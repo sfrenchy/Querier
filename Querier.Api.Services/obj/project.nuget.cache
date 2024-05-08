@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "t/eVgFv4Fp+HWIsuiZS/PGHGmqoZCfPJmeBKUteRenzWCT8lI+gsAvvCa57Cn3Ue55CWy2PioQJYWF+M7WWBFw==",
+  "dgSpecHash": "MtnCIrq9m2NnpEZZd1r11OyBdOXCBwGv++GKUOdZnkHLY6RLfwE2vuDE6f1hyjkKM/zB87JSABkd7QpsL/0biw==",
   "success": true,
   "projectFilePath": "/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Services/Querier.Api.Services.csproj",
   "expectedPackageFiles": [

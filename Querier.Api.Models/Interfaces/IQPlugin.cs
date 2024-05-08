@@ -10,7 +10,7 @@ using Querier.Api.Models.Requests.User;
 
 namespace Querier.Api.Models.Interfaces
 {
-    public interface IHerdiaApp
+    public interface IQPlugin
     {
         void ConfigureApp(IApplicationBuilder app, IWebHostEnvironment env);
 

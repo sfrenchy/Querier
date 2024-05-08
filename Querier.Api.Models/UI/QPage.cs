@@ -20,9 +20,9 @@ namespace Querier.Api.Models.UI
         [Column("HAPageCategoryId")]
         public int? HAPageCategoryId { get; set; }
         [JsonIgnore]
-        public virtual HAPageCategory HAPageCategory { get; set; }
+        public virtual QPageCategory QPageCategory { get; set; }
         [JsonIgnore]
-        public virtual List<HAPageRow> HAPageRows { get; set; }
+        public virtual List<QPageRow> HAPageRows { get; set; }
         [JsonIgnore]
         public virtual List<QPageRole> HAPageRoles { get; set; }
     }

@@ -6,7 +6,7 @@ namespace Querier.Api.Models.Responses
     public class AddDBConnectionResponse
     {
         public bool IsInError { get; set; } = false;
-        public HADBConnectionState State { get; set; } = HADBConnectionState.None;
+        public QDBConnectionState State { get; set; } = QDBConnectionState.None;
         public List<string> Messages { get; set; } = new List<string>();
     }
 }

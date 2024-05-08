@@ -10,7 +10,7 @@ using Querier.Api.Models.UI;
 
 namespace Querier.Api.Models.Common
 {
-    public class HAUploadDefinition : UIDBEntity
+    public class QUploadDefinition : UIDBEntity
     {
         /// <summary>
         /// The id of upload
@@ -61,7 +61,7 @@ namespace Querier.Api.Models.Common
         /// </summary>
         [AllowNull]
         [DefaultValue(null)]
-        public HAUploadNatureEnum Nature { get; set; }
+        public QUploadNatureEnum Nature { get; set; }
 
     }
 
@@ -90,7 +90,7 @@ namespace Querier.Api.Models.Common
         /// <summary>
         /// The nature of the uploaded file
         /// </summary>
-        public HAUploadNatureEnum Nature { get; set; }
+        public QUploadNatureEnum Nature { get; set; }
     }
 
     public class HAUploadDefinitionFromApi

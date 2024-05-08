@@ -18,14 +18,14 @@ namespace Querier.Api.Services
         /// This method is used to get the theme list of a specific User
         /// </summary>
         /// <param name="UserId"></param>
-        /// <returns> A list of <see cref="HATheme"/> </returns>
-        public List<HATheme> GetUserThemeList(string UserId);
+        /// <returns> A list of <see cref="QTheme"/> </returns>
+        public List<QTheme> GetUserThemeList(string UserId);
         /// <summary>
         /// This method is used to get the content of a specific theme
         /// </summary>
         /// <param name="ThemeId"></param>
-        /// <returns>A list of <see cref="HAThemeVariable" /> objects</returns>
-        public List<HAThemeVariable> GetThemeDefinition(int ThemeId);
+        /// <returns>A list of <see cref="QThemeVariable" /> objects</returns>
+        public List<QThemeVariable> GetThemeDefinition(int ThemeId);
         /// <summary>
         /// This method is used to update the values of a specific theme 
         /// </summary>
@@ -58,23 +58,23 @@ namespace Querier.Api.Services
             _contextFactory = contextFactory;
         }
 
-        public List<HATheme> GetUserThemeList(string UserId)
+        public List<QTheme> GetUserThemeList(string UserId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                List<HATheme> result = new List<HATheme>();
+                List<QTheme> result = new List<QTheme>();
                 result = apidbContext.HAThemes.Where(i => i.UserId == UserId).ToList();
                 return result;
             }
         }
-        public List<HAThemeVariable> GetThemeDefinition(int ThemeId)
+        public List<QThemeVariable> GetThemeDefinition(int ThemeId)
         {
-            List<HAThemeVariable> result = new List<HAThemeVariable>();
+            List<QThemeVariable> result = new List<QThemeVariable>();
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                List<HAThemeVariable> ThemeDefinitionObj = apidbContext.HAThemeVariables.ToList(); //PAS ICI BORDEL
+                List<QThemeVariable> ThemeDefinitionObj = apidbContext.HAThemeVariables.ToList(); //PAS ICI BORDEL
 
-                foreach (HAThemeVariable ThemeDefinition in ThemeDefinitionObj)
+                foreach (QThemeVariable ThemeDefinition in ThemeDefinitionObj)
                 {
                     if (ThemeDefinition.HAThemeId == ThemeId)
                         result.Add(ThemeDefinition);
@@ -87,7 +87,7 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HATheme currentThemeId = apidbContext.HAThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == Label);
+                QTheme currentThemeId = apidbContext.HAThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == Label);
                 int result = currentThemeId.Id;
                 return result;
             }
@@ -97,11 +97,11 @@ namespace Querier.Api.Services
         {
             using (var apiDbContext = _contextFactory.CreateDbContext())
             {
-                HATheme a = apiDbContext.HAThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == "Theme1");
+                QTheme a = apiDbContext.HAThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == "Theme1");
                 if (a == null)
                 {
                     // Create Theme1
-                    HATheme defaultTheme = new HATheme()
+                    QTheme defaultTheme = new QTheme()
                     {
                         Label = "Theme1",
                         UserId = UserId
@@ -110,11 +110,11 @@ namespace Querier.Api.Services
                     apiDbContext.SaveChanges();
                 }
 
-                HATheme b = apiDbContext.HAThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == "Theme2");
+                QTheme b = apiDbContext.HAThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == "Theme2");
                 if (b == null)
                 {
                     // Create Theme2
-                    HATheme defaultTheme2 = new HATheme()
+                    QTheme defaultTheme2 = new QTheme()
                     {
                         Label = "Theme2",
                         UserId = UserId
@@ -137,11 +137,11 @@ namespace Querier.Api.Services
 
                 foreach (KeyValuePair<string, string> ThemeableElement in ThemeableElementsList1)
                 {
-                    HAThemeVariable userThemeVariable = apiDbContext.HAThemeVariables.FirstOrDefault(t => t.HAThemeId == userTheme1Id && t.VariableName == ThemeableElement.Key);
+                    QThemeVariable userThemeVariable = apiDbContext.HAThemeVariables.FirstOrDefault(t => t.HAThemeId == userTheme1Id && t.VariableName == ThemeableElement.Key);
 
                     if (userThemeVariable == null)
                     { 
-                        HAThemeVariable defaultThemeVariable = new HAThemeVariable()
+                        QThemeVariable defaultThemeVariable = new QThemeVariable()
                         {
                             VariableName = ThemeableElement.Key,
                             VariableValue = ThemeableElement.Value,
@@ -165,10 +165,10 @@ namespace Querier.Api.Services
 
                 foreach (KeyValuePair<string, string> ThemeableElement in ThemeableElementsList2)
                 {
-                    HAThemeVariable userTheme2Variable = apiDbContext.HAThemeVariables.FirstOrDefault(t => t.HAThemeId == userTheme2Id && t.VariableName == ThemeableElement.Key);
+                    QThemeVariable userTheme2Variable = apiDbContext.HAThemeVariables.FirstOrDefault(t => t.HAThemeId == userTheme2Id && t.VariableName == ThemeableElement.Key);
                     if (userTheme2Variable == null)
                     {
-                        HAThemeVariable defaultThemeVariable = new HAThemeVariable()
+                        QThemeVariable defaultThemeVariable = new QThemeVariable()
                         {
                             VariableName = ThemeableElement.Key,
                             VariableValue = ThemeableElement.Value,
@@ -184,27 +184,27 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAThemeVariable existingPrimaryColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(l => l.VariableName == "PrimaryColor");
+                QThemeVariable existingPrimaryColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(l => l.VariableName == "PrimaryColor");
                 if (existingPrimaryColor == null)
                     return false;
                 existingPrimaryColor.VariableValue = TargetTheme.PrimaryValue;
 
-                HAThemeVariable existingSecondaryColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "SecondaryColor");
+                QThemeVariable existingSecondaryColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "SecondaryColor");
                 if (existingSecondaryColor == null)
                     return false;
                 existingSecondaryColor.VariableValue = TargetTheme.SecondaryValue;
 
-                HAThemeVariable existingNavbarColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "NavbarColor");
+                QThemeVariable existingNavbarColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "NavbarColor");
                 if (existingNavbarColor == null)
                     return false;
                 existingNavbarColor.VariableValue = TargetTheme.navbarValue;
 
-                HAThemeVariable existingTopNavbarColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "TopNavbarColor");
+                QThemeVariable existingTopNavbarColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "TopNavbarColor");
                 if (existingTopNavbarColor == null)
                     return false;
                 existingTopNavbarColor.VariableValue = TargetTheme.topNavbarValue;
 
-                HAThemeVariable existingCustomFontSize = apidbContext.HAThemeVariables.Where(k => k.HAThemeId == ThemeId).FirstOrDefault(k => k.VariableName == "customFontSize");
+                QThemeVariable existingCustomFontSize = apidbContext.HAThemeVariables.Where(k => k.HAThemeId == ThemeId).FirstOrDefault(k => k.VariableName == "customFontSize");
                 if (existingCustomFontSize == null)
                     return false;
                 existingCustomFontSize.VariableValue = TargetTheme.customFontSize;

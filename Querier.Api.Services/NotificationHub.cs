@@ -42,7 +42,7 @@ namespace Querier.Api.Services
                 ApiUser user = apidbContext.Users.FirstOrDefault(u => u.Email == Context.UserIdentifier);
                 if (user != null && apidbContext.HANotifications.Any(n => n.UserId == user.Id))
                 {
-                    foreach (HANotification notif in apidbContext.HANotifications.Where(n => n.UserId == user.Id))
+                    foreach (QNotification notif in apidbContext.HANotifications.Where(n => n.UserId == user.Id))
                         _notification.NotifyUser(notif, true).GetAwaiter();
                 }
 

@@ -1,6 +1,6 @@
 ﻿namespace Querier.Api.Models.Cards
 {
-    public class GoogleMapCard : IHACard
+    public class GoogleMapCard : IQCard
     {
         #region IAlhCardViewComponent
         public string Label => "Carte Google Map";

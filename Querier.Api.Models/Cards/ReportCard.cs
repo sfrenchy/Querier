@@ -1,6 +1,6 @@
 ﻿namespace Querier.Api.Models.Cards
 {
-    public class ReportCard : IHACard
+    public class ReportCard : IQCard
     {
         #region IAlhCardViewComponent
         public string Label => "Carte de rapport";

@@ -60,11 +60,11 @@ namespace Querier.Api.Services
     public class DBConnectionService : IDBConnectionService
     {
         private readonly ILogger<DBConnectionService> _logger;
-        private readonly IHAUploadService _uploadService;
+        private readonly IQUploadService _uploadService;
         private readonly IDbContextFactory<ApiDbContext> _apiDbContextFactory;
         private readonly IServiceProvider _serviceProvider;
         private readonly IDynamicContextList _dynamicContextList;
-        public DBConnectionService(IDynamicContextList dynamicContextList, IDbContextFactory<ApiDbContext> apiDbContextFactory, IServiceProvider serviceProvider, IHAUploadService uploadService, ILogger<DBConnectionService> logger)
+        public DBConnectionService(IDynamicContextList dynamicContextList, IDbContextFactory<ApiDbContext> apiDbContextFactory, IServiceProvider serviceProvider, IQUploadService uploadService, ILogger<DBConnectionService> logger)
         {
             _uploadService = uploadService;
             _logger = logger;
@@ -83,38 +83,38 @@ namespace Querier.Api.Services
             {
                 switch (connection.ConnectionType)
                 {
-                    case HADBConnectionType.SqlServer:
+                    case QDBConnectionType.SqlServer:
                         using (SqlConnection c = new SqlConnection(connection.ConnectionString))
                         {
                             c.Open();
                             connectionNamespace = $"{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
-                            result.State = HADBConnectionState.Connected;
+                            result.State = QDBConnectionState.Connected;
                         }
                         break;
-                    case HADBConnectionType.MySQL:
+                    case QDBConnectionType.MySQL:
                         using (MySqlConnection c = new MySqlConnection(connection.ConnectionString))
                         {
                             c.Open();
                             connectionNamespace = $"{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
-                            result.State = HADBConnectionState.Connected;
+                            result.State = QDBConnectionState.Connected;
                         }
                         break;
-                    case HADBConnectionType.PgSQL:
+                    case QDBConnectionType.PgSQL:
                         using (NpgsqlConnection c = new NpgsqlConnection(connection.ConnectionString))
                         {
                             c.Open();
                             connectionNamespace = $"{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
-                            result.State = HADBConnectionState.Connected;
+                            result.State = QDBConnectionState.Connected;
                         }
                         break;
                 }
             }
             catch (Exception ex)
             {
-                result.State = HADBConnectionState.ConnectionError;
+                result.State = QDBConnectionState.ConnectionError;
                 result.Messages.Add(ex.Message);
                 return result;
             }
@@ -123,13 +123,13 @@ namespace Querier.Api.Services
             IReverseEngineerScaffolder scaffolder = null;
             switch (connection.ConnectionType)
             {
-                case HADBConnectionType.SqlServer:
+                case QDBConnectionType.SqlServer:
                     scaffolder = CreateMssqlScaffolder();
                     break;
-                case HADBConnectionType.MySQL:
+                case QDBConnectionType.MySQL:
                     scaffolder = CreateMySQLScaffolder();
                     break;
-                case HADBConnectionType.PgSQL:
+                case QDBConnectionType.PgSQL:
                     scaffolder = CreatePgSQLScaffolder();
                     break;
             }
@@ -148,11 +148,11 @@ namespace Querier.Api.Services
             var scaffoldedModelSources = scaffolder.ScaffoldModel(connection.ConnectionString, dbOpts, modelOpts, codeGenOpts);
 
             var contextFile = "";
-            if (connection.ConnectionType == HADBConnectionType.SqlServer)
+            if (connection.ConnectionType == QDBConnectionType.SqlServer)
                 contextFile = scaffoldedModelSources.ContextFile.Code.Replace(".UseSqlServer", ".UseLazyLoadingProxies().UseSqlServer");
-            else if (connection.ConnectionType == HADBConnectionType.MySQL)    
+            else if (connection.ConnectionType == QDBConnectionType.MySQL)    
                 contextFile = scaffoldedModelSources.ContextFile.Code.Replace(".UseMySql", ".UseLazyLoadingProxies().UseMySql");
-            else if (connection.ConnectionType == HADBConnectionType.PgSQL)
+            else if (connection.ConnectionType == QDBConnectionType.PgSQL)
                 contextFile = scaffoldedModelSources.ContextFile.Code.Replace(".UseNpgsql", ".UseLazyLoadingProxies().UseNpgsql");
             else
                 throw new Exception("Unsupported SGBD");
@@ -166,7 +166,7 @@ namespace Querier.Api.Services
                 srcZipContent.Add(addFile.Path, addFile.Code);
             }
             // if scaffolding OK => Generate a common DB Schema representation for stored procedure
-            if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == HADBConnectionType.SqlServer)
+            if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == QDBConnectionType.SqlServer)
             {
                 List<StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
                 procedureDescription = JsonConvert.SerializeObject(storedProcedures);
@@ -255,7 +255,7 @@ namespace Querier.Api.Services
                 }
                 string errorMessage = sb.ToString();
                 Console.WriteLine(errorMessage);
-                result.State = HADBConnectionState.CompilationError;
+                result.State = QDBConnectionState.CompilationError;
                 result.Messages = new List<string>();
                 result.Messages.Add(errorMessage);
                 return result;
@@ -268,13 +268,13 @@ namespace Querier.Api.Services
             peStream.Seek(0, SeekOrigin.Begin);
             pdbStream.Seek(0, SeekOrigin.Begin);
             // Store connection to database
-            HADBConnection newConnection = new HADBConnection();
+            QDBConnection newConnection = new QDBConnection();
             newConnection.ApiRoute = connection.ContextApiRoute;
             newConnection.AssemblyUploadDefinitionId = await _uploadService.UploadFileFromApiAsync(
                 new HAUploadDefinitionFromApi() {
                     Definition = new SimpleUploadDefinition() {
                         FileName = $"{connection.Name}.DynamicContext.dll",
-                        Nature = HAUploadNatureEnum.Assembly,
+                        Nature = QUploadNatureEnum.Assembly,
                         MimeType = "application/octet-stream"
                     },
                     UploadStream = peStream
@@ -284,7 +284,7 @@ namespace Querier.Api.Services
                 new HAUploadDefinitionFromApi() {
                     Definition = new SimpleUploadDefinition() {
                             FileName = $"{connection.Name}.DynamicContext.pdb",
-                            Nature = HAUploadNatureEnum.AssemblyPDB,
+                            Nature = QUploadNatureEnum.AssemblyPDB,
                             MimeType = "application/octet-stream"
                         },
                     UploadStream = pdbStream
@@ -294,7 +294,7 @@ namespace Querier.Api.Services
                 new HAUploadDefinitionFromApi() {
                     Definition = new SimpleUploadDefinition() {
                             FileName = $"{connection.Name}.DynamicContext.Sources.zip",
-                            Nature = HAUploadNatureEnum.AssemblySources,
+                            Nature = QUploadNatureEnum.AssemblySources,
                             MimeType = "application/octet-stream"
                         },
                     UploadStream = File.OpenRead(sourceZipPath)
@@ -309,7 +309,7 @@ namespace Querier.Api.Services
                 apiDbContext.HADBConnections.Add(newConnection);
                 await apiDbContext.SaveChangesAsync();
             }
-            result.State = HADBConnectionState.Available;
+            result.State = QDBConnectionState.Available;
             File.Delete(sourceZipPath);
             return result;
         }  
@@ -411,7 +411,7 @@ namespace Querier.Api.Services
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                HADBConnection toDelete = apiDbContext.HADBConnections.Find(request.DBConnectionId);
+                QDBConnection toDelete = apiDbContext.HADBConnections.Find(request.DBConnectionId);
                 int toDeleteId = toDelete.Id;
                 int assemblyUploadId = toDelete.AssemblyUploadDefinitionId;
                 int pdbUploadId = toDelete.PDBUploadDefinitionId;

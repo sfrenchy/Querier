@@ -4,7 +4,7 @@ using Querier.Api.Models.Auth;
 
 namespace Querier.Api.Models.Common
 {
-    public class HARefreshToken
+    public class QRefreshToken
     {
         public int Id { get; set; }
         public string UserId { get; set; } // Linked to the AspNet Identity User Id

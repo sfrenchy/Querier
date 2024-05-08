@@ -38,7 +38,7 @@ namespace Querier.Api.Models.UI
         [Column("Order")]
         public int Order { get; set; }
         [JsonIgnore]
-        public virtual HAPageRow HAPageRow { get; set; }
+        public virtual QPageRow QPageRow { get; set; }
         [JsonIgnore]
         public virtual List<QCardRole> HACardRoles { get; set; }
 

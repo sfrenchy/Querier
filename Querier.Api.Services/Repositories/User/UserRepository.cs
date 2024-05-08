@@ -35,9 +35,9 @@ namespace Querier.Api.Services.Repositories.User
         private readonly IConfiguration _configuration;
         private readonly IEmailSendingService _emailSending;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IHAUploadService _uploadService;
+        private readonly IQUploadService _uploadService;
 
-        public UserRepository(ApiDbContext context, UserManager<ApiUser> userManager, ILogger<UserRepository> logger, IConfiguration configuration, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory, IHAUploadService uploadService)
+        public UserRepository(ApiDbContext context, UserManager<ApiUser> userManager, ILogger<UserRepository> logger, IConfiguration configuration, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory, IQUploadService uploadService)
         {
             _context = context;
             _logger = logger;
@@ -178,7 +178,7 @@ namespace Querier.Api.Services.Repositories.User
 
                 //get the body of the mail from the uploaderManager
                 //Get the uploadID
-                List<HAUploadDefinition> result;
+                List<QUploadDefinition> result;
                 //get the name of the template html for email confirmation with the good language:
                 string EmailConfirmationTemplateName;
                 switch (user.LanguageCode)
@@ -199,7 +199,7 @@ namespace Querier.Api.Services.Repositories.User
 
                 using (var apidbContext = _contextFactory.CreateDbContext())
                 {
-                    result = apidbContext.HAUploadDefinitions.Where(t => t.Nature == HAUploadNatureEnum.ApplicationEmail && t.FileName == EmailConfirmationTemplateName).ToList();
+                    result = apidbContext.HAUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == EmailConfirmationTemplateName).ToList();
                 }
 
                 //GetUploadStream

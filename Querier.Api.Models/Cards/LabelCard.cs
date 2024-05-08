@@ -1,6 +1,6 @@
 ﻿namespace Querier.Api.Models.Cards
 {
-    public class LabelCard : IHACard
+    public class LabelCard : IQCard
     {
         #region IAlhCardViewComponent
         public string Label => "Carte de libellé";

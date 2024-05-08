@@ -18,9 +18,9 @@ namespace Querier.Api.Controllers
     public class EmailTemplateCrudUserController : ControllerBase
     {
         private IEmailTemplateCrudUserService _emailTemplateCrudUserService;
-        private IHAUploadService _uploadService;
+        private IQUploadService _uploadService;
         private IEmailTemplateCrudCommonService _emailTemplateCrudCommonService;
-        public EmailTemplateCrudUserController(IEmailTemplateCrudUserService emailTemplateCrudUserService, IHAUploadService uploadService, IEmailTemplateCrudCommonService emailTemplateCrudCommonService)
+        public EmailTemplateCrudUserController(IEmailTemplateCrudUserService emailTemplateCrudUserService, IQUploadService uploadService, IEmailTemplateCrudCommonService emailTemplateCrudCommonService)
         {
             _emailTemplateCrudUserService = emailTemplateCrudUserService;
             _uploadService = uploadService;
@@ -30,7 +30,7 @@ namespace Querier.Api.Controllers
         [HttpPost("GetAllUserEmailTemplate")]
         public IActionResult GetAllUserEmailTemplate([FromBody] ServerSideRequest datatableRequest)
         {
-            return new  OkObjectResult(_emailTemplateCrudCommonService.GetAllEmailTemplates(datatableRequest, HAUploadNatureEnum.UserEmail));
+            return new  OkObjectResult(_emailTemplateCrudCommonService.GetAllEmailTemplates(datatableRequest, QUploadNatureEnum.UserEmail));
         }
 
         [HttpDelete("DeletUserEmailTemplate/{TemplateId}")]
@@ -40,15 +40,15 @@ namespace Querier.Api.Controllers
         }
 
         [HttpPost("AddUserEmailTemplate")]
-        public async Task<IActionResult> AddUserEmailTemplate(HAAddUserEmailTemplateRequest request)
+        public async Task<IActionResult> AddUserEmailTemplate(QAddUserEmailTemplateRequest request)
         {
             return new OkObjectResult(await _emailTemplateCrudUserService.AddUserEmailTemplate(request));
         }
 
         [HttpPut("UpdateContentEmailTemplateUser")]
-        public async Task<IActionResult> UpdateContentEmailTemplateUser(HAUpdateEmailTemplateRequest request)
+        public async Task<IActionResult> UpdateContentEmailTemplateUser(QUpdateEmailTemplateRequest request)
         {
-            return new OkObjectResult(await _emailTemplateCrudCommonService.UpdateContentEmailTemplate(request, HAUploadNatureEnum.UserEmail));
+            return new OkObjectResult(await _emailTemplateCrudCommonService.UpdateContentEmailTemplate(request, QUploadNatureEnum.UserEmail));
         }
 
         [HttpGet("GetContentEmailTemplateUser/{TemplateId}")]
@@ -58,7 +58,7 @@ namespace Querier.Api.Controllers
         }
 
         [HttpPost("SendEmailForTestTemplateUser")]
-        public async Task<IActionResult> SendEmailForTestTemplateUser([FromBody] HASendEmailForTestTemplateRequest request)
+        public async Task<IActionResult> SendEmailForTestTemplateUser([FromBody] QSendEmailForTestTemplateRequest request)
         {
             return new OkObjectResult(await _emailTemplateCrudCommonService.SendEmailForTestTemplate(request, HttpContext.User.FindFirst(ClaimTypes.Email).Value));
         }

@@ -162,7 +162,7 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                var herdiaApp = ServiceActivator.GetScope().ServiceProvider.GetService(typeof(IHerdiaApp)) as IHerdiaApp;
+                var herdiaApp = ServiceActivator.GetScope().ServiceProvider.GetService(typeof(IQPlugin)) as IQPlugin;
                 //Check google token, it will crash if it isn't valid 
                 var isTokenValid = await UserMethods.VerifyGoogleToken(user.AuthToken);
                 var existingUser = await _userManager.FindByEmailAsync(user.Email);

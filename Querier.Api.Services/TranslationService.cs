@@ -12,8 +12,8 @@ namespace Querier.Api.Services
     public interface ITranslationService
     {
         dynamic GetTranslations(string languageCode);
-        HATranslation CreateTranslation(CreateOrUpdateTranslationRequest request);
-        HATranslation UpdateTranslation(CreateOrUpdateTranslationRequest request);
+        QTranslation CreateTranslation(CreateOrUpdateTranslationRequest request);
+        QTranslation UpdateTranslation(CreateOrUpdateTranslationRequest request);
     }
     public class TranslationService : ITranslationService
     {
@@ -30,7 +30,7 @@ namespace Querier.Api.Services
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 string columnNameLanguage = "";
-                var propertiesTranslation = new HATranslation().GetType().GetProperties();
+                var propertiesTranslation = new QTranslation().GetType().GetProperties();
                 foreach (var property in propertiesTranslation)
                 {
                     if (property.Name.Contains(languageCode))
@@ -63,11 +63,11 @@ namespace Querier.Api.Services
             }
         }
 
-        public HATranslation CreateTranslation(CreateOrUpdateTranslationRequest request)
+        public QTranslation CreateTranslation(CreateOrUpdateTranslationRequest request)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HATranslation newTranslation = new()
+                QTranslation newTranslation = new()
                 {
                     Code = request.Code,
                     Context = request.Context
@@ -83,7 +83,7 @@ namespace Querier.Api.Services
                         break;
                 }
 
-                typeof(HATranslation).GetProperty(propertyLabel)?.SetValue(newTranslation, request.Value);
+                typeof(QTranslation).GetProperty(propertyLabel)?.SetValue(newTranslation, request.Value);
 
                 apidbContext.HATranslations.Add(newTranslation);
                 apidbContext.SaveChanges();
@@ -91,11 +91,11 @@ namespace Querier.Api.Services
             }
         }
 
-        public HATranslation UpdateTranslation(CreateOrUpdateTranslationRequest request)
+        public QTranslation UpdateTranslation(CreateOrUpdateTranslationRequest request)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HATranslation existingTranslation = apidbContext.HATranslations.First(t => t.Code == request.Code);
+                QTranslation existingTranslation = apidbContext.HATranslations.First(t => t.Code == request.Code);
                 string propertyLabel = "EnLabel";
                 switch (request.LanguageCode.Substring(0, 2).ToLower())
                 {
@@ -107,7 +107,7 @@ namespace Querier.Api.Services
                         break;
                 }
 
-                typeof(HATranslation).GetProperty(propertyLabel)?.SetValue(existingTranslation, request.Value);
+                typeof(QTranslation).GetProperty(propertyLabel)?.SetValue(existingTranslation, request.Value);
                 apidbContext.SaveChanges();
                 return existingTranslation;
             }

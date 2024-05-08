@@ -11,18 +11,18 @@ namespace Querier.Api.Services
 {
     public interface IEmailTemplateCrudUserService
     {
-        Task<bool> AddUserEmailTemplate(HAAddUserEmailTemplateRequest request);
+        Task<bool> AddUserEmailTemplate(QAddUserEmailTemplateRequest request);
     }
     public class EmailTemplateCrudUserService : IEmailTemplateCrudUserService
     {
-        private readonly IHAUploadService _uploadService;
-        public EmailTemplateCrudUserService(IHAUploadService uploadService)
+        private readonly IQUploadService _uploadService;
+        public EmailTemplateCrudUserService(IQUploadService uploadService)
         {
             _uploadService = uploadService;
         }
 
 
-        public async Task<bool> AddUserEmailTemplate(HAAddUserEmailTemplateRequest request)
+        public async Task<bool> AddUserEmailTemplate(QAddUserEmailTemplateRequest request)
         {
             //create stream from the string
             byte[] ContentBytes = Encoding.Default.GetBytes(request.ContentEmailTemplate);
@@ -33,7 +33,7 @@ namespace Querier.Api.Services
                 Definition = new SimpleUploadDefinition()
                 {
                     FileName = request.NameEmailTemplate,
-                    Nature = HAUploadNatureEnum.UserEmail
+                    Nature = QUploadNatureEnum.UserEmail
                 },
                 UploadStream = new MemoryStream(ContentBytes)
             };

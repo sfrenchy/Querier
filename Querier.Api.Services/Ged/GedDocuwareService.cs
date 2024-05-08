@@ -16,10 +16,10 @@ using Querier.Api.Models.Ged;
 
 namespace Querier.Api.Services.Ged
 {
-    public class GedDocuwareService : IHAFileReadOnlyDeposit
+    public class GedDocuwareService : IQFileReadOnlyDeposit
     {
         //variable from interface;
-        public HAFileDeposit FileDepositInformations { get; set; }
+        public QFileDeposit FileDepositInformations { get; set; }
         //
 
         private readonly ILogger<GedDocuwareService> _logger;
@@ -32,7 +32,7 @@ namespace Querier.Api.Services.Ged
             FileDepositInformations = GetInformationFromDB();
         }
 
-        private HAFileDeposit GetInformationFromDB()
+        private QFileDeposit GetInformationFromDB()
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
@@ -54,14 +54,14 @@ namespace Querier.Api.Services.Ged
             result.AddRange(queryResult.Items);
 
 
-            List<HAFilesFromFileDeposit> response = new List<HAFilesFromFileDeposit>();
+            List<QFilesFromFileDeposit> response = new List<QFilesFromFileDeposit>();
             if(result.Count == 0)
             {
                 return new FillFileInformationResponse() { success = false, numberFileAdded = 0, message = "no file finded" };
             }
             foreach (Document document in result)
             {
-                HAFilesFromFileDeposit element = new HAFilesFromFileDeposit() { 
+                QFilesFromFileDeposit element = new QFilesFromFileDeposit() { 
                     FileRef = document.Id.ToString(),
                     HAFileDepositId = FileDepositInformations.Id,
                 };
@@ -69,11 +69,11 @@ namespace Querier.Api.Services.Ged
                 response.Add(element);
             }
 
-            //save documents ref in HAFilesFromFileDeposit
+            //save documents ref in QFilesFromFileDeposit
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                //used to see il the file is already exist in table HAFilesFromFileDeposit by compare the fileRef(path of the file) and the HAFileDepositId
-                List<HAFilesFromFileDeposit> missingRecords = response.Where(x => !apidbContext.HAFilesFromFileDeposit.Any(el => el.FileRef == x.FileRef && el.HAFileDepositId == x.HAFileDepositId )).ToList();
+                //used to see il the file is already exist in table QFilesFromFileDeposit by compare the fileRef(path of the file) and the HAFileDepositId
+                List<QFilesFromFileDeposit> missingRecords = response.Where(x => !apidbContext.HAFilesFromFileDeposit.Any(el => el.FileRef == x.FileRef && el.HAFileDepositId == x.HAFileDepositId )).ToList();
                 
                 if(missingRecords.Count > 0)
                 {
@@ -181,7 +181,7 @@ namespace Querier.Api.Services.Ged
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 //get the file 
-                HAFilesFromFileDeposit fileReference = apidbContext.HAFilesFromFileDeposit.FirstOrDefault(r => r.Id == IdTable && r.HAFileDepositId == FileDepositInformations.Id);
+                QFilesFromFileDeposit fileReference = apidbContext.HAFilesFromFileDeposit.FirstOrDefault(r => r.Id == IdTable && r.HAFileDepositId == FileDepositInformations.Id);
                 if (fileReference == null)
                 {
                     return new GeneralResponse() { success = false, message = "file not find" };

@@ -5,7 +5,7 @@ using Querier.Api.Models.Auth;
 
 namespace Querier.Api.Models.Notifications
 {
-    public class HANotification
+    public class QNotification
     {
         [Key]
         [Required]

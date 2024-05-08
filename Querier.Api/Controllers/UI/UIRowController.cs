@@ -48,7 +48,7 @@ namespace Querier.Api.Controllers.UI
         [HttpPost("AddRow")]
         public async Task<IActionResult> AddRowAsync([FromBody] AddRowRequest addRowRequest)
         {
-            HAPage page = await _uiRowService.AddRowAsync(addRowRequest.PageId);
+            QPage page = await _uiRowService.AddRowAsync(addRowRequest.PageId);
 
             if (page == null)
                 return NotFound("Unable to find the page!");
@@ -64,7 +64,7 @@ namespace Querier.Api.Controllers.UI
         [HttpDelete("DeleteRow/{rowId}")]
         public async Task<IActionResult> DeleteRowAsync(int rowId)
         {
-            HAPageRowVM row = await _uiRowService.DeleteRowAsync(rowId); 
+            QPageRowVM row = await _uiRowService.DeleteRowAsync(rowId); 
 
             if (row == null)
                 return NotFound("Unable to find the row!");
@@ -78,12 +78,12 @@ namespace Querier.Api.Controllers.UI
         /// <param name="page">the page to update the order of its rows</param>
         /// <returns>Return a ObjectResult which holds status code (Ok:200/BadRequest:400/NotFound:404) and data</returns>
         [HttpPut("UpdateRowOrder")]
-        public async Task<IActionResult> UpdateRowOrderAsync([FromBody] HAPageVM page)
+        public async Task<IActionResult> UpdateRowOrderAsync([FromBody] QPageVM page)
         {
             if (page == null)
                 return NotFound("Unable to find the page!");
 
-            List<HAPageRowVM> rows = await _uiRowService.UpdateRowOrder(page);
+            List<QPageRowVM> rows = await _uiRowService.UpdateRowOrder(page);
             return new OkObjectResult(rows);
         }
     }

@@ -91,47 +91,47 @@ namespace Querier.Api.Models.Common
                 UserId = "545823b1-11b7-4e35-af5f-84e06aa1c050"
             });
 
-            modelBuilder.Entity<HACategoryRole>()
+            modelBuilder.Entity<QCategoryRole>()
                .HasKey(cr => new { cr.HAPageCategoryId, cr.ApiRoleId });
 
-            modelBuilder.Entity<HAPageRole>()
+            modelBuilder.Entity<QPageRole>()
                 .HasKey(cr => new { cr.HAPageId, cr.ApiRoleId });
 
-            modelBuilder.Entity<HACardRole>()
+            modelBuilder.Entity<QCardRole>()
                 .HasKey(cr => new { cr.HAPageCardId, cr.ApiRoleId });
 
-            modelBuilder.Entity<HACategoryRole>()
+            modelBuilder.Entity<QCategoryRole>()
                 .HasOne(c => c.ApiRole)
                 .WithMany(r => r.HACategoryRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HAPageRole>()
+            modelBuilder.Entity<QPageRole>()
                 .HasOne(p => p.ApiRole)
                 .WithMany(r => r.HAPageRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HACardRole>()
+            modelBuilder.Entity<QCardRole>()
                 .HasOne(p => p.ApiRole)
                 .WithMany(r => r.HACardRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HACategoryRole>()
-                .HasOne(c => c.HAPageCategory)
+            modelBuilder.Entity<QCategoryRole>()
+                .HasOne(c => c.QPageCategory)
                 .WithMany(r => r.HACategoryRoles)
                 .HasForeignKey(c => c.HAPageCategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HAPageRole>()
-                .HasOne(p => p.HAPage)
+            modelBuilder.Entity<QPageRole>()
+                .HasOne(p => p.QPage)
                 .WithMany(r => r.HAPageRoles)
                 .HasForeignKey(c => c.HAPageId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HACardRole>()
-                .HasOne(p => p.HAPageCard)
+            modelBuilder.Entity<QCardRole>()
+                .HasOne(p => p.QPageCard)
                 .WithMany(r => r.HACardRoles)
                 .HasForeignKey(c => c.HAPageCardId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -142,27 +142,27 @@ namespace Querier.Api.Models.Common
     {
 
         public IConfiguration _configuration { get; }
-        public virtual DbSet<HARefreshToken> HARefreshTokens { get; set; }
-        public virtual DbSet<HANotification> HANotifications { get; set; }
-        public virtual DbSet<HAPageCategory> HAPageCategories { get; set; }
-        public virtual DbSet<HAPage> HAPages { get; set; }
-        public virtual DbSet<HAPageRow> HAPageRows { get; set; }
-        public virtual DbSet<HAPageCard> HAPageCards { get; set; }
-        public virtual DbSet<HAPageCardDefinedConfiguration> HAPageCardDefinedConfigurations { get; set; }
-        public virtual DbSet<HATranslation> HATranslations { get; set; }
-        public virtual DbSet<HAHtmlPartialRef> HAHtmlPartialRefs { get; set; }
-        public virtual DbSet<HACategoryRole> HACategoryRoles { get; set; }
-        public virtual DbSet<HAPageRole> HAPageRoles { get; set; }
-        public virtual DbSet<HACardRole> HACardRoles { get; set; }
-        public virtual DbSet<HATheme> HAThemes { get; set; }
-        public virtual DbSet<HAThemeVariable> HAThemeVariables { get; set; }
-        public virtual DbSet<HADBConnection.HADBConnection> HADBConnections { get; set; }
+        public virtual DbSet<QRefreshToken> HARefreshTokens { get; set; }
+        public virtual DbSet<QNotification> HANotifications { get; set; }
+        public virtual DbSet<QPageCategory> HAPageCategories { get; set; }
+        public virtual DbSet<QPage> HAPages { get; set; }
+        public virtual DbSet<QPageRow> HAPageRows { get; set; }
+        public virtual DbSet<QPageCard> HAPageCards { get; set; }
+        public virtual DbSet<QPageCardDefinedConfiguration> HAPageCardDefinedConfigurations { get; set; }
+        public virtual DbSet<QTranslation> HATranslations { get; set; }
+        public virtual DbSet<QHtmlPartialRef> HAHtmlPartialRefs { get; set; }
+        public virtual DbSet<QCategoryRole> HACategoryRoles { get; set; }
+        public virtual DbSet<QPageRole> HAPageRoles { get; set; }
+        public virtual DbSet<QCardRole> HACardRoles { get; set; }
+        public virtual DbSet<QTheme> HAThemes { get; set; }
+        public virtual DbSet<QThemeVariable> HAThemeVariables { get; set; }
+        public virtual DbSet<HADBConnection.QDBConnection> HADBConnections { get; set; }
         // public virtual DbSet<UserNotification> Notifications { get; set; }
         public virtual DbSet<HAEntityAttribute> HAEntityAttributes { get; set; }
-        public virtual DbSet<HAUploadDefinition> HAUploadDefinitions { get; set; }
+        public virtual DbSet<QUploadDefinition> HAUploadDefinitions { get; set; }
         public virtual DbSet<HAApiUserAttributes> HAApiUserAttributes { get; set; }
-        public virtual DbSet<HAFileDeposit> HAFileDeposit { get; set; }
-        public virtual DbSet<HAFilesFromFileDeposit> HAFilesFromFileDeposit { get; set; }
+        public virtual DbSet<QFileDeposit> HAFileDeposit { get; set; }
+        public virtual DbSet<QFilesFromFileDeposit> HAFilesFromFileDeposit { get; set; }
 
 
         public ApiDbContext(DbContextOptions<ApiDbContext> options, IConfiguration configuration) : base(options)
@@ -297,7 +297,7 @@ namespace Querier.Api.Models.Common
                 UserId = "545823b1-11b7-4e35-af5f-84e06aa1c050"
             });
 
-            modelBuilder.Entity<HAPageCategory>().HasData(new HAPageCategory
+            modelBuilder.Entity<QPageCategory>().HasData(new QPageCategory
             {
                 Id = 1,
                 Label = "Welcome",
@@ -305,7 +305,7 @@ namespace Querier.Api.Models.Common
                 Icon = "book"
             });
 
-            modelBuilder.Entity<HAPage>().HasData(new HAPage
+            modelBuilder.Entity<QPage>().HasData(new QPage
             {
                 Id = 1,
                 Description = "Page d'accueil par défaut",
@@ -315,21 +315,21 @@ namespace Querier.Api.Models.Common
             });
 
             //Admin User Default 2 Themes
-            modelBuilder.Entity<HATheme>().HasData(new HATheme
+            modelBuilder.Entity<QTheme>().HasData(new QTheme
             {
                 Id = 1,
                 Label = "Theme1",
                 UserId = "3fcfa67e-b654-4df0-9558-d97cb90e415e",
             });
 
-            modelBuilder.Entity<HATheme>().HasData(new HATheme
+            modelBuilder.Entity<QTheme>().HasData(new QTheme
             {
                 Id = 2,
                 Label = "Theme2",
                 UserId = "3fcfa67e-b654-4df0-9558-d97cb90e415e",
             });
 
-            modelBuilder.Entity<HAThemeVariable>().HasData(new HAThemeVariable
+            modelBuilder.Entity<QThemeVariable>().HasData(new QThemeVariable
             {
                 Id = 1,
                 VariableName = "PrimaryColor",
@@ -337,7 +337,7 @@ namespace Querier.Api.Models.Common
                 HAThemeId = 1
             });
 
-            modelBuilder.Entity<HAThemeVariable>().HasData(new HAThemeVariable
+            modelBuilder.Entity<QThemeVariable>().HasData(new QThemeVariable
             {
                 Id = 2,
                 VariableName = "SecondaryColor",
@@ -345,7 +345,7 @@ namespace Querier.Api.Models.Common
                 HAThemeId = 1
             });
 
-            modelBuilder.Entity<HAThemeVariable>().HasData(new HAThemeVariable
+            modelBuilder.Entity<QThemeVariable>().HasData(new QThemeVariable
             {
                 Id = 3,
                 VariableName = "NavbarColor",
@@ -353,7 +353,7 @@ namespace Querier.Api.Models.Common
                 HAThemeId = 1
             });
 
-            modelBuilder.Entity<HAThemeVariable>().HasData(new HAThemeVariable
+            modelBuilder.Entity<QThemeVariable>().HasData(new QThemeVariable
             {
                 Id = 4,
                 VariableName = "TopNavbarColor",
@@ -361,7 +361,7 @@ namespace Querier.Api.Models.Common
                 HAThemeId = 1
             });
 
-            modelBuilder.Entity<HAThemeVariable>().HasData(new HAThemeVariable
+            modelBuilder.Entity<QThemeVariable>().HasData(new QThemeVariable
             {
                 Id = 5,
                 VariableName = "customFontSize",
@@ -369,7 +369,7 @@ namespace Querier.Api.Models.Common
                 HAThemeId = 1
             });
 
-            modelBuilder.Entity<HAThemeVariable>().HasData(new HAThemeVariable
+            modelBuilder.Entity<QThemeVariable>().HasData(new QThemeVariable
             {
                 Id = 6,
                 VariableName = "PrimaryColor",
@@ -377,7 +377,7 @@ namespace Querier.Api.Models.Common
                 HAThemeId = 2
             });
 
-            modelBuilder.Entity<HAThemeVariable>().HasData(new HAThemeVariable
+            modelBuilder.Entity<QThemeVariable>().HasData(new QThemeVariable
             {
                 Id = 7,
                 VariableName = "SecondaryColor",
@@ -385,7 +385,7 @@ namespace Querier.Api.Models.Common
                 HAThemeId = 2
             });
 
-            modelBuilder.Entity<HAThemeVariable>().HasData(new HAThemeVariable
+            modelBuilder.Entity<QThemeVariable>().HasData(new QThemeVariable
             {
                 Id = 8,
                 VariableName = "NavbarColor",
@@ -393,7 +393,7 @@ namespace Querier.Api.Models.Common
                 HAThemeId = 2
             });
 
-            modelBuilder.Entity<HAThemeVariable>().HasData(new HAThemeVariable
+            modelBuilder.Entity<QThemeVariable>().HasData(new QThemeVariable
             {
                 Id = 9,
                 VariableName = "TopNavbarColor",
@@ -401,7 +401,7 @@ namespace Querier.Api.Models.Common
                 HAThemeId = 2
             });
 
-            modelBuilder.Entity<HAThemeVariable>().HasData(new HAThemeVariable
+            modelBuilder.Entity<QThemeVariable>().HasData(new QThemeVariable
             {
                 Id = 10,
                 VariableName = "customFontSize",
@@ -409,59 +409,59 @@ namespace Querier.Api.Models.Common
                 HAThemeId = 2
             });
 
-            modelBuilder.Entity<HAPageRow>().HasData(new HAPageRow
+            modelBuilder.Entity<QPageRow>().HasData(new QPageRow
             {
                 Id = 1,
                 HAPageId = 1,
                 Order = 1
             });
 
-            modelBuilder.Entity<HACategoryRole>()
+            modelBuilder.Entity<QCategoryRole>()
                 .HasKey(cr => new { cr.HAPageCategoryId, cr.ApiRoleId });
 
-            modelBuilder.Entity<HAPageRole>()
+            modelBuilder.Entity<QPageRole>()
                 .HasKey(cr => new { cr.HAPageId, cr.ApiRoleId });
 
-            modelBuilder.Entity<HACardRole>()
+            modelBuilder.Entity<QCardRole>()
                 .HasKey(cr => new { cr.HAPageCardId, cr.ApiRoleId });
 
-            modelBuilder.Entity<HACategoryRole>()
+            modelBuilder.Entity<QCategoryRole>()
                 .HasOne(c => c.ApiRole)
                 .WithMany(r => r.HACategoryRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HAPageRole>()
+            modelBuilder.Entity<QPageRole>()
                 .HasOne(p => p.ApiRole)
                 .WithMany(r => r.HAPageRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HACardRole>()
+            modelBuilder.Entity<QCardRole>()
                 .HasOne(p => p.ApiRole)
                 .WithMany(r => r.HACardRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HACategoryRole>()
-                .HasOne(c => c.HAPageCategory)
+            modelBuilder.Entity<QCategoryRole>()
+                .HasOne(c => c.QPageCategory)
                 .WithMany(r => r.HACategoryRoles)
                 .HasForeignKey(c => c.HAPageCategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HAPageRole>()
-                .HasOne(p => p.HAPage)
+            modelBuilder.Entity<QPageRole>()
+                .HasOne(p => p.QPage)
                 .WithMany(r => r.HAPageRoles)
                 .HasForeignKey(c => c.HAPageId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HACardRole>()
-                .HasOne(p => p.HAPageCard)
+            modelBuilder.Entity<QCardRole>()
+                .HasOne(p => p.QPageCard)
                 .WithMany(r => r.HACardRoles)
                 .HasForeignKey(c => c.HAPageCardId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HACategoryRole>().HasData(new HACategoryRole
+            modelBuilder.Entity<QCategoryRole>().HasData(new QCategoryRole
             {
                 ApiRoleId = "bae3a8d8-5abe-4c9e-8088-bbdf863e4fb9",
                 HAPageCategoryId = 1,
@@ -470,7 +470,7 @@ namespace Querier.Api.Models.Common
                 Edit = true
             });
 
-            modelBuilder.Entity<HAPageRole>().HasData(new HAPageRole
+            modelBuilder.Entity<QPageRole>().HasData(new QPageRole
             {
                 ApiRoleId = "bae3a8d8-5abe-4c9e-8088-bbdf863e4fb9",
                 HAPageId = 1,
@@ -481,14 +481,14 @@ namespace Querier.Api.Models.Common
             });
 
             //add delete cascade on foreign key which point to aspNetUser table 
-            modelBuilder.Entity<HARefreshToken>()
+            modelBuilder.Entity<QRefreshToken>()
                 .HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
             //
 
-            modelBuilder.Entity<HATheme>()
+            modelBuilder.Entity<QTheme>()
                 .HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
@@ -506,46 +506,46 @@ namespace Querier.Api.Models.Common
                 .HasForeignKey(e => e.EntityAttributeId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HADBConnection.HADBConnection>()
+            modelBuilder.Entity<HADBConnection.QDBConnection>()
                 .HasIndex(d => d.Name)
                 .IsUnique();
             
-            modelBuilder.Entity<HADBConnection.HADBConnection>()
+            modelBuilder.Entity<HADBConnection.QDBConnection>()
                 .HasIndex(d => d.ApiRoute)
                 .IsUnique();
 
-            modelBuilder.Entity<HADBConnection.HADBConnection>()
+            modelBuilder.Entity<HADBConnection.QDBConnection>()
                 .HasOne(e => e.AssemblyUploadDefinition)
                 .WithMany()
                 .HasForeignKey(e => e.AssemblyUploadDefinitionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<HADBConnection.HADBConnection>()
+            modelBuilder.Entity<HADBConnection.QDBConnection>()
                 .HasOne(e => e.PDBUploadDefinition)
                 .WithMany()
                 .HasForeignKey(e => e.PDBUploadDefinitionId)
                 .OnDelete(DeleteBehavior.Restrict);
             
-            modelBuilder.Entity<HADBConnection.HADBConnection>()
+            modelBuilder.Entity<HADBConnection.QDBConnection>()
                 .HasOne(e => e.SourcesUploadDefinition)
                 .WithMany()
                 .HasForeignKey(e => e.SourcesUploadDefinitionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            //add unique constrain on colomn tags from table HAFileDeposit
-            modelBuilder.Entity<HAFileDeposit>()
+            //add unique constrain on colomn tags from table QFileDeposit
+            modelBuilder.Entity<QFileDeposit>()
                 .HasIndex(d => d.Tag)
                 .IsUnique();
 
-            //add delete cascade on fk : HAFilesFromFileDeposit.HAFileDepositId
-            modelBuilder.Entity<HAFilesFromFileDeposit>()
-                .HasOne(e => e.HAFileDeposit)
+            //add delete cascade on fk : QFilesFromFileDeposit.HAFileDepositId
+            modelBuilder.Entity<QFilesFromFileDeposit>()
+                .HasOne(e => e.QFileDeposit)
                 .WithMany()
                 .HasForeignKey(e => e.HAFileDepositId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             ////seeding data file deposit for testing during dev
-            modelBuilder.Entity<HAFileDeposit>().HasData(new HAFileDeposit
+            modelBuilder.Entity<QFileDeposit>().HasData(new QFileDeposit
             {
                 Id = 1,
                 Enable = true,
@@ -562,7 +562,7 @@ namespace Querier.Api.Models.Common
                 Tag = "lease_code"
             });
 
-            modelBuilder.Entity<HAFileDeposit>().HasData(new HAFileDeposit
+            modelBuilder.Entity<QFileDeposit>().HasData(new QFileDeposit
             {
                 Id = 2,
                 Enable = true,

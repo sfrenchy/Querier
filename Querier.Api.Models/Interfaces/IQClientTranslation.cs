@@ -5,7 +5,7 @@ namespace Querier.Api.Models.Interfaces
 {
 	public interface IQClientTranslation
 	{
-        public HAGetTranslationsResponse GetTranslations();
+        public QGetTranslationsResponse GetTranslations();
     }
 }
 

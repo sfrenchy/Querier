@@ -15,7 +15,7 @@ namespace Querier.Api.Models.Requests
         public List<DataFilter> Filters { get; set; } = new List<DataFilter>();
         public Dictionary<string, string> ExportedColumns { get; set; } = new Dictionary<string, string>();
         public bool UseFilters { get; set; } = true;
-        public HAUploadNatureEnum Nature { get; set; }
+        public QUploadNatureEnum Nature { get; set; }
 
     }
     

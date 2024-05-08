@@ -4,7 +4,7 @@ using Querier.Api.Models.UI;
 
 namespace Querier.Api.Models.Auth
 {
-    public class HAPageRole
+    public class QPageRole
     {
         public bool View { get; set; }
         public bool Add { get; set; }
@@ -15,14 +15,14 @@ namespace Querier.Api.Models.Auth
         public int HAPageId { get; set; }
 
         public virtual ApiRole ApiRole { get; set; }
-        public virtual HAPage HAPage { get; set; }
+        public virtual QPage QPage { get; set; }
 
-        public HAPageRole()
+        public QPageRole()
         {
 
         }
 
-        public HAPageRole(string roleId, int pageId, bool view, bool add, bool edit, bool remove)
+        public QPageRole(string roleId, int pageId, bool view, bool add, bool edit, bool remove)
         {
             ApiRoleId = roleId;
             HAPageId = pageId;

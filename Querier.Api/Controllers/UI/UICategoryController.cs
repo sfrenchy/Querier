@@ -64,7 +64,7 @@ namespace Querier.Api.Controllers.UI
         [HttpPut("UpdateCategory")]
         public async Task<IActionResult> UpdateCategoryAsync([FromBody] UpdateCategoryRequest request)
         {
-            HAPageCategory category = await _uiCategoryService.GetCategoryAsync(request.Id);
+            QPageCategory category = await _uiCategoryService.GetCategoryAsync(request.Id);
             if (category == null)
                 return NotFound("Unable to find the category!");
 
@@ -79,7 +79,7 @@ namespace Querier.Api.Controllers.UI
         [HttpDelete("DeleteCategory/{id}")]
         public async Task<IActionResult> DeleteCategoryAsync(int id)
         {
-            HAPageCategory category = await _uiCategoryService.GetCategoryAsync(id);
+            QPageCategory category = await _uiCategoryService.GetCategoryAsync(id);
             if (category == null)
                 return NotFound("Unable to find the category!");
 

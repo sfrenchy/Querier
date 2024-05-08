@@ -15,10 +15,10 @@ namespace Querier.Api.Services.Repositories.Role
         Task<bool> Add(ApiRole role);
         Task<bool> Edit(ApiRole role);
         Task<bool> Delete(string id);
-        Task<List<HAPageCategory>> GetCategories();
-        Task<bool> UpdateCategoryRoleActionsList(List<HACategoryRole> actions);
-        Task<bool> UpdatePageRoleActionsList(List<HAPageRole> actions);
-        Task<bool> UpdateCardRoleActionsList(List<HACardRole> actions);
+        Task<List<QPageCategory>> GetCategories();
+        Task<bool> UpdateCategoryRoleActionsList(List<QCategoryRole> actions);
+        Task<bool> UpdatePageRoleActionsList(List<QPageRole> actions);
+        Task<bool> UpdateCardRoleActionsList(List<QCardRole> actions);
         Task<bool> AddActionsMissing(ActionsMissing actions);
     }
 
@@ -125,7 +125,7 @@ namespace Querier.Api.Services.Repositories.Role
             }
         }
 
-        public async Task<List<HAPageCategory>> GetCategories()
+        public async Task<List<QPageCategory>> GetCategories()
         {
             try
             {
@@ -138,11 +138,11 @@ namespace Querier.Api.Services.Repositories.Role
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                return new List<HAPageCategory>();
+                return new List<QPageCategory>();
             }
         }
 
-        public async Task<bool> UpdateCategoryRoleActionsList(List<HACategoryRole> actions)
+        public async Task<bool> UpdateCategoryRoleActionsList(List<QCategoryRole> actions)
         {
             try
             {
@@ -176,7 +176,7 @@ namespace Querier.Api.Services.Repositories.Role
             }
         }
 
-        public async Task<bool> UpdatePageRoleActionsList(List<HAPageRole> actions)
+        public async Task<bool> UpdatePageRoleActionsList(List<QPageRole> actions)
         {
             try
             {
@@ -211,7 +211,7 @@ namespace Querier.Api.Services.Repositories.Role
             }
         }
 
-        public async Task<bool> UpdateCardRoleActionsList(List<HACardRole> actions)
+        public async Task<bool> UpdateCardRoleActionsList(List<QCardRole> actions)
         {
             try
             {
@@ -253,13 +253,13 @@ namespace Querier.Api.Services.Repositories.Role
                 switch (actions.Type)
                 {
                     case "CategoryId":
-                        await _context.HACategoryRoles.AddAsync(new HACategoryRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit));
+                        await _context.HACategoryRoles.AddAsync(new QCategoryRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit));
                         break;
                     case "PageId":
-                        await _context.HAPageRoles.AddAsync(new HAPageRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit, actions.Actions.Remove));
+                        await _context.HAPageRoles.AddAsync(new QPageRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit, actions.Actions.Remove));
                         break;
                     case "CardId":
-                        await _context.HACardRoles.AddAsync(new HACardRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit, actions.Actions.Remove));
+                        await _context.HACardRoles.AddAsync(new QCardRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit, actions.Actions.Remove));
                         break;
                     default:
                         break;

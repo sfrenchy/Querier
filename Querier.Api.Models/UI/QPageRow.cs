@@ -19,7 +19,7 @@ namespace Querier.Api.Models.UI
         [JsonIgnore]
         public virtual List<QPageCard> HAPageCards { get; set; }
 
-        public static QPageRow FromHAPageVMRow(HAPageRowVM row)
+        public static QPageRow FromHAPageVMRow(QPageRowVM row)
         {
             return new QPageRow
             {

@@ -5,7 +5,7 @@ using Querier.Api.Models.Common;
 
 namespace Querier.Api.Models.UI
 {
-    public class HAHtmlPartialRef : UIDBEntity
+    public class QHtmlPartialRef : UIDBEntity
     {
         [Key]
         [Column("Id")]
@@ -17,7 +17,7 @@ namespace Querier.Api.Models.UI
         [Column("HAPageCardId")]
         public int HAPageCardId { get; set; }
         [JsonIgnore]
-        public virtual HAPageCard HAPageCard { get; set; }
+        public virtual QPageCard QPageCard { get; set; }
         [Column("HAUploadDefinitionId")]
         public int HAUploadDefinitionId { get; set; }
         [JsonIgnore]

@@ -15,7 +15,7 @@ namespace Querier.Api.Quartz
         {
             using (var serviceScope = ServiceActivator.GetScope())
             {
-                var uploadService = serviceScope.ServiceProvider.GetService<IHAUploadService>();
+                var uploadService = serviceScope.ServiceProvider.GetService<IQUploadService>();
                 var toastMessageEmitterService = serviceScope.ServiceProvider.GetService<IToastMessageEmitterService>();
                 var logger = serviceScope.ServiceProvider.GetService<ILogger<DeleteUploadJob>>();
 

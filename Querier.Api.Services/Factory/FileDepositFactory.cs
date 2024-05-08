@@ -15,9 +15,9 @@ namespace Querier.Api.Services.Factory
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private readonly ILogger<FileSystemService> _loggerFileSystem;
         private readonly ILogger<GedDocuwareService> _loggerGedDocuware;
-        private readonly IHAUploadService _uploadService;
+        private readonly IQUploadService _uploadService;
 
-        public FileDepositFactory(IDbContextFactory<ApiDbContext> contextFactory, ILogger<FileSystemService> loggerFileSystem, ILogger<GedDocuwareService> loggerGedDocuware, IHAUploadService uploadService)
+        public FileDepositFactory(IDbContextFactory<ApiDbContext> contextFactory, ILogger<FileSystemService> loggerFileSystem, ILogger<GedDocuwareService> loggerGedDocuware, IQUploadService uploadService)
         {
             _contextFactory = contextFactory;
             _loggerFileSystem = loggerFileSystem;
@@ -25,9 +25,9 @@ namespace Querier.Api.Services.Factory
             _uploadService = uploadService;
         }
 
-        public IHAFileReadOnlyDeposit? CreateClassInstanceByTag(string tag)
+        public IQFileReadOnlyDeposit? CreateClassInstanceByTag(string tag)
         {
-            HAFileDeposit fileDeposit;
+            QFileDeposit fileDeposit;
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 fileDeposit = apidbContext.HAFileDeposit.FirstOrDefault(r => r.Tag == tag);
@@ -35,9 +35,9 @@ namespace Querier.Api.Services.Factory
             return CreateInstance(fileDeposit);
         }
 
-        public IHAFileReadOnlyDeposit? CreateClassInstanceByType(TypeFileDepositEnum typeFileDeposit)
+        public IQFileReadOnlyDeposit? CreateClassInstanceByType(TypeFileDepositEnum typeFileDeposit)
         {
-            HAFileDeposit fileDeposit;
+            QFileDeposit fileDeposit;
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 fileDeposit = apidbContext.HAFileDeposit.FirstOrDefault(r => r.Type == typeFileDeposit);
@@ -45,7 +45,7 @@ namespace Querier.Api.Services.Factory
 
             return CreateInstance(fileDeposit);
         }
-        private IHAFileReadOnlyDeposit? CreateInstance(HAFileDeposit fileDeposit)
+        private IQFileReadOnlyDeposit? CreateInstance(QFileDeposit fileDeposit)
         {
             if(fileDeposit == null)
             {

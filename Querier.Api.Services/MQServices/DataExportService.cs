@@ -31,14 +31,14 @@ namespace Querier.Api.Services.MQServices
         private readonly IModel _channel;
         private readonly IEntityCRUDService _entityCRUDService;
         private readonly IToastMessageEmitterService _toastMessageEmitterService;
-        private readonly IHAUploadService _uploadService;
+        private readonly IQUploadService _uploadService;
         private readonly ILogger<DataExportReceiverService> _logger;
         private readonly IDynamicContextList _dynamicContextList;
         private readonly IExportGeneratorService _exportGeneratorService;
         
         public DataExportReceiverService(ILogger<DataExportReceiverService> logger, 
                                          IDynamicContextList dynamicContextList, 
-                                         IHAUploadService uploadService, 
+                                         IQUploadService uploadService, 
                                          IToastMessageEmitterService toastMessageEmitterService, 
                                          IConfiguration configuration, 
                                          IServiceProvider serviceProvider, 

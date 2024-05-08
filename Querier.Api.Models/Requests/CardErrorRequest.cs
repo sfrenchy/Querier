@@ -9,7 +9,7 @@ namespace Querier.Api.Models.Requests
         /// <summary>
         /// The card object in error state
         /// </summary>
-        public HAPageCard Card { get; set; }
+        public QPageCard Card { get; set; }
         /// <summary>
         /// The .Net exception
         /// </summary>

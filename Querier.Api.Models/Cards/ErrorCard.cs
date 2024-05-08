@@ -1,6 +1,6 @@
 ﻿namespace Querier.Api.Models.Cards
 {
-    public class ErrorCard : IHACard
+    public class ErrorCard : IQCard
     {
         public string Label => "Ceci est une erreur";
 

@@ -10,11 +10,11 @@ namespace Querier.Api.Services.UI
 
     public interface IUICategoryService
     {
-        Task<HAPageCategory> GetCategoryAsync(int categoryId);
-        Task<List<HAPageCategory>> GetCategoriesAsync();
-        Task<List<HAPageCategory>> AddCategoryAsync(AddCategoryRequest request);
-        Task<List<HAPageCategory>> UpdateCategoryAsync(UpdateCategoryRequest request);
-        Task<List<HAPageCategory>> DeleteCategoryAsync(HAPageCategory category);
+        Task<QPageCategory> GetCategoryAsync(int categoryId);
+        Task<List<QPageCategory>> GetCategoriesAsync();
+        Task<List<QPageCategory>> AddCategoryAsync(AddCategoryRequest request);
+        Task<List<QPageCategory>> UpdateCategoryAsync(UpdateCategoryRequest request);
+        Task<List<QPageCategory>> DeleteCategoryAsync(QPageCategory category);
     }
     public class UICategoryService : IUICategoryService
     {
@@ -27,7 +27,7 @@ namespace Querier.Api.Services.UI
             _contextFactory = contextFactory;
         }
 
-        public async Task<HAPageCategory> GetCategoryAsync(int categoryId)
+        public async Task<QPageCategory> GetCategoryAsync(int categoryId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
@@ -35,7 +35,7 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<List<HAPageCategory>> GetCategoriesAsync()
+        public async Task<List<QPageCategory>> GetCategoriesAsync()
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
@@ -43,11 +43,11 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<List<HAPageCategory>> AddCategoryAsync(AddCategoryRequest request)
+        public async Task<List<QPageCategory>> AddCategoryAsync(AddCategoryRequest request)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                apidbContext.HAPageCategories.Add(new HAPageCategory()
+                apidbContext.HAPageCategories.Add(new QPageCategory()
                 {
                     Label = request.Label,
                     Description = request.Description,
@@ -59,11 +59,11 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<List<HAPageCategory>> UpdateCategoryAsync(UpdateCategoryRequest request)
+        public async Task<List<QPageCategory>> UpdateCategoryAsync(UpdateCategoryRequest request)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPageCategory category = await apidbContext.HAPageCategories.FindAsync(request.Id);
+                QPageCategory category = await apidbContext.HAPageCategories.FindAsync(request.Id);
                 category.Label = request.Label;
                 category.Description = request.Description;
                 category.Icon = request.Icon;
@@ -74,7 +74,7 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<List<HAPageCategory>> DeleteCategoryAsync(HAPageCategory category)
+        public async Task<List<QPageCategory>> DeleteCategoryAsync(QPageCategory category)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {

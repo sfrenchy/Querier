@@ -51,6 +51,6 @@
   <ItemGroup>
     <Folder Include="Enums\Ged\" />
     <Folder Include="Notifications\" />
-    <Content Include="HADBConnection\HADBConnection.cs" />
+    <Content Include="QDBConnection\QDBConnection.cs" />
   </ItemGroup>
 </Project>

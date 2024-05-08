@@ -17,21 +17,21 @@ namespace Querier.Api.Services
 {
     public interface IEmailTemplateCrudCommonService
     {
-        public Task<HAEmailTemplateManagerResponse> GetContentEmailTemplate(int templateId);
-        public Task<bool> UpdateContentEmailTemplate(HAUpdateEmailTemplateRequest request, HAUploadNatureEnum emailNature);
+        public Task<QEmailTemplateManagerResponse> GetContentEmailTemplate(int templateId);
+        public Task<bool> UpdateContentEmailTemplate(QUpdateEmailTemplateRequest request, QUploadNatureEnum emailNature);
         Dictionary<string, string> GetDescriptionVariablesTemplates();
-        public Task<dynamic> SendEmailForTestTemplate(HASendEmailForTestTemplateRequest request, string emailTo);
-        public ServerSideResponse<HAUploadDefinition> GetAllEmailTemplates(ServerSideRequest datatableRequest, HAUploadNatureEnum emailNature);
+        public Task<dynamic> SendEmailForTestTemplate(QSendEmailForTestTemplateRequest request, string emailTo);
+        public ServerSideResponse<QUploadDefinition> GetAllEmailTemplates(ServerSideRequest datatableRequest, QUploadNatureEnum emailNature);
     }
 
     public class EmailTemplateCrudCommonService : IEmailTemplateCrudCommonService
     {
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IHAUploadService _uploadService;
+        private readonly IQUploadService _uploadService;
         private readonly IConfiguration _configuration;
         private readonly UserManager<ApiUser> _userManager;
         private readonly IEmailSendingService _emailSending;
-        public EmailTemplateCrudCommonService(IDbContextFactory<ApiDbContext> contextFactory, IHAUploadService uploadService, IConfiguration configuration, UserManager<ApiUser> userManager, IEmailSendingService emailSending)
+        public EmailTemplateCrudCommonService(IDbContextFactory<ApiDbContext> contextFactory, IQUploadService uploadService, IConfiguration configuration, UserManager<ApiUser> userManager, IEmailSendingService emailSending)
         {
             _contextFactory = contextFactory;
             _uploadService = uploadService;
@@ -40,7 +40,7 @@ namespace Querier.Api.Services
             _emailSending = emailSending;
         }
 
-        public async Task<HAEmailTemplateManagerResponse> GetContentEmailTemplate(int templateId)
+        public async Task<QEmailTemplateManagerResponse> GetContentEmailTemplate(int templateId)
         {
             Stream fileStream = await _uploadService.GetUploadStream(templateId);
             byte[] byteArrayFile;
@@ -51,14 +51,14 @@ namespace Querier.Api.Services
             }
             string HtmlcontentString = System.Text.Encoding.UTF8.GetString(byteArrayFile);
 
-            HAEmailTemplateManagerResponse response = new HAEmailTemplateManagerResponse()
+            QEmailTemplateManagerResponse response = new QEmailTemplateManagerResponse()
             {
                 Content = HtmlcontentString,
             };
             return response;
         }
 
-        public async Task<bool> UpdateContentEmailTemplate(HAUpdateEmailTemplateRequest request, HAUploadNatureEnum emailNature)
+        public async Task<bool> UpdateContentEmailTemplate(QUpdateEmailTemplateRequest request, QUploadNatureEnum emailNature)
         {
             //delete existed file 
             bool res = await _uploadService.DeleteUploadAsync(request.TemplateId);
@@ -90,7 +90,7 @@ namespace Querier.Api.Services
             return ParametersEmail;
         }
 
-        public async Task<dynamic> SendEmailForTestTemplate(HASendEmailForTestTemplateRequest request, string emailTo)
+        public async Task<dynamic> SendEmailForTestTemplate(QSendEmailForTestTemplateRequest request, string emailTo)
         {
             //Get user from mail:
             var user = await _userManager.FindByEmailAsync(emailTo);
@@ -124,11 +124,11 @@ namespace Querier.Api.Services
             return response;
         }
 
-        public ServerSideResponse<HAUploadDefinition> GetAllEmailTemplates(ServerSideRequest datatableRequest, HAUploadNatureEnum emailNature)
+        public ServerSideResponse<QUploadDefinition> GetAllEmailTemplates(ServerSideRequest datatableRequest, QUploadNatureEnum emailNature)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                ServerSideResponse<HAUploadDefinition> response = new ServerSideResponse<HAUploadDefinition>();
+                ServerSideResponse<QUploadDefinition> response = new ServerSideResponse<QUploadDefinition>();
                 var res = apidbContext.HAUploadDefinitions.Where(t => t.Nature == emailNature).DatatableFilter(datatableRequest, out int? filteredCount);
 
                 response.sums = null;

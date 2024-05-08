@@ -1,6 +1,6 @@
 namespace Querier.Api.Models.Enums
 {
-    public enum HADBConnectionState
+    public enum QDBConnectionState
     {
         None,
         ConnectionError,

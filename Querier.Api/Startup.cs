@@ -218,9 +218,9 @@ namespace Querier.Api
             services.AddSingleton<IEntityCRUDService, EntityCRUDService>();
             services.AddSingleton<ITranslationService, TranslationService>();
             services.AddSingleton<IThemeService, ThemeService>();
-            services.AddSingleton<IHATaskScheduler, HATaskScheduler>();
-            services.AddSingleton<IHAUploadService, HAUploadService>();
-            services.AddSingleton<IHATranslationService, HATranslationService>();
+            services.AddSingleton<IHATaskScheduler, QTaskScheduler>();
+            services.AddSingleton<IQUploadService, IqUploadService>();
+            services.AddSingleton<IHATranslationService, QTranslationService>();
             services.AddScoped<IAuthManagementService, AuthManagementService>();
             services.AddSingleton<IEditModeService, EditModeService>();
             services.AddSingleton<IUICategoryService, UICategoryService>();
@@ -232,7 +232,7 @@ namespace Querier.Api
             services.AddSingleton<IEmailSendingService, SMTPEmailSendingService>();
             services.AddSingleton<IEmailTemplateCrudUserService, EmailTemplateCrudUserService>();
             services.AddScoped<IEmailTemplateCrudCommonService, EmailTemplateCrudCommonService>();
-            services.AddSingleton<IHAFileReadOnlyDeposit, GedDocuwareService>();
+            services.AddSingleton<IQFileReadOnlyDeposit, GedDocuwareService>();
             services.AddSingleton<FileDepositFactory, FileDepositFactory>();
             services.AddSingleton<IFileDepositService, FileDepositService>();
             services.AddHostedService<ToastMessageReceiverService>();
@@ -284,7 +284,7 @@ namespace Querier.Api
                             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
                             var jwtToken = jwtTokenHandler.WriteToken(token);
 
-                            var refreshToken = new HARefreshToken()
+                            var refreshToken = new QRefreshToken()
                             {
                                 JwtId = token.Id,
                                 IsUsed = false,
@@ -428,7 +428,7 @@ namespace Querier.Api
             
             using (ApiDbContext apiDbContext = new ApiDbContext(optionsBuilder.Options, _configuration))
             {
-                foreach(HADBConnection connection in apiDbContext.HADBConnections.ToList())
+                foreach(QDBConnection connection in apiDbContext.HADBConnections.ToList())
                 {
                     Console.WriteLine("Loading assembly for " + connection.Name);
                     var loadContext = new AssemblyLoadContext(null, false); 
@@ -475,7 +475,7 @@ namespace Querier.Api
                 }
 
                 foreach (var ha in from Type herdiaApp in herdiaAppTypes
-                                let ha = (IHerdiaApp)Activator.CreateInstance(herdiaApp)
+                                let ha = (IQPlugin)Activator.CreateInstance(herdiaApp)
                                 select ha)
                 {
                     var m = ha.GetSpecificProperties();
@@ -495,7 +495,7 @@ namespace Querier.Api
                     {
                         Console.WriteLine($"Unable to load services for application as I need some DynamicContexts ({String.Join(", ", m.RequiredDynamicContexts.ToArray())})");
                     }
-                    services.AddSingleton(typeof(IHerdiaApp), ha);
+                    services.AddSingleton(typeof(IQPlugin), ha);
                 }
             }
             
@@ -584,7 +584,7 @@ namespace Querier.Api
                 }
 
                 foreach (var ha in from Type herdiaApp in herdiaAppTypes
-                                let ha = (IHerdiaApp)Activator.CreateInstance(herdiaApp)
+                                let ha = (IQPlugin)Activator.CreateInstance(herdiaApp)
                                 select ha)
                 {
                     ha.ConfigureApp(app, env);
@@ -715,13 +715,13 @@ namespace Querier.Api
         //Add email template dynamically, you just need to add the origin template in the directory Services/MailTemplating with the extension ".html"
         private async Task CreateTemplateEmail()
         {
-            //use to have IHAUploadService and IDbContextFactory services 
+            //use to have IQUploadService and IDbContextFactory services 
             using (var serviceScope = ServiceActivator.GetScope())
             {
-                IHAUploadService uploadSrv;
+                IQUploadService uploadSrv;
                 IDbContextFactory<ApiDbContext> dbContextFactory;
 
-                uploadSrv = serviceScope.ServiceProvider.GetService<IHAUploadService>();
+                uploadSrv = serviceScope.ServiceProvider.GetService<IQUploadService>();
                 dbContextFactory = serviceScope.ServiceProvider.GetService<IDbContextFactory<ApiDbContext>>();
 
                 ResourceSet resourceSet = Properties.Resources.ResourceManager.GetResourceSet(System.Globalization.CultureInfo.CurrentCulture, true, true);
@@ -743,11 +743,11 @@ namespace Querier.Api
                 foreach (string resourceName in resourceNames)
                 {
                     //check if the template already exist 
-                    List<HAUploadDefinition> templateCount;
+                    List<QUploadDefinition> templateCount;
 
                     using (var apidbContext = dbContextFactory.CreateDbContext())
                     {
-                        templateCount = apidbContext.HAUploadDefinitions.Where(t => t.Nature == HAUploadNatureEnum.ApplicationEmail && t.FileName == resourceName).ToList();
+                        templateCount = apidbContext.HAUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == resourceName).ToList();
                     }
 
                     //test if the default template exist and if the template already exist in db 
@@ -764,7 +764,7 @@ namespace Querier.Api
                             {
                                 FileName = resourceName,
                                 MimeType = "text/html",
-                                Nature = HAUploadNatureEnum.ApplicationEmail
+                                Nature = QUploadNatureEnum.ApplicationEmail
                             },
                             UploadStream = stream
                         };

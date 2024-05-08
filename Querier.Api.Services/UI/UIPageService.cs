@@ -23,15 +23,15 @@ namespace Querier.Api.Services.UI
     public interface IUIPageService
     {
         PageManagementResponse Index();
-        Task<HAPageVM> GetPageAsync(int? pageId);
-        Task<List<HAPage>> GetPagesAsync();
+        Task<QPageVM> GetPageAsync(int? pageId);
+        Task<List<QPage>> GetPagesAsync();
         Task<IActionResult> GetAllPagesDatatableAsync(ServerSideRequest datatableRequest);
-        Task<HAPage> AddPageAsync(AddPageRequest model);
-        Task<HAPage> DeletePageAsync(int pageId);
-        Task<HAPage> EditPageAsync(EditPageRequest model);
-        Task<HAPage> DuplicatePageAsync(int pageId);
-        Task CopyContextAlhPage(HAPage source);
-        Task<HAPage> ExportPage(int pageId);
+        Task<QPage> AddPageAsync(AddPageRequest model);
+        Task<QPage> DeletePageAsync(int pageId);
+        Task<QPage> EditPageAsync(EditPageRequest model);
+        Task<QPage> DuplicatePageAsync(int pageId);
+        Task CopyContextAlhPage(QPage source);
+        Task<QPage> ExportPage(int pageId);
         Task<ExportPageResponse> ExportPageConfigurationAsync(ExportPageRequest exportPageRequest);
         Task<ExportPageResponse> ImportPageConfigurationAsync(PageImportConfigRequest pageImportConfigRequest);
     }
@@ -39,11 +39,11 @@ namespace Querier.Api.Services.UI
     {
         private readonly ILogger<UIPageService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IHAUploadService _uploadService;
+        private readonly IQUploadService _uploadService;
         private readonly IToastMessageEmitterService _toastMessageEmitterService;
 
 
-        public UIPageService(ILogger<UIPageService> logger, IDbContextFactory<ApiDbContext> contextFactory, IHAUploadService uploadService, IToastMessageEmitterService toastMessageEmitterService)
+        public UIPageService(ILogger<UIPageService> logger, IDbContextFactory<ApiDbContext> contextFactory, IQUploadService uploadService, IToastMessageEmitterService toastMessageEmitterService)
         {
             _logger = logger;
             _contextFactory = contextFactory;
@@ -57,7 +57,7 @@ namespace Querier.Api.Services.UI
             {
                 PageManagementResponse model = new PageManagementResponse
                 {
-                    Categories = apidbContext.HAPageCategories.Select(hac => new HAPageCategory()
+                    Categories = apidbContext.HAPageCategories.Select(hac => new QPageCategory()
                     {
                         Icon = hac.Icon == "" ? "circle" : hac.Icon,
                         Description = hac.Description,
@@ -66,13 +66,13 @@ namespace Querier.Api.Services.UI
                         Label = hac.Label,
                         HACategoryRoles = hac.HACategoryRoles
                     }).ToList(),
-                    Pages = apidbContext.HAPages.Select(hap => new HAPage()
+                    Pages = apidbContext.HAPages.Select(hap => new QPage()
                     {
                         Icon = hap.Icon == "" ? "circle" : hap.Icon,
                         Description = hap.Description,
                         Id = hap.Id,
                         Title = hap.Title,
-                        HAPageCategory = hap.HAPageCategory,
+                        QPageCategory = hap.QPageCategory,
                         HAPageRoles = hap.HAPageRoles,
                         HAPageCategoryId = hap.HAPageCategoryId,
                         HAPageRows = hap.HAPageRows
@@ -82,17 +82,17 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<HAPageVM> GetPageAsync(int? pageId)
+        public async Task<QPageVM> GetPageAsync(int? pageId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 pageId ??= 1;
-                HAPage page = await apidbContext.HAPages.FindAsync(pageId);
-                return HAPageVM.FromHAPage(page);
+                QPage page = await apidbContext.HAPages.FindAsync(pageId);
+                return QPageVM.FromHAPage(page);
             }
         }
 
-        public async Task<List<HAPage>> GetPagesAsync()
+        public async Task<List<QPage>> GetPagesAsync()
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
@@ -104,8 +104,8 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                ServerSideResponse<HAPage> response = new ServerSideResponse<HAPage>();
-                List<HAPage> result = await apidbContext.HAPages.ToListAsync();
+                ServerSideResponse<QPage> response = new ServerSideResponse<QPage>();
+                List<QPage> result = await apidbContext.HAPages.ToListAsync();
 
                 response.sums = null;
                 response.draw = datatableRequest.draw;
@@ -117,11 +117,11 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<HAPage> AddPageAsync(AddPageRequest model)
+        public async Task<QPage> AddPageAsync(AddPageRequest model)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                var pageEntity = new HAPage()
+                var pageEntity = new QPage()
                 {
                     HAPageCategoryId = model.CategoryId,
                     Title = model.PageTitle,
@@ -130,8 +130,8 @@ namespace Querier.Api.Services.UI
                 };
 
                 await apidbContext.HAPages.AddAsync(pageEntity);
-                IEnumerable<HAPageRole> EnumerableNewPagesRoles = model.IdRoles.Select(IdRole => new HAPageRole() { 
-                    HAPage = pageEntity, 
+                IEnumerable<QPageRole> EnumerableNewPagesRoles = model.IdRoles.Select(IdRole => new QPageRole() { 
+                    QPage = pageEntity, 
                     ApiRoleId = IdRole, 
                     View = true,
                     Add = true,
@@ -147,11 +147,11 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<HAPage> DeletePageAsync(int pageId)
+        public async Task<QPage> DeletePageAsync(int pageId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPage page = await apidbContext.HAPages.FindAsync(pageId);
+                QPage page = await apidbContext.HAPages.FindAsync(pageId);
                 if (page != null)
                 {
                     apidbContext.HAPages.Remove(page);
@@ -162,11 +162,11 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<HAPage> EditPageAsync(EditPageRequest model)
+        public async Task<QPage> EditPageAsync(EditPageRequest model)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPage updatePage = await apidbContext.HAPages.FindAsync(model.PageId);
+                QPage updatePage = await apidbContext.HAPages.FindAsync(model.PageId);
 
                 updatePage.Title = model.PageTitle;
                 updatePage.Description = model.PageDescription;
@@ -179,11 +179,11 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<HAPage> DuplicatePageAsync(int pageId)
+        public async Task<QPage> DuplicatePageAsync(int pageId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPage duplicatePageSource = await apidbContext.HAPages.FindAsync(pageId);
+                QPage duplicatePageSource = await apidbContext.HAPages.FindAsync(pageId);
 
                 if (duplicatePageSource != null)
                 {
@@ -198,11 +198,11 @@ namespace Querier.Api.Services.UI
         /// Used to copy an entity
         /// </summary>
         /// <param name="source">The entity to copy</param>
-        public async Task CopyContextAlhPage(HAPage source)
+        public async Task CopyContextAlhPage(QPage source)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPage newEntity = source.EntityCopy();
+                QPage newEntity = source.EntityCopy();
                 newEntity.Title = source.Title + "(copie)";
 
                 apidbContext.Add(newEntity);
@@ -210,11 +210,11 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<HAPage> ExportPage(int pageId)
+        public async Task<QPage> ExportPage(int pageId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPage source = await apidbContext.HAPages.FindAsync(pageId);
+                QPage source = await apidbContext.HAPages.FindAsync(pageId);
                 return source.EntityCopy();
             }
         }
@@ -229,7 +229,7 @@ namespace Querier.Api.Services.UI
 
             string bodyHash = Guid.NewGuid().ToString() + ".dat";
 
-            HAPage sourceToExport = new HAPage();
+            QPage sourceToExport = new QPage();
             byte[] content;
 
             using (var apidbContext = _contextFactory.CreateDbContext())
@@ -250,7 +250,7 @@ namespace Querier.Api.Services.UI
                     WriteIndented = false,
                     Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Default
                 };
-                serializeOptions.Converters.Add(new IgnoreHAPageCardConfigurationPropertyConverter<HAPageCard>());
+                serializeOptions.Converters.Add(new IgnoreHAPageCardConfigurationPropertyConverter<QPageCard>());
                 var pageToExport = sourceToExport.EntityCopy();
                 var jsonPage = JsonSerializer.Serialize(pageToExport, serializeOptions);
                 content = Encoding.UTF8.GetBytes(jsonPage);
@@ -263,7 +263,7 @@ namespace Querier.Api.Services.UI
                     FileName = bodyHash,
                     MimeType = "application/octet-stream",
                     DayRetention = 1,
-                    Nature = HAUploadNatureEnum.PageConfiguration
+                    Nature = QUploadNatureEnum.PageConfiguration
                 },
                 UploadStream = new MemoryStream(content)
             };
@@ -304,7 +304,7 @@ namespace Querier.Api.Services.UI
                 json = r.ReadToEnd();
             }
 
-            HAPage importPage = JsonSerializer.Deserialize<HAPage>(json);
+            QPage importPage = JsonSerializer.Deserialize<QPage>(json);
             importPage.HAPageCategoryId = pageImportConfigRequest.CategoryId;
             importPage.Title = $"{importPage.Title} copie";
 
@@ -356,7 +356,7 @@ namespace Querier.Api.Services.UI
             {
                 bool ignore = false;
 
-                if (typeof(T) == typeof(HAPageCard) && property.Name == "Configuration")
+                if (typeof(T) == typeof(QPageCard) && property.Name == "Configuration")
                     ignore = true;
                 
                 if (!ignore)

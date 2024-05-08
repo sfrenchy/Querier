@@ -84,7 +84,7 @@ namespace Querier.Api.Controllers.UI
         [HttpDelete("DeletePage")]
         public async Task<IActionResult> DeletePageAsync([FromBody] RemovePageRequest model)
         {
-            HAPage page = await _uiPageService.DeletePageAsync(model.PageId);
+            QPage page = await _uiPageService.DeletePageAsync(model.PageId);
 
             if (page == null)
                 return NotFound("Unable to find the page!");
@@ -100,7 +100,7 @@ namespace Querier.Api.Controllers.UI
         [HttpPut("EditPage")]
         public async Task<IActionResult> EditPageAsync([FromBody] EditPageRequest model)
         {
-            HAPage updatePage = await _uiPageService.EditPageAsync(model); 
+            QPage updatePage = await _uiPageService.EditPageAsync(model); 
 
             if (updatePage == null)
                 return NotFound("Unable to find the page!");
@@ -116,7 +116,7 @@ namespace Querier.Api.Controllers.UI
         [HttpPost("DuplicatePage")]
         public async Task<IActionResult> DuplicatePageAsync([FromBody] DuplicatePageRequest model)
         {
-            HAPage duplicatePageSource = await _uiPageService.DuplicatePageAsync(model.PageId);
+            QPage duplicatePageSource = await _uiPageService.DuplicatePageAsync(model.PageId);
 
             if (duplicatePageSource == null)
                 return NotFound("Unable to find the page!");

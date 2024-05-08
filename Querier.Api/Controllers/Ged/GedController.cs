@@ -39,7 +39,7 @@ namespace Querier.Api.Controllers.Ged
         [HttpGet("FillFileInformationByType/{type}")]
         public async Task<IActionResult> FillFileInformationByType(TypeFileDepositEnum type)
         {
-            IHAFileReadOnlyDeposit instanceClass = _fileDepositFactory.CreateClassInstanceByType(type);
+            IQFileReadOnlyDeposit instanceClass = _fileDepositFactory.CreateClassInstanceByType(type);
 
             return Ok(await instanceClass.FillFileInformations());
         }
@@ -58,7 +58,7 @@ namespace Querier.Api.Controllers.Ged
         [HttpPost("GetSpecificInformationByType/{type}")]
         public async Task<IActionResult> GetSpecificInformationByType([FromBody] List<GetSpecificInformationRequest> variablesFilter, TypeFileDepositEnum type)
         {
-            IHAFileReadOnlyDeposit instanceClass = _fileDepositFactory.CreateClassInstanceByType(type);
+            IQFileReadOnlyDeposit instanceClass = _fileDepositFactory.CreateClassInstanceByType(type);
 
             return Ok(await instanceClass.GetSpecificInformation(variablesFilter));
         }
@@ -66,7 +66,7 @@ namespace Querier.Api.Controllers.Ged
         [HttpPost("GetDatatableSpecificInformationByType")]
         public async Task<IActionResult> GetDatatableSpecificInformationByType([FromBody] GetDatatableSpecificInfosRequest request)
         {
-            IHAFileReadOnlyDeposit instanceClass = _fileDepositFactory.CreateClassInstanceByType(request.type);
+            IQFileReadOnlyDeposit instanceClass = _fileDepositFactory.CreateClassInstanceByType(request.type);
             var result = await instanceClass.GetSpecificInformation(request.variablesFilter);
             var filteredResult = result.DatatableFilter(request.requestDatatable, out int? count);
 
@@ -93,7 +93,7 @@ namespace Querier.Api.Controllers.Ged
         [HttpGet("GetDocumentViewerByType/{tableId}/{type}")]
         public async Task<IActionResult> GetDocumentViewerByType(int tableId, TypeFileDepositEnum type)
         {
-            IHAFileReadOnlyDeposit instanceClass = _fileDepositFactory.CreateClassInstanceByType(type);
+            IQFileReadOnlyDeposit instanceClass = _fileDepositFactory.CreateClassInstanceByType(type);
 
             return Ok(await instanceClass.GetDocumentViewer(tableId));
         }

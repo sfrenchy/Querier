@@ -30,7 +30,7 @@ namespace Querier.Api.Controllers
         [HttpPost("GetAllAppEmailTemplate")]
         public IActionResult GetAllAppEmailTemplate([FromBody] ServerSideRequest datatableRequest)
         {
-            return new OkObjectResult(_emailTemplateCrudCommonService.GetAllEmailTemplates(datatableRequest, HAUploadNatureEnum.ApplicationEmail));
+            return new OkObjectResult(_emailTemplateCrudCommonService.GetAllEmailTemplates(datatableRequest, QUploadNatureEnum.ApplicationEmail));
         }
 
         [HttpGet("GetContentEmailTemplateApp/{TemplateId}")]
@@ -40,9 +40,9 @@ namespace Querier.Api.Controllers
         }
 
         [HttpPut("UpdateContentEmailTemplateApp")]
-        public async Task<IActionResult> UpdateContentEmailTemplateApp([FromBody] HAUpdateEmailTemplateRequest request)
+        public async Task<IActionResult> UpdateContentEmailTemplateApp([FromBody] QUpdateEmailTemplateRequest request)
         {
-            return new OkObjectResult(await _emailTemplateCrudCommonService.UpdateContentEmailTemplate(request, HAUploadNatureEnum.ApplicationEmail));
+            return new OkObjectResult(await _emailTemplateCrudCommonService.UpdateContentEmailTemplate(request, QUploadNatureEnum.ApplicationEmail));
         }
 
         [HttpGet("GetDescriptionVariablesTemplates")]
@@ -52,7 +52,7 @@ namespace Querier.Api.Controllers
         }
 
         [HttpPost("SendEmailForTestTemplateUser")]
-        public async Task<IActionResult> SendEmailForTestTemplateUser([FromBody] HASendEmailForTestTemplateRequest request)
+        public async Task<IActionResult> SendEmailForTestTemplateUser([FromBody] QSendEmailForTestTemplateRequest request)
         {
             return new OkObjectResult(await _emailTemplateCrudCommonService.SendEmailForTestTemplate(request, HttpContext.User.FindFirst(ClaimTypes.Email).Value));
         }

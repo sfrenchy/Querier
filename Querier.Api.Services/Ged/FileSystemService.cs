@@ -18,24 +18,24 @@ using Querier.Api.Models.Ged;
 
 namespace Querier.Api.Services.Ged
 {
-    public class FileSystemService : IHAFileReadOnlyDeposit
+    public class FileSystemService : IQFileReadOnlyDeposit
     {
         //variable from interface;
-        public HAFileDeposit FileDepositInformations { get; set; }
+        public QFileDeposit FileDepositInformations { get; set; }
         //
 
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private readonly ILogger<FileSystemService> _logger;
-        private readonly IHAUploadService _uploadService;
+        private readonly IQUploadService _uploadService;
 
-        public FileSystemService(ILogger<FileSystemService> logger, IDbContextFactory<ApiDbContext> contextFactory, IHAUploadService uploadService)
+        public FileSystemService(ILogger<FileSystemService> logger, IDbContextFactory<ApiDbContext> contextFactory, IQUploadService uploadService)
         {
             _logger = logger;
             _contextFactory = contextFactory;
             FileDepositInformations = GetInformationFromDB();
             _uploadService = uploadService;
         }
-        private HAFileDeposit GetInformationFromDB()
+        private QFileDeposit GetInformationFromDB()
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
@@ -59,12 +59,12 @@ namespace Querier.Api.Services.Ged
             }
 
             //get informations for all files found
-            List<HAFilesFromFileDeposit> response = new List<HAFilesFromFileDeposit>();
+            List<QFilesFromFileDeposit> response = new List<QFilesFromFileDeposit>();
             foreach (string filePath in filePaths) 
             {
                 FileInfo fileInfo = new FileInfo(filePath);
 
-                HAFilesFromFileDeposit element = new HAFilesFromFileDeposit
+                QFilesFromFileDeposit element = new QFilesFromFileDeposit
                 {
                     FileRef = fileInfo.FullName,
                     HAFileDepositId = FileDepositInformations.Id,
@@ -80,8 +80,8 @@ namespace Querier.Api.Services.Ged
 
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                //used to see il the file is already exist in table HAFilesFromFileDeposit by compare the fileRef(path of the file) and the HAFileDepositId
-                List<HAFilesFromFileDeposit> missingRecords = response.Where(new_el => 
+                //used to see il the file is already exist in table QFilesFromFileDeposit by compare the fileRef(path of the file) and the HAFileDepositId
+                List<QFilesFromFileDeposit> missingRecords = response.Where(new_el => 
                     !apidbContext.HAFilesFromFileDeposit.Any(el_exist => 
                         el_exist.FileRef == new_el.FileRef && 
                         el_exist.HAFileDepositId == new_el.HAFileDepositId
@@ -108,7 +108,7 @@ namespace Querier.Api.Services.Ged
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 //get all files from the file deposit 
-                List<HAFilesFromFileDeposit> filesFromSpecificFileDeposit = apidbContext.HAFilesFromFileDeposit.Where(r => r.HAFileDepositId == FileDepositInformations.Id).ToList();
+                List<QFilesFromFileDeposit> filesFromSpecificFileDeposit = apidbContext.HAFilesFromFileDeposit.Where(r => r.HAFileDepositId == FileDepositInformations.Id).ToList();
                 if (filesFromSpecificFileDeposit == null)
                 {
                     return new List<GetInformationsResponse>()
@@ -171,7 +171,7 @@ namespace Querier.Api.Services.Ged
 
                 //then find the files that match the filled expression using fileref 
                 List<GetInformationsResponse> result = new List<GetInformationsResponse>();
-                foreach (HAFilesFromFileDeposit file in filesFromSpecificFileDeposit)
+                foreach (QFilesFromFileDeposit file in filesFromSpecificFileDeposit)
                 {
                     string filePath = file.FileRef;
                     
@@ -200,8 +200,8 @@ namespace Querier.Api.Services.Ged
 
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                //get the file from HAFilesFromFileDeposit
-                HAFilesFromFileDeposit fileReference = apidbContext.HAFilesFromFileDeposit.FirstOrDefault(r => r.Id == IdTable && r.HAFileDepositId == FileDepositInformations.Id);
+                //get the file from QFilesFromFileDeposit
+                QFilesFromFileDeposit fileReference = apidbContext.HAFilesFromFileDeposit.FirstOrDefault(r => r.Id == IdTable && r.HAFileDepositId == FileDepositInformations.Id);
                 if (fileReference == null)
                 {
                     return new GeneralResponse () { success = false, message = "file not find" };
@@ -210,7 +210,7 @@ namespace Querier.Api.Services.Ged
                 //we use HAUploadDefinitions to get a download url, as we don't yet have a viewer. 
 
                 //test if we have already a uploadDefinitionRef
-                HAUploadDefinition uploadDefinitionRef = apidbContext.HAUploadDefinitions.FirstOrDefault(r => r.FileName == fileReference.FileRef);
+                QUploadDefinition uploadDefinitionRef = apidbContext.HAUploadDefinitions.FirstOrDefault(r => r.FileName == fileReference.FileRef);
                 int UploadId;
                 ConfigurationFileSystem fileConfig = fileReference.GetConfiguration<ConfigurationFileSystem>();
                 if (uploadDefinitionRef == null)
@@ -223,7 +223,7 @@ namespace Querier.Api.Services.Ged
                         Definition = new SimpleUploadDefinition()
                         {
                             FileName = fileReference.FileRef,
-                            Nature = HAUploadNatureEnum.FileDeposit,
+                            Nature = QUploadNatureEnum.FileDeposit,
                             MimeType = "text/plain"
                         },
                         UploadStream = new MemoryStream(fileByteArray)
@@ -253,7 +253,7 @@ namespace Querier.Api.Services.Ged
                             Definition = new SimpleUploadDefinition()
                             {
                                 FileName = fileReference.FileRef,
-                                Nature = HAUploadNatureEnum.FileDeposit,
+                                Nature = QUploadNatureEnum.FileDeposit,
                                 MimeType = "text/plain",
                             },
                             UploadStream = new MemoryStream(fileByteArray)

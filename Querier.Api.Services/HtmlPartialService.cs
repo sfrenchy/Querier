@@ -21,8 +21,8 @@ namespace Querier.Api.Services
     public class HtmlPartialService : IHtmlPartialService
     {
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IHAUploadService _uploadService;
-        public HtmlPartialService(IHAUploadService uploadService, IDbContextFactory<ApiDbContext> contextFactory)
+        private readonly IQUploadService _uploadService;
+        public HtmlPartialService(IQUploadService uploadService, IDbContextFactory<ApiDbContext> contextFactory)
         {
             _uploadService = uploadService;
 
@@ -32,7 +32,7 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAHtmlPartialRef fileInfoFromDB = apidbContext.HAHtmlPartialRefs.FirstOrDefault(r => r.HAPageCard.Id == cardId && r.Language == writtenLanguage);
+                QHtmlPartialRef fileInfoFromDB = apidbContext.HAHtmlPartialRefs.FirstOrDefault(r => r.QPageCard.Id == cardId && r.Language == writtenLanguage);
                 if (fileInfoFromDB == null)
                 {
                     //throw new System.NullReferenceException();
@@ -162,12 +162,12 @@ namespace Querier.Api.Services
                     int upload_Id = await _uploadService.UploadFileFromApiAsync(uploadDef);
 
                     //verify in db if there is already html partial in this card 
-                    HAHtmlPartialRef fileInfoFromDB = apidbContext.HAHtmlPartialRefs.FirstOrDefault(r => r.HAPageCard.Id == cardId && r.Language == writtenLanguage);
+                    QHtmlPartialRef fileInfoFromDB = apidbContext.HAHtmlPartialRefs.FirstOrDefault(r => r.QPageCard.Id == cardId && r.Language == writtenLanguage);
                     if (fileInfoFromDB == null)
                     {
                         //not find  
                         //add Html Partial Refs informations to the db :
-                        await apidbContext.HAHtmlPartialRefs.AddAsync(new HAHtmlPartialRef()
+                        await apidbContext.HAHtmlPartialRefs.AddAsync(new QHtmlPartialRef()
                         {
                             HAUploadDefinitionId = upload_Id,
                             Language = writtenLanguage,
@@ -184,7 +184,7 @@ namespace Querier.Api.Services
                         apidbContext.HAHtmlPartialRefs.Remove(fileInfoFromDB);
                         await apidbContext.SaveChangesAsync();
                         //add new information to the db :
-                        await apidbContext.HAHtmlPartialRefs.AddAsync(new HAHtmlPartialRef()
+                        await apidbContext.HAHtmlPartialRefs.AddAsync(new QHtmlPartialRef()
                         {
                             HAUploadDefinitionId = upload_Id,
                             Language = writtenLanguage,

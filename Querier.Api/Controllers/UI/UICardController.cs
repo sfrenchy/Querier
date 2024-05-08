@@ -63,9 +63,9 @@ namespace Querier.Api.Controllers.UI
         /// <param name="updateCardRequest">The update card request</param>
         /// <returns>Return a ObjectResult which holds status code (Ok:200/BadRequest:400/NotFound:404) and data</returns>
         [HttpPut("UpdateCard")]
-        public async Task<IActionResult> UpdateCardAsync([FromBody] HAPageCard cardUpdated)
+        public async Task<IActionResult> UpdateCardAsync([FromBody] QPageCard cardUpdated)
         {
-            HAPageCard card = await _uiCardService.UpdateCardAsync(cardUpdated);
+            QPageCard card = await _uiCardService.UpdateCardAsync(cardUpdated);
 
             if (card == null)
                 return NotFound("The card was not found!");
@@ -81,7 +81,7 @@ namespace Querier.Api.Controllers.UI
         [HttpDelete("DeleteCard/{cardId}")]
         public async Task<IActionResult> DeleteCardAsync(int cardId)
         {
-            HAPageCard card = await _uiCardService.DeleteCardAsync(cardId);
+            QPageCard card = await _uiCardService.DeleteCardAsync(cardId);
 
             if (card == null)
                 return NotFound("The card was not found!");
@@ -113,7 +113,7 @@ namespace Querier.Api.Controllers.UI
         [HttpGet("CardContent/{haPageCardId}")]
         public async Task<IActionResult> CardContentAsync(int haPageCardId)
         {
-            HAPageCard card = await _uiCardService.CardContentAsync(haPageCardId);
+            QPageCard card = await _uiCardService.CardContentAsync(haPageCardId);
 
             if (card == null)
                 return NotFound("The card has been not found!");
@@ -197,7 +197,7 @@ namespace Querier.Api.Controllers.UI
         [HttpGet("GetCardConfiguration/{cardId}")]
         public async Task<IActionResult> GetCardConfigurationAsync(int cardId)
         {
-            HAPageCard card = await _uiCardService.GetCardConfigurationAsync(cardId);
+            QPageCard card = await _uiCardService.GetCardConfigurationAsync(cardId);
 
             if (card == null)
                 return NotFound("The card has been not found!");
@@ -228,12 +228,12 @@ namespace Querier.Api.Controllers.UI
         /// <param name="row">the row to update the order of its cards</param>
         /// <returns>Return a ObjectResult which holds status code (Ok:200/BadRequest:400/NotFound:404) and data</returns>
         [HttpPut("UpdateCardOrder")]
-        public async Task<IActionResult> UpdateCardOrderAsync([FromBody] HAPageRowVM row)
+        public async Task<IActionResult> UpdateCardOrderAsync([FromBody] QPageRowVM row)
         {
             if (row == null)
                 return NotFound("Unable to find the row!");
 
-            List<HAPageCard> cards = await _uiCardService.UpdateCardOrder(row);
+            List<QPageCard> cards = await _uiCardService.UpdateCardOrder(row);
             return new OkObjectResult(cards);
         }
     }

@@ -1,6 +1,6 @@
 ﻿namespace Querier.Api.Models.Cards
 {
-    public class ChartCard : IHACard
+    public class ChartCard : IQCard
     {
         public string Label => "Carte de chart";
 

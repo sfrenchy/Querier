@@ -30,7 +30,7 @@ namespace Querier.Api.Quartz
                 {
                     foreach(var fileDeposit in fileDepositActive.Result)
                     {
-                        IHAFileReadOnlyDeposit fileDepositInstance = fileDepositFactory.CreateClassInstanceByType(fileDeposit.Type);
+                        IQFileReadOnlyDeposit fileDepositInstance = fileDepositFactory.CreateClassInstanceByType(fileDeposit.Type);
                         Task<FillFileInformationResponse> result = fileDepositInstance.FillFileInformations();
                         await Console.Out.WriteLineAsync("Instance " + key + "  --- Update file deposit " + fileDeposit.Label + " "+ result.Result.numberFileAdded + "files added --- the creator is " + creator);
                     }

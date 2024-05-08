@@ -32,14 +32,14 @@ namespace Querier.Api.Services
         private readonly IEntityCRUDService _entityCRUDService;
         private readonly IServiceProvider _serviceProvider;
         private readonly IDynamicContextList _dynamicContextList;
-        private readonly IHAUploadService _uploadService;
+        private readonly IQUploadService _uploadService;
         private readonly HttpClient _httpClient;
         public ExportGeneratorService(IConfiguration configuration, 
                                       ILogger<ExportGeneratorService> logger, 
                                       IEntityCRUDService entityCRUDService,
                                       IServiceProvider serviceProvider,
                                       IDynamicContextList dynamicContextList,
-                                      IHAUploadService uploadService)
+                                      IQUploadService uploadService)
         {
             _logger = logger;
             _configuration = configuration;

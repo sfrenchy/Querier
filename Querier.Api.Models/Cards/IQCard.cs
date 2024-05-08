@@ -1,6 +1,6 @@
 ﻿namespace Querier.Api.Models.Cards
 {
-    public interface IHACard
+    public interface IQCard
     {
         /// <summary>
         /// Define the minimum used width for the card

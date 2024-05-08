@@ -14,10 +14,10 @@ namespace Querier.Api.Services.UI
 {
     public interface IUIRowService
     {
-        Task<List<HAPageRow>> GetRowsAsync(int pageId);
-        Task<HAPage> AddRowAsync(int pageId);
-        Task<HAPageRowVM> DeleteRowAsync(int rowId);
-        Task<List<HAPageRowVM>> UpdateRowOrder(HAPageVM page);
+        Task<List<QPageRow>> GetRowsAsync(int pageId);
+        Task<QPage> AddRowAsync(int pageId);
+        Task<QPageRowVM> DeleteRowAsync(int rowId);
+        Task<List<QPageRowVM>> UpdateRowOrder(QPageVM page);
 
     }
     public class UIRowService : IUIRowService
@@ -31,24 +31,24 @@ namespace Querier.Api.Services.UI
             _contextFactory = contextFactory;
         }
 
-        public async Task<List<HAPageRow>> GetRowsAsync(int pageId)
+        public async Task<List<QPageRow>> GetRowsAsync(int pageId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPage page = await apidbContext.HAPages.FindAsync(pageId);
+                QPage page = await apidbContext.HAPages.FindAsync(pageId);
                 return page.HAPageRows;
             }
         }
 
-        public async Task<HAPage> AddRowAsync(int pageId)
+        public async Task<QPage> AddRowAsync(int pageId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPage page = await apidbContext.HAPages.FindAsync(pageId);
+                QPage page = await apidbContext.HAPages.FindAsync(pageId);
                 if (page != null)
                 {
-                    page.HAPageRows ??= new EditableList<HAPageRow>();
-                    HAPageRow row = new HAPageRow();
+                    page.HAPageRows ??= new EditableList<QPageRow>();
+                    QPageRow row = new QPageRow();
                     if (page.HAPageRows.Count < 1)
                     {
                         row.Order = 1;
@@ -66,16 +66,16 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<HAPageRowVM> DeleteRowAsync(int rowId)
+        public async Task<QPageRowVM> DeleteRowAsync(int rowId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPageRow row = await apidbContext.HAPageRows.FindAsync(rowId);
+                QPageRow row = await apidbContext.HAPageRows.FindAsync(rowId);
                 if (row.HAPageCards.Count != 0)
                 {
                     row.HAPageCards.Clear();
                 }
-                HAPage pageDb = await apidbContext.HAPages.FindAsync(row.HAPageId);
+                QPage pageDb = await apidbContext.HAPages.FindAsync(row.HAPageId);
 
                 //deleting the row
                 pageDb.HAPageRows.Remove(row);
@@ -95,17 +95,17 @@ namespace Querier.Api.Services.UI
                 }
                 await apidbContext.SaveChangesAsync();
 
-                return HAPageRowVM.FromHAPageRow(row);
+                return QPageRowVM.FromHAPageRow(row);
             }
         }
 
-        public async Task<List<HAPageRowVM>> UpdateRowOrder(HAPageVM page)
+        public async Task<List<QPageRowVM>> UpdateRowOrder(QPageVM page)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 //ordering of the list by ID as it is retrieved ordered by the field 'Order' from the front
-                List<HAPageRowVM> listOrdered = page.HAPageRows.OrderBy(row => row.Id).ToList();
-                HAPage pageDb = await apidbContext.HAPages.FindAsync(page.Id);
+                List<QPageRowVM> listOrdered = page.HAPageRows.OrderBy(row => row.Id).ToList();
+                QPage pageDb = await apidbContext.HAPages.FindAsync(page.Id);
 
                 foreach (var (row, index) in pageDb.HAPageRows.Select((value, i) => (value, i)).ToList())
                 {
@@ -113,8 +113,8 @@ namespace Querier.Api.Services.UI
                     if (row.Order != listOrdered[index].Order)
                     {
                         //transformation of the view model by the repository model to be able to store in a database
-                        HAPageRow rowTransformed = new HAPageRow();
-                        rowTransformed = HAPageRow.FromHAPageVMRow(listOrdered[index]);
+                        QPageRow rowTransformed = new QPageRow();
+                        rowTransformed = QPageRow.FromHAPageVMRow(listOrdered[index]);
                         apidbContext.HAPageRows.First(r => r.Id == rowTransformed.Id).Order = rowTransformed.Order;
                     }
                 }

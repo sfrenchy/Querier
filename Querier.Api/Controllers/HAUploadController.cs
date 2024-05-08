@@ -21,9 +21,9 @@ namespace Querier.Api.Controllers
     public class HAUploadController : ControllerBase
     {
         private readonly ILogger _logger;
-        private IHAUploadService _uploadService;
+        private IQUploadService _uploadService;
         private readonly IWebHostEnvironment _environment;
-        public HAUploadController(ILogger<HAUploadController> logger, IHAUploadService uploadService, IWebHostEnvironment hostEnvironment)
+        public HAUploadController(ILogger<HAUploadController> logger, IQUploadService uploadService, IWebHostEnvironment hostEnvironment)
         {
             _logger = logger;
             _uploadService = uploadService;
@@ -48,7 +48,7 @@ namespace Querier.Api.Controllers
         [Route("GetFile/{id}")]
         public async Task<IActionResult> GetFileAsync(int id)
         {
-            HAUploadDefinition upload = await _uploadService.GetFileAsync(id);
+            QUploadDefinition upload = await _uploadService.GetFileAsync(id);
 
             using (var stream = new FileStream(upload.Path, FileMode.Open))
             {

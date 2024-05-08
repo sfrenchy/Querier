@@ -13,10 +13,10 @@ namespace Querier.Api.Services
     public interface INotification
     {
         Task NotifyUser(string userId, string content, bool persistNotification);
-        Task NotifyUser(HANotification notif, bool persistNotification);
+        Task NotifyUser(QNotification notif, bool persistNotification);
         Task MessageToUser(string from, string to, string content);
         Task MessageToAll(string from, string content);
-        List<HANotification> GetPersistentNotifications();
+        List<QNotification> GetPersistentNotifications();
     }
 
     public class Notification : INotification
@@ -50,7 +50,7 @@ namespace Querier.Api.Services
                 string notificationId = System.Guid.NewGuid().ToString();
                 if (persistNotification)
                 {
-                    HANotification un = new HANotification();
+                    QNotification un = new QNotification();
                     un.Id = notificationId;
                     un.Date = System.DateTime.Now;
                     un.UserId = apidbContext.Users.First(u => u.Email == userEmail).Id;
@@ -75,13 +75,13 @@ namespace Querier.Api.Services
             }
         }
 
-        public async Task NotifyUser(HANotification notif, bool persistNotification)
+        public async Task NotifyUser(QNotification notif, bool persistNotification)
         {
             if (NotificationHub.Users.Contains(notif.User.Email))
                 await _hubContext.Clients.User(notif.User.Email).SendAsync("ToastPersistentNotification", notif.Id, notif.Date, notif.JsonContent).ConfigureAwait(false);
         }
 
-        public List<HANotification> GetPersistentNotifications()
+        public List<QNotification> GetPersistentNotifications()
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {

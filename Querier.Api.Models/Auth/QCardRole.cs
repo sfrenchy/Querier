@@ -14,7 +14,7 @@ namespace Querier.Api.Models.Auth
 
         public virtual ApiRole ApiRole { get; set; }
 
-        public virtual HAPageCard HAPageCard { get; set; }
+        public virtual QPageCard QPageCard { get; set; }
 
         public QCardRole() { }
 

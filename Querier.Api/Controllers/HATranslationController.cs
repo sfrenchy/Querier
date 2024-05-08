@@ -39,12 +39,12 @@ namespace Querier.Api.Controllers
 
         [AllowAnonymous]
         [HttpPost("GetTranslationTable")]
-        [ProducesResponseType(typeof(ServerSideResponse<HATranslation>), 200)]
+        [ProducesResponseType(typeof(ServerSideResponse<QTranslation>), 200)]
         public async Task<IActionResult> GetTranslationTable(ServerSideRequest request)
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                ServerSideResponse<HATranslation> response = new ServerSideResponse<HATranslation>();
+                ServerSideResponse<QTranslation> response = new ServerSideResponse<QTranslation>();
                 response.data = _translationService.GetTranslationTable().DatatableFilter(request, out int? countFiltered).ToList();
                 response.draw = request.draw;
                 response.recordsTotal = apiDbContext.HADBConnections.Count();
@@ -62,7 +62,7 @@ namespace Querier.Api.Controllers
         }
 
         [HttpPost("UpdateTranslation")]
-        public IActionResult UpdateTranslation([FromBody] HAUpdateTranslationRequest request)
+        public IActionResult UpdateTranslation([FromBody] QUpdateTranslationRequest request)
         {
             _translationService.UpdateTranslation(request);
             return Ok();

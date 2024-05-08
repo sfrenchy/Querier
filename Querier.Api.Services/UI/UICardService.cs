@@ -13,30 +13,30 @@ namespace Querier.Api.Services.UI
 {
     public interface IUICardService
     {
-        Task<List<HAPageCard>> GetCardsAsync(int rowId);
-        Task<List<HAPageCard>> AddCardAsync(AddCardRequest card);
-        Task<HAPageCard> UpdateCardAsync(HAPageCard cardUpdated);
-        Task<HAPageCard> DeleteCardAsync(int cardId);
-        Task<List<HAPageCard>> AddPredefinedCardAsync(AddPredefinedCardRequest model);
-        Task<HAPageCard> CardContentAsync(int haPageCardId);
+        Task<List<QPageCard>> GetCardsAsync(int rowId);
+        Task<List<QPageCard>> AddCardAsync(AddCardRequest card);
+        Task<QPageCard> UpdateCardAsync(QPageCard cardUpdated);
+        Task<QPageCard> DeleteCardAsync(int cardId);
+        Task<List<QPageCard>> AddPredefinedCardAsync(AddPredefinedCardRequest model);
+        Task<QPageCard> CardContentAsync(int haPageCardId);
         Task<object> SaveCardConfigurationAsync(CardDefinedConfigRequest model);
         Task<object> ExportCardConfigurationAsync(CardDefinedConfigRequest model);
-        Task<List<HAPageCard>> ImportCardConfigurationAsync(CardImportConfigRequest config);
+        Task<List<QPageCard>> ImportCardConfigurationAsync(CardImportConfigRequest config);
         Task<object> UpdateCardConfigurationAsync(dynamic newConfiguration);
-        Task<HAPageCard> GetCardConfigurationAsync(int cardId);
+        Task<QPageCard> GetCardConfigurationAsync(int cardId);
         object CardMaxWidth(int cardId, int cardRowId);
-        Task<List<HAPageCardDefinedConfiguration>> GetPredefinedCards();
-        Task<List<HAPageCard>> UpdateCardOrder(HAPageRowVM row);
+        Task<List<QPageCardDefinedConfiguration>> GetPredefinedCards();
+        Task<List<QPageCard>> UpdateCardOrder(QPageRowVM row);
 
     }
     public class UICardService : IUICardService
     {
         private readonly ILogger<UICardService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IHAUploadService _uploadService;
+        private readonly IQUploadService _uploadService;
         private readonly IToastMessageEmitterService _toastMessageEmitterService;
 
-        public UICardService(ILogger<UICardService> logger, IDbContextFactory<ApiDbContext> contextFactory, IHAUploadService uploadService, IToastMessageEmitterService toastMessageEmitterService)
+        public UICardService(ILogger<UICardService> logger, IDbContextFactory<ApiDbContext> contextFactory, IQUploadService uploadService, IToastMessageEmitterService toastMessageEmitterService)
         {
             _logger = logger;
             _contextFactory = contextFactory;
@@ -44,21 +44,21 @@ namespace Querier.Api.Services.UI
             _toastMessageEmitterService = toastMessageEmitterService;
         }
 
-        public async Task<List<HAPageCard>> GetCardsAsync(int rowId)
+        public async Task<List<QPageCard>> GetCardsAsync(int rowId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPageRow row = await apidbContext.HAPageRows.FindAsync(rowId);
+                QPageRow row = await apidbContext.HAPageRows.FindAsync(rowId);
                 return row.HAPageCards;
             }
         }
 
-        public async Task<List<HAPageCard>> AddCardAsync(AddCardRequest card)
+        public async Task<List<QPageCard>> AddCardAsync(AddCardRequest card)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 int order = 0;
-                HAPageRow row = apidbContext.HAPageRows.Find(card.pageRowId);
+                QPageRow row = apidbContext.HAPageRows.Find(card.pageRowId);
                 if (row.HAPageCards.Count < 1)
                 {
                     order = 1;
@@ -68,7 +68,7 @@ namespace Querier.Api.Services.UI
                     List<int> listOrders = row.HAPageCards.Select(r => r.Order).ToList();
                     order = listOrders.Max() + 1;
                 }
-                HAPageCard newCard = new HAPageCard()
+                QPageCard newCard = new QPageCard()
                 {
                     CardTypeLabel = card.cardType,
                     Title = card.cardTitle,
@@ -95,11 +95,11 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<HAPageCard> UpdateCardAsync(HAPageCard cardUpdated)
+        public async Task<QPageCard> UpdateCardAsync(QPageCard cardUpdated)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPageCard card = await apidbContext.HAPageCards.FindAsync(cardUpdated.Id);
+                QPageCard card = await apidbContext.HAPageCards.FindAsync(cardUpdated.Id);
                 if (card != null)
                 {
                     card.Title = cardUpdated.Title;
@@ -113,15 +113,15 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<HAPageCard> DeleteCardAsync(int cardId)
+        public async Task<QPageCard> DeleteCardAsync(int cardId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPageCard card = await apidbContext.HAPageCards.FindAsync(cardId);
+                QPageCard card = await apidbContext.HAPageCards.FindAsync(cardId);
 
                 if (card != null)
                 {
-                    HAPageRow rowDb = await apidbContext.HAPageRows.FindAsync(card.HAPageRowId);
+                    QPageRow rowDb = await apidbContext.HAPageRows.FindAsync(card.HAPageRowId);
                     rowDb.HAPageCards.Remove(card);
 
                     //set up a counter to restore the order of the cards to proper
@@ -144,12 +144,12 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<List<HAPageCard>> AddPredefinedCardAsync(AddPredefinedCardRequest model)
+        public async Task<List<QPageCard>> AddPredefinedCardAsync(AddPredefinedCardRequest model)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPageRow row = await apidbContext.HAPageRows.FindAsync(model.pageRowId);
-                HAPageCardDefinedConfiguration pConf = await apidbContext.HAPageCardDefinedConfigurations.FindAsync(model.predefinedCardId);
+                QPageRow row = await apidbContext.HAPageRows.FindAsync(model.pageRowId);
+                QPageCardDefinedConfiguration pConf = await apidbContext.HAPageCardDefinedConfigurations.FindAsync(model.predefinedCardId);
 
                 int order = 0;
                 if (row.HAPageCards.Count < 1)
@@ -161,7 +161,7 @@ namespace Querier.Api.Services.UI
                     List<int> listOrders = row.HAPageCards.Select(r => r.Order).ToList();
                     order = listOrders.Max() + 1;
                 }
-                row.HAPageCards.Add(new HAPageCard()
+                row.HAPageCards.Add(new QPageCard()
                 {
                     CardTypeLabel = pConf.CardTypeLabel,
                     Title = pConf.Title,
@@ -176,11 +176,11 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<HAPageCard> CardContentAsync(int haPageCardId)
+        public async Task<QPageCard> CardContentAsync(int haPageCardId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPageCard card = await apidbContext.HAPageCards.FindAsync(haPageCardId);
+                QPageCard card = await apidbContext.HAPageCards.FindAsync(haPageCardId);
 
                 return card;
             }
@@ -190,7 +190,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                await apidbContext.HAPageCardDefinedConfigurations.AddAsync(new HAPageCardDefinedConfiguration()
+                await apidbContext.HAPageCardDefinedConfigurations.AddAsync(new QPageCardDefinedConfiguration()
                 {
                     Title = model.Title,
                     CardConfiguration = model.Config,
@@ -219,7 +219,7 @@ namespace Querier.Api.Services.UI
                     FileName = bodyHash,
                     MimeType = "application/octet-stream",
                     DayRetention = 1,
-                    Nature = HAUploadNatureEnum.CardConfiguration
+                    Nature = QUploadNatureEnum.CardConfiguration
                 },
                 UploadStream = new MemoryStream(content)
             };
@@ -243,7 +243,7 @@ namespace Querier.Api.Services.UI
             return new { Msg = $"The Card configuration is available to download" };
         }
 
-        public async Task<List<HAPageCard>> ImportCardConfigurationAsync(CardImportConfigRequest configRequest)
+        public async Task<List<QPageCard>> ImportCardConfigurationAsync(CardImportConfigRequest configRequest)
         {
             string json = "";
             using (StreamReader r = new StreamReader(configRequest.FilePath))
@@ -254,9 +254,9 @@ namespace Querier.Api.Services.UI
 
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPageRow row = await apidbContext.HAPageRows.FindAsync(configRequest.PageRowId);
+                QPageRow row = await apidbContext.HAPageRows.FindAsync(configRequest.PageRowId);
 
-                row.HAPageCards.Add(new HAPageCard()
+                row.HAPageCards.Add(new QPageCard()
                 {
                     CardTypeLabel = dictionaryConfig["CardTypeLabel"],
                     Title = dictionaryConfig["CardTitle"],
@@ -276,7 +276,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPageCard card = await apidbContext.HAPageCards.FindAsync(Convert.ToInt32(newConfiguration.cardId.Value));
+                QPageCard card = await apidbContext.HAPageCards.FindAsync(Convert.ToInt32(newConfiguration.cardId.Value));
                 card.Configuration = newConfiguration;
 
                 await apidbContext.SaveChangesAsync();
@@ -285,11 +285,11 @@ namespace Querier.Api.Services.UI
             }
         }
 
-        public async Task<HAPageCard> GetCardConfigurationAsync(int cardId)
+        public async Task<QPageCard> GetCardConfigurationAsync(int cardId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                HAPageCard card = await apidbContext.HAPageCards.FindAsync(cardId);
+                QPageCard card = await apidbContext.HAPageCards.FindAsync(cardId);
 
                 return card;
             }
@@ -298,25 +298,25 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                var maxWidth = 12 - apidbContext.HAPageCards.Where(c => c.HAPageRow.Id == cardRowId && c.Id != cardId).Sum(c => c.Width);
+                var maxWidth = 12 - apidbContext.HAPageCards.Where(c => c.QPageRow.Id == cardRowId && c.Id != cardId).Sum(c => c.Width);
                 return new { maxWidth };
             }
         }
 
-        public async Task<List<HAPageCardDefinedConfiguration>> GetPredefinedCards()
+        public async Task<List<QPageCardDefinedConfiguration>> GetPredefinedCards()
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 return await apidbContext.HAPageCardDefinedConfigurations.OrderBy(a => a.Title).ToListAsync();
             }
         }
-        public async Task<List<HAPageCard>> UpdateCardOrder(HAPageRowVM row)
+        public async Task<List<QPageCard>> UpdateCardOrder(QPageRowVM row)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 //ordering of the list by ID as it is retrieved ordered by the field 'Order' from the front
-                List<HAPageCard> listOrdered = row.HAPageCards.OrderBy(c => c.Id).ToList();
-                HAPageRow rowDB = await apidbContext.HAPageRows.FindAsync(row.Id);
+                List<QPageCard> listOrdered = row.HAPageCards.OrderBy(c => c.Id).ToList();
+                QPageRow rowDB = await apidbContext.HAPageRows.FindAsync(row.Id);
 
                 foreach (var (card, index) in rowDB.HAPageCards.Select((value, i) => (value, i)).ToList())
                 {

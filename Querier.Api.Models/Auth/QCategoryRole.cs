@@ -2,7 +2,7 @@
 
 namespace Querier.Api.Models.Auth
 {
-    public class HACategoryRole
+    public class QCategoryRole
     {
         public bool View { get; set; }
         public bool Add { get; set; }
@@ -12,14 +12,14 @@ namespace Querier.Api.Models.Auth
         public int HAPageCategoryId { get; set; }
 
         public virtual ApiRole ApiRole { get; set; }
-        public virtual HAPageCategory HAPageCategory { get; set; }
+        public virtual QPageCategory QPageCategory { get; set; }
 
-        public HACategoryRole()
+        public QCategoryRole()
         {
 
         }
 
-        public HACategoryRole(string roleId, int categoryId, bool view, bool add, bool edit)
+        public QCategoryRole(string roleId, int categoryId, bool view, bool add, bool edit)
         {
             ApiRoleId = roleId;
             HAPageCategoryId = categoryId;

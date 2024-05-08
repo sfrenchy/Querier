@@ -39,10 +39,10 @@ namespace Querier.Api.Services.User
         private readonly IEmailSendingService _emailSending;
         private readonly IConfiguration _configuration;
         private readonly Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IHAUploadService _uploadService;
+        private readonly IQUploadService _uploadService;
         private readonly IRoleService _roleService;
-        // private readonly IHerdiaApp _herdiaApp;
-        public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, IHAUploadService uploadService, IRoleService roleService/*, IHerdiaApp herdiaApp*/)
+        // private readonly IQPlugin _herdiaApp;
+        public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, IQUploadService uploadService, IRoleService roleService/*, IQPlugin herdiaApp*/)
         {
             _repo = repo;
             _logger = logger;
@@ -235,7 +235,7 @@ namespace Querier.Api.Services.User
 
             //get the body of the mail from the uploaderManager
             //Get the uploadID
-            List<HAUploadDefinition> resultat;
+            List<QUploadDefinition> resultat;
             //get the name of the template html for email confirmation with the good language:
             string ResetPasswordTemplateName;
             switch (user.LanguageCode)
@@ -256,7 +256,7 @@ namespace Querier.Api.Services.User
 
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                resultat = apidbContext.HAUploadDefinitions.Where(t => t.Nature == HAUploadNatureEnum.ApplicationEmail && t.FileName == ResetPasswordTemplateName).ToList();
+                resultat = apidbContext.HAUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == ResetPasswordTemplateName).ToList();
             }
 
             //Get the content string of the body Email with a stream:

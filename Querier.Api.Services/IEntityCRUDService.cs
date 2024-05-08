@@ -24,7 +24,7 @@ namespace Querier.Api.Services
         /// Get the entity definition for the context and the entity
         /// </summary>
         /// <param name="contextTypeFullname">A full name of an available context (ie: HerdiaApp.Api.Models.ApiDbContext)</param>
-        /// <param name="entityFullname">A full name of an available context entity (ie: HerdiaApp.Api.Models.UI.HAPageCategory)</param>
+        /// <param name="entityFullname">A full name of an available context entity (ie: HerdiaApp.Api.Models.UI.QPageCategory)</param>
         /// <returns></returns>
         public EntityDefinition GetEntity(string contextTypeFullname, string entityFullname);
         /// <summary>

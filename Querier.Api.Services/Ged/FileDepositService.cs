@@ -15,7 +15,7 @@ namespace Querier.Api.Services.Ged
 {
     public interface IFileDepositService
     {
-        //this function is used to get all file deposit from the table HAFileDeposit, used for datatable
+        //this function is used to get all file deposit from the table QFileDeposit, used for datatable
         Task<ServerSideResponse<FileDepositResponse>> GetAllFileDeposit(ServerSideRequest request);
         //this function is used to delete a file deposit with the id is given in parameter
         Task<GeneralResponse> DeleteFileDeposit(int fileDepositId);
@@ -70,7 +70,7 @@ namespace Querier.Api.Services.Ged
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                HAFileDeposit filedepositToRemove = await apiDbContext.HAFileDeposit.FirstAsync(c => c.Id == fileDepositId);
+                QFileDeposit filedepositToRemove = await apiDbContext.HAFileDeposit.FirstAsync(c => c.Id == fileDepositId);
                 if (filedepositToRemove == null)
                 {
                     return new GeneralResponse() { success = false, message = "file deposit not find" };
@@ -85,7 +85,7 @@ namespace Querier.Api.Services.Ged
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                HAFileDeposit fileDepositOrigin = await apiDbContext.HAFileDeposit.FirstAsync(c => c.Id == FileDepositToUpdate.Id);
+                QFileDeposit fileDepositOrigin = await apiDbContext.HAFileDeposit.FirstAsync(c => c.Id == FileDepositToUpdate.Id);
                 if (fileDepositOrigin == null)
                 {
                     return new GeneralResponse() { success = false, message = "file deposit not find" };
@@ -104,7 +104,7 @@ namespace Querier.Api.Services.Ged
                 {
                     try
                     {
-                        PropertyInfo p = typeof(HAFileDeposit).GetProperty(property.Name);
+                        PropertyInfo p = typeof(QFileDeposit).GetProperty(property.Name);
                         var valueFromObject = property.GetValue(FileDepositToUpdate);
                         IHaveValueFromObject = true;
                         var valueFromEntity = p.GetValue(fileDepositOrigin);
@@ -143,7 +143,7 @@ namespace Querier.Api.Services.Ged
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                HAFileDeposit newFileDeposit = new HAFileDeposit()
+                QFileDeposit newFileDeposit = new QFileDeposit()
                 {
                     Auth = FileDepositToAdd.Auth,
                     Capabilities = FileDepositToAdd.Capabilities,
@@ -169,7 +169,7 @@ namespace Querier.Api.Services.Ged
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                List<HAFileDeposit> fileDepositActif = apiDbContext.HAFileDeposit.Where(f => f.Enable == true).ToList();
+                List<QFileDeposit> fileDepositActif = apiDbContext.HAFileDeposit.Where(f => f.Enable == true).ToList();
                 List<FileDepositResponse> result = fileDepositActif.Select(f => new FileDepositResponse() { Auth = f.Auth, Capabilities = f.Capabilities, Filter = f.Filter, Host = f.Host, Label = f.Label, Login = f.Login, Enable = f.Enable, Id = f.Id, Password = f.Password, Port = f.Port, RootPath = f.RootPath, Tag = f.Tag, Type = f.Type }).ToList();
                 return result;
             }
