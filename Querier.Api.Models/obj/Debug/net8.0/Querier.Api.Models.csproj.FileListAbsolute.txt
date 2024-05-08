@@ -12,3 +12,17 @@
 /Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.pdb
 /Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.genruntimeconfig.cache
 /Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/Querier.Api.Models/obj/Debug/net8.0/ref/Querier.Api.Models.dll
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/bin/Debug/net8.0/Querier.Api.Models.deps.json
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/bin/Debug/net8.0/Querier.Api.Models.runtimeconfig.json
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/bin/Debug/net8.0/Querier.Api.Models.dll
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/bin/Debug/net8.0/Querier.Api.Models.pdb
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.csproj.AssemblyReference.cache
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.GeneratedMSBuildEditorConfig.editorconfig
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.AssemblyInfoInputs.cache
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.AssemblyInfo.cs
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.csproj.CoreCompileInputs.cache
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.dll
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/obj/Debug/net8.0/refint/Querier.Api.Models.dll
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.pdb
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.genruntimeconfig.cache
+/Users/arnaudchampion/Projects/Querier/Querier/Querier.Api.Models/obj/Debug/net8.0/ref/Querier.Api.Models.dll
