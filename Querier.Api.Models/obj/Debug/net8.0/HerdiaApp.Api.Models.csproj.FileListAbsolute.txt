@@ -1,0 +1,14 @@
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/bin/Debug/net8.0/HerdiaApp.Api.Models.deps.json
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/bin/Debug/net8.0/HerdiaApp.Api.Models.runtimeconfig.json
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/bin/Debug/net8.0/HerdiaApp.Api.Models.dll
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/bin/Debug/net8.0/HerdiaApp.Api.Models.pdb
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/obj/Debug/net8.0/HerdiaApp.Api.Models.csproj.AssemblyReference.cache
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/obj/Debug/net8.0/HerdiaApp.Api.Models.GeneratedMSBuildEditorConfig.editorconfig
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/obj/Debug/net8.0/HerdiaApp.Api.Models.AssemblyInfoInputs.cache
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/obj/Debug/net8.0/HerdiaApp.Api.Models.AssemblyInfo.cs
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/obj/Debug/net8.0/HerdiaApp.Api.Models.csproj.CoreCompileInputs.cache
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/obj/Debug/net8.0/HerdiaApp.Api.Models.dll
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/obj/Debug/net8.0/refint/HerdiaApp.Api.Models.dll
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/obj/Debug/net8.0/HerdiaApp.Api.Models.pdb
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/obj/Debug/net8.0/HerdiaApp.Api.Models.genruntimeconfig.cache
+/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api.Models/obj/Debug/net8.0/ref/HerdiaApp.Api.Models.dll

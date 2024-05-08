@@ -1,0 +1,10 @@
+{
+  "FilesToGenerate": [
+    {
+      "Filename": "api.service.generated.ts",
+      "Project": "WebAppAngular",
+      "Path": "src\\app\\shared\\service",
+      "Properties": {}
+    }
+  ]
+}

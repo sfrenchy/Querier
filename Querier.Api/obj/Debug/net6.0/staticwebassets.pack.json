@@ -1,0 +1,129 @@
+{
+  "Files": [
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/readme.txt",
+      "PackagePath": "staticwebassets/readme.txt"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/0650/06509a59-ce26-48ac-b9b6-aa635ae159f1",
+      "PackagePath": "staticwebassets/uploadManager/0650"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/1631/16312769-9d7c-441c-831e-baf8cc6d8642",
+      "PackagePath": "staticwebassets/uploadManager/1631"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/2731/2731206f-74e2-4b17-93b2-e606767e35ac",
+      "PackagePath": "staticwebassets/uploadManager/2731"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/2a1b/2a1b4b2a-b6dc-44c0-9eb7-e9156270adc4",
+      "PackagePath": "staticwebassets/uploadManager/2a1b"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/3206/3206bce5-f4cd-4b79-b006-d82b8dc29ee6",
+      "PackagePath": "staticwebassets/uploadManager/3206"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/3e19/3e19a98e-f2d9-4deb-a372-0d64606d9124",
+      "PackagePath": "staticwebassets/uploadManager/3e19"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/49e3/49e374fc-22f9-4932-8441-f38015918b1f",
+      "PackagePath": "staticwebassets/uploadManager/49e3"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/561b/561b4cb5-7ac3-4651-a6fc-4cfde0011ad8",
+      "PackagePath": "staticwebassets/uploadManager/561b"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/5964/596475e6-cc65-4253-af7f-01b71ab7fb0d",
+      "PackagePath": "staticwebassets/uploadManager/5964"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/5e46/5e467b51-497e-434f-93db-4fdc30c89c64",
+      "PackagePath": "staticwebassets/uploadManager/5e46"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/5eb4/5eb4dd0d-cc6e-4416-8143-d7da0c55fe32",
+      "PackagePath": "staticwebassets/uploadManager/5eb4"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/72bb/72bbac6d-46a8-4482-936c-fbd33239491d",
+      "PackagePath": "staticwebassets/uploadManager/72bb"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/8d55/8d55fa78-6f94-4ddb-89a1-ea95c2b214db",
+      "PackagePath": "staticwebassets/uploadManager/8d55"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/9560/9560a0d6-9716-4719-860f-2fed772c43e4",
+      "PackagePath": "staticwebassets/uploadManager/9560"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/a59e/a59e3ea7-1b05-4c03-bb8d-5a680034b016",
+      "PackagePath": "staticwebassets/uploadManager/a59e"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/aa2b/aa2bc9bf-7ef7-49c6-bca0-2371e96bafd8",
+      "PackagePath": "staticwebassets/uploadManager/aa2b"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/aac6/aac64f3c-6d65-4096-b936-6acb30abf20e",
+      "PackagePath": "staticwebassets/uploadManager/aac6"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/b6be/b6be2ea6-f9bf-4f27-9625-4519e0e1e8c2",
+      "PackagePath": "staticwebassets/uploadManager/b6be"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/b825/b82515b3-404a-46d3-8cb8-5bae0820a71b",
+      "PackagePath": "staticwebassets/uploadManager/b825"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/bd39/bd393884-462c-4b02-a632-b41b7056fa13",
+      "PackagePath": "staticwebassets/uploadManager/bd39"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/c77c/c77c952b-eaea-4e66-970f-1732878a434d",
+      "PackagePath": "staticwebassets/uploadManager/c77c"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/d5e4/d5e404fd-6003-4d40-9827-93e8e6da9229",
+      "PackagePath": "staticwebassets/uploadManager/d5e4"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/e6c4/e6c43761-2937-4f56-b8d6-5d495df0f362",
+      "PackagePath": "staticwebassets/uploadManager/e6c4"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/eb24/eb245c14-77ca-49ad-8dbd-1c0cbd554178",
+      "PackagePath": "staticwebassets/uploadManager/eb24"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/ef67/ef6736b0-41f1-44a8-8d2a-a9a084d24fe8",
+      "PackagePath": "staticwebassets/uploadManager/ef67"
+    },
+    {
+      "Id": "/Users/arnaudchampion/Projects/HerdiaApp/src/HerdiaApp/HerdiaApp.Api/wwwroot/uploadManager/f5e0/f5e09bc6-3625-41fa-89e2-a2c88e6cda64",
+      "PackagePath": "staticwebassets/uploadManager/f5e0"
+    },
+    {
+      "Id": "obj/Debug/net6.0/staticwebassets/msbuild.HerdiaApp.Api.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net6.0/staticwebassets/msbuild.build.HerdiaApp.Api.props",
+      "PackagePath": "build\\HerdiaApp.Api.props"
+    },
+    {
+      "Id": "obj/Debug/net6.0/staticwebassets/msbuild.buildMultiTargeting.HerdiaApp.Api.props",
+      "PackagePath": "buildMultiTargeting\\HerdiaApp.Api.props"
+    },
+    {
+      "Id": "obj/Debug/net6.0/staticwebassets/msbuild.buildTransitive.HerdiaApp.Api.props",
+      "PackagePath": "buildTransitive\\HerdiaApp.Api.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

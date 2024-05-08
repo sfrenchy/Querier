@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../buildMultiTargeting/HerdiaApp.Api.props" />
+</Project>
