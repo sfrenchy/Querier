@@ -396,3 +396,10 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+Querier.Api/obj/Debug/net8.0/Querier.Api.csproj.FileListAbsolute.txt
+Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.assets.cache
+Querier.Api.Models/obj/Debug/net8.0/Querier.Api.Models.csproj.FileListAbsolute.txt
+Querier.Api.Services/obj/Debug/net8.0/Querier.Api.Services.assets.cache
+Querier.Api.Services/obj/Debug/net8.0/Querier.Api.Services.csproj.FileListAbsolute.txt
+Querier.Tools/obj/Debug/net8.0/Querier.Tools.assets.cache
+Querier.Tools/obj/Debug/net8.0/Querier.Tools.csproj.FileListAbsolute.txt
