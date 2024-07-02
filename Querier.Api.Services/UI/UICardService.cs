@@ -48,8 +48,8 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPageRow row = await apidbContext.HAPageRows.FindAsync(rowId);
-                return row.HAPageCards;
+                QPageRow row = await apidbContext.QPageRows.FindAsync(rowId);
+                return row.QPageCards;
             }
         }
 
@@ -58,14 +58,14 @@ namespace Querier.Api.Services.UI
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 int order = 0;
-                QPageRow row = apidbContext.HAPageRows.Find(card.pageRowId);
-                if (row.HAPageCards.Count < 1)
+                QPageRow row = apidbContext.QPageRows.Find(card.pageRowId);
+                if (row.QPageCards.Count < 1)
                 {
                     order = 1;
                 }
                 else
                 {
-                    List<int> listOrders = row.HAPageCards.Select(r => r.Order).ToList();
+                    List<int> listOrders = row.QPageCards.Select(r => r.Order).ToList();
                     order = listOrders.Max() + 1;
                 }
                 QPageCard newCard = new QPageCard()
@@ -81,7 +81,7 @@ namespace Querier.Api.Services.UI
                     Order = order
                 };
 
-                row.HAPageCards.Add(newCard);
+                row.QPageCards.Add(newCard);
                 await apidbContext.SaveChangesAsync();
 
                 newCard.Configuration = new
@@ -91,7 +91,7 @@ namespace Querier.Api.Services.UI
                 };
                 await apidbContext.SaveChangesAsync();
 
-                return row.HAPageCards;
+                return row.QPageCards;
             }
         }
 
@@ -99,7 +99,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPageCard card = await apidbContext.HAPageCards.FindAsync(cardUpdated.Id);
+                QPageCard card = await apidbContext.QPageCards.FindAsync(cardUpdated.Id);
                 if (card != null)
                 {
                     card.Title = cardUpdated.Title;
@@ -117,25 +117,25 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPageCard card = await apidbContext.HAPageCards.FindAsync(cardId);
+                QPageCard card = await apidbContext.QPageCards.FindAsync(cardId);
 
                 if (card != null)
                 {
-                    QPageRow rowDb = await apidbContext.HAPageRows.FindAsync(card.HAPageRowId);
-                    rowDb.HAPageCards.Remove(card);
+                    QPageRow rowDb = await apidbContext.QPageRows.FindAsync(card.HAPageRowId);
+                    rowDb.QPageCards.Remove(card);
 
                     //set up a counter to restore the order of the cards to proper
                     int orderCounter = 1;
 
                     //Browse the list with the previously deleted line
-                    foreach (var (c, index) in rowDb.HAPageCards.Select((value, i) => (value, i)).ToList())
+                    foreach (var (c, index) in rowDb.QPageCards.Select((value, i) => (value, i)).ToList())
                     {
                         //The new order is applied to each cards in the list
                         c.Order = orderCounter;
 
                         //counter increment for the next items in the list
                         orderCounter++;
-                        apidbContext.HAPageCards.Update(c);
+                        apidbContext.QPageCards.Update(c);
                     }
                     await apidbContext.SaveChangesAsync();
                 }
@@ -148,20 +148,20 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPageRow row = await apidbContext.HAPageRows.FindAsync(model.pageRowId);
-                QPageCardDefinedConfiguration pConf = await apidbContext.HAPageCardDefinedConfigurations.FindAsync(model.predefinedCardId);
+                QPageRow row = await apidbContext.QPageRows.FindAsync(model.pageRowId);
+                QPageCardDefinedConfiguration pConf = await apidbContext.QPageCardDefinedConfigurations.FindAsync(model.predefinedCardId);
 
                 int order = 0;
-                if (row.HAPageCards.Count < 1)
+                if (row.QPageCards.Count < 1)
                 {
                     order = 1;
                 }
                 else
                 {
-                    List<int> listOrders = row.HAPageCards.Select(r => r.Order).ToList();
+                    List<int> listOrders = row.QPageCards.Select(r => r.Order).ToList();
                     order = listOrders.Max() + 1;
                 }
-                row.HAPageCards.Add(new QPageCard()
+                row.QPageCards.Add(new QPageCard()
                 {
                     CardTypeLabel = pConf.CardTypeLabel,
                     Title = pConf.Title,
@@ -172,7 +172,7 @@ namespace Querier.Api.Services.UI
                 });
                 await apidbContext.SaveChangesAsync();
 
-                return row.HAPageCards;
+                return row.QPageCards;
             }
         }
 
@@ -180,7 +180,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPageCard card = await apidbContext.HAPageCards.FindAsync(haPageCardId);
+                QPageCard card = await apidbContext.QPageCards.FindAsync(haPageCardId);
 
                 return card;
             }
@@ -190,7 +190,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                await apidbContext.HAPageCardDefinedConfigurations.AddAsync(new QPageCardDefinedConfiguration()
+                await apidbContext.QPageCardDefinedConfigurations.AddAsync(new QPageCardDefinedConfiguration()
                 {
                     Title = model.Title,
                     CardConfiguration = model.Config,
@@ -254,9 +254,9 @@ namespace Querier.Api.Services.UI
 
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPageRow row = await apidbContext.HAPageRows.FindAsync(configRequest.PageRowId);
+                QPageRow row = await apidbContext.QPageRows.FindAsync(configRequest.PageRowId);
 
-                row.HAPageCards.Add(new QPageCard()
+                row.QPageCards.Add(new QPageCard()
                 {
                     CardTypeLabel = dictionaryConfig["CardTypeLabel"],
                     Title = dictionaryConfig["CardTitle"],
@@ -267,7 +267,7 @@ namespace Querier.Api.Services.UI
 
                 await apidbContext.SaveChangesAsync();
 
-                return row.HAPageCards;
+                return row.QPageCards;
             }
 
         }
@@ -276,7 +276,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPageCard card = await apidbContext.HAPageCards.FindAsync(Convert.ToInt32(newConfiguration.cardId.Value));
+                QPageCard card = await apidbContext.QPageCards.FindAsync(Convert.ToInt32(newConfiguration.cardId.Value));
                 card.Configuration = newConfiguration;
 
                 await apidbContext.SaveChangesAsync();
@@ -289,7 +289,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPageCard card = await apidbContext.HAPageCards.FindAsync(cardId);
+                QPageCard card = await apidbContext.QPageCards.FindAsync(cardId);
 
                 return card;
             }
@@ -298,7 +298,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                var maxWidth = 12 - apidbContext.HAPageCards.Where(c => c.QPageRow.Id == cardRowId && c.Id != cardId).Sum(c => c.Width);
+                var maxWidth = 12 - apidbContext.QPageCards.Where(c => c.QPageRow.Id == cardRowId && c.Id != cardId).Sum(c => c.Width);
                 return new { maxWidth };
             }
         }
@@ -307,7 +307,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                return await apidbContext.HAPageCardDefinedConfigurations.OrderBy(a => a.Title).ToListAsync();
+                return await apidbContext.QPageCardDefinedConfigurations.OrderBy(a => a.Title).ToListAsync();
             }
         }
         public async Task<List<QPageCard>> UpdateCardOrder(QPageRowVM row)
@@ -315,16 +315,16 @@ namespace Querier.Api.Services.UI
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 //ordering of the list by ID as it is retrieved ordered by the field 'Order' from the front
-                List<QPageCard> listOrdered = row.HAPageCards.OrderBy(c => c.Id).ToList();
-                QPageRow rowDB = await apidbContext.HAPageRows.FindAsync(row.Id);
+                List<QPageCard> listOrdered = row.QPageCards.OrderBy(c => c.Id).ToList();
+                QPageRow rowDB = await apidbContext.QPageRows.FindAsync(row.Id);
 
-                foreach (var (card, index) in rowDB.HAPageCards.Select((value, i) => (value, i)).ToList())
+                foreach (var (card, index) in rowDB.QPageCards.Select((value, i) => (value, i)).ToList())
                 {
                     //we do the treatment if there is a difference in the order
                     if (card.Order != listOrdered[index].Order)
                     {
                         //transformation of the view model by the repository model to be able to store in a database
-                        apidbContext.HAPageCards.First(r => r.Id == listOrdered[index].Id).Order = listOrdered[index].Order;
+                        apidbContext.QPageCards.First(r => r.Id == listOrdered[index].Id).Order = listOrdered[index].Order;
                     }
                 }
                 await apidbContext.SaveChangesAsync();

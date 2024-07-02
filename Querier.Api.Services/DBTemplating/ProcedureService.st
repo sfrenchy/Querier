@@ -2,9 +2,9 @@ using $nameSpace$;
 using $nameSpace$.ProcedureParameters;
 using $nameSpace$.ProcedureReportRequests;
 using $nameSpace$.ProcedureResultSets;
-using HerdiaApp.Api.Models.Datatable;
-using HerdiaApp.Api.Models.Interfaces;
-using HerdiaApp.Tools;
+using Querier.Api.Models.Datatable;
+using Querier.Api.Models.Interfaces;
+using Querier.Tools;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -15,8 +15,8 @@ using System.Threading;
 using System;
 using System.Linq;
 using System.IO;
-using HerdiaApp.Api.Models.HADBConnection;
-using HerdiaApp.Api.Models.Attributes;
+using Querier.Api.Models.QDBConnection;
+using Querier.Api.Models.Attributes;
 
 namespace $nameSpace$.Services
 {

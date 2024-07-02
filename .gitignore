@@ -398,3 +398,7 @@ FodyWeavers.xsd
 *.sln.iml
 bin
 obj
+Querier.Api/.DS_Store
+Querier.Api/Quartz/.DS_Store
+uploadManager
+bin/Debug

@@ -40,7 +40,7 @@ namespace Querier.Api.Models.UI
         [JsonIgnore]
         public virtual QPageRow QPageRow { get; set; }
         [JsonIgnore]
-        public virtual List<QCardRole> HACardRoles { get; set; }
+        public virtual List<QCardRole> QCardRoles { get; set; }
 
         public override string ToString()
         {

@@ -70,17 +70,17 @@ namespace Querier.Api.Services.Role
             {
                 CategoryId = c.Id,
                 Name = c.Label,
-                Actions = c.HACategoryRoles.Select(v => new CategoryActions(v.ApiRoleId, v.View, v.Add, v.Edit)).ToList(),
-                Pages = c.HAPages.Select(p => new PageActionsList
+                Actions = c.QCategoryRoles.Select(v => new CategoryActions(v.ApiRoleId, v.View, v.Add, v.Edit)).ToList(),
+                Pages = c.QPages.Select(p => new PageActionsList
                 {
                     PageId = p.Id,
                     Name = p.Title,
-                    Actions = p.HAPageRoles.Select(v => new PageCartActions(v.ApiRoleId, v.View, v.Add, v.Edit, v.Remove)).ToList(),
-                    Cards = p.HAPageRows.SelectMany(r => r.HAPageCards.Select(c => new CardActionsList
+                    Actions = p.QPageRoles.Select(v => new PageCartActions(v.ApiRoleId, v.View, v.Add, v.Edit, v.Remove)).ToList(),
+                    Cards = p.QPageRows.SelectMany(r => r.QPageCards.Select(c => new CardActionsList
                     {
                         CardId = c.Id,
                         Name = c.Title,
-                        Actions = c.HACardRoles.Select(v => new PageCartActions(v.ApiRoleId, v.View, v.Add, v.Edit, v.Remove)).ToList()
+                        Actions = c.QCardRoles.Select(v => new PageCartActions(v.ApiRoleId, v.View, v.Add, v.Edit, v.Remove)).ToList()
                     })).ToList()
                 }).ToList()
             }).ToList();
@@ -170,11 +170,11 @@ namespace Querier.Api.Services.Role
             GetAllRolesAndPagesAndRelationBetweenResponse response = new GetAllRolesAndPagesAndRelationBetweenResponse();
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                response.Pages = await apidbContext.HAPages.ToListAsync();
+                response.Pages = await apidbContext.QPages.ToListAsync();
                 response.Roles = await _repoRole.GetAll();
-                response.Category = await apidbContext.HAPageCategories.ToListAsync();
+                response.Category = await apidbContext.QPageCategories.ToListAsync();
                 response.PagesRoles = new List<GetPagesRolesRelationsViewModel>();
-                List<QPageRole> PagesRoles = await apidbContext.HAPageRoles.ToListAsync();
+                List<QPageRole> PagesRoles = await apidbContext.QPageRoles.ToListAsync();
                 foreach (var PageRole in PagesRoles)
                 {
                     GetPagesRolesRelationsViewModel elementToAdd = new GetPagesRolesRelationsViewModel
@@ -194,7 +194,7 @@ namespace Querier.Api.Services.Role
             //action = true -> add view and false -> remove view
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPageRole relationPageRole = apidbContext.HAPageRoles.FirstOrDefault(r => r.ApiRoleId == request.roleId && r.HAPageId == request.pageId);
+                QPageRole relationPageRole = apidbContext.QPageRoles.FirstOrDefault(r => r.ApiRoleId == request.roleId && r.HAPageId == request.pageId);
                 if (relationPageRole == null)
                 {
                     //throw new System.NullReferenceException();
@@ -222,7 +222,7 @@ namespace Querier.Api.Services.Role
                     Edit = true,
                     Remove = true
                 };
-                apidbContext.HAPageRoles.Add(newInsert);
+                apidbContext.QPageRoles.Add(newInsert);
                 await apidbContext.SaveChangesAsync();
             }
             return true;
@@ -253,10 +253,10 @@ namespace Querier.Api.Services.Role
             List<GetAllPagesWithRolesResponse> response = new List<GetAllPagesWithRolesResponse>();
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                var pages = await apidbContext.HAPages.ToListAsync();
+                var pages = await apidbContext.QPages.ToListAsync();
                 foreach (var page in pages)
                 {
-                    QPage pageFind = await apidbContext.HAPages.FindAsync(page.Id);
+                    QPage pageFind = await apidbContext.QPages.FindAsync(page.Id);
                     var pageVM = QPageVM.FromHAPage(page);
                     GetAllPagesWithRolesResponse element = new GetAllPagesWithRolesResponse
                     {

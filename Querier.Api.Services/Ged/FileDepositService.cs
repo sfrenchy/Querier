@@ -42,7 +42,7 @@ namespace Querier.Api.Services.Ged
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
                 ServerSideResponse<FileDepositResponse> r = new ServerSideResponse<FileDepositResponse>();
-                r.data = apiDbContext.HAFileDeposit.Select(c => new FileDepositResponse()
+                r.data = apiDbContext.QFileDeposit.Select(c => new FileDepositResponse()
                 {
                     Id = c.Id,
                     Auth = c.Auth,
@@ -59,7 +59,7 @@ namespace Querier.Api.Services.Ged
                     Type = c.Type
                 }).DatatableFilter(request, out int? countFiltered).ToList();
                 r.draw = request.draw;
-                r.recordsTotal = apiDbContext.HAFileDeposit.Count();
+                r.recordsTotal = apiDbContext.QFileDeposit.Count();
                 r.recordsFiltered = (int)countFiltered;
                 
                 return r;
@@ -70,12 +70,12 @@ namespace Querier.Api.Services.Ged
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                QFileDeposit filedepositToRemove = await apiDbContext.HAFileDeposit.FirstAsync(c => c.Id == fileDepositId);
+                QFileDeposit filedepositToRemove = await apiDbContext.QFileDeposit.FirstAsync(c => c.Id == fileDepositId);
                 if (filedepositToRemove == null)
                 {
                     return new GeneralResponse() { success = false, message = "file deposit not find" };
                 }
-                apiDbContext.HAFileDeposit.Remove(filedepositToRemove);
+                apiDbContext.QFileDeposit.Remove(filedepositToRemove);
                 await apiDbContext.SaveChangesAsync();
                 return new GeneralResponse() { success = true, message = "file deposit has been deleted" };
             }
@@ -85,7 +85,7 @@ namespace Querier.Api.Services.Ged
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                QFileDeposit fileDepositOrigin = await apiDbContext.HAFileDeposit.FirstAsync(c => c.Id == FileDepositToUpdate.Id);
+                QFileDeposit fileDepositOrigin = await apiDbContext.QFileDeposit.FirstAsync(c => c.Id == FileDepositToUpdate.Id);
                 if (fileDepositOrigin == null)
                 {
                     return new GeneralResponse() { success = false, message = "file deposit not find" };
@@ -158,7 +158,7 @@ namespace Querier.Api.Services.Ged
                     Tag = FileDepositToAdd.Tag,
                     Type = FileDepositToAdd.Type,
                 };
-                apiDbContext.HAFileDeposit.Add(newFileDeposit);
+                apiDbContext.QFileDeposit.Add(newFileDeposit);
                 await apiDbContext.SaveChangesAsync();
 
                 return new GeneralResponse() { success = true, message = "file deposit has been added" };
@@ -169,7 +169,7 @@ namespace Querier.Api.Services.Ged
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                List<QFileDeposit> fileDepositActif = apiDbContext.HAFileDeposit.Where(f => f.Enable == true).ToList();
+                List<QFileDeposit> fileDepositActif = apiDbContext.QFileDeposit.Where(f => f.Enable == true).ToList();
                 List<FileDepositResponse> result = fileDepositActif.Select(f => new FileDepositResponse() { Auth = f.Auth, Capabilities = f.Capabilities, Filter = f.Filter, Host = f.Host, Label = f.Label, Login = f.Login, Enable = f.Enable, Id = f.Id, Password = f.Password, Port = f.Port, RootPath = f.RootPath, Tag = f.Tag, Type = f.Type }).ToList();
                 return result;
             }

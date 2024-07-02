@@ -57,7 +57,7 @@ using Querier.Api.Models.Enums;
 using System.Collections;
 using System.Resources;
 using Querier.Api.CustomTokenProviders;
-using Querier.Api.Models.HADBConnection;
+using Querier.Api.Models.QDBConnection;
 using Querier.Api.Quartz;
 using Querier.Api.Services.Repositories.Application;
 using Querier.Api.Services.Repositories.Role;
@@ -218,9 +218,9 @@ namespace Querier.Api
             services.AddSingleton<IEntityCRUDService, EntityCRUDService>();
             services.AddSingleton<ITranslationService, TranslationService>();
             services.AddSingleton<IThemeService, ThemeService>();
-            services.AddSingleton<IHATaskScheduler, QTaskScheduler>();
+            services.AddSingleton<IQTaskScheduler, QTaskScheduler>();
             services.AddSingleton<IQUploadService, IqUploadService>();
-            services.AddSingleton<IHATranslationService, QTranslationService>();
+            services.AddSingleton<IQTranslationService, QTranslationService>();
             services.AddScoped<IAuthManagementService, AuthManagementService>();
             services.AddSingleton<IEditModeService, EditModeService>();
             services.AddSingleton<IUICategoryService, UICategoryService>();
@@ -295,7 +295,7 @@ namespace Querier.Api
                                 Token = Utils.RandomString(25) + Guid.NewGuid()
                             };
 
-                            apiDbContext.HARefreshTokens.AddAsync(refreshToken).GetAwaiter().GetResult();
+                            apiDbContext.QRefreshTokens.AddAsync(refreshToken).GetAwaiter().GetResult();
                             apiDbContext.SaveChangesAsync().GetAwaiter().GetResult();
 
                             context.Token = jwtToken;
@@ -416,8 +416,8 @@ namespace Querier.Api
             var assemblyPath = _configuration.GetSection("ApplicationSettings:AssemblyPath").Get<string>();
             var loadAssemblies = _configuration.GetSection("ApplicationSettings:LoadAssemblies").Get<List<string>>() ?? new List<string>();
             var pluginsStartupTypes = _configuration.GetSection("ApplicationSettings:PluginsStartupTypes").Get<List<string>>() ?? new List<string>();
-            List<Type> herdiaAppTypes = new List<Type>();
-            List<Assembly> herdiaAppAssemblies = new List<Assembly>();
+            List<Type> pluginTypes = new List<Type>();
+            List<Assembly> pluginAssemblies = new List<Assembly>();
             List<string> availableDynamicContexts = new List<string>();
 
             // Load dynamically API DB assemblies
@@ -428,12 +428,82 @@ namespace Querier.Api
             
             using (ApiDbContext apiDbContext = new ApiDbContext(optionsBuilder.Options, _configuration))
             {
-                foreach(QDBConnection connection in apiDbContext.HADBConnections.ToList())
+                apiDbContext.Database.EnsureCreated();
+                // Check if QuartzModel exists, deploy if needed
+                if (apiDbContext.Database.IsMySql())
+                {
+                    object qrtzExists = apiDbContext.ExecuteScalar(@"
+                                SELECT COUNT(TABLE_NAME)
+                                FROM 
+                                    information_schema.TABLES 
+                                WHERE 
+                                    TABLE_SCHEMA LIKE 'HAAPIDB' AND 
+                                    TABLE_TYPE LIKE 'BASE TABLE' AND
+                                    TABLE_NAME = 'QRTZ_CALENDARS';");
+                    if (Convert.ToInt32(qrtzExists) == 0) {
+                        string initDBFilePath = "Quartz/Scripts/MYSQL.sql";
+                        apiDbContext.Database.ExecuteSqlRaw(File.ReadAllText(initDBFilePath));
+                    }
+                }
+
+                if (apiDbContext.Database.IsSqlServer())
+                {
+                    object qrtzExists = apiDbContext.ExecuteScalar(@"
+                                SELECT COUNT(*) 
+                                    FROM INFORMATION_SCHEMA.TABLES 
+                                    WHERE TABLE_SCHEMA = 'dbo' 
+                                    AND  TABLE_NAME = 'QRTZ_CALENDARS'");
+                    if (Convert.ToInt32(qrtzExists) == 0) {
+                        string initDBFilePath = "Quartz/Scripts/MSSQL.sql";
+                        apiDbContext.Database.ExecuteSqlRaw(File.ReadAllText(initDBFilePath).Replace("GO",""));
+                    }
+                }
+
+                if (apiDbContext.Database.IsNpgsql())
+                {
+                    object qrtzExists = apiDbContext.ExecuteScalar(@"
+                                SELECT 
+                                    COUNT(table_name)
+                                FROM 
+                                    information_schema.tables 
+                                WHERE 
+                                    table_schema LIKE 'HAAPIDB' AND 
+                                    table_type LIKE 'BASE TABLE' AND
+                                    table_name = 'QRTZ_CALENDARS';");
+                    if (Convert.ToInt32(qrtzExists) == 0) {
+                        string initDBFilePath = "Quartz/Scripts/PGSQL.sql";
+                        apiDbContext.Database.ExecuteSqlRaw(File.ReadAllText(initDBFilePath));
+                    }
+                }
+
+                if (apiDbContext.Database.IsOracle())
+                {
+                    object qrtzExists = apiDbContext.ExecuteScalar(@"
+                                SELECT COUNT(table_name )
+                                FROM USER_TABLES
+                                WHERE table_name='QRTZ_CALENDARS'");
+                    if (Convert.ToInt32(qrtzExists) == 0) {
+                        //string initDBFilePath = "Quartz/Scripts/ORACLE.sql";
+                        //apiDbContext.Database.ExecuteSqlRaw(File.ReadAllText(initDBFilePath));
+                        string initDBFilePath = "Quartz/Scripts/ORACLE.sql";
+                        string[] sqlStatements = File.ReadAllText(initDBFilePath).Split(';');
+
+                        foreach (string sqlStatement in sqlStatements)
+                        {
+                            if (!string.IsNullOrWhiteSpace(sqlStatement))
+                            {
+                                apiDbContext.Database.ExecuteSqlRaw(sqlStatement);
+                            }
+                        }
+                    }
+                }
+                Console.WriteLine("Quartz.Net model OK");
+                foreach(QDBConnection connection in apiDbContext.QDBConnections.ToList())
                 {
                     Console.WriteLine("Loading assembly for " + connection.Name);
                     var loadContext = new AssemblyLoadContext(null, false); 
                     var dbAssembly = Assembly.LoadFrom(connection.AssemblyUploadDefinition.Path);
-                    herdiaAppAssemblies.Add(dbAssembly);
+                    pluginAssemblies.Add(dbAssembly);
                     Type dynamicInterfaceType = typeof(IDynamicContextProceduresServicesResolver);
                     if (dbAssembly.GetTypes().Any(t => dynamicInterfaceType.IsAssignableFrom(t)))
                     {
@@ -462,7 +532,7 @@ namespace Querier.Api
             
             foreach (string assemblyToLoad in loadAssemblies)
             {
-                herdiaAppAssemblies.Add(Assembly.LoadFrom(Path.Combine(assemblyPath, assemblyToLoad)));
+                pluginAssemblies.Add(Assembly.LoadFrom(Path.Combine(assemblyPath, assemblyToLoad)));
             }
 
             if (pluginsStartupTypes != null)
@@ -470,12 +540,12 @@ namespace Querier.Api
                 foreach (string startupType in pluginsStartupTypes)
                 {
                     Type type = Type.GetType(startupType, true);
-                    herdiaAppTypes.Add(type);
-                    herdiaAppAssemblies.Add(type.Assembly);
+                    pluginTypes.Add(type);
+                    pluginAssemblies.Add(type.Assembly);
                 }
 
-                foreach (var ha in from Type herdiaApp in herdiaAppTypes
-                                let ha = (IQPlugin)Activator.CreateInstance(herdiaApp)
+                foreach (var ha in from Type plugin in pluginTypes
+                                let ha = (IQPlugin)Activator.CreateInstance(plugin)
                                 select ha)
                 {
                     var m = ha.GetSpecificProperties();
@@ -499,7 +569,7 @@ namespace Querier.Api
                 }
             }
             
-            foreach (Assembly a in herdiaAppAssemblies)
+            foreach (Assembly a in pluginAssemblies)
             {
                 mvc.AddApplicationPart(a);
             }
@@ -574,17 +644,17 @@ namespace Querier.Api
             });
 
             var pluginsStartupTypes = _configuration.GetSection("ApplicationSettings:PluginsStartupTypes").Get<List<string>>() ?? new List<string>();
-            List<Type> herdiaAppTypes = new List<Type>();
+            List<Type> pluginTypes = new List<Type>();
             if (pluginsStartupTypes != null)
             {
                 foreach (string startupType in pluginsStartupTypes)
                 {
                     Type type = Type.GetType(startupType, true);
-                    herdiaAppTypes.Add(type);
+                    pluginTypes.Add(type);
                 }
 
-                foreach (var ha in from Type herdiaApp in herdiaAppTypes
-                                let ha = (IQPlugin)Activator.CreateInstance(herdiaApp)
+                foreach (var ha in from Type plugin in pluginTypes
+                                let ha = (IQPlugin)Activator.CreateInstance(plugin)
                                 select ha)
                 {
                     ha.ConfigureApp(app, env);
@@ -747,7 +817,7 @@ namespace Querier.Api
 
                     using (var apidbContext = dbContextFactory.CreateDbContext())
                     {
-                        templateCount = apidbContext.HAUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == resourceName).ToList();
+                        templateCount = apidbContext.QUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == resourceName).ToList();
                     }
 
                     //test if the default template exist and if the template already exist in db 

@@ -17,7 +17,7 @@ namespace Querier.Api.Models.UI
         [JsonIgnore]
         public virtual QPage QPage { get; set; }
         [JsonIgnore]
-        public virtual List<QPageCard> HAPageCards { get; set; }
+        public virtual List<QPageCard> QPageCards { get; set; }
 
         public static QPageRow FromHAPageVMRow(QPageRowVM row)
         {
@@ -26,7 +26,7 @@ namespace Querier.Api.Models.UI
                 Id = row.Id,
                 Order = row.Order,
                 HAPageId = row.HAPageId,
-                HAPageCards = row.HAPageCards
+                QPageCards = row.QPageCards
             };
         }
     }

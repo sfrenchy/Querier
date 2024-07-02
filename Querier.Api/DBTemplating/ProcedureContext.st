@@ -2,7 +2,7 @@ using $nameSpace$.ProcedureResultSets;
 using $nameSpace$.ProcedureParameters;
 using Microsoft.Data.SqlClient;
 using System.ComponentModel;
-using HerdiaApp.Tools.DynamicContextExtensions;
+using Querier.Tools.DynamicContextExtensions;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;

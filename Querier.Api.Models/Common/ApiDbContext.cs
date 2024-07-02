@@ -56,8 +56,8 @@ namespace Querier.Api.Models.Common
             {
                 Id = "3fcfa67e-b654-4df0-9558-d97cb90e415e", // primary key
                 UserName = "Administrateur",
-                Email = "admin@herdia.fr",
-                NormalizedEmail = "ADMIN@HERDIA.FR",
+                Email = "admin@querier.fr",
+                NormalizedEmail = "ADMIN@QUERIER.FR",
                 FirstName = "Admin",
                 LastName = "Admin",
                 NormalizedUserName = "ADMINISTRATEUR",
@@ -69,8 +69,8 @@ namespace Querier.Api.Models.Common
             {
                 Id = "545823b1-11b7-4e35-af5f-84e06aa1c050", // primary key
                 UserName = "ApiClientApplication",
-                Email = "apiclient@herdia.fr",
-                NormalizedEmail = "APICLIENT@HERDIA.FR",
+                Email = "apiclient@querier.fr",
+                NormalizedEmail = "APICLIENT@QUERIER.FR",
                 FirstName = "apiclient",
                 LastName = "apiclient",
                 NormalizedUserName = "APICLIENTAPPLICATION",
@@ -102,37 +102,37 @@ namespace Querier.Api.Models.Common
 
             modelBuilder.Entity<QCategoryRole>()
                 .HasOne(c => c.ApiRole)
-                .WithMany(r => r.HACategoryRoles)
+                .WithMany(r => r.QCategoryRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<QPageRole>()
                 .HasOne(p => p.ApiRole)
-                .WithMany(r => r.HAPageRoles)
+                .WithMany(r => r.QPageRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<QCardRole>()
                 .HasOne(p => p.ApiRole)
-                .WithMany(r => r.HACardRoles)
+                .WithMany(r => r.QCardRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<QCategoryRole>()
                 .HasOne(c => c.QPageCategory)
-                .WithMany(r => r.HACategoryRoles)
+                .WithMany(r => r.QCategoryRoles)
                 .HasForeignKey(c => c.HAPageCategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<QPageRole>()
                 .HasOne(p => p.QPage)
-                .WithMany(r => r.HAPageRoles)
+                .WithMany(r => r.QPageRoles)
                 .HasForeignKey(c => c.HAPageId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<QCardRole>()
                 .HasOne(p => p.QPageCard)
-                .WithMany(r => r.HACardRoles)
+                .WithMany(r => r.QCardRoles)
                 .HasForeignKey(c => c.HAPageCardId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -142,27 +142,27 @@ namespace Querier.Api.Models.Common
     {
 
         public IConfiguration _configuration { get; }
-        public virtual DbSet<QRefreshToken> HARefreshTokens { get; set; }
-        public virtual DbSet<QNotification> HANotifications { get; set; }
-        public virtual DbSet<QPageCategory> HAPageCategories { get; set; }
-        public virtual DbSet<QPage> HAPages { get; set; }
-        public virtual DbSet<QPageRow> HAPageRows { get; set; }
-        public virtual DbSet<QPageCard> HAPageCards { get; set; }
-        public virtual DbSet<QPageCardDefinedConfiguration> HAPageCardDefinedConfigurations { get; set; }
-        public virtual DbSet<QTranslation> HATranslations { get; set; }
-        public virtual DbSet<QHtmlPartialRef> HAHtmlPartialRefs { get; set; }
-        public virtual DbSet<QCategoryRole> HACategoryRoles { get; set; }
-        public virtual DbSet<QPageRole> HAPageRoles { get; set; }
-        public virtual DbSet<QCardRole> HACardRoles { get; set; }
-        public virtual DbSet<QTheme> HAThemes { get; set; }
-        public virtual DbSet<QThemeVariable> HAThemeVariables { get; set; }
-        public virtual DbSet<HADBConnection.QDBConnection> HADBConnections { get; set; }
+        public virtual DbSet<QRefreshToken> QRefreshTokens { get; set; }
+        public virtual DbSet<QNotification> QNotifications { get; set; }
+        public virtual DbSet<QPageCategory> QPageCategories { get; set; }
+        public virtual DbSet<QPage> QPages { get; set; }
+        public virtual DbSet<QPageRow> QPageRows { get; set; }
+        public virtual DbSet<QPageCard> QPageCards { get; set; }
+        public virtual DbSet<QPageCardDefinedConfiguration> QPageCardDefinedConfigurations { get; set; }
+        public virtual DbSet<QTranslation> QTranslations { get; set; }
+        public virtual DbSet<QHtmlPartialRef> QHtmlPartialRefs { get; set; }
+        public virtual DbSet<QCategoryRole> QCategoryRoles { get; set; }
+        public virtual DbSet<QPageRole> QPageRoles { get; set; }
+        public virtual DbSet<QCardRole> QCardRoles { get; set; }
+        public virtual DbSet<QTheme> QThemes { get; set; }
+        public virtual DbSet<QThemeVariable> QThemeVariables { get; set; }
+        public virtual DbSet<QDBConnection.QDBConnection> QDBConnections { get; set; }
         // public virtual DbSet<UserNotification> Notifications { get; set; }
-        public virtual DbSet<HAEntityAttribute> HAEntityAttributes { get; set; }
-        public virtual DbSet<QUploadDefinition> HAUploadDefinitions { get; set; }
-        public virtual DbSet<HAApiUserAttributes> HAApiUserAttributes { get; set; }
-        public virtual DbSet<QFileDeposit> HAFileDeposit { get; set; }
-        public virtual DbSet<QFilesFromFileDeposit> HAFilesFromFileDeposit { get; set; }
+        public virtual DbSet<QEntityAttribute> QEntityAttribute { get; set; }
+        public virtual DbSet<QUploadDefinition> QUploadDefinitions { get; set; }
+        public virtual DbSet<QApiUserAttributes> QApiUserAttributes { get; set; }
+        public virtual DbSet<QFileDeposit> QFileDeposit { get; set; }
+        public virtual DbSet<QFilesFromFileDeposit> QFilesFromFileDeposit { get; set; }
 
 
         public ApiDbContext(DbContextOptions<ApiDbContext> options, IConfiguration configuration) : base(options)
@@ -199,16 +199,16 @@ namespace Querier.Api.Models.Common
         {
             var SQLEngine = _configuration.GetSection("SQLEngine").Get<string>();
 
-            modelBuilder.ApplyConfiguration(new HAEntityAttribute.HAEntityAttributeConfiguration());
+            modelBuilder.ApplyConfiguration(new QEntityAttribute.QEntityAttributeConfiguration());
             base.OnModelCreating(modelBuilder);
 
             switch (SQLEngine)
             {
                 case "PgSQL":
-                    modelBuilder.Entity<HAEntityAttribute>(entity => entity.HasCheckConstraint("CK_ONLY_ONE_NOT_NULL", "num_nonnulls(\"StringAttribute\", \"IntAttribute\", \"DecimalAttribute\", \"DateTimeAttribute\") = 1"));
+                    modelBuilder.Entity<QEntityAttribute>(entity => entity.HasCheckConstraint("CK_ONLY_ONE_NOT_NULL", "num_nonnulls(\"StringAttribute\", \"IntAttribute\", \"DecimalAttribute\", \"DateTimeAttribute\") = 1"));
                     break;
                 case "Oracle":
-                    modelBuilder.Entity<HAEntityAttribute>(entity => entity.HasCheckConstraint("CK_ONLY_ONE_NOT_NULL", @"
+                    modelBuilder.Entity<QEntityAttribute>(entity => entity.HasCheckConstraint("CK_ONLY_ONE_NOT_NULL", @"
                         (
                             (CASE WHEN NVL(""StringAttribute"", 0) IS NULL THEN 0 ELSE 1 END) +
                             (CASE WHEN NVL(""IntAttribute"", 0) IS NULL THEN 0 ELSE 1 END) +
@@ -218,7 +218,7 @@ namespace Querier.Api.Models.Common
                     );
                     break;
                 default:
-                    modelBuilder.Entity<HAEntityAttribute>(entity => entity.HasCheckConstraint("CK_ONLY_ONE_NOT_NULL", @"
+                    modelBuilder.Entity<QEntityAttribute>(entity => entity.HasCheckConstraint("CK_ONLY_ONE_NOT_NULL", @"
                         (CASE WHEN StringAttribute IS NULL THEN 0 ELSE 1 END 
                             + CASE WHEN IntAttribute IS NULL THEN 0 ELSE 1 END
                             + CASE WHEN DecimalAttribute IS NULL THEN 0 ELSE 1 END
@@ -263,8 +263,8 @@ namespace Querier.Api.Models.Common
             {
                 Id = "3fcfa67e-b654-4df0-9558-d97cb90e415e", // primary key
                 UserName = "Administrateur",
-                Email = "admin@herdia.fr",
-                NormalizedEmail = "admin@herdia.fr",
+                Email = "admin@querier.fr",
+                NormalizedEmail = "admin@querier.fr",
                 FirstName = "Admin",
                 LastName = "Admin",
                 NormalizedUserName = "ADMINISTRATEUR",
@@ -276,7 +276,7 @@ namespace Querier.Api.Models.Common
             {
                 Id = "545823b1-11b7-4e35-af5f-84e06aa1c050", // primary key
                 UserName = "ApiClientApplication",
-                Email = "apiclient@herdia.fr",
+                Email = "apiclient@querier.fr",
                 FirstName = "apiclient",
                 LastName = "apiclient",
                 NormalizedUserName = "APICLIENTAPPLICATION",
@@ -427,37 +427,37 @@ namespace Querier.Api.Models.Common
 
             modelBuilder.Entity<QCategoryRole>()
                 .HasOne(c => c.ApiRole)
-                .WithMany(r => r.HACategoryRoles)
+                .WithMany(r => r.QCategoryRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<QPageRole>()
                 .HasOne(p => p.ApiRole)
-                .WithMany(r => r.HAPageRoles)
+                .WithMany(r => r.QPageRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<QCardRole>()
                 .HasOne(p => p.ApiRole)
-                .WithMany(r => r.HACardRoles)
+                .WithMany(r => r.QCardRoles)
                 .HasForeignKey(c => c.ApiRoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<QCategoryRole>()
                 .HasOne(c => c.QPageCategory)
-                .WithMany(r => r.HACategoryRoles)
+                .WithMany(r => r.QCategoryRoles)
                 .HasForeignKey(c => c.HAPageCategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<QPageRole>()
                 .HasOne(p => p.QPage)
-                .WithMany(r => r.HAPageRoles)
+                .WithMany(r => r.QPageRoles)
                 .HasForeignKey(c => c.HAPageId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<QCardRole>()
                 .HasOne(p => p.QPageCard)
-                .WithMany(r => r.HACardRoles)
+                .WithMany(r => r.QCardRoles)
                 .HasForeignKey(c => c.HAPageCardId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -494,39 +494,39 @@ namespace Querier.Api.Models.Common
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HAApiUserAttributes>()
+            modelBuilder.Entity<QApiUserAttributes>()
                 .HasOne(e => e.User)
-                .WithMany(a => a.HAApiUserAttributes)
+                .WithMany(a => a.QApiUserAttributes)
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HAApiUserAttributes>()
+            modelBuilder.Entity<QApiUserAttributes>()
                 .HasOne(e => e.EntityAttribute)
-                .WithMany(a => a.HAApiUserAttributes)
+                .WithMany(a => a.QApiUserAttributes)
                 .HasForeignKey(e => e.EntityAttributeId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<HADBConnection.QDBConnection>()
+            modelBuilder.Entity<QDBConnection.QDBConnection>()
                 .HasIndex(d => d.Name)
                 .IsUnique();
             
-            modelBuilder.Entity<HADBConnection.QDBConnection>()
+            modelBuilder.Entity<QDBConnection.QDBConnection>()
                 .HasIndex(d => d.ApiRoute)
                 .IsUnique();
 
-            modelBuilder.Entity<HADBConnection.QDBConnection>()
+            modelBuilder.Entity<QDBConnection.QDBConnection>()
                 .HasOne(e => e.AssemblyUploadDefinition)
                 .WithMany()
                 .HasForeignKey(e => e.AssemblyUploadDefinitionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<HADBConnection.QDBConnection>()
+            modelBuilder.Entity<QDBConnection.QDBConnection>()
                 .HasOne(e => e.PDBUploadDefinition)
                 .WithMany()
                 .HasForeignKey(e => e.PDBUploadDefinitionId)
                 .OnDelete(DeleteBehavior.Restrict);
             
-            modelBuilder.Entity<HADBConnection.QDBConnection>()
+            modelBuilder.Entity<QDBConnection.QDBConnection>()
                 .HasOne(e => e.SourcesUploadDefinition)
                 .WithMany()
                 .HasForeignKey(e => e.SourcesUploadDefinitionId)
@@ -537,11 +537,11 @@ namespace Querier.Api.Models.Common
                 .HasIndex(d => d.Tag)
                 .IsUnique();
 
-            //add delete cascade on fk : QFilesFromFileDeposit.HAFileDepositId
+            //add delete cascade on fk : QFilesFromFileDeposit.QFileDepositId
             modelBuilder.Entity<QFilesFromFileDeposit>()
                 .HasOne(e => e.QFileDeposit)
                 .WithMany()
-                .HasForeignKey(e => e.HAFileDepositId)
+                .HasForeignKey(e => e.QFileDepositId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             ////seeding data file deposit for testing during dev

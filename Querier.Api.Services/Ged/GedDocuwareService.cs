@@ -36,7 +36,7 @@ namespace Querier.Api.Services.Ged
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                return apidbContext.HAFileDeposit.FirstOrDefault(r => r.Type == TypeFileDepositEnum.Docuware);
+                return apidbContext.QFileDeposit.FirstOrDefault(r => r.Type == TypeFileDepositEnum.Docuware);
             }
         } 
 
@@ -63,7 +63,7 @@ namespace Querier.Api.Services.Ged
             {
                 QFilesFromFileDeposit element = new QFilesFromFileDeposit() { 
                     FileRef = document.Id.ToString(),
-                    HAFileDepositId = FileDepositInformations.Id,
+                    QFileDepositId = FileDepositInformations.Id,
                 };
                 element.SetConfiguration<ConfigurationDocuware>(new ConfigurationDocuware { Title = document.Title, StoredDate = document.CreatedAt, DateModification = document.LastModified });
                 response.Add(element);
@@ -72,12 +72,12 @@ namespace Querier.Api.Services.Ged
             //save documents ref in QFilesFromFileDeposit
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                //used to see il the file is already exist in table QFilesFromFileDeposit by compare the fileRef(path of the file) and the HAFileDepositId
-                List<QFilesFromFileDeposit> missingRecords = response.Where(x => !apidbContext.HAFilesFromFileDeposit.Any(el => el.FileRef == x.FileRef && el.HAFileDepositId == x.HAFileDepositId )).ToList();
+                //used to see il the file is already exist in table QFilesFromFileDeposit by compare the fileRef(path of the file) and the QFileDepositId
+                List<QFilesFromFileDeposit> missingRecords = response.Where(x => !apidbContext.QFilesFromFileDeposit.Any(el => el.FileRef == x.FileRef && el.QFileDepositId == x.QFileDepositId )).ToList();
                 
                 if(missingRecords.Count > 0)
                 {
-                    apidbContext.HAFilesFromFileDeposit.AddRange(missingRecords);
+                    apidbContext.QFilesFromFileDeposit.AddRange(missingRecords);
                     apidbContext.SaveChanges();
                     return new FillFileInformationResponse() { success = true, numberFileAdded = missingRecords.Count(), message = "" };
                 }
@@ -106,7 +106,7 @@ namespace Querier.Api.Services.Ged
                         new GetInformationsResponse
                         {
                             FilePath = "",
-                            IdHAFilesFromFileDeposit = 0
+                            IdQFilesFromFileDeposit = 0
                         }
                     };
             }
@@ -154,7 +154,7 @@ namespace Querier.Api.Services.Ged
                         new GetInformationsResponse
                         {
                             FilePath = "",
-                            IdHAFilesFromFileDeposit = 0
+                            IdQFilesFromFileDeposit = 0
                         }
                     };
             }
@@ -165,10 +165,10 @@ namespace Querier.Api.Services.Ged
             {
                 foreach (Document document in documentFiltered)
                 {
-                    var doc = apidbContext.HAFilesFromFileDeposit.FirstOrDefault(d => d.FileRef == document.Id.ToString());
+                    var doc = apidbContext.QFilesFromFileDeposit.FirstOrDefault(d => d.FileRef == document.Id.ToString());
                     if(doc != null)
                     {
-                        response.Add(new GetInformationsResponse { FilePath = document.Title, IdHAFilesFromFileDeposit = doc.Id });
+                        response.Add(new GetInformationsResponse { FilePath = document.Title, IdQFilesFromFileDeposit = doc.Id });
                     }  
                 }
             }
@@ -181,7 +181,7 @@ namespace Querier.Api.Services.Ged
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 //get the file 
-                QFilesFromFileDeposit fileReference = apidbContext.HAFilesFromFileDeposit.FirstOrDefault(r => r.Id == IdTable && r.HAFileDepositId == FileDepositInformations.Id);
+                QFilesFromFileDeposit fileReference = apidbContext.QFilesFromFileDeposit.FirstOrDefault(r => r.Id == IdTable && r.QFileDepositId == FileDepositInformations.Id);
                 if (fileReference == null)
                 {
                     return new GeneralResponse() { success = false, message = "file not find" };

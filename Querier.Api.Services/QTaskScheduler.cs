@@ -12,7 +12,7 @@ using static Quartz.Logging.OperationName;
 
 namespace Querier.Api.Services
 {
-    public interface IHATaskScheduler
+    public interface IQTaskScheduler
     {
         Task<CreateOrUpdateScheduleJobResponse> CreateOrUpdateScheduledJobAsync(JobSchedule jobSchedule);
         Task<bool> DeleteScheduledJobAsync(string jobName);
@@ -21,7 +21,7 @@ namespace Querier.Api.Services
         Task<dynamic> GetAllClassJobs();
         Task<bool> RunJobAsync(string jobName);
     }
-    public class QTaskScheduler : IHATaskScheduler
+    public class QTaskScheduler : IQTaskScheduler
     {
         private readonly ISchedulerFactory _schedulerFactory;
         private readonly IJobFactory _jobFactory;

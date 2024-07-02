@@ -64,30 +64,30 @@ namespace Querier.Tools
         {
             if (callerName == null)
                 throw new NullReferenceException();
-            return _apiUser.HAApiUserAttributes.First(a => a.EntityAttribute.Label == callerName).EntityAttribute.Value;
+            return _apiUser.QApiUserAttributes.First(a => a.EntityAttribute.Label == callerName).EntityAttribute.Value;
         }
         private void SetAttribute(object? attributeValue, bool nullable, string callerName = null)
         {
             if (callerName == null)
                 throw new NullReferenceException();
 
-            if (!_apiUser.HAApiUserAttributes.Any(a => a.EntityAttribute.Label == callerName))
+            if (!_apiUser.QApiUserAttributes.Any(a => a.EntityAttribute.Label == callerName))
             {
-                var newAttribute = new HAApiUserAttributes()
+                var newAttribute = new QApiUserAttributes()
                 {
                     User = _apiUser,
-                    EntityAttribute = new HAEntityAttribute()
+                    EntityAttribute = new QEntityAttribute()
                     {
                         Label = callerName,
                         Nullable = nullable
                     }
                 };
                 newAttribute.EntityAttribute.Value = attributeValue;
-                _apiUser.HAApiUserAttributes.Add(newAttribute);
+                _apiUser.QApiUserAttributes.Add(newAttribute);
             }
             else
             {
-                _apiUser.HAApiUserAttributes.First(a => a.EntityAttribute.Label == callerName).EntityAttribute.Value = attributeValue;
+                _apiUser.QApiUserAttributes.First(a => a.EntityAttribute.Label == callerName).EntityAttribute.Value = attributeValue;
             }
             _userManager.UpdateAsync(_apiUser).GetAwaiter().GetResult();
         }

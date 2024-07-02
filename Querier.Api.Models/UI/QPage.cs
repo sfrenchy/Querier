@@ -22,8 +22,8 @@ namespace Querier.Api.Models.UI
         [JsonIgnore]
         public virtual QPageCategory QPageCategory { get; set; }
         [JsonIgnore]
-        public virtual List<QPageRow> HAPageRows { get; set; }
+        public virtual List<QPageRow> QPageRows { get; set; }
         [JsonIgnore]
-        public virtual List<QPageRole> HAPageRoles { get; set; }
+        public virtual List<QPageRole> QPageRoles { get; set; }
     }
 }

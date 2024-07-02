@@ -36,9 +36,9 @@ namespace Querier.Api.Models.Common
         /// </summary>
         public string RightPanelPackageName { get; set; }
         /// <summary>
-        /// A list of <see cref="HAEntityAttributeViewModel"/> that the application needs for it's AspNetUsers
+        /// A list of <see cref="QEntityAttributeViewModel"/> that the application needs for it's AspNetUsers
         /// </summary>
-        public List<HAEntityAttributeViewModel> ApplicationUserAttributes { get; set; }
+        public List<QEntityAttributeViewModel> ApplicationUserAttributes { get; set; }
         /// <summary>
         /// A list of <see cref="PropertyDefinition"/> that the application needs for a specific user table
         /// </summary>

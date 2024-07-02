@@ -74,33 +74,33 @@ namespace Querier.Api.Services.User
             if (Features.ApplicationUserAttributes.Count > 0)
             {
                 //Get Application specific user attributes viewmodels
-                List<HAEntityAttributeViewModel> ApplicationSpecificUserAttributesViewModels = Features.ApplicationUserAttributes;
+                List<QEntityAttributeViewModel> ApplicationSpecificUserAttributesViewModels = Features.ApplicationUserAttributes;
 
                 using (var apiDbContext = _contextFactory.CreateDbContext())
                 {
                     //Map viewmodel user attributes
-                    List<HAEntityAttribute> ApplicationSpecificUserAttributes = new List<HAEntityAttribute>();
+                    List<QEntityAttribute> ApplicationSpecificUserAttributes = new List<QEntityAttribute>();
 
                     ApplicationSpecificUserAttributesViewModels.ForEach(vm =>
                     {
-                        HAEntityAttribute EntityAttribute = new HAEntityAttribute() { Label = vm.Label, Value = vm.Value, Nullable = vm.Nullable };
+                        QEntityAttribute EntityAttribute = new QEntityAttribute() { Label = vm.Label, Value = vm.Value, Nullable = vm.Nullable };
                         ApplicationSpecificUserAttributes.Add(EntityAttribute);
                     });
 
-                    //Add Application specific attributes to the HAEntityAttributes tables
-                    apiDbContext.HAEntityAttributes.AddRange(ApplicationSpecificUserAttributes);
+                    //Add Application specific attributes to the QEntityAttribute tables
+                    apiDbContext.QEntityAttribute.AddRange(ApplicationSpecificUserAttributes);
                     apiDbContext.SaveChanges();
 
-                    //Create a list of HAApiUserAttributes
-                    List<HAApiUserAttributes> userAttributes = new List<HAApiUserAttributes>();
+                    //Create a list of QApiUserAttributes
+                    List<QApiUserAttributes> userAttributes = new List<QApiUserAttributes>();
 
-                    //For each specific user attributes, create a HAApiUserAttributes to link the attribute to the user being created
+                    //For each specific user attributes, create a QApiUserAttributes to link the attribute to the user being created
                     ApplicationSpecificUserAttributes.ForEach(att =>
                     {
-                        HAApiUserAttributes userAttribute = new HAApiUserAttributes() { EntityAttributeId = att.Id, UserId = newUser.Id };
+                        QApiUserAttributes userAttribute = new QApiUserAttributes() { EntityAttributeId = att.Id, UserId = newUser.Id };
                         userAttributes.Add(userAttribute);
                     });
-                    apiDbContext.HAApiUserAttributes.AddRange(userAttributes);
+                    apiDbContext.QApiUserAttributes.AddRange(userAttributes);
                     await apiDbContext.SaveChangesAsync();
                 }
             }
@@ -256,7 +256,7 @@ namespace Querier.Api.Services.User
 
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                resultat = apidbContext.HAUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == ResetPasswordTemplateName).ToList();
+                resultat = apidbContext.QUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == ResetPasswordTemplateName).ToList();
             }
 
             //Get the content string of the body Email with a stream:

@@ -100,9 +100,9 @@ namespace Querier.Api.Services.Repositories.Role
                 }
 
                 var foundRole = await _roleManager.Roles
-                    .Include(r => r.HACategoryRoles)
-                    .Include(r => r.HAPageRoles)
-                    .Include(r => r.HACardRoles)
+                    .Include(r => r.QCategoryRoles)
+                    .Include(r => r.QPageRoles)
+                    .Include(r => r.QCardRoles)
                     .FirstOrDefaultAsync(r => r.Id == id);
                 if (foundRole == null)
                 {
@@ -129,11 +129,11 @@ namespace Querier.Api.Services.Repositories.Role
         {
             try
             {
-                return _context.HAPageCategories
-                    .Include(c => c.HACategoryRoles)
-                    .Include(c => c.HAPages).ThenInclude(p => p.HAPageRoles)
-                    .Include(c => c.HAPages).ThenInclude(p => p.HAPageRows).ThenInclude(r => r.HAPageCards)
-                    .Include(c => c.HAPages).ThenInclude(p => p.HAPageRows).ThenInclude(r => r.HAPageCards).ThenInclude(c => c.HACardRoles).ToList();
+                return _context.QPageCategories
+                    .Include(c => c.QCategoryRoles)
+                    .Include(c => c.QPages).ThenInclude(p => p.QPageRoles)
+                    .Include(c => c.QPages).ThenInclude(p => p.QPageRows).ThenInclude(r => r.QPageCards)
+                    .Include(c => c.QPages).ThenInclude(p => p.QPageRows).ThenInclude(r => r.QPageCards).ThenInclude(c => c.QCardRoles).ToList();
             }
             catch (Exception ex)
             {
@@ -153,7 +153,7 @@ namespace Querier.Api.Services.Repositories.Role
                 }
                 foreach (var action in actions)
                 {
-                    var foundAction = await _context.HACategoryRoles
+                    var foundAction = await _context.QCategoryRoles
                         .FirstOrDefaultAsync(a => a.ApiRoleId == action.ApiRoleId && a.HAPageCategoryId == action.HAPageCategoryId);
                     if (foundAction != null)
                     {
@@ -163,7 +163,7 @@ namespace Querier.Api.Services.Repositories.Role
                     }
                     else
                     {
-                        await _context.HACategoryRoles.AddAsync(action);
+                        await _context.QCategoryRoles.AddAsync(action);
                     }
                 }
                 await _context.SaveChangesAsync();
@@ -187,7 +187,7 @@ namespace Querier.Api.Services.Repositories.Role
                 }
                 foreach (var action in actions)
                 {
-                    var foundAction = await _context.HAPageRoles
+                    var foundAction = await _context.QPageRoles
                         .FirstOrDefaultAsync(a => a.ApiRoleId == action.ApiRoleId && a.HAPageId == action.HAPageId);
                     if (foundAction != null)
                     {
@@ -198,7 +198,7 @@ namespace Querier.Api.Services.Repositories.Role
                     }
                     else
                     {
-                        await _context.HAPageRoles.AddAsync(action);
+                        await _context.QPageRoles.AddAsync(action);
                     }
                 }
                 await _context.SaveChangesAsync();
@@ -222,7 +222,7 @@ namespace Querier.Api.Services.Repositories.Role
                 }
                 foreach (var action in actions)
                 {
-                    var foundAction = await _context.HACardRoles
+                    var foundAction = await _context.QCardRoles
                         .FirstOrDefaultAsync(a => a.ApiRoleId == action.ApiRoleId && a.HAPageCardId == action.HAPageCardId);
                     if (foundAction != null)
                     {
@@ -233,7 +233,7 @@ namespace Querier.Api.Services.Repositories.Role
                     }
                     else
                     {
-                        await _context.HACardRoles.AddAsync(action);
+                        await _context.QCardRoles.AddAsync(action);
                     }
                 }
                 await _context.SaveChangesAsync();
@@ -253,13 +253,13 @@ namespace Querier.Api.Services.Repositories.Role
                 switch (actions.Type)
                 {
                     case "CategoryId":
-                        await _context.HACategoryRoles.AddAsync(new QCategoryRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit));
+                        await _context.QCategoryRoles.AddAsync(new QCategoryRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit));
                         break;
                     case "PageId":
-                        await _context.HAPageRoles.AddAsync(new QPageRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit, actions.Actions.Remove));
+                        await _context.QPageRoles.AddAsync(new QPageRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit, actions.Actions.Remove));
                         break;
                     case "CardId":
-                        await _context.HACardRoles.AddAsync(new QCardRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit, actions.Actions.Remove));
+                        await _context.QCardRoles.AddAsync(new QCardRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit, actions.Actions.Remove));
                         break;
                     default:
                         break;

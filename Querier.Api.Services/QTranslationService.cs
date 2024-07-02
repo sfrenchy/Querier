@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Querier.Api.Services
 {
-    public interface IHATranslationService
+    public interface IQTranslationService
     {
         QGetTranslationsSignatureResponse GetSignature();
         QGetTranslationsResponse GetTranslations();
@@ -20,7 +20,7 @@ namespace Querier.Api.Services
         public List<QTranslation> GetTranslationTable();
     }
 
-    public class QTranslationService : IHATranslationService
+    public class QTranslationService : IQTranslationService
     {
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private readonly ILogger<QTranslationService> _logger;
@@ -37,7 +37,7 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                return apidbContext.HATranslations.ToList();
+                return apidbContext.QTranslations.ToList();
             }
         }
         public QGetTranslationsResponse GetTranslations()
@@ -49,9 +49,9 @@ namespace Querier.Api.Services
                 result.EN = new Dictionary<string, string>();
                 result.FR = new Dictionary<string, string>();
 
-                result.DE = apidbContext.HATranslations.ToDictionary(t => t.Code, t => t.DeLabel);
-                result.EN = apidbContext.HATranslations.ToDictionary(t => t.Code, t => t.EnLabel);
-                result.FR = apidbContext.HATranslations.ToDictionary(t => t.Code, t => t.FrLabel);
+                result.DE = apidbContext.QTranslations.ToDictionary(t => t.Code, t => t.DeLabel);
+                result.EN = apidbContext.QTranslations.ToDictionary(t => t.Code, t => t.EnLabel);
+                result.FR = apidbContext.QTranslations.ToDictionary(t => t.Code, t => t.FrLabel);
 
                 if (Repositories.Application.Features.EnabledFeatures.Contains(Querier.Api.Models.Enums.ApplicationFeatures.OwnTranslation))
                 {
@@ -94,7 +94,7 @@ namespace Querier.Api.Services
             {
 
 
-                var translation = apidbContext.HATranslations.FirstOrDefault(t => t.Code == request.Code);
+                var translation = apidbContext.QTranslations.FirstOrDefault(t => t.Code == request.Code);
                 if (translation == null)
                 {
                     translation = new Querier.Api.Models.UI.QTranslation()
@@ -104,7 +104,7 @@ namespace Querier.Api.Services
                         EnLabel = request.Language.ToLower().Contains("en") ? request.Value : null,
                         DeLabel = request.Language.ToLower().Contains("de") ? request.Value : null
                     };
-                    apidbContext.HATranslations.Add(translation);
+                    apidbContext.QTranslations.Add(translation);
                 }
                 else
                 {
@@ -124,7 +124,7 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                var translation = apidbContext.HATranslations.FirstOrDefault(t => t.Code == request.Code);
+                var translation = apidbContext.QTranslations.FirstOrDefault(t => t.Code == request.Code);
                 if (translation != null)
                 {
                     translation.EnLabel = request.EnLabel;

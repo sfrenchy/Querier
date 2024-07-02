@@ -8,8 +8,8 @@ namespace Querier.Api.Models.Auth
         public ApiRole(): base() {}
         public ApiRole(string name): base(name) {}
 
-        public virtual List<QCategoryRole> HACategoryRoles { get; set; }
-        public virtual List<QCardRole> HACardRoles { get; set; }
-        public virtual List<QPageRole> HAPageRoles { get; set; }
+        public virtual List<QCategoryRole> QCategoryRoles { get; set; }
+        public virtual List<QCardRole> QCardRoles { get; set; }
+        public virtual List<QPageRole> QPageRoles { get; set; }
     }
 }

@@ -108,7 +108,7 @@ namespace Querier.Api.Services.Repositories.User
                 }
 
                 // Check the token we got if its saved in the db
-                var storedRefreshToken = await apiDbContext.HARefreshTokens.FirstOrDefaultAsync(x => x.Token == tokenRequest.RefreshToken);
+                var storedRefreshToken = await apiDbContext.QRefreshTokens.FirstOrDefaultAsync(x => x.Token == tokenRequest.RefreshToken);
 
                 if (storedRefreshToken == null)
                 {
@@ -163,7 +163,7 @@ namespace Querier.Api.Services.Repositories.User
                 }
 
                 storedRefreshToken.IsUsed = true;
-                apiDbContext.HARefreshTokens.Update(storedRefreshToken);
+                apiDbContext.QRefreshTokens.Update(storedRefreshToken);
                 await apiDbContext.SaveChangesAsync();
 
                 var dbUser = await userManager.FindByIdAsync(storedRefreshToken.UserId);
@@ -209,7 +209,7 @@ namespace Querier.Api.Services.Repositories.User
                 Token = Utils.RandomString(25) + Guid.NewGuid()
             };
 
-            await apiDbContext.HARefreshTokens.AddAsync(refreshToken);
+            await apiDbContext.QRefreshTokens.AddAsync(refreshToken);
             await apiDbContext.SaveChangesAsync();
 
             return new AuthResult()

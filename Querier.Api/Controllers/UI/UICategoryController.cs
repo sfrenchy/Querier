@@ -83,7 +83,7 @@ namespace Querier.Api.Controllers.UI
             if (category == null)
                 return NotFound("Unable to find the category!");
 
-            if (category.HAPages.Count > 0)
+            if (category.QPages.Count > 0)
                 return BadRequest("The category can't be deleted, there are still page(s) for this!");
 
             return new OkObjectResult(await _uiCategoryService.DeleteCategoryAsync(category));

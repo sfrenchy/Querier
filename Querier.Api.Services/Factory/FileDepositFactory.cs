@@ -30,7 +30,7 @@ namespace Querier.Api.Services.Factory
             QFileDeposit fileDeposit;
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                fileDeposit = apidbContext.HAFileDeposit.FirstOrDefault(r => r.Tag == tag);
+                fileDeposit = apidbContext.QFileDeposit.FirstOrDefault(r => r.Tag == tag);
             }
             return CreateInstance(fileDeposit);
         }
@@ -40,7 +40,7 @@ namespace Querier.Api.Services.Factory
             QFileDeposit fileDeposit;
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                fileDeposit = apidbContext.HAFileDeposit.FirstOrDefault(r => r.Type == typeFileDeposit);
+                fileDeposit = apidbContext.QFileDeposit.FirstOrDefault(r => r.Type == typeFileDeposit);
             }
 
             return CreateInstance(fileDeposit);

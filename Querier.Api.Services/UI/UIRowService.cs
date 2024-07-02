@@ -35,8 +35,8 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPage page = await apidbContext.HAPages.FindAsync(pageId);
-                return page.HAPageRows;
+                QPage page = await apidbContext.QPages.FindAsync(pageId);
+                return page.QPageRows;
             }
         }
 
@@ -44,21 +44,21 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPage page = await apidbContext.HAPages.FindAsync(pageId);
+                QPage page = await apidbContext.QPages.FindAsync(pageId);
                 if (page != null)
                 {
-                    page.HAPageRows ??= new EditableList<QPageRow>();
+                    page.QPageRows ??= new EditableList<QPageRow>();
                     QPageRow row = new QPageRow();
-                    if (page.HAPageRows.Count < 1)
+                    if (page.QPageRows.Count < 1)
                     {
                         row.Order = 1;
-                        page.HAPageRows.Add(row);
+                        page.QPageRows.Add(row);
                     }
                     else
                     {
-                        List<int> listOrders = page.HAPageRows.Select(r => r.Order).ToList();
+                        List<int> listOrders = page.QPageRows.Select(r => r.Order).ToList();
                         row.Order = listOrders.Max() + 1;
-                        page.HAPageRows.Add(row);
+                        page.QPageRows.Add(row);
                     }
                     await apidbContext.SaveChangesAsync();
                 }
@@ -70,28 +70,28 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPageRow row = await apidbContext.HAPageRows.FindAsync(rowId);
-                if (row.HAPageCards.Count != 0)
+                QPageRow row = await apidbContext.QPageRows.FindAsync(rowId);
+                if (row.QPageCards.Count != 0)
                 {
-                    row.HAPageCards.Clear();
+                    row.QPageCards.Clear();
                 }
-                QPage pageDb = await apidbContext.HAPages.FindAsync(row.HAPageId);
+                QPage pageDb = await apidbContext.QPages.FindAsync(row.HAPageId);
 
                 //deleting the row
-                pageDb.HAPageRows.Remove(row);
+                pageDb.QPageRows.Remove(row);
 
                 //set up a counter to restore the order of the lines to proper
                 int orderCounter = 1;
 
                 //Browse the list with the previously deleted line
-                foreach (var (r, index) in pageDb.HAPageRows.Select((value, i) => (value, i)).ToList())
+                foreach (var (r, index) in pageDb.QPageRows.Select((value, i) => (value, i)).ToList())
                 {
                     //The new order is applied to each row in the list
                     r.Order = orderCounter;
 
                     //counter increment for the next items in the list
                     orderCounter++;
-                    apidbContext.HAPageRows.Update(r);
+                    apidbContext.QPageRows.Update(r);
                 }
                 await apidbContext.SaveChangesAsync();
 
@@ -104,10 +104,10 @@ namespace Querier.Api.Services.UI
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 //ordering of the list by ID as it is retrieved ordered by the field 'Order' from the front
-                List<QPageRowVM> listOrdered = page.HAPageRows.OrderBy(row => row.Id).ToList();
-                QPage pageDb = await apidbContext.HAPages.FindAsync(page.Id);
+                List<QPageRowVM> listOrdered = page.QPageRows.OrderBy(row => row.Id).ToList();
+                QPage pageDb = await apidbContext.QPages.FindAsync(page.Id);
 
-                foreach (var (row, index) in pageDb.HAPageRows.Select((value, i) => (value, i)).ToList())
+                foreach (var (row, index) in pageDb.QPageRows.Select((value, i) => (value, i)).ToList())
                 {
                     //we do the treatment if there is a difference in the order
                     if (row.Order != listOrdered[index].Order)
@@ -115,7 +115,7 @@ namespace Querier.Api.Services.UI
                         //transformation of the view model by the repository model to be able to store in a database
                         QPageRow rowTransformed = new QPageRow();
                         rowTransformed = QPageRow.FromHAPageVMRow(listOrdered[index]);
-                        apidbContext.HAPageRows.First(r => r.Id == rowTransformed.Id).Order = rowTransformed.Order;
+                        apidbContext.QPageRows.First(r => r.Id == rowTransformed.Id).Order = rowTransformed.Order;
                     }
                 }
                 await apidbContext.SaveChangesAsync();

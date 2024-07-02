@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using System.Data.Common;
 using System.IO;
 using System.Threading.Tasks;
-using Querier.Api.Models.HADBConnection;
+using Querier.Api.Models.QDBConnection;
 using Querier.Api.Models.Requests;
 
 namespace Querier.Api.Controllers

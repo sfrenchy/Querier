@@ -129,7 +129,7 @@ namespace Querier.Api.Services
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 ServerSideResponse<QUploadDefinition> response = new ServerSideResponse<QUploadDefinition>();
-                var res = apidbContext.HAUploadDefinitions.Where(t => t.Nature == emailNature).DatatableFilter(datatableRequest, out int? filteredCount);
+                var res = apidbContext.QUploadDefinitions.Where(t => t.Nature == emailNature).DatatableFilter(datatableRequest, out int? filteredCount);
 
                 response.sums = null;
                 response.draw = datatableRequest.draw;

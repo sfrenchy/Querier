@@ -48,14 +48,6 @@ namespace Querier.Api.Controllers
             _logger.LogInformation("Get application background login ");
             return Ok(Features.ApplicationBackgroundLogin);
         }
-
-        [HttpGet]
-        [Route("GetHerdiaAppAPIBuildId")]
-        public IActionResult GetHerdiaAppAPIBuildId()
-        {
-            _logger.LogInformation("Get herdiaApp API BuildId ");
-            return new JsonResult(Features.HerdiaAppAPIBuildId);
-        }
     
 
         [HttpGet]

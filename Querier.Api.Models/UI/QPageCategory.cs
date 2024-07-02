@@ -18,8 +18,8 @@ namespace Querier.Api.Models.UI
         [Column("Icon")]
         public string Icon { get; set; }
         [JsonIgnore]
-        public virtual List<QPage> HAPages { get; set; }
+        public virtual List<QPage> QPages { get; set; }
         [JsonIgnore]
-        public virtual List<QCategoryRole> HACategoryRoles { get; set; }
+        public virtual List<QCategoryRole> QCategoryRoles { get; set; }
     }
 }

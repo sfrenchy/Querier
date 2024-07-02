@@ -88,10 +88,10 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QUploadDefinition upload = await apidbContext.HAUploadDefinitions.FindAsync(id);
+                QUploadDefinition upload = await apidbContext.QUploadDefinitions.FindAsync(id);
                 if (upload != null)
                 {
-                    apidbContext.HAUploadDefinitions.Remove(upload);
+                    apidbContext.QUploadDefinitions.Remove(upload);
                     await apidbContext.SaveChangesAsync();
 
                     string[] files = Directory.GetFiles(Path.Combine(_environment.WebRootPath, "uploadManager", upload.Hash.Substring(0, 4)));
@@ -108,7 +108,7 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                return await apidbContext.HAUploadDefinitions.FindAsync(id);
+                return await apidbContext.QUploadDefinitions.FindAsync(id);
             }
         }
 
@@ -116,7 +116,7 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                return await apidbContext.HAUploadDefinitions.ToListAsync();
+                return await apidbContext.QUploadDefinitions.ToListAsync();
             }
         }
 
@@ -125,7 +125,7 @@ namespace Querier.Api.Services
             QUploadDefinition upload = new QUploadDefinition();
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                upload = await apidbContext.HAUploadDefinitions.FindAsync(id);
+                upload = await apidbContext.QUploadDefinitions.FindAsync(id);
             }
 
             string[] files = Directory.GetFiles(Path.Combine(_environment.WebRootPath, "uploadManager", upload.Hash.Substring(0, 4)));
@@ -183,7 +183,7 @@ namespace Querier.Api.Services
             List<QUploadDefinition> listUploads = new List<QUploadDefinition>();
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                listUploads =  await apidbContext.HAUploadDefinitions.ToListAsync();
+                listUploads =  await apidbContext.QUploadDefinitions.ToListAsync();
             }
             List<string> filesToZip =  listUploads.Select(upload => upload.Path).ToList();
 
@@ -208,7 +208,7 @@ namespace Querier.Api.Services
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 bool result = true;
-                List<QUploadDefinition> listUpload = await apidbContext.HAUploadDefinitions.ToListAsync();
+                List<QUploadDefinition> listUpload = await apidbContext.QUploadDefinitions.ToListAsync();
                 if (listUpload.Count > 0)
                 {
 
@@ -221,7 +221,7 @@ namespace Querier.Api.Services
                             DateTime deadline = upload.DateUpload.Add(ts);
                             if (deadline.ToString("dd/MM/yyyy") == DateTime.Now.ToString("dd/MM/yyyy"))
                             {
-                                apidbContext.HAUploadDefinitions.Remove(upload);
+                                apidbContext.QUploadDefinitions.Remove(upload);
                                 await apidbContext.SaveChangesAsync();
 
                                 string[] files = Directory.GetFiles(Path.Combine(_environment.WebRootPath, "uploadManager", upload.Hash.Substring(0, 4)));
@@ -276,7 +276,7 @@ namespace Querier.Api.Services
                         newObject.MimeType = upload.Definition.MimeType;
                         newObject.Nature = upload.Definition.Nature;
                         // Perform database operations here
-                        await apidbContext.HAUploadDefinitions.AddAsync(newObject);
+                        await apidbContext.QUploadDefinitions.AddAsync(newObject);
                         await apidbContext.SaveChangesAsync();
 
                         //Create the directory to put the file uploaded after
@@ -321,7 +321,7 @@ namespace Querier.Api.Services
                         newObject.MimeType = upload.Definition.MimeType;
                         newObject.Nature = upload.Definition.Nature;
                         // Perform database operations here
-                        await apidbContext.HAUploadDefinitions.AddAsync(newObject);
+                        await apidbContext.QUploadDefinitions.AddAsync(newObject);
                         await apidbContext.SaveChangesAsync();
 
                         //Create the directory to put the file uploaded after

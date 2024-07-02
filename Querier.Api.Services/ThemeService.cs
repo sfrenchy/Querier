@@ -44,7 +44,7 @@ namespace Querier.Api.Services
         /// This method is used to create the default theme and affect it to a User
         /// </summary>
         /// <param name="UserId"></param>
-        /// <returns>The number of entries added in the "HAThemeVariables" database table</returns>
+        /// <returns>The number of entries added in the "QThemeVariables" database table</returns>
         public int CreateDefaultTheme(string UserId);
     }
     public class ThemeService : IThemeService
@@ -63,7 +63,7 @@ namespace Querier.Api.Services
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 List<QTheme> result = new List<QTheme>();
-                result = apidbContext.HAThemes.Where(i => i.UserId == UserId).ToList();
+                result = apidbContext.QThemes.Where(i => i.UserId == UserId).ToList();
                 return result;
             }
         }
@@ -72,7 +72,7 @@ namespace Querier.Api.Services
             List<QThemeVariable> result = new List<QThemeVariable>();
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                List<QThemeVariable> ThemeDefinitionObj = apidbContext.HAThemeVariables.ToList(); //PAS ICI BORDEL
+                List<QThemeVariable> ThemeDefinitionObj = apidbContext.QThemeVariables.ToList(); //PAS ICI BORDEL
 
                 foreach (QThemeVariable ThemeDefinition in ThemeDefinitionObj)
                 {
@@ -87,7 +87,7 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QTheme currentThemeId = apidbContext.HAThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == Label);
+                QTheme currentThemeId = apidbContext.QThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == Label);
                 int result = currentThemeId.Id;
                 return result;
             }
@@ -97,7 +97,7 @@ namespace Querier.Api.Services
         {
             using (var apiDbContext = _contextFactory.CreateDbContext())
             {
-                QTheme a = apiDbContext.HAThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == "Theme1");
+                QTheme a = apiDbContext.QThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == "Theme1");
                 if (a == null)
                 {
                     // Create Theme1
@@ -106,11 +106,11 @@ namespace Querier.Api.Services
                         Label = "Theme1",
                         UserId = UserId
                     };
-                    apiDbContext.HAThemes.Add(defaultTheme);
+                    apiDbContext.QThemes.Add(defaultTheme);
                     apiDbContext.SaveChanges();
                 }
 
-                QTheme b = apiDbContext.HAThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == "Theme2");
+                QTheme b = apiDbContext.QThemes.FirstOrDefault(t => t.UserId == UserId && t.Label == "Theme2");
                 if (b == null)
                 {
                     // Create Theme2
@@ -119,7 +119,7 @@ namespace Querier.Api.Services
                         Label = "Theme2",
                         UserId = UserId
                     };
-                    apiDbContext.HAThemes.Add(defaultTheme2);
+                    apiDbContext.QThemes.Add(defaultTheme2);
                     apiDbContext.SaveChanges();
                 }
 
@@ -137,7 +137,7 @@ namespace Querier.Api.Services
 
                 foreach (KeyValuePair<string, string> ThemeableElement in ThemeableElementsList1)
                 {
-                    QThemeVariable userThemeVariable = apiDbContext.HAThemeVariables.FirstOrDefault(t => t.HAThemeId == userTheme1Id && t.VariableName == ThemeableElement.Key);
+                    QThemeVariable userThemeVariable = apiDbContext.QThemeVariables.FirstOrDefault(t => t.HAThemeId == userTheme1Id && t.VariableName == ThemeableElement.Key);
 
                     if (userThemeVariable == null)
                     { 
@@ -147,7 +147,7 @@ namespace Querier.Api.Services
                             VariableValue = ThemeableElement.Value,
                             HAThemeId = GetThemeId("Theme1", UserId)
                         };
-                        apiDbContext.HAThemeVariables.Add(defaultThemeVariable);
+                        apiDbContext.QThemeVariables.Add(defaultThemeVariable);
                     }
                 }
 
@@ -165,7 +165,7 @@ namespace Querier.Api.Services
 
                 foreach (KeyValuePair<string, string> ThemeableElement in ThemeableElementsList2)
                 {
-                    QThemeVariable userTheme2Variable = apiDbContext.HAThemeVariables.FirstOrDefault(t => t.HAThemeId == userTheme2Id && t.VariableName == ThemeableElement.Key);
+                    QThemeVariable userTheme2Variable = apiDbContext.QThemeVariables.FirstOrDefault(t => t.HAThemeId == userTheme2Id && t.VariableName == ThemeableElement.Key);
                     if (userTheme2Variable == null)
                     {
                         QThemeVariable defaultThemeVariable = new QThemeVariable()
@@ -174,7 +174,7 @@ namespace Querier.Api.Services
                             VariableValue = ThemeableElement.Value,
                             HAThemeId = GetThemeId("Theme2", UserId)
                         };
-                        apiDbContext.HAThemeVariables.Add(defaultThemeVariable);
+                        apiDbContext.QThemeVariables.Add(defaultThemeVariable);
                     }
                 }
                 return apiDbContext.SaveChanges();
@@ -184,27 +184,27 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QThemeVariable existingPrimaryColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(l => l.VariableName == "PrimaryColor");
+                QThemeVariable existingPrimaryColor = apidbContext.QThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(l => l.VariableName == "PrimaryColor");
                 if (existingPrimaryColor == null)
                     return false;
                 existingPrimaryColor.VariableValue = TargetTheme.PrimaryValue;
 
-                QThemeVariable existingSecondaryColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "SecondaryColor");
+                QThemeVariable existingSecondaryColor = apidbContext.QThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "SecondaryColor");
                 if (existingSecondaryColor == null)
                     return false;
                 existingSecondaryColor.VariableValue = TargetTheme.SecondaryValue;
 
-                QThemeVariable existingNavbarColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "NavbarColor");
+                QThemeVariable existingNavbarColor = apidbContext.QThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "NavbarColor");
                 if (existingNavbarColor == null)
                     return false;
                 existingNavbarColor.VariableValue = TargetTheme.navbarValue;
 
-                QThemeVariable existingTopNavbarColor = apidbContext.HAThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "TopNavbarColor");
+                QThemeVariable existingTopNavbarColor = apidbContext.QThemeVariables.Where(p => p.HAThemeId == ThemeId).FirstOrDefault(p => p.VariableName == "TopNavbarColor");
                 if (existingTopNavbarColor == null)
                     return false;
                 existingTopNavbarColor.VariableValue = TargetTheme.topNavbarValue;
 
-                QThemeVariable existingCustomFontSize = apidbContext.HAThemeVariables.Where(k => k.HAThemeId == ThemeId).FirstOrDefault(k => k.VariableName == "customFontSize");
+                QThemeVariable existingCustomFontSize = apidbContext.QThemeVariables.Where(k => k.HAThemeId == ThemeId).FirstOrDefault(k => k.VariableName == "customFontSize");
                 if (existingCustomFontSize == null)
                     return false;
                 existingCustomFontSize.VariableValue = TargetTheme.customFontSize;

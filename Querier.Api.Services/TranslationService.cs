@@ -43,7 +43,7 @@ namespace Querier.Api.Services
 
                 if (columnNameLanguage != "")
                 {
-                    translationsLanguage = apidbContext.HATranslations.Select(haTranslation => new
+                    translationsLanguage = apidbContext.QTranslations.Select(haTranslation => new
                     {
                         Id = haTranslation.Id,
                         Code = haTranslation.Code,
@@ -52,7 +52,7 @@ namespace Querier.Api.Services
                 }
                 else
                 {
-                    translationsLanguage = apidbContext.HATranslations.Select(haTranslation => new
+                    translationsLanguage = apidbContext.QTranslations.Select(haTranslation => new
                     {
                         Id = haTranslation.Id,
                         Code = haTranslation.Code,
@@ -85,7 +85,7 @@ namespace Querier.Api.Services
 
                 typeof(QTranslation).GetProperty(propertyLabel)?.SetValue(newTranslation, request.Value);
 
-                apidbContext.HATranslations.Add(newTranslation);
+                apidbContext.QTranslations.Add(newTranslation);
                 apidbContext.SaveChanges();
                 return newTranslation;
             }
@@ -95,7 +95,7 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QTranslation existingTranslation = apidbContext.HATranslations.First(t => t.Code == request.Code);
+                QTranslation existingTranslation = apidbContext.QTranslations.First(t => t.Code == request.Code);
                 string propertyLabel = "EnLabel";
                 switch (request.LanguageCode.Substring(0, 2).ToLower())
                 {

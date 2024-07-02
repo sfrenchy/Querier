@@ -20,7 +20,7 @@ namespace Querier.Api.Quartz
                 var logger = serviceScope.ServiceProvider.GetService<ILogger<DeleteUploadJob>>();
 
                 ToastMessage message = new ToastMessage();
-                message.Recipient = "admin@herdia.fr";
+                message.Recipient = "admin@querier.fr";
                 message.Persistent = false;
                 if (await uploadService.DeleteFromRules())
                 {

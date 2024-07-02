@@ -71,8 +71,8 @@ namespace Querier.Api.Controllers
             {
                 EmailFrom = from,
                 EmailTo = to,
-                bodyEmail = "Test email from herdiaApp",
-                SubjectEmail = "This is a test from herdiaApp to check email settings. If you read this, it works",
+                bodyEmail = "Test email from Querier",
+                SubjectEmail = "This is a test from Querier to check email settings. If you read this, it works",
                 bodyHtmlEmail = false
             };
             return Ok(await _emailSendingService.SendEmailAsync(ObjectRequest));

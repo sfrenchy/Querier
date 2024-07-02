@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using HerdiaApp.Api.Models.Datatable;
+using Querier.Api.Models.Datatable;
 
 namespace $nameSpace$.Mvc
 {

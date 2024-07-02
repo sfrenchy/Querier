@@ -219,7 +219,6 @@ namespace Querier.Api.Services
             result.QuerySuccessful = true;
             // TODO : --> On ne doit pas ramener la donnée dans le front
             result.Datas = new List<dynamic>();
-            //myHerdia.Api.Models.Contexts.MyHerdiaDbContext
             DbContext apiDbContext = GetDbContextFromTypeName(request.ContextTypeName);
 
             try

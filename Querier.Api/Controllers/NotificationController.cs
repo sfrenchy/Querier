@@ -30,7 +30,7 @@ namespace Querier.Api.Controllers
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QNotification n = apidbContext.HANotifications.Find(id);
+                QNotification n = apidbContext.QNotifications.Find(id);
                 if (n != null)
                 {
                     apidbContext.Remove(n);

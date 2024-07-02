@@ -12,19 +12,19 @@ namespace Querier.Api.Services
         /// <summary>
         /// Get the list of available EntityFrameworkCore contexts
         /// </summary>
-        /// <returns>The list of full names of available contexts (ie: HerdiaApp.Api.Models.ApiDbContext)</returns>
+        /// <returns>The list of full names of available contexts (ie: Querier.Api.Models.ApiDbContext)</returns>
         public List<string?> GetContexts();
         /// <summary>
         /// Get the list of available entities definitions for a context
         /// </summary>
-        /// <param name="contextTypeFullname">A full name of an available context (ie: HerdiaApp.Api.Models.ApiDbContext)</param>
+        /// <param name="contextTypeFullname">A full name of an available context (ie: Querier.Api.Models.ApiDbContext)</param>
         /// <returns>The list of entites available in the context with regarding informations</returns>
         public List<EntityDefinition> GetEntities(string contextTypeFullname);
         /// <summary>
         /// Get the entity definition for the context and the entity
         /// </summary>
-        /// <param name="contextTypeFullname">A full name of an available context (ie: HerdiaApp.Api.Models.ApiDbContext)</param>
-        /// <param name="entityFullname">A full name of an available context entity (ie: HerdiaApp.Api.Models.UI.QPageCategory)</param>
+        /// <param name="contextTypeFullname">A full name of an available context (ie: Querier.Api.Models.ApiDbContext)</param>
+        /// <param name="entityFullname">A full name of an available context entity (ie: Querier.Api.Models.UI.QPageCategory)</param>
         /// <returns></returns>
         public EntityDefinition GetEntity(string contextTypeFullname, string entityFullname);
         /// <summary>

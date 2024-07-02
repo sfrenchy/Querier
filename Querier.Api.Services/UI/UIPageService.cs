@@ -57,25 +57,25 @@ namespace Querier.Api.Services.UI
             {
                 PageManagementResponse model = new PageManagementResponse
                 {
-                    Categories = apidbContext.HAPageCategories.Select(hac => new QPageCategory()
+                    Categories = apidbContext.QPageCategories.Select(hac => new QPageCategory()
                     {
                         Icon = hac.Icon == "" ? "circle" : hac.Icon,
                         Description = hac.Description,
-                        HAPages = hac.HAPages,
+                        QPages = hac.QPages,
                         Id = hac.Id,
                         Label = hac.Label,
-                        HACategoryRoles = hac.HACategoryRoles
+                        QCategoryRoles = hac.QCategoryRoles
                     }).ToList(),
-                    Pages = apidbContext.HAPages.Select(hap => new QPage()
+                    Pages = apidbContext.QPages.Select(hap => new QPage()
                     {
                         Icon = hap.Icon == "" ? "circle" : hap.Icon,
                         Description = hap.Description,
                         Id = hap.Id,
                         Title = hap.Title,
                         QPageCategory = hap.QPageCategory,
-                        HAPageRoles = hap.HAPageRoles,
+                        QPageRoles = hap.QPageRoles,
                         HAPageCategoryId = hap.HAPageCategoryId,
-                        HAPageRows = hap.HAPageRows
+                        QPageRows = hap.QPageRows
                     }).ToList()
                 };
                 return model;
@@ -87,7 +87,7 @@ namespace Querier.Api.Services.UI
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 pageId ??= 1;
-                QPage page = await apidbContext.HAPages.FindAsync(pageId);
+                QPage page = await apidbContext.QPages.FindAsync(pageId);
                 return QPageVM.FromHAPage(page);
             }
         }
@@ -96,7 +96,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                return await apidbContext.HAPages.ToListAsync();
+                return await apidbContext.QPages.ToListAsync();
             }
         }
 
@@ -105,7 +105,7 @@ namespace Querier.Api.Services.UI
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 ServerSideResponse<QPage> response = new ServerSideResponse<QPage>();
-                List<QPage> result = await apidbContext.HAPages.ToListAsync();
+                List<QPage> result = await apidbContext.QPages.ToListAsync();
 
                 response.sums = null;
                 response.draw = datatableRequest.draw;
@@ -129,7 +129,7 @@ namespace Querier.Api.Services.UI
                     Icon = model.PageIcon
                 };
 
-                await apidbContext.HAPages.AddAsync(pageEntity);
+                await apidbContext.QPages.AddAsync(pageEntity);
                 IEnumerable<QPageRole> EnumerableNewPagesRoles = model.IdRoles.Select(IdRole => new QPageRole() { 
                     QPage = pageEntity, 
                     ApiRoleId = IdRole, 
@@ -139,7 +139,7 @@ namespace Querier.Api.Services.UI
                     Remove = true
                 });
 
-                await apidbContext.HAPageRoles.AddRangeAsync(EnumerableNewPagesRoles);
+                await apidbContext.QPageRoles.AddRangeAsync(EnumerableNewPagesRoles);
 
                 await apidbContext.SaveChangesAsync();
 
@@ -151,10 +151,10 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPage page = await apidbContext.HAPages.FindAsync(pageId);
+                QPage page = await apidbContext.QPages.FindAsync(pageId);
                 if (page != null)
                 {
-                    apidbContext.HAPages.Remove(page);
+                    apidbContext.QPages.Remove(page);
                     await apidbContext.SaveChangesAsync();
                 }
 
@@ -166,7 +166,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPage updatePage = await apidbContext.HAPages.FindAsync(model.PageId);
+                QPage updatePage = await apidbContext.QPages.FindAsync(model.PageId);
 
                 updatePage.Title = model.PageTitle;
                 updatePage.Description = model.PageDescription;
@@ -183,7 +183,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPage duplicatePageSource = await apidbContext.HAPages.FindAsync(pageId);
+                QPage duplicatePageSource = await apidbContext.QPages.FindAsync(pageId);
 
                 if (duplicatePageSource != null)
                 {
@@ -214,7 +214,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPage source = await apidbContext.HAPages.FindAsync(pageId);
+                QPage source = await apidbContext.QPages.FindAsync(pageId);
                 return source.EntityCopy();
             }
         }
@@ -234,7 +234,7 @@ namespace Querier.Api.Services.UI
 
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                sourceToExport = await apidbContext.HAPages.FindAsync(exportPageRequest.PageId);            
+                sourceToExport = await apidbContext.QPages.FindAsync(exportPageRequest.PageId);            
 
                 if (sourceToExport == null)
                 {

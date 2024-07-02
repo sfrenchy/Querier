@@ -1,5 +1,5 @@
 
-namespace Querier.Api.Models.HADBConnection
+namespace Querier.Api.Models.QDBConnection
 {
     public class ProcedureParameter
 	{

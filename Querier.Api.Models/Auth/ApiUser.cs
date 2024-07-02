@@ -17,18 +17,18 @@ namespace Querier.Api.Models.Auth
         public string Phone { get; set; }
         public string Img { get; set; }
         public string DateFormat { get; set; }
-        public virtual List<HAApiUserAttributes> HAApiUserAttributes { get; set; }
+        public virtual List<QApiUserAttributes> QApiUserAttributes { get; set; }
     }
 
-    public partial class HAApiUserAttributes
+    public partial class QApiUserAttributes
     {
         public int Id { get; set; }
         public string UserId { get; set; }
         public virtual ApiUser User { get; set; }
         public int EntityAttributeId { get; set; }
-        public virtual HAEntityAttribute EntityAttribute { get; set; }
+        public virtual QEntityAttribute EntityAttribute { get; set; }
     }
-    public class HAEntityAttribute
+    public class QEntityAttribute
     {
         public int Id { get; set; }
         public string Label { get; set; }
@@ -75,11 +75,11 @@ namespace Querier.Api.Models.Auth
         private int? IntAttribute { get; set; }
         private decimal? DecimalAttribute { get; set; }
         private DateTime? DateTimeAttribute { get; set; }
-        public virtual List<HAApiUserAttributes> HAApiUserAttributes { get; set; } = new List<HAApiUserAttributes>();
+        public virtual List<QApiUserAttributes> QApiUserAttributes { get; set; } = new List<QApiUserAttributes>();
 
-        public class HAEntityAttributeConfiguration : IEntityTypeConfiguration<HAEntityAttribute>
+        public class QEntityAttributeConfiguration : IEntityTypeConfiguration<QEntityAttribute>
         {
-            public void Configure(EntityTypeBuilder<HAEntityAttribute> builder)
+            public void Configure(EntityTypeBuilder<QEntityAttribute> builder)
             {
                 builder.Property(p => p.StringAttribute);
                 builder.Property(p => p.IntAttribute);

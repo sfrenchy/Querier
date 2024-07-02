@@ -12,7 +12,7 @@ public static class Features
     public static byte[] ApplicationBackgroundLogin { get; set; }
     public static string ApplicationRightPanelPackageName { get; set; }
     public static List<string> ApplicationDefaultTheme { get; set; }
-    public static List<HAEntityAttributeViewModel> ApplicationUserAttributes { get; set; }
+    public static List<QEntityAttributeViewModel> ApplicationUserAttributes { get; set; }
     public static List<PropertyDefinition> ApplicationUserProperties { get; set; }
 
     public static string HerdiaAppAPIBuildId 

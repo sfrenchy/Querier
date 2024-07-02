@@ -1,5 +1,5 @@
 using $nameSpace$.ProcedureParameters;
-using HerdiaApp.Api.Models.Datatable;
+using Querier.Api.Models.Datatable;
 namespace $nameSpace$.ProcedureReportRequests
 {
     $procedureList: {procedure|

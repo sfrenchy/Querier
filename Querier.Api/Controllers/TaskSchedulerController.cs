@@ -21,12 +21,12 @@ namespace Querier.Api.Controllers
     [AllowAnonymous]
     public class TaskSchedulerController : ControllerBase
     {
-        private readonly IHATaskScheduler _taskScheduler;
+        private readonly IQTaskScheduler _taskScheduler;
         private readonly ILogger<TaskSchedulerController> _logger;
         private ApiDbContext _apidbContext;
 
 
-        public TaskSchedulerController(IHATaskScheduler taskScheduler, ILogger<TaskSchedulerController> logger, ApiDbContext apidbContext)
+        public TaskSchedulerController(IQTaskScheduler taskScheduler, ILogger<TaskSchedulerController> logger, ApiDbContext apidbContext)
         {
             _logger = logger;
             _apidbContext = apidbContext;

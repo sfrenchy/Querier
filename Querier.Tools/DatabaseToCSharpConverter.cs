@@ -1,4 +1,4 @@
-﻿using Querier.Api.Models.HADBConnection;
+﻿using Querier.Api.Models.QDBConnection;
 using Microsoft.Data.SqlClient;
 using System.Data;
 

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HerdiaApp.Api.Models.Interfaces
+namespace Querier.Api.Models.Interfaces
 {
     public interface IApiResponse
     {

@@ -34,17 +34,17 @@ namespace Querier.Api.Models.Interfaces
         /// This method will be called whenever a new ApiUser is created and will allow any application that implement it to perform a specific task
         /// </summary>
         /// <param name="user"></param>
-        void herdiaAppUserCreated(ApiUser user);
+        void QuerierUserCreated(ApiUser user);
         /// <summary>
         /// This method will be called whenever a new ApiUser is updated and will allow any application that implement it to perform a specific task
         /// </summary>
         /// <param name="userRequest"></param>
-        void herdiaAppUserUpdated(UserRequest userRequest);
+        void QuerierUserUpdated(UserRequest userRequest);
         /// <summary>
         /// This method will be called whenever a new ApiUser is deleted and will allow any application that implement it to perform a specific task
         /// </summary>
         /// <param name="userId"></param>
-        void herdiaAppUserDeleted(string userId);
+        void QuerierUserDeleted(string userId);
         /// <summary>
         /// This method will be called to create template mail when the solution starts
         /// </summary>

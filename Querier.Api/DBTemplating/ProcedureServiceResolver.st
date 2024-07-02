@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using HerdiaApp.Api.Models.Interfaces;
+using Querier.Api.Models.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 

@@ -16,7 +16,7 @@ using Querier.Api.Models;
 using Querier.Api.Models.Common;
 using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Enums;
-using Querier.Api.Models.HADBConnection;
+using Querier.Api.Models.QDBConnection;
 using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Requests;
 using Querier.Api.Models.Responses;
@@ -53,7 +53,7 @@ namespace Querier.Api.Services
     public interface IDBConnectionService
     {
         Task<AddDBConnectionResponse> AddConnectionAsync(AddDBConnectionRequest request);
-        Task<ServerSideResponse<HADBConnectionResponse>> ReadDBConnectionAsync(ServerSideRequest request);
+        Task<ServerSideResponse<QDBConnectionResponse>> ReadDBConnectionAsync(ServerSideRequest request);
         Task<DeleteDBConnectionResponse> DeleteDBConnectionAsync(DeleteDBConnectionRequest request);
     }
 
@@ -306,7 +306,7 @@ namespace Querier.Api.Services
             newConnection.Description = procedureDescription;
             using (var apiDbContext = _apiDbContextFactory.CreateDbContext())
             {
-                apiDbContext.HADBConnections.Add(newConnection);
+                apiDbContext.QDBConnections.Add(newConnection);
                 await apiDbContext.SaveChangesAsync();
             }
             result.State = QDBConnectionState.Available;
@@ -411,13 +411,13 @@ namespace Querier.Api.Services
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                QDBConnection toDelete = apiDbContext.HADBConnections.Find(request.DBConnectionId);
+                QDBConnection toDelete = apiDbContext.QDBConnections.Find(request.DBConnectionId);
                 int toDeleteId = toDelete.Id;
                 int assemblyUploadId = toDelete.AssemblyUploadDefinitionId;
                 int pdbUploadId = toDelete.PDBUploadDefinitionId;
                 int sourcesUploadId = toDelete.SourcesUploadDefinitionId;
 
-                apiDbContext.HADBConnections.Remove(toDelete);
+                apiDbContext.QDBConnections.Remove(toDelete);
                 apiDbContext.SaveChanges();
 
                 await _uploadService.DeleteUploadAsync(assemblyUploadId);
@@ -430,12 +430,12 @@ namespace Querier.Api.Services
                 };
             }
         }
-        public async Task<ServerSideResponse<HADBConnectionResponse>> ReadDBConnectionAsync(ServerSideRequest request)
+        public async Task<ServerSideResponse<QDBConnectionResponse>> ReadDBConnectionAsync(ServerSideRequest request)
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                ServerSideResponse<HADBConnectionResponse> r = new ServerSideResponse<HADBConnectionResponse>();
-                r.data = apiDbContext.HADBConnections.Select(c => new HADBConnectionResponse() {
+                ServerSideResponse<QDBConnectionResponse> r = new ServerSideResponse<QDBConnectionResponse>();
+                r.data = apiDbContext.QDBConnections.Select(c => new QDBConnectionResponse() {
                         ApiRoute = c.ApiRoute,
                         AssemblyUploadDefinitionId = c.AssemblyUploadDefinitionId,
                         ConnectionString = c.ConnectionString,
@@ -446,7 +446,7 @@ namespace Querier.Api.Services
                         SourcesUploadDefinitionId = c.SourcesUploadDefinitionId
                     }).DatatableFilter(request, out int? countFiltered).ToList();
                 r.draw = request.draw;
-                r.recordsTotal = apiDbContext.HADBConnections.Count();
+                r.recordsTotal = apiDbContext.QDBConnections.Count();
                 r.recordsFiltered = (int)countFiltered;
                 r.sums = new Dictionary<string, object>();
                 return r;

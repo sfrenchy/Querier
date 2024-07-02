@@ -11,7 +11,7 @@ namespace Querier.Api.Models.UI
         public int Id { get; set; }
         public int Order { get; set; }
         public int HAPageId { get; set; }
-        public List<QPageCard> HAPageCards { get; set; }
+        public List<QPageCard> QPageCards { get; set; }
 
         public static QPageRowVM FromHAPageRow(QPageRow row)
         {
@@ -20,7 +20,7 @@ namespace Querier.Api.Models.UI
                 Id = row.Id,
                 Order = row.Order,
                 HAPageId = row.HAPageId,
-                HAPageCards = row.HAPageCards
+                QPageCards = row.QPageCards
             };
         }
     }

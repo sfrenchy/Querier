@@ -20,6 +20,6 @@ namespace Querier.Api.Models.UI
         [JsonIgnore]
         public virtual ApiUser User { get;set;}
         [JsonIgnore]
-        public virtual List<QThemeVariable> HAThemeVariables { get; set; }
+        public virtual List<QThemeVariable> QThemeVariables { get; set; }
     }
 }

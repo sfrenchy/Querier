@@ -149,7 +149,7 @@ namespace Querier.Api.Controllers
                 sqlQueryStatusNotification.Type = ToastType.Danger;
                 sqlQueryStatusNotification.TitleCode = $"Sql query error";
                 sqlQueryStatusNotification.ContentCode = "The Sql query you entered is invalid";
-                sqlQueryStatusNotification.Recipient = "admin@herdia.fr";
+                sqlQueryStatusNotification.Recipient = "admin@querier.fr";
                 sqlQueryStatusNotification.Closable = false;
                 sqlQueryStatusNotification.Persistent = false;
                 _toastMessageEmitterService.PublishToast(sqlQueryStatusNotification);

@@ -31,7 +31,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                return await apidbContext.HAPageCategories.FindAsync(categoryId);
+                return await apidbContext.QPageCategories.FindAsync(categoryId);
             }
         }
 
@@ -39,7 +39,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                return await apidbContext.HAPageCategories.ToListAsync();
+                return await apidbContext.QPageCategories.ToListAsync();
             }
         }
 
@@ -47,7 +47,7 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                apidbContext.HAPageCategories.Add(new QPageCategory()
+                apidbContext.QPageCategories.Add(new QPageCategory()
                 {
                     Label = request.Label,
                     Description = request.Description,
@@ -55,7 +55,7 @@ namespace Querier.Api.Services.UI
                 });
                 await apidbContext.SaveChangesAsync();
 
-                return await apidbContext.HAPageCategories.ToListAsync();
+                return await apidbContext.QPageCategories.ToListAsync();
             }
         }
 
@@ -63,14 +63,14 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                QPageCategory category = await apidbContext.HAPageCategories.FindAsync(request.Id);
+                QPageCategory category = await apidbContext.QPageCategories.FindAsync(request.Id);
                 category.Label = request.Label;
                 category.Description = request.Description;
                 category.Icon = request.Icon;
 
                 await apidbContext.SaveChangesAsync();
 
-                return await apidbContext.HAPageCategories.ToListAsync();
+                return await apidbContext.QPageCategories.ToListAsync();
             }
         }
 
@@ -78,11 +78,11 @@ namespace Querier.Api.Services.UI
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                apidbContext.HAPageCategories.Remove(category);
+                apidbContext.QPageCategories.Remove(category);
 
                 await apidbContext.SaveChangesAsync();
 
-                return await apidbContext.HAPageCategories.ToListAsync();
+                return await apidbContext.QPageCategories.ToListAsync();
             }
         }
     }

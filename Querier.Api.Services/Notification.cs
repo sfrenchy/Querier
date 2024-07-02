@@ -85,7 +85,7 @@ namespace Querier.Api.Services
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
-                return apidbContext.HANotifications.ToList();
+                return apidbContext.QNotifications.ToList();
             }
         }
     }

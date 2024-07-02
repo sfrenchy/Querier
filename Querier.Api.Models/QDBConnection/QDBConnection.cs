@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Querier.Api.Models.Common;
 using Querier.Api.Models.Enums;
 
-namespace Querier.Api.Models.HADBConnection
+namespace Querier.Api.Models.QDBConnection
 {
     public class QDBConnection
     {
@@ -34,7 +34,7 @@ namespace Querier.Api.Models.HADBConnection
         public bool GenerateProcedureControllersAndServices { get; set;} = true;
     }
 
-    public class HADBConnectionResponse
+    public class QDBConnectionResponse
     {
         public int Id { get;set; }
         public string ConnectionType { get; set; }

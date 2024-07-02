@@ -37,9 +37,9 @@ namespace Querier.Api.Hubs
             {
                 Users.Add(Context.UserIdentifier);
                 ApiUser user = apidbContext.Users.FirstOrDefault(u => u.Email == Context.UserIdentifier);
-                if (user != null && apidbContext.HANotifications.Any(n => n.UserId == user.Id))
+                if (user != null && apidbContext.QNotifications.Any(n => n.UserId == user.Id))
                 {
-                    foreach (QNotification notif in apidbContext.HANotifications.Where(n => n.UserId == user.Id))
+                    foreach (QNotification notif in apidbContext.QNotifications.Where(n => n.UserId == user.Id))
                         _notification.NotifyUser(notif, false).GetAwaiter();
                 }
                 return base.OnConnectedAsync();

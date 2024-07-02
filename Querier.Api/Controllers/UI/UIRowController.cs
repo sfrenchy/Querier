@@ -53,7 +53,7 @@ namespace Querier.Api.Controllers.UI
             if (page == null)
                 return NotFound("Unable to find the page!");
 
-            return new OkObjectResult(page.HAPageRows);
+            return new OkObjectResult(page.QPageRows);
         }
 
         /// <summary>

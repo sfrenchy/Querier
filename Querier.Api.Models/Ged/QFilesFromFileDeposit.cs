@@ -29,8 +29,8 @@ namespace Querier.Api.Models.Ged
             FileInformation = JsonConvert.SerializeObject(val);
         }
 
-        [Column("HAFileDepositId")]
-        public int HAFileDepositId { get; set; }
+        [Column("QFileDepositId")]
+        public int QFileDepositId { get; set; }
         [JsonIgnore]
         public virtual QFileDeposit QFileDeposit { get; set; }
 

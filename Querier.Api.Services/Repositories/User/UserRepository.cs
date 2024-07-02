@@ -199,7 +199,7 @@ namespace Querier.Api.Services.Repositories.User
 
                 using (var apidbContext = _contextFactory.CreateDbContext())
                 {
-                    result = apidbContext.HAUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == EmailConfirmationTemplateName).ToList();
+                    result = apidbContext.QUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == EmailConfirmationTemplateName).ToList();
                 }
 
                 //GetUploadStream
@@ -284,8 +284,8 @@ namespace Querier.Api.Services.Repositories.User
                 var foundUser = await _userManager.FindByIdAsync(id);
                 if (foundUser != null)
                 {
-                    var refreshToken = _context.HARefreshTokens.Where(t => t.UserId == foundUser.Id);
-                    _context.HARefreshTokens.RemoveRange(refreshToken);
+                    var refreshToken = _context.QRefreshTokens.Where(t => t.UserId == foundUser.Id);
+                    _context.QRefreshTokens.RemoveRange(refreshToken);
 
                     var res = await _userManager.DeleteAsync(foundUser);
 
