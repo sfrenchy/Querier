@@ -401,3 +401,4 @@ obj
 Querier.Api/.DS_Store
 Querier.Api/Quartz/.DS_Store
 uploadManager
+Querier.Api/obj
