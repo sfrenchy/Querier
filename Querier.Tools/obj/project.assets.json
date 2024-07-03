@@ -9348,11 +9348,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/arnaudchampion/Dev/Projects/Querier/Querier.Tools/Querier.Tools.csproj",
+      "projectUniqueName": "/Users/arnaudchampion/Projects/Querier/Querier.Tools/Querier.Tools.csproj",
       "projectName": "Querier.Tools",
-      "projectPath": "/Users/arnaudchampion/Dev/Projects/Querier/Querier.Tools/Querier.Tools.csproj",
+      "projectPath": "/Users/arnaudchampion/Projects/Querier/Querier.Tools/Querier.Tools.csproj",
       "packagesPath": "/Users/arnaudchampion/.nuget/packages/",
-      "outputPath": "/Users/arnaudchampion/Dev/Projects/Querier/Querier.Tools/obj/",
+      "outputPath": "/Users/arnaudchampion/Projects/Querier/Querier.Tools/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/arnaudchampion/.nuget/NuGet/NuGet.Config"
@@ -9367,8 +9367,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "/Users/arnaudchampion/Dev/Projects/Querier/Querier.Api.Models/Querier.Api.Models.csproj": {
-              "projectPath": "/Users/arnaudchampion/Dev/Projects/Querier/Querier.Api.Models/Querier.Api.Models.csproj"
+            "/Users/arnaudchampion/Projects/Querier/Querier.Api.Models/Querier.Api.Models.csproj": {
+              "projectPath": "/Users/arnaudchampion/Projects/Querier/Querier.Api.Models/Querier.Api.Models.csproj"
             }
           }
         }
@@ -9437,7 +9437,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.302/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.204/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

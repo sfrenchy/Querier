@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "qybQVh4lXWI=",
+  "dgSpecHash": "KsOBlZCcclmkmRXjMLies9a+7hLPMN9uWn0fUlafAsQiWKBw6TXASuhFlQT7breGDyRP2mAssrA6dEUCI8vFew==",
   "success": true,
-  "projectFilePath": "/Users/arnaudchampion/Dev/Projects/Querier/Querier.Tools/Querier.Tools.csproj",
+  "projectFilePath": "/Users/arnaudchampion/Projects/Querier/Querier.Tools/Querier.Tools.csproj",
   "expectedPackageFiles": [
     "/Users/arnaudchampion/.nuget/packages/castle.core/4.4.1/castle.core.4.4.1.nupkg.sha512",
     "/Users/arnaudchampion/.nuget/packages/entityframework/6.4.4/entityframework.6.4.4.nupkg.sha512",

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "7YE6f+5NRSM=",
+  "dgSpecHash": "pX3fA7krRcITuzTATH2kuPCxvX7rG8FPCcS/APw8CByBKqNj1hslpp90eSj7uSms81xoKFHzK2sK5zM84VwYLQ==",
   "success": true,
-  "projectFilePath": "/Users/arnaudchampion/Dev/Projects/Querier/Querier.Api.Services/Querier.Api.Services.csproj",
+  "projectFilePath": "/Users/arnaudchampion/Projects/Querier/Querier.Api.Services/Querier.Api.Services.csproj",
   "expectedPackageFiles": [
     "/Users/arnaudchampion/.nuget/packages/antlr3.runtime/3.5.1/antlr3.runtime.3.5.1.nupkg.sha512",
     "/Users/arnaudchampion/.nuget/packages/azure.core/1.24.0/azure.core.1.24.0.nupkg.sha512",
@@ -311,7 +311,7 @@
       "code": "NU1903",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Le package 'Microsoft.Data.SqlClient' 5.0.1 présente une vulnérabilité de gravité élevé(e) connue, https://github.com/advisories/GHSA-98g6-xh36-x2p7.",
+      "message": "Package 'Microsoft.Data.SqlClient' 5.0.1 has a known high severity vulnerability, https://github.com/advisories/GHSA-98g6-xh36-x2p7",
       "libraryId": "Microsoft.Data.SqlClient",
       "targetGraphs": [
         "net8.0"
@@ -321,7 +321,7 @@
       "code": "NU1903",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Le package 'System.Data.SqlClient' 4.8.5 présente une vulnérabilité de gravité élevé(e) connue, https://github.com/advisories/GHSA-98g6-xh36-x2p7.",
+      "message": "Package 'System.Data.SqlClient' 4.8.5 has a known high severity vulnerability, https://github.com/advisories/GHSA-98g6-xh36-x2p7",
       "libraryId": "System.Data.SqlClient",
       "targetGraphs": [
         "net8.0"

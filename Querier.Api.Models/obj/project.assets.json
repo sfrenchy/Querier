@@ -8795,11 +8795,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/arnaudchampion/Dev/Projects/Querier/Querier.Api.Models/Querier.Api.Models.csproj",
+      "projectUniqueName": "/Users/arnaudchampion/Projects/Querier/Querier.Api.Models/Querier.Api.Models.csproj",
       "projectName": "Querier.Api.Models",
-      "projectPath": "/Users/arnaudchampion/Dev/Projects/Querier/Querier.Api.Models/Querier.Api.Models.csproj",
+      "projectPath": "/Users/arnaudchampion/Projects/Querier/Querier.Api.Models/Querier.Api.Models.csproj",
       "packagesPath": "/Users/arnaudchampion/.nuget/packages/",
-      "outputPath": "/Users/arnaudchampion/Dev/Projects/Querier/Querier.Api.Models/obj/",
+      "outputPath": "/Users/arnaudchampion/Projects/Querier/Querier.Api.Models/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/arnaudchampion/.nuget/NuGet/NuGet.Config"
@@ -8913,7 +8913,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.302/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.204/PortableRuntimeIdentifierGraph.json"
       }
     }
   },
@@ -8922,7 +8922,7 @@
       "code": "NU1902",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Le package 'System.Data.SqlClient' 4.8.3 présente une vulnérabilité de gravité moyenne connue, https://github.com/advisories/GHSA-8g2p-5pqh-5jmc.",
+      "message": "Package 'System.Data.SqlClient' 4.8.3 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-8g2p-5pqh-5jmc",
       "libraryId": "System.Data.SqlClient",
       "targetGraphs": [
         "net8.0"
@@ -8932,7 +8932,7 @@
       "code": "NU1903",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Le package 'System.Data.SqlClient' 4.8.3 présente une vulnérabilité de gravité élevé(e) connue, https://github.com/advisories/GHSA-98g6-xh36-x2p7.",
+      "message": "Package 'System.Data.SqlClient' 4.8.3 has a known high severity vulnerability, https://github.com/advisories/GHSA-98g6-xh36-x2p7",
       "libraryId": "System.Data.SqlClient",
       "targetGraphs": [
         "net8.0"
