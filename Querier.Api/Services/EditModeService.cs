@@ -15,10 +15,10 @@ namespace Querier.Api.Services
     }
     public class EditModeService : IEditModeService
     {
-        private readonly ILogger<TranslationService> _logger;
+        private readonly ILogger<EditModeService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
 
-        public EditModeService(ILogger<TranslationService> logger, IDbContextFactory<ApiDbContext> contextFactory)
+        public EditModeService(ILogger<EditModeService> logger, IDbContextFactory<ApiDbContext> contextFactory)
         {
             _logger = logger;
             _contextFactory = contextFactory;

@@ -176,11 +176,9 @@ namespace Querier.Api
             services.AddSingleton(tokenValidationParameters);
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IEntityCRUDService, EntityCRUDService>();
-            services.AddSingleton<ITranslationService, TranslationService>();
             services.AddSingleton<IThemeService, ThemeService>();
             services.AddSingleton<IQTaskScheduler, QTaskScheduler>();
             services.AddSingleton<Models.Interfaces.IQUploadService, IQUploadService>();
-            services.AddSingleton<IQTranslationService, QTranslationService>();
             services.AddScoped<IAuthManagementService, AuthManagementService>();
             services.AddSingleton<IEditModeService, EditModeService>();
             services.AddSingleton<IUICategoryService, UICategoryService>();
