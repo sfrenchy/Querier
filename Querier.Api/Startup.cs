@@ -36,7 +36,6 @@ using System.Resources;
 using Newtonsoft.Json;
 using Querier.Api.CustomTokenProviders;
 using Querier.Api.Models.QDBConnection;
-using Querier.Api.Quartz;
 using Querier.Api.Services.Repositories.Application;
 using Querier.Api.Services.Repositories.Role;
 using Querier.Api.Services.Repositories.User;
@@ -290,7 +289,6 @@ namespace Querier.Api
             // we can use options pattern to support hooking your own configuration
             // because we don't use service registration api, 
             // we need to manually ensure the job is present in DI
-            services.AddTransient<DeleteUploadJob>();
             services.AddSingleton<IDynamicContextList, DynamicContextList>(_ => DynamicContextList.Instance);
             IMvcBuilder mvc = services.AddControllers();
             var assemblyPath = _configuration.GetSection("ApplicationSettings:AssemblyPath").Get<string>();

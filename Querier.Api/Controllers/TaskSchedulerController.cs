@@ -1,8 +1,5 @@
-﻿//using Querier.Api.Quartz;
-using Querier.Api.Models;
-using Querier.Api.Models.Datatable;
+﻿using Querier.Api.Models;
 using Querier.Api.Models.Requests;
-using Querier.Api.Quartz;
 using Querier.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Quartz;
 using System;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Querier.Api.Models.Common;
 
