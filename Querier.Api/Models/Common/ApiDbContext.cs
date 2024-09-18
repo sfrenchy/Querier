@@ -149,20 +149,20 @@ namespace Querier.Api.Models.Common
         public virtual DbSet<QPageRow> QPageRows { get; set; }
         public virtual DbSet<QPageCard> QPageCards { get; set; }
         public virtual DbSet<QPageCardDefinedConfiguration> QPageCardDefinedConfigurations { get; set; }
-        public virtual DbSet<QTranslation> QTranslations { get; set; }
-        public virtual DbSet<QHtmlPartialRef> QHtmlPartialRefs { get; set; }
+        //public virtual DbSet<QTranslation> QTranslations { get; set; }
+        //public virtual DbSet<QHtmlPartialRef> QHtmlPartialRefs { get; set; }
         public virtual DbSet<QCategoryRole> QCategoryRoles { get; set; }
         public virtual DbSet<QPageRole> QPageRoles { get; set; }
         public virtual DbSet<QCardRole> QCardRoles { get; set; }
-        public virtual DbSet<QTheme> QThemes { get; set; }
-        public virtual DbSet<QThemeVariable> QThemeVariables { get; set; }
+        //public virtual DbSet<QTheme> QThemes { get; set; }
+        //public virtual DbSet<QThemeVariable> QThemeVariables { get; set; }
         public virtual DbSet<QDBConnection.QDBConnection> QDBConnections { get; set; }
         // public virtual DbSet<UserNotification> Notifications { get; set; }
         public virtual DbSet<QEntityAttribute> QEntityAttribute { get; set; }
         public virtual DbSet<QUploadDefinition> QUploadDefinitions { get; set; }
-        public virtual DbSet<QApiUserAttributes> QApiUserAttributes { get; set; }
-        public virtual DbSet<QFileDeposit> QFileDeposit { get; set; }
-        public virtual DbSet<QFilesFromFileDeposit> QFilesFromFileDeposit { get; set; }
+        //public virtual DbSet<QApiUserAttributes> QApiUserAttributes { get; set; }
+        //public virtual DbSet<QFileDeposit> QFileDeposit { get; set; }
+        //public virtual DbSet<QFilesFromFileDeposit> QFilesFromFileDeposit { get; set; }
 
 
         public ApiDbContext(DbContextOptions<ApiDbContext> options, IConfiguration configuration) : base(options)
@@ -540,24 +540,6 @@ namespace Querier.Api.Models.Common
                 .WithMany()
                 .HasForeignKey(e => e.QFileDepositId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            ////seeding data file deposit for testing during dev
-            modelBuilder.Entity<QFileDeposit>().HasData(new QFileDeposit
-            {
-                Id = 1,
-                Enable = true,
-                Label = "Docuware lease_code",
-                Filter = "['CODE_BAIL', 'IMMEUBLE']",
-                Type = TypeFileDepositEnum.Docuware,
-                Auth = AuthFileDepositEnum.Basic,
-                Login = "RICH",
-                Password = "Jaimevoirmesbaux1!",
-                Host = "https://dw75.meylly.com",
-                Port = 0,
-                RootPath = "3328efb0-df0d-4f09-a237-91cd9aa69ef7",
-                Capabilities = CapabilitiesEnum.Player,
-                Tag = "lease_code"
-            });
 
             modelBuilder.Entity<QFileDeposit>().HasData(new QFileDeposit
             {
