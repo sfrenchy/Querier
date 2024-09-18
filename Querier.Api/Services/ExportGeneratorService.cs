@@ -13,7 +13,6 @@ using RabbitMQ.Client;
 using System.Data;
 using System.Linq;
 using System.Net.Http;
-using Querier.Tools;
 using ClosedXML.Excel;
 using Querier.Api.Models.Common;
 using CsvHelper.Configuration;
@@ -22,6 +21,7 @@ using System.Threading.Tasks;
 using Querier.Api.Models;
 using Querier.Api.Models.Enums;
 using Microsoft.AspNetCore.Http;
+using Querier.Api.Tools;
 
 namespace Querier.Api.Services
 {

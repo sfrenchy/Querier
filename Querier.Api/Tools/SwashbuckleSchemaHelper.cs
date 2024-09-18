@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Querier.Tools
+namespace Querier.Api.Tools
 {
   public class SwashbuckleSchemaHelper
   {

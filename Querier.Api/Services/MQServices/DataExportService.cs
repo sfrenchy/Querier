@@ -13,7 +13,6 @@ using Querier.Api.Models.Common;
 using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Notifications.MQMessages;
 using Querier.Api.Models.Requests;
-using Querier.Tools;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;

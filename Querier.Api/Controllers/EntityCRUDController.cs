@@ -3,7 +3,6 @@ using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Requests;
 using Querier.Api.Models.Responses;
 using Querier.Api.Services;
-using Querier.Tools;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -13,6 +12,7 @@ using System.Dynamic;
 using System.Linq;
 using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Notifications.MQMessages;
+using Querier.Api.Tools;
 
 namespace Querier.Api.Controllers
 {

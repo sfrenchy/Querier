@@ -11,7 +11,6 @@ using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Requests;
 using Querier.Api.Models.Responses;
 using Querier.Api.Models.UI;
-using Querier.Tools;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -22,6 +21,7 @@ using Querier.Api.Models.Enums;
 using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Notifications.MQMessages;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Querier.Api.Tools;
 
 namespace Querier.Api.Services.UI
 {

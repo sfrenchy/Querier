@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using Querier.Api.Models.QDBConnection;
-using Microsoft.Data.SqlClient;
 using System.Data;
+using Microsoft.Data.SqlClient;
+using Querier.Api.Models.QDBConnection;
 
-namespace Querier.Tools
+namespace Querier.Api.Tools
 {
     public static class DatabaseToCSharpConverter
     {

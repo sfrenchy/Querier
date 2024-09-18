@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Querier.Tools
+namespace Querier.Api.Tools
 {
     public static class DbContextExtensions
     {

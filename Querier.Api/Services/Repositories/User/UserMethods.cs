@@ -9,11 +9,11 @@ using Google.Apis.Auth;
 using Querier.Api.Models;
 using Querier.Api.Models.Auth;
 using Querier.Api.Models.Common;
-using Querier.Tools;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Querier.Api.Tools;
 using static Google.Apis.Auth.JsonWebToken;
 
 namespace Querier.Api.Services.Repositories.User

@@ -7,9 +7,9 @@ using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Requests;
 using Querier.Api.Models.Responses;
 using Querier.Api.Models.UI;
-using Querier.Tools;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Tools;
 
 namespace Querier.Api.Services
 {

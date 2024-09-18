@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
-using Querier.Api.Models.Attributes;
-using Querier.Api.Models.Datatable;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
+using Querier.Api.Models.Attributes;
 
-namespace Querier.Tools
+namespace Querier.Api.Tools
 {
     public abstract class DynamicContextServiceBase
     {

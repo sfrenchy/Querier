@@ -6,7 +6,6 @@ using Querier.Api.Services.MQServices;
 using Querier.Api.Services.Role;
 using Querier.Api.Services.UI;
 using Querier.Api.Services.User;
-using Querier.Tools;
 using KissLog;
 using KissLog.AspNetCore;
 using KissLog.CloudListeners.Auth;
@@ -21,14 +20,10 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Serialization;
-using Quartz;
-using Quartz.Impl.Matchers;
-using Quartz.Spi;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -38,28 +33,19 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using Quartz;
-using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.SqlServer.Diagnostics.Internal;
-using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
-using Microsoft.EntityFrameworkCore.Scaffolding;
-using Microsoft.EntityFrameworkCore.SqlServer.Scaffolding.Internal;
-using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
-using Quartz.Spi;
-using Quartz.Impl.Matchers;
 using System.Runtime.Loader;
 using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Enums;
 using System.Collections;
 using System.Resources;
+using Newtonsoft.Json;
 using Querier.Api.CustomTokenProviders;
 using Querier.Api.Models.QDBConnection;
 using Querier.Api.Quartz;
 using Querier.Api.Services.Repositories.Application;
 using Querier.Api.Services.Repositories.Role;
 using Querier.Api.Services.Repositories.User;
+using Querier.Api.Tools;
 
 namespace Querier.Api
 {
@@ -91,14 +77,14 @@ namespace Querier.Api
             {
                 logging.AddKissLog(options =>
                 {
-                    options.Formatter = (FormatterArgs args) =>
+                    options.Formatter = args =>
                     {
                         if (args.Exception == null)
                             return args.DefaultValue;
 
                         string exceptionStr = new ExceptionFormatter().Format(args.Exception, args.Logger);
 
-                        return string.Join(Environment.NewLine, new[] { args.DefaultValue, exceptionStr });
+                        return string.Join(Environment.NewLine, args.DefaultValue, exceptionStr);
                     };
                 });
             });
@@ -135,8 +121,8 @@ namespace Querier.Api
                 var schemaHelper = new SwashbuckleSchemaHelper();
                 c.CustomSchemaIds(type => schemaHelper.GetSchemaId(type));
             });
-            var SQLEngine = _configuration.GetSection("SQLEngine").Get<string>();
-            switch (SQLEngine)
+            var sqlEngine = _configuration.GetSection("SQLEngine").Get<string>();
+            switch (sqlEngine)
             {
                 default:
                 case "MSSQL":
@@ -255,7 +241,7 @@ namespace Querier.Api
 
                             ApiUser user = userManager.FindByEmailAsync(userMail).GetAwaiter().GetResult();
                             var jwtTokenHandler = new JwtSecurityTokenHandler();
-                            var key = Encoding.ASCII.GetBytes(option.CurrentValue.Secret);
+                            var k = Encoding.ASCII.GetBytes(option.CurrentValue.Secret);
                             var tokenDescriptor = new SecurityTokenDescriptor
                             {
                                 Subject = new ClaimsIdentity(new[]
@@ -266,13 +252,13 @@ namespace Querier.Api
                                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                                 }),
                                 Expires = DateTime.UtcNow.Add(option.CurrentValue.ExpiryTimeFrame),
-                                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(k), SecurityAlgorithms.HmacSha256Signature)
                             };
 
                             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
                             var jwtToken = jwtTokenHandler.WriteToken(token);
 
-                            var refreshToken = new QRefreshToken()
+                            var refreshToken = new QRefreshToken
                             {
                                 JwtId = token.Id,
                                 IsUsed = false,
@@ -318,87 +304,11 @@ namespace Querier.Api
             services.AddSignalR();
             services.AddHealthChecks();
 
-            services.Configure<QuartzOptions>(options =>
-            {
-                options.Scheduling.IgnoreDuplicates = true; // default: false
-                options.Scheduling.OverWriteExistingData = true; // default: true
-            });
-
-            services.AddQuartz(q =>
-            {
-                // handy when part of cluster or you want to otherwise identify multiple schedulers
-                q.SchedulerId = "Scheduler-CoreId";
-                q.SchedulerName = "Scheduler-Core";
-
-                // we take this from appsettings.json, just show it's possible
-                // q.SchedulerName = "Quartz ASP.NET Core Sample Scheduler";
-
-                // as of 3.3.2 this also injects scoped services (like EF DbContext) without problems
-                q.UseMicrosoftDependencyInjectionJobFactory();
-
-                // or for scoped service support like EF Core DbContext
-                // q.UseMicrosoftDependencyInjectionScopedJobFactory();
-
-                // these are the defaults
-                q.UseSimpleTypeLoader();
-                q.UseInMemoryStore();
-                q.UseDefaultThreadPool(tp =>
-                {
-                    tp.MaxConcurrency = 10;
-                });
-                q.UsePersistentStore(s =>
-                {
-                    s.PerformSchemaValidation = false; // default
-                    s.UseProperties = true; // preferred, but not default
-                    switch (SQLEngine)
-                    {
-                        default:
-                        case "MSSQL":
-                            s.UseSqlServer(sql =>
-                            {
-                                sql.ConnectionString = _configuration.GetConnectionString("ApiDBConnection");
-                                sql.TablePrefix = "QRTZ_";
-                            });
-                            break;
-                        case "MySQL":
-                            s.UseMySqlConnector(sql =>
-                            {
-                                sql.ConnectionString = _configuration.GetConnectionString("ApiDBConnection");
-                                sql.TablePrefix = "QRTZ_";
-                            });
-                            break;
-                        case "PgSQL":
-                            s.UsePostgres(sql =>
-                            {
-                                sql.ConnectionString = _configuration.GetConnectionString("ApiDBConnection");
-                                sql.TablePrefix = "QRTZ_";
-                            });
-                            break;
-                        case "Oracle":
-                            s.UseOracle(sql =>
-                            {
-                                sql.ConnectionString = _configuration.GetConnectionString("ApiDBConnection");
-                                sql.TablePrefix = "QRTZ_";
-                            });
-                            break;
-                    }
-                    s.UseJsonSerializer();
-                    s.UseClustering(c =>
-                    {
-                        c.CheckinMisfireThreshold = TimeSpan.FromSeconds(20);
-                        c.CheckinInterval = TimeSpan.FromSeconds(10);
-                    });
-                });
-            });
-            services.AddQuartzHostedService(options =>
-            {
-                options.WaitForJobsToComplete = true;
-            });
             // we can use options pattern to support hooking your own configuration
             // because we don't use service registration api, 
             // we need to manually ensure the job is present in DI
             services.AddTransient<DeleteUploadJob>();
-            services.AddSingleton<IDynamicContextList, DynamicContextList>(sp => { return DynamicContextList.Instance; });
+            services.AddSingleton<IDynamicContextList, DynamicContextList>(_ => DynamicContextList.Instance);
             IMvcBuilder mvc = services.AddControllers();
             var assemblyPath = _configuration.GetSection("ApplicationSettings:AssemblyPath").Get<string>();
             var loadAssemblies = _configuration.GetSection("ApplicationSettings:LoadAssemblies").Get<List<string>>() ?? new List<string>();
@@ -416,58 +326,9 @@ namespace Querier.Api
             using (ApiDbContext apiDbContext = new ApiDbContext(optionsBuilder.Options, _configuration))
             {
                 apiDbContext.Database.EnsureCreated();
-                // Check if QuartzModel exists, deploy if needed
-                if (apiDbContext.Database.IsMySql())
-                {
-                    object qrtzExists = apiDbContext.ExecuteScalar(@"
-                                SELECT COUNT(TABLE_NAME)
-                                FROM 
-                                    information_schema.TABLES 
-                                WHERE 
-                                    TABLE_SCHEMA LIKE 'HAAPIDB' AND 
-                                    TABLE_TYPE LIKE 'BASE TABLE' AND
-                                    TABLE_NAME = 'QRTZ_CALENDARS';");
-                    if (Convert.ToInt32(qrtzExists) == 0) {
-                        string initDBFilePath = "Quartz/Scripts/MYSQL.sql";
-                        apiDbContext.Database.ExecuteSqlRaw(File.ReadAllText(initDBFilePath));
-                    }
-                }
-
-                if (apiDbContext.Database.IsSqlServer())
-                {
-                    object qrtzExists = apiDbContext.ExecuteScalar(@"
-                                SELECT COUNT(*) 
-                                    FROM INFORMATION_SCHEMA.TABLES 
-                                    WHERE TABLE_SCHEMA = 'dbo' 
-                                    AND  TABLE_NAME = 'QRTZ_CALENDARS'");
-                    if (Convert.ToInt32(qrtzExists) == 0) {
-                        string initDBFilePath = "Quartz/Scripts/MSSQL.sql";
-                        apiDbContext.Database.ExecuteSqlRaw(File.ReadAllText(initDBFilePath).Replace("GO",""));
-                    }
-                }
-
-                if (apiDbContext.Database.IsNpgsql())
-                {
-                    object qrtzExists = apiDbContext.ExecuteScalar(@"
-                                SELECT 
-                                    COUNT(table_name)
-                                FROM 
-                                    information_schema.tables 
-                                WHERE 
-                                    table_schema LIKE 'HAAPIDB' AND 
-                                    table_type LIKE 'BASE TABLE' AND
-                                    table_name = 'QRTZ_CALENDARS';");
-                    if (Convert.ToInt32(qrtzExists) == 0) {
-                        string initDBFilePath = "Quartz/Scripts/PGSQL.sql";
-                        apiDbContext.Database.ExecuteSqlRaw(File.ReadAllText(initDBFilePath));
-                    }
-                }
-
-                Console.WriteLine("Quartz.Net model OK");
                 foreach(QDBConnection connection in apiDbContext.QDBConnections.ToList())
                 {
                     Console.WriteLine("Loading assembly for " + connection.Name);
-                    var loadContext = new AssemblyLoadContext(null, false); 
                     var dbAssembly = Assembly.LoadFrom(connection.AssemblyUploadDefinition.Path);
                     pluginAssemblies.Add(dbAssembly);
                     Type dynamicInterfaceType = typeof(IDynamicContextProceduresServicesResolver);
@@ -501,40 +362,37 @@ namespace Querier.Api
                 pluginAssemblies.Add(Assembly.LoadFrom(Path.Combine(assemblyPath, assemblyToLoad)));
             }
 
-            if (pluginsStartupTypes != null)
+            foreach (string startupType in pluginsStartupTypes)
             {
-                foreach (string startupType in pluginsStartupTypes)
-                {
-                    Type type = Type.GetType(startupType, true);
-                    pluginTypes.Add(type);
-                    pluginAssemblies.Add(type.Assembly);
-                }
-
-                foreach (var ha in from Type plugin in pluginTypes
-                                let ha = (IQPlugin)Activator.CreateInstance(plugin)
-                                select ha)
-                {
-                    var m = ha.GetSpecificProperties();
-                    Features.EnabledFeatures.AddRange(m.Features);
-                    Features.ApplicationName = m.Title;
-                    Features.ApplicationIcon = m.Icon;
-                    Features.ApplicationBackgroundLogin = m.BackgroundLogin;
-                    Features.ApplicationDefaultTheme = m.ApplicationDefaultTheme;
-                    Features.ApplicationRightPanelPackageName = m.RightPanelPackageName;
-                    Features.ApplicationUserAttributes = m.ApplicationUserAttributes;
-                    Features.ApplicationUserProperties = m.ApplicationUserProperties;
-                    if (m.RequiredDynamicContexts.All(i => availableDynamicContexts.Contains(i)))
-                    {
-                        ha.ConfigureServices(services, _configuration);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Unable to load services for application as I need some DynamicContexts ({String.Join(", ", m.RequiredDynamicContexts.ToArray())})");
-                    }
-                    services.AddSingleton(typeof(IQPlugin), ha);
-                }
+                Type type = Type.GetType(startupType, true);
+                pluginTypes.Add(type);
+                pluginAssemblies.Add(type.Assembly);
             }
-            
+
+            foreach (var ha in from Type plugin in pluginTypes
+                     let ha = (IQPlugin)Activator.CreateInstance(plugin)
+                     select ha)
+            {
+                var m = ha.GetSpecificProperties();
+                Features.EnabledFeatures.AddRange(m.Features);
+                Features.ApplicationName = m.Title;
+                Features.ApplicationIcon = m.Icon;
+                Features.ApplicationBackgroundLogin = m.BackgroundLogin;
+                Features.ApplicationDefaultTheme = m.ApplicationDefaultTheme;
+                Features.ApplicationRightPanelPackageName = m.RightPanelPackageName;
+                Features.ApplicationUserAttributes = m.ApplicationUserAttributes;
+                Features.ApplicationUserProperties = m.ApplicationUserProperties;
+                if (m.RequiredDynamicContexts.All(i => availableDynamicContexts.Contains(i)))
+                {
+                    ha.ConfigureServices(services, _configuration);
+                }
+                else
+                {
+                    Console.WriteLine($"Unable to load services for application as I need some DynamicContexts ({String.Join(", ", m.RequiredDynamicContexts.ToArray())})");
+                }
+                services.AddSingleton(typeof(IQPlugin), ha);
+            }
+
             foreach (Assembly a in pluginAssemblies)
             {
                 mvc.AddApplicationPart(a);
@@ -542,8 +400,8 @@ namespace Querier.Api
 
             mvc.AddNewtonsoftJson(options => {
                 options.SerializerSettings.ContractResolver = new DefaultContractResolver();
-                options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Include;
-                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                options.SerializerSettings.NullValueHandling = NullValueHandling.Include;
+                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
         }
 
@@ -628,9 +486,7 @@ namespace Querier.Api
                 }
             }
 
-            CreateJobByDefaultAsync().GetAwaiter().GetResult();
             CreateTemplateEmail().GetAwaiter().GetResult();
-            CreateJobForUpdateFileDepositActive().GetAwaiter().GetResult();
         }
 
         /// <summary>
@@ -656,73 +512,6 @@ namespace Querier.Api
                 {
                     ApiUrl = _configuration["KissLog.ApiUrl"]
                 });
-        }
-
-        private async Task CreateJobByDefaultAsync()
-        {
-            using (var serviceScope = ServiceActivator.GetScope())
-            {
-                IScheduler scheduler;
-
-                var schedulerFactory = serviceScope.ServiceProvider.GetService<ISchedulerFactory>();
-                var jobFactory = serviceScope.ServiceProvider.GetService<IJobFactory>();
-
-                scheduler = await schedulerFactory.GetScheduler();
-                scheduler.JobFactory = jobFactory;
-
-                List<IJobDetail> jobs = new List<IJobDetail>();
-
-                //Retrieve all existing job keys for a given scheduler
-                foreach (JobKey jobKey in await scheduler.GetJobKeys(GroupMatcher<JobKey>.AnyGroup()))
-                {
-                    jobs.Add(await scheduler.GetJobDetail(jobKey));
-                }
-
-                bool deleteUploadJob = jobs.Any(job => job.JobType == typeof(DeleteUploadJob));
-                if (!deleteUploadJob)
-                {
-                    IJobDetail newJob = JobBuilder
-                       .Create(typeof(DeleteUploadJob))
-                       .WithIdentity("DeleteUploadJob.StartUp")
-                       .WithDescription("a job that will allow to delete twice a day the uploads that fulfil the management rules")
-                       .UsingJobData("Creator", "System")
-                       .PersistJobDataAfterExecution()
-                       .Build();
-
-                    ITrigger newTrigger = TriggerBuilder
-                       .Create()
-                       .WithIdentity("DeleteUpload.Trigger")
-                       .WithCronSchedule("0 0 0/12 ? * * *", x => x
-                            .InTimeZone(TimeZoneInfo.Local))
-                       .WithDescription("a trigger that runs twice a day")
-                       .UsingJobData("Creator", "System")
-                       .Build();
-
-                    await scheduler.ScheduleJob(newJob, newTrigger);
-                }
-            }
-        }
-
-        private async Task CreateJobForUpdateFileDepositActive()
-        {
-            using (var serviceScope = ServiceActivator.GetScope())
-            {
-                IScheduler scheduler;
-
-                var schedulerFactory = serviceScope.ServiceProvider.GetService<ISchedulerFactory>();
-                var jobFactory = serviceScope.ServiceProvider.GetService<IJobFactory>();
-
-                scheduler = await schedulerFactory.GetScheduler();
-                scheduler.JobFactory = jobFactory;
-
-                List<IJobDetail> jobs = new List<IJobDetail>();
-
-                //Retrieve all existing job keys for a given scheduler
-                foreach (JobKey jobKey in await scheduler.GetJobKeys(GroupMatcher<JobKey>.AnyGroup()))
-                {
-                    jobs.Add(await scheduler.GetJobDetail(jobKey));
-                }
-            }
         }
 
         //Add email template dynamically, you just need to add the origin template in the directory Services/MailTemplating with the extension ".html"
@@ -781,7 +570,7 @@ namespace Querier.Api
                             },
                             UploadStream = stream
                         };
-                        var result = await uploadSrv.UploadFileFromApiAsync(requestParam);
+                        await uploadSrv.UploadFileFromApiAsync(requestParam);
                     }
                 }
             }

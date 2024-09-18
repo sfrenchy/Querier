@@ -1,15 +1,12 @@
 ﻿using System;
-using Querier.Api.Models.Auth;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
-using System.Runtime.CompilerServices;
-using System.Diagnostics;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
-using Querier.Api.Models;
+using Querier.Api.Models.Auth;
 using Querier.Api.Models.Common;
 
-namespace Querier.Tools
+namespace Querier.Api.Tools
 {
     public abstract class ApiUserExtended<T,U> where T : ApiUserExtended<T,U>, new() where U: ApiDbContext
     {

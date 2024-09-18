@@ -11,11 +11,11 @@ using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Email;
 using Querier.Api.Models.Enums;
 using Querier.Api.Models.Interfaces;
-using Querier.Tools;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Tools;
 
 namespace Querier.Api.Services.Repositories.User
 {

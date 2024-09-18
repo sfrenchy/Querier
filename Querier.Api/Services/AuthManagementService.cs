@@ -6,13 +6,13 @@ using Querier.Api.Models;
 using Querier.Api.Models.Auth;
 using Querier.Api.Models.Common;
 using Querier.Api.Models.Interfaces;
-using Querier.Tools;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Querier.Api.Services.Repositories.User;
+using Querier.Api.Tools;
 
 namespace Querier.Api.Services
 {

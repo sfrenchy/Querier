@@ -2,10 +2,10 @@
 using Querier.Api.Models;
 using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Notifications.MQMessages;
-using Querier.Tools;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Quartz;
+using Querier.Api.Tools;
 
 namespace Querier.Api.Quartz
 {

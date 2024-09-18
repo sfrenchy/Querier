@@ -5,7 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Querier.Tools
+namespace Querier.Api.Tools
 {
     public static class PredicateBuilder
     {

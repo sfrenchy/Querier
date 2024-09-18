@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Querier.Tools
+namespace Querier.Api.Tools
 {
     /// <summary>
     /// Add static service resolver to use when dependencies injection is not available

@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Querier.Api.Models.Requests;
-using Querier.Tools;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +25,7 @@ using Querier.Api.Models;
 using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Notifications.MQMessages;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Tools;
 
 namespace Querier.Api.Services.MQServices
 {

@@ -20,7 +20,6 @@ using Querier.Api.Models.QDBConnection;
 using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Requests;
 using Querier.Api.Models.Responses;
-using Querier.Tools;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
@@ -46,6 +45,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 using Pomelo.EntityFrameworkCore.MySql.Diagnostics.Internal;
 using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
+using Querier.Api.Tools;
 
 namespace Querier.Api.Services
 {

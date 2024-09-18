@@ -1,39 +1,31 @@
 using System;
-using Querier.Api.Models.Datatable;
-using Querier.Api.Models.UI;
-using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Entity.Core.Objects;
-using System.Reflection;
-using System.Security.Claims;
-using Querier.Api.Models.Attributes;
-using Querier.Api.Models.Common;
-using Newtonsoft.Json;
-using System.Security.Cryptography;
-using System.Runtime.Serialization;
-using Querier.Api.Models.Auth;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using System.Globalization;
-using System.Text;
-using System.ComponentModel;
+using System.Data.Entity.Core.Objects;
 using System.Dynamic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.NetworkInformation;
+using System.Reflection;
+using System.Runtime.Serialization;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
+using Querier.Api.Models.Attributes;
+using Querier.Api.Models.Common;
+using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Requests;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Castle.Core.Internal;
+using Querier.Api.Models.UI;
 
-namespace Querier.Tools
+namespace Querier.Api.Tools
 {
     public static class ExtensionMethods
     {

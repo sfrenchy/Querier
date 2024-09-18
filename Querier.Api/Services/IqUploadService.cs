@@ -9,11 +9,11 @@ using Querier.Api.Models;
 using Querier.Api.Models.Common;
 using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Requests;
-using Querier.Tools;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Tools;
 
 namespace Querier.Api.Services
 {
