@@ -183,7 +183,6 @@ namespace Querier.Api
             services.AddSingleton<IUIPageService, UIPageService>();
             services.AddSingleton<IUIRowService, UIRowService>();
             services.AddSingleton<IUICardService, UICardService>();
-            services.AddSingleton<IHtmlPartialService, HtmlPartialService>();
             services.AddScoped<IUserManagerService, UserManagerService>();
             services.AddSingleton<IEmailSendingService, SMTPEmailSendingService>();
             services.AddSingleton<IEmailTemplateCrudUserService, EmailTemplateCrudUserService>();
