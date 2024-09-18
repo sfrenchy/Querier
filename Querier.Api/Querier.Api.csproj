@@ -16,6 +16,8 @@
     <Compile Remove="Repositories\Data\**" />
     <Content Remove="Controllers\Charts\**" />
     <Content Remove="Repositories\Data\**" />
+    <Content Include="Services\MQServices\DataExportService.cs" />
+    <Content Include="Services\Repositories\Application\Features.cs" />
     <EmbeddedResource Remove="Controllers\Charts\**" />
     <EmbeddedResource Remove="Repositories\Data\**" />
     <None Remove="Controllers\Charts\**" />
@@ -49,6 +51,7 @@
     <PackageReference Include="EntityFramework" Version="6.5.1" />
     <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
     <PackageReference Include="KissLog.AspNetCore" Version="5.3.0" />
+    <PackageReference Include="MailKit" Version="4.7.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.HealthChecks" Version="2.2.0" />
@@ -98,6 +101,7 @@
     <Folder Include="wwwroot\uploadManager\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Models\QDBConnection\QDBConnection.cs" />
     <Content Include="Services\DBTemplating\*.*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -109,9 +113,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Querier.Api.Models\Querier.Api.Models.csproj" />
-    <ProjectReference Include="..\Querier.Api.Services\Querier.Api.Services.csproj" />
-    <ProjectReference Include="..\Querier.Tools\Querier.Tools.csproj" />
     <Content Include="Controllers\ApplicationSpecificProperties.cs" />
   </ItemGroup>
   <ItemGroup>

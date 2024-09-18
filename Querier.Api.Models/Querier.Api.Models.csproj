@@ -48,9 +48,4 @@
     <None Remove="Microsoft.EntityFrameworkCore.Proxies" />
     <None Remove="Microsoft.EntityFrameworkCore.Design" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Enums\Ged\" />
-    <Folder Include="Notifications\" />
-    <Content Include="QDBConnection\QDBConnection.cs" />
-  </ItemGroup>
 </Project>

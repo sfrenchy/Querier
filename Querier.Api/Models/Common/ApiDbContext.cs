@@ -189,9 +189,6 @@ namespace Querier.Api.Models.Common
                     AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
                     optionsBuilder.UseLazyLoadingProxies().UseNpgsql(_configuration.GetConnectionString("ApiDBConnection"), x => x.MigrationsAssembly("HerdiaApp.Migration.PgSQL"));
                     break;
-                case "Oracle":
-                    optionsBuilder.UseLazyLoadingProxies().UseOracle(_configuration.GetConnectionString("ApiDBConnection"), x => x.MigrationsAssembly("HerdiaApp.Migration.Oracle"));
-                    break;
             }
         }
 

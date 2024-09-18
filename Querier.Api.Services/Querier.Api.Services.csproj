@@ -46,8 +46,6 @@
       <Content Update="MailTemplating\EmailResetPassword.fr.html">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <Content Include="MQServices\DataExportService.cs" />
-      <Content Include="Repositories\Application\Features.cs" />
       <Content Update="Repositories\Quartz\Scripts\MSSQL.sql">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
@@ -106,53 +104,6 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="8.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Querier.Api.Models\Querier.Api.Models.csproj" />
-      <ProjectReference Include="..\Querier.Tools\Querier.Tools.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Update="MailTemplating\EmailConfirmation.de.html">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="MailTemplating\EmailConfirmation.en.html">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="MailTemplating\EmailConfirmation.fr.html">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="MailTemplating\EmailResetPassword.de.html">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="MailTemplating\EmailResetPassword.en.html">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="MailTemplating\EmailResetPassword.fr.html">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="DBTemplating\ProcedureContext.st">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="DBTemplating\ProcedureController.st">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="DBTemplating\ProcedureParameters.st">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="DBTemplating\ProcedureReportRequests.st">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="DBTemplating\ProcedureResultSet.st">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="DBTemplating\ProcedureService.st">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="DBTemplating\ProcedureServiceResolver.st">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
 
 </Project>

@@ -1,4 +1,6 @@
-﻿using Querier.Api.Models.QDBConnection;
+﻿using System;
+using System.Collections.Generic;
+using Querier.Api.Models.QDBConnection;
 using Microsoft.Data.SqlClient;
 using System.Data;
 

@@ -1,3 +1,4 @@
+using System;
 using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Requests;
 using Microsoft.Extensions.Configuration;

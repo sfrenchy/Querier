@@ -51,8 +51,6 @@ using Quartz.Spi;
 using Quartz.Impl.Matchers;
 using System.Runtime.Loader;
 using Querier.Api.Models.Interfaces;
-using Querier.Api.Services.Ged;
-using Querier.Api.Services.Factory;
 using Querier.Api.Models.Enums;
 using System.Collections;
 using System.Resources;
@@ -157,12 +155,6 @@ namespace Querier.Api
                     services.AddDbContextFactory<ApiDbContext>(options => options.UseNpgsql(_configuration.GetConnectionString("ApiDBConnection")));
                     services.AddDbContext<UserDbContext>(options => options.UseNpgsql(_configuration.GetConnectionString("ApiDBConnection")).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
                     break;
-                case "Oracle":
-                    services.AddDbContext<ApiDbContext>(options => options.UseOracle(_configuration.GetConnectionString("ApiDBConnection"), x => x.MigrationsAssembly("HerdiaApp.Migration.Oracle")));
-                    services.AddDbContextFactory<ApiDbContext>(options => options.UseOracle(_configuration.GetConnectionString("ApiDBConnection")));
-                    services.AddDbContext<UserDbContext>(options => options.UseOracle(_configuration.GetConnectionString("ApiDBConnection")).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
-
-                    break;
             }
             
             services.Configure<JwtConfig>(_configuration.GetSection("JwtConfig"));
@@ -231,10 +223,6 @@ namespace Querier.Api
             services.AddScoped<IUserManagerService, UserManagerService>();
             services.AddSingleton<IEmailSendingService, SMTPEmailSendingService>();
             services.AddSingleton<IEmailTemplateCrudUserService, EmailTemplateCrudUserService>();
-            services.AddScoped<IEmailTemplateCrudCommonService, EmailTemplateCrudCommonService>();
-            services.AddSingleton<IQFileReadOnlyDeposit, GedDocuwareService>();
-            services.AddSingleton<FileDepositFactory, FileDepositFactory>();
-            services.AddSingleton<IFileDepositService, FileDepositService>();
             services.AddHostedService<ToastMessageReceiverService>();
             services.AddHostedService<DataExportReceiverService>();
             services.AddHostedService<DataImportReceiverService>();
@@ -410,7 +398,6 @@ namespace Querier.Api
             // because we don't use service registration api, 
             // we need to manually ensure the job is present in DI
             services.AddTransient<DeleteUploadJob>();
-            services.AddTransient<UpdateFileDeposit>();
             services.AddSingleton<IDynamicContextList, DynamicContextList>(sp => { return DynamicContextList.Instance; });
             IMvcBuilder mvc = services.AddControllers();
             var assemblyPath = _configuration.GetSection("ApplicationSettings:AssemblyPath").Get<string>();
@@ -476,27 +463,6 @@ namespace Querier.Api
                     }
                 }
 
-                if (apiDbContext.Database.IsOracle())
-                {
-                    object qrtzExists = apiDbContext.ExecuteScalar(@"
-                                SELECT COUNT(table_name )
-                                FROM USER_TABLES
-                                WHERE table_name='QRTZ_CALENDARS'");
-                    if (Convert.ToInt32(qrtzExists) == 0) {
-                        //string initDBFilePath = "Quartz/Scripts/ORACLE.sql";
-                        //apiDbContext.Database.ExecuteSqlRaw(File.ReadAllText(initDBFilePath));
-                        string initDBFilePath = "Quartz/Scripts/ORACLE.sql";
-                        string[] sqlStatements = File.ReadAllText(initDBFilePath).Split(';');
-
-                        foreach (string sqlStatement in sqlStatements)
-                        {
-                            if (!string.IsNullOrWhiteSpace(sqlStatement))
-                            {
-                                apiDbContext.Database.ExecuteSqlRaw(sqlStatement);
-                            }
-                        }
-                    }
-                }
                 Console.WriteLine("Quartz.Net model OK");
                 foreach(QDBConnection connection in apiDbContext.QDBConnections.ToList())
                 {
@@ -755,29 +721,6 @@ namespace Querier.Api
                 foreach (JobKey jobKey in await scheduler.GetJobKeys(GroupMatcher<JobKey>.AnyGroup()))
                 {
                     jobs.Add(await scheduler.GetJobDetail(jobKey));
-                }
-
-                bool updateFileDepositJob = jobs.Any(job => job.JobType == typeof(UpdateFileDeposit));
-                if (!updateFileDepositJob)
-                {
-                    IJobDetail newJob = JobBuilder
-                       .Create(typeof(UpdateFileDeposit))
-                       .WithIdentity("UpdateFileDeposit.StartUp")
-                       .WithDescription("a job which will update the file deposit information in db.")
-                       .UsingJobData("Creator", "System")
-                       .PersistJobDataAfterExecution()
-                       .Build();
-
-                    ITrigger newTrigger = TriggerBuilder
-                       .Create()
-                       .WithIdentity("UpdateFileDeposit.Trigger")
-                       .WithCronSchedule("0 */15 * ? * *", x => x
-                            .InTimeZone(TimeZoneInfo.Local))
-                       .WithDescription("a trigger that runs every 15 minutes")
-                       .UsingJobData("Creator", "System")
-                       .Build();
-
-                    await scheduler.ScheduleJob(newJob, newTrigger);
                 }
             }
         }

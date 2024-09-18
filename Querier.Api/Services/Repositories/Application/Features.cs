@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.IO;
 using Querier.Api.Models.Common;
 using Querier.Api.Models.Enums;
 using Querier.Api.Models.Interfaces;

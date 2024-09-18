@@ -1,4 +1,6 @@
-﻿using Querier.Api.Models;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Querier.Api.Models;
 using Querier.Api.Models.Common;
 using Querier.Api.Models.Requests;
 using Querier.Api.Models.UI;

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using CsvHelper;
@@ -9,11 +11,14 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using System.Data;
+using System.Linq;
+using System.Net.Http;
 using Querier.Tools;
 using ClosedXML.Excel;
 using Querier.Api.Models.Common;
 using CsvHelper.Configuration;
 using System.Text;
+using System.Threading.Tasks;
 using Querier.Api.Models;
 using Querier.Api.Models.Enums;
 using Microsoft.AspNetCore.Http;
@@ -168,8 +173,7 @@ namespace Querier.Api.Services
 
             if (exportParameters.UseFilters)
             {
-                var filteredDatas = datas.AsEnumerable()
-                    .DatatableFilter(exportParameters.DatatableRequest, out int? count);
+                var filteredDatas = datas.AsEnumerable().DatatableFilter(exportParameters.DatatableRequest, out int? count);
                 return filteredDatas.CopyToDataTable();
             }
             else
