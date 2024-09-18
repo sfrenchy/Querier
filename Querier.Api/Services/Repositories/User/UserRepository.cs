@@ -40,9 +40,9 @@ namespace Querier.Api.Services.Repositories.User
         private readonly IConfiguration _configuration;
         private readonly IEmailSendingService _emailSending;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IQUploadService _uploadService;
+        private readonly Models.Interfaces.IQUploadService _uploadService;
 
-        public UserRepository(ApiDbContext context, UserManager<ApiUser> userManager, ILogger<UserRepository> logger, IConfiguration configuration, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory, IQUploadService uploadService)
+        public UserRepository(ApiDbContext context, UserManager<ApiUser> userManager, ILogger<UserRepository> logger, IConfiguration configuration, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService)
         {
             _context = context;
             _logger = logger;

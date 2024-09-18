@@ -36,10 +36,10 @@ using System.Resources;
 using Newtonsoft.Json;
 using Querier.Api.CustomTokenProviders;
 using Querier.Api.Models.QDBConnection;
-using Querier.Api.Services.Repositories.Application;
 using Querier.Api.Services.Repositories.Role;
 using Querier.Api.Services.Repositories.User;
 using Querier.Api.Tools;
+using IQUploadService = Querier.Api.Services.IQUploadService;
 
 namespace Querier.Api
 {
@@ -179,7 +179,7 @@ namespace Querier.Api
             services.AddSingleton<ITranslationService, TranslationService>();
             services.AddSingleton<IThemeService, ThemeService>();
             services.AddSingleton<IQTaskScheduler, QTaskScheduler>();
-            services.AddSingleton<IQUploadService, IqUploadService>();
+            services.AddSingleton<Models.Interfaces.IQUploadService, IQUploadService>();
             services.AddSingleton<IQTranslationService, QTranslationService>();
             services.AddScoped<IAuthManagementService, AuthManagementService>();
             services.AddSingleton<IEditModeService, EditModeService>();
@@ -355,14 +355,6 @@ namespace Querier.Api
                      select ha)
             {
                 var m = ha.GetSpecificProperties();
-                Features.EnabledFeatures.AddRange(m.Features);
-                Features.ApplicationName = m.Title;
-                Features.ApplicationIcon = m.Icon;
-                Features.ApplicationBackgroundLogin = m.BackgroundLogin;
-                Features.ApplicationDefaultTheme = m.ApplicationDefaultTheme;
-                Features.ApplicationRightPanelPackageName = m.RightPanelPackageName;
-                Features.ApplicationUserAttributes = m.ApplicationUserAttributes;
-                Features.ApplicationUserProperties = m.ApplicationUserProperties;
                 if (m.RequiredDynamicContexts.All(i => availableDynamicContexts.Contains(i)))
                 {
                     ha.ConfigureServices(services, _configuration);
@@ -490,10 +482,10 @@ namespace Querier.Api
             //use to have IQUploadService and IDbContextFactory services 
             using (var serviceScope = ServiceActivator.GetScope())
             {
-                IQUploadService uploadSrv;
+                Models.Interfaces.IQUploadService uploadSrv;
                 IDbContextFactory<ApiDbContext> dbContextFactory;
 
-                uploadSrv = serviceScope.ServiceProvider.GetService<IQUploadService>();
+                uploadSrv = serviceScope.ServiceProvider.GetService<Models.Interfaces.IQUploadService>();
                 dbContextFactory = serviceScope.ServiceProvider.GetService<IDbContextFactory<ApiDbContext>>();
 
                 ResourceSet resourceSet = Properties.Resources.ResourceManager.GetResourceSet(System.Globalization.CultureInfo.CurrentCulture, true, true);

@@ -21,8 +21,8 @@ namespace Querier.Api.Services
     public class HtmlPartialService : IHtmlPartialService
     {
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IQUploadService _uploadService;
-        public HtmlPartialService(IQUploadService uploadService, IDbContextFactory<ApiDbContext> contextFactory)
+        private readonly Models.Interfaces.IQUploadService _uploadService;
+        public HtmlPartialService(Models.Interfaces.IQUploadService uploadService, IDbContextFactory<ApiDbContext> contextFactory)
         {
             _uploadService = uploadService;
 

@@ -56,31 +56,7 @@ namespace Querier.Api.Services
                 result.EN = apidbContext.QTranslations.ToDictionary(t => t.Code, t => t.EnLabel);
                 result.FR = apidbContext.QTranslations.ToDictionary(t => t.Code, t => t.FrLabel);
 
-                if (Repositories.Application.Features.EnabledFeatures.Contains(Querier.Api.Models.Enums.ApplicationFeatures.OwnTranslation))
-                {
-                    IQClientTranslation clientTranslationService = (IQClientTranslation)_serviceProvider.GetService(typeof(IQClientTranslation));
-                    if (clientTranslationService != null)
-                    {
-                        var clientTranslations = clientTranslationService.GetTranslations();
-                        foreach (var frClientTranslation in clientTranslations.FR)
-                        {
-                            if (!result.FR.ContainsKey(frClientTranslation.Key))
-                                result.FR.Add(frClientTranslation.Key, frClientTranslation.Value);
-                        }
-
-                        foreach (var enClientTranslation in clientTranslations.EN)
-                        {
-                            if (!result.EN.ContainsKey(enClientTranslation.Key))
-                                result.EN.Add(enClientTranslation.Key, enClientTranslation.Value);
-                        }
-
-                        foreach (var deClientTranslation in clientTranslations.DE)
-                        {
-                            if (!result.DE.ContainsKey(deClientTranslation.Key))
-                                result.DE.Add(deClientTranslation.Key, deClientTranslation.Value);
-                        }
-                    }
-                }
+                
 
                 return result;
             }

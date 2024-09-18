@@ -38,10 +38,10 @@ namespace Querier.Api.Services.UI
     {
         private readonly ILogger<UICardService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IQUploadService _uploadService;
+        private readonly Models.Interfaces.IQUploadService _uploadService;
         private readonly IToastMessageEmitterService _toastMessageEmitterService;
 
-        public UICardService(ILogger<UICardService> logger, IDbContextFactory<ApiDbContext> contextFactory, IQUploadService uploadService, IToastMessageEmitterService toastMessageEmitterService)
+        public UICardService(ILogger<UICardService> logger, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService, IToastMessageEmitterService toastMessageEmitterService)
         {
             _logger = logger;
             _contextFactory = contextFactory;

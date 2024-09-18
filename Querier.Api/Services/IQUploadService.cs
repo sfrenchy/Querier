@@ -19,14 +19,14 @@ namespace Querier.Api.Services
 {
 
 
-    public class IqUploadService : IQUploadService
+    public class IQUploadService : Models.Interfaces.IQUploadService
     {
-        private readonly ILogger<IqUploadService> _logger;
+        private readonly ILogger<IQUploadService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _configuration;
 
-        public IqUploadService(ILogger<IqUploadService> logger, IDbContextFactory<ApiDbContext> contextFactory, IWebHostEnvironment hostEnvironment, IConfiguration configuration)
+        public IQUploadService(ILogger<IQUploadService> logger, IDbContextFactory<ApiDbContext> contextFactory, IWebHostEnvironment hostEnvironment, IConfiguration configuration)
         {
             _logger = logger;
             _contextFactory = contextFactory;

@@ -60,11 +60,11 @@ namespace Querier.Api.Services
     public class DBConnectionService : IDBConnectionService
     {
         private readonly ILogger<DBConnectionService> _logger;
-        private readonly IQUploadService _uploadService;
+        private readonly Models.Interfaces.IQUploadService _uploadService;
         private readonly IDbContextFactory<ApiDbContext> _apiDbContextFactory;
         private readonly IServiceProvider _serviceProvider;
         private readonly IDynamicContextList _dynamicContextList;
-        public DBConnectionService(IDynamicContextList dynamicContextList, IDbContextFactory<ApiDbContext> apiDbContextFactory, IServiceProvider serviceProvider, IQUploadService uploadService, ILogger<DBConnectionService> logger)
+        public DBConnectionService(IDynamicContextList dynamicContextList, IDbContextFactory<ApiDbContext> apiDbContextFactory, IServiceProvider serviceProvider, Models.Interfaces.IQUploadService uploadService, ILogger<DBConnectionService> logger)
         {
             _uploadService = uploadService;
             _logger = logger;

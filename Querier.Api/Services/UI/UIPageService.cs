@@ -44,11 +44,11 @@ namespace Querier.Api.Services.UI
     {
         private readonly ILogger<UIPageService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IQUploadService _uploadService;
+        private readonly Models.Interfaces.IQUploadService _uploadService;
         private readonly IToastMessageEmitterService _toastMessageEmitterService;
 
 
-        public UIPageService(ILogger<UIPageService> logger, IDbContextFactory<ApiDbContext> contextFactory, IQUploadService uploadService, IToastMessageEmitterService toastMessageEmitterService)
+        public UIPageService(ILogger<UIPageService> logger, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService, IToastMessageEmitterService toastMessageEmitterService)
         {
             _logger = logger;
             _contextFactory = contextFactory;

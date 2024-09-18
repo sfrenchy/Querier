@@ -9,14 +9,12 @@ using Querier.Api.Models.Common;
 using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Email;
 using Querier.Api.Models.Enums;
-using Querier.Api.Models.Interfaces;
 using Querier.Api.Models.Requests.User;
 using Querier.Api.Models.Responses.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Web;
-using Querier.Api.Services.Repositories.Application;
 using Querier.Api.Services.Repositories.User;
 using Querier.Api.Services.Role;
 
@@ -44,10 +42,10 @@ namespace Querier.Api.Services.User
         private readonly IEmailSendingService _emailSending;
         private readonly IConfiguration _configuration;
         private readonly Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IQUploadService _uploadService;
+        private readonly Models.Interfaces.IQUploadService _uploadService;
         private readonly IRoleService _roleService;
         // private readonly IQPlugin _herdiaApp;
-        public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, IQUploadService uploadService, IRoleService roleService/*, IQPlugin herdiaApp*/)
+        public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, Models.Interfaces.IQUploadService uploadService, IRoleService roleService/*, IQPlugin herdiaApp*/)
         {
             _repo = repo;
             _logger = logger;
@@ -73,42 +71,7 @@ namespace Querier.Api.Services.User
             {
                 return false;
             }
-            // _herdiaApp.herdiaAppUserCreated(newUser);
-
-            //If the application needs some, create the application-specific user attributes in HAAPIDB
-            if (Features.ApplicationUserAttributes.Count > 0)
-            {
-                //Get Application specific user attributes viewmodels
-                List<QEntityAttributeViewModel> ApplicationSpecificUserAttributesViewModels = Features.ApplicationUserAttributes;
-
-                using (var apiDbContext = _contextFactory.CreateDbContext())
-                {
-                    //Map viewmodel user attributes
-                    List<QEntityAttribute> ApplicationSpecificUserAttributes = new List<QEntityAttribute>();
-
-                    ApplicationSpecificUserAttributesViewModels.ForEach(vm =>
-                    {
-                        QEntityAttribute EntityAttribute = new QEntityAttribute() { Label = vm.Label, Value = vm.Value, Nullable = vm.Nullable };
-                        ApplicationSpecificUserAttributes.Add(EntityAttribute);
-                    });
-
-                    //Add Application specific attributes to the QEntityAttribute tables
-                    apiDbContext.QEntityAttribute.AddRange(ApplicationSpecificUserAttributes);
-                    apiDbContext.SaveChanges();
-
-                    //Create a list of QApiUserAttributes
-                    List<QApiUserAttributes> userAttributes = new List<QApiUserAttributes>();
-
-                    //For each specific user attributes, create a QApiUserAttributes to link the attribute to the user being created
-                    ApplicationSpecificUserAttributes.ForEach(att =>
-                    {
-                        QApiUserAttributes userAttribute = new QApiUserAttributes() { EntityAttributeId = att.Id, UserId = newUser.Id };
-                        userAttributes.Add(userAttribute);
-                    });
-                    apiDbContext.QApiUserAttributes.AddRange(userAttributes);
-                    await apiDbContext.SaveChangesAsync();
-                }
-            }
+            
             return await _repo.AddRole(newUser, _roleService.UseMapToModel(user.Roles));
         }
 

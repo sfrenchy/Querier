@@ -12,6 +12,7 @@ using System.IO.Compression;
 using System.Security.Policy;
 using System.Threading.Tasks;
 using Querier.Api.Models.Interfaces;
+using IQUploadService = Querier.Api.Models.Interfaces.IQUploadService;
 
 namespace Querier.Api.Controllers
 {

@@ -37,6 +37,8 @@
     <None Remove="System.Data.SqlClient" />
     <None Remove="Azure.Core" />
     <None Remove="Microsoft.SqlServer.Server" />
+    <None Remove="Properties\PublishProfiles\192.168.1.5_5000.pubxml" />
+    <None Remove="Properties\PublishProfiles\192.168.1.5_50001.pubxml" />
   </ItemGroup>
   <Target Name="ChangeAliasesOfStrongNameAssemblies" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
     <ItemGroup>

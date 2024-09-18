@@ -15,8 +15,8 @@ namespace Querier.Api.Services
     }
     public class EmailTemplateCrudUserService : IEmailTemplateCrudUserService
     {
-        private readonly IQUploadService _uploadService;
-        public EmailTemplateCrudUserService(IQUploadService uploadService)
+        private readonly Models.Interfaces.IQUploadService _uploadService;
+        public EmailTemplateCrudUserService(Models.Interfaces.IQUploadService uploadService)
         {
             _uploadService = uploadService;
         }
