@@ -20,7 +20,6 @@ namespace Querier.Api.Controllers.UI
     [ApiController]
     public class UICardController : ControllerBase
     {
-
         private readonly ILogger<UICardController> _logger;
         private readonly IUICardService _uiCardService;
 
@@ -105,6 +104,7 @@ namespace Querier.Api.Controllers.UI
         {
             return new OkObjectResult(await _uiCardService.GetPredefinedCards());
         }
+
         /// <summary>
         /// Used to get the content for a card
         /// </summary>

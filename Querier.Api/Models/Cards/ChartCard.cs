@@ -12,6 +12,7 @@
                 return c;
             }
         }
+
         public int MinWidth => 4;
         public bool HasButton => false;
         public bool HasFooter => true;

@@ -48,17 +48,17 @@ namespace Querier.Api.Tools
         private static readonly byte[] WMV_WMA = { 48, 38, 178, 117, 142, 102, 207, 17, 166, 217, 0, 170, 0, 98, 206, 108 };
         private static readonly byte[] ZIP_DOCX = { 80, 75, 3, 4 };
 
-        public static IQueryable Query(this DbContext context, string entityName) =>
-            context.Query(context.Model.FindEntityType(entityName).ClrType);
-
         static readonly MethodInfo SetMethod =
             typeof(DbContext).GetMethod(nameof(DbContext.Set), 1, Array.Empty<Type>()) ??
             throw new Exception($"Type not found: DbContext.Set");
 
+        public static IQueryable Query(this DbContext context, string entityName) =>
+            context.Query(context.Model.FindEntityType(entityName).ClrType);
+
         public static IQueryable Query(this DbContext context, Type entityType) =>
             (IQueryable)SetMethod.MakeGenericMethod(entityType)?.Invoke(context, null) ??
             throw new Exception($"Type not found: {entityType.FullName}");
-    
+
         public static DataTable ToDataTable<T>(this IList<T> data)
         {
             
@@ -82,7 +82,7 @@ namespace Querier.Api.Tools
             
             return table;
         }
-        
+
         public static object ExecuteScalar(this DbContext context, string sql,
         List<DbParameter> parameters = null,
         CommandType commandType = CommandType.Text,
@@ -92,6 +92,7 @@ namespace Querier.Api.Tools
                                          commandType, commandTimeOutInSeconds);
             return value;
         }
+
         public static DataTable RawSqlQuery(this DatabaseFacade database, string sql, List<DbParameter> parameters = null, CommandType commandType = CommandType.Text, int? commandTimeOutInSeconds = null)
         {
             var dt = new DataTable();
@@ -166,7 +167,7 @@ namespace Querier.Api.Tools
 
             return table;
         }
-        
+
         public static IServiceCollection AddLazyResolution(this IServiceCollection services)
         {
             return services.AddTransient(
@@ -174,18 +175,11 @@ namespace Querier.Api.Tools
                 typeof(LazilyResolved<>));
         }
 
-        public class LazilyResolved<T> : Lazy<T>
-        {
-            public LazilyResolved(IServiceProvider serviceProvider)
-                : base(serviceProvider.GetRequiredService<T>)
-            {
-            }
-        }
-
         public static int MonthDifference(this DateTime lValue, DateTime rValue)
         {
             return Math.Abs((lValue.Month - rValue.Month) + 12 * (lValue.Year - rValue.Year));
         }
+
         public static DateTime FromTimeZone(this DateTimeOffset? lValue, string timeZone)
         {
             TimeZoneInfo tZone = TimeZoneInfo.FindSystemTimeZoneById(timeZone);
@@ -196,8 +190,10 @@ namespace Querier.Api.Tools
         {
             return (input > date1 && input < date2);
         }
+
         public static T CastTo<T>(this object o) => (T)o;
         public static T CastTo<T>(this object o, T type) => (T)o;
+
         public static List<dynamic> CastListToDynamic<T>(this List<T> source)
         {
             List<dynamic> result = new List<dynamic>();
@@ -255,6 +251,7 @@ namespace Querier.Api.Tools
 
             return result;
         }
+
         public static bool IsNullOrEmpty(this JToken token)
         {
             return token == null ||
@@ -426,6 +423,7 @@ namespace Querier.Api.Tools
                     throw new NotImplementedException($"Type {type} not handled yet");
             }
         }
+
         public static List<T> DatatableFilter<T>(this IEnumerable<T> source, ServerSideRequest datatableParams, out int? countFiltered)
         {
             // If there's no requested columns, we had all columns to the result
@@ -718,6 +716,7 @@ namespace Querier.Api.Tools
                 .ToString()
                 .Normalize(NormalizationForm.FormC);
         }
+
         /// <summary>
         ///This method reads the first bytes of a file,
         ///and then uses the MimeTypeHelper class to determine the MIME type of the file based on the byte array.
@@ -843,6 +842,14 @@ namespace Querier.Api.Tools
                 result = value * 1073741824;
             }
             return result;
+        }
+
+        public class LazilyResolved<T> : Lazy<T>
+        {
+            public LazilyResolved(IServiceProvider serviceProvider)
+                : base(serviceProvider.GetRequiredService<T>)
+            {
+            }
         }
     }
 }

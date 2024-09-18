@@ -22,16 +22,18 @@ namespace Querier.Api.Models.Notifications.MQMessages
 		public string ContentDownloadsFilename { get; set; } = "";
 		public bool Closable { get; set; } = false;
 		public bool Persistent { get; set; } = false;
-        public byte[] GetBytes()
+
+		public byte[] GetBytes()
         {
             return Encoding.UTF8.GetBytes(this.ToJSONString());
         }
-        public string ToJSONString()
+
+		public string ToJSONString()
         {
 			try
 			{
-            string result = JsonConvert.SerializeObject(this);
-			return result;
+	            string result = JsonConvert.SerializeObject(this);
+				return result;
 			}
 			catch (Exception e)
 			{
@@ -39,5 +41,5 @@ namespace Querier.Api.Models.Notifications.MQMessages
 				return "";
 			}
         }
-    }
+	}
 }

@@ -36,14 +36,16 @@ namespace Querier.Api.Services.User
     }
     public class UserService : IUserService
     {
-        private readonly IUserRepository _repo;
-        private readonly ILogger<UserRepository> _logger;
-        private readonly UserManager<ApiUser> _userManager;
-        private readonly IEmailSendingService _emailSending;
         private readonly IConfiguration _configuration;
         private readonly Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly Models.Interfaces.IQUploadService _uploadService;
+        private readonly IEmailSendingService _emailSending;
+        private readonly ILogger<UserRepository> _logger;
+        private readonly IUserRepository _repo;
         private readonly IRoleService _roleService;
+        private readonly Models.Interfaces.IQUploadService _uploadService;
+
+        private readonly UserManager<ApiUser> _userManager;
+
         // private readonly IQPlugin _herdiaApp;
         public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, Models.Interfaces.IQUploadService uploadService, IRoleService roleService/*, IQPlugin herdiaApp*/)
         {
@@ -146,48 +148,6 @@ namespace Querier.Api.Services.User
             return searchUser.PasswordHash;
         }
 
-        private void MapToModel(UserRequest user, ApiUser updateUser)
-        {
-            updateUser.FirstName = user.FirstName;
-            updateUser.LastName = user.LastName;
-            updateUser.Email = user.Email;
-            updateUser.LanguageCode = user.LanguageCode;
-            updateUser.Phone = user.Phone;
-            updateUser.Img = user.Img;
-            updateUser.DateFormat = user.DateFormat;
-            updateUser.UserName = user.UserName;
-        }
-
-        private ApiUser MapToModel(UserRequest user)
-        {
-            return new ApiUser
-            {
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email,
-                LanguageCode = user.LanguageCode,
-                Phone = user.Phone,
-                Img = user.Img,
-                DateFormat = user.DateFormat,
-                UserName = user.UserName
-            };
-        }
-
-        private UserResponse MapToVM(ApiUser user)
-        {
-            return new UserResponse
-            {
-                Id = user.Id,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email,
-                Phone = user.Phone,
-                LanguageCode = user.LanguageCode,
-                Img = user.Img,
-                DateFormat = user.DateFormat,
-                UserName = user.UserName
-            };
-        }
         public async Task<object> SendMailForForgotPassword(SendMailForgotPassword user_mail)
         {
             object response;
@@ -325,6 +285,7 @@ namespace Querier.Api.Services.User
                 return response;
             }
         }
+
         public async Task<bool> EmailConfirmation(EmailConfirmation emailConfirmation)
         {
             string token = Uri.UnescapeDataString(emailConfirmation.Token);
@@ -333,6 +294,49 @@ namespace Querier.Api.Services.User
                 return false;
             var result = await _userManager.ConfirmEmailAsync(user, token);
             return result.Succeeded;
+        }
+
+        private void MapToModel(UserRequest user, ApiUser updateUser)
+        {
+            updateUser.FirstName = user.FirstName;
+            updateUser.LastName = user.LastName;
+            updateUser.Email = user.Email;
+            updateUser.LanguageCode = user.LanguageCode;
+            updateUser.Phone = user.Phone;
+            updateUser.Img = user.Img;
+            updateUser.DateFormat = user.DateFormat;
+            updateUser.UserName = user.UserName;
+        }
+
+        private ApiUser MapToModel(UserRequest user)
+        {
+            return new ApiUser
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                LanguageCode = user.LanguageCode,
+                Phone = user.Phone,
+                Img = user.Img,
+                DateFormat = user.DateFormat,
+                UserName = user.UserName
+            };
+        }
+
+        private UserResponse MapToVM(ApiUser user)
+        {
+            return new UserResponse
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Phone = user.Phone,
+                LanguageCode = user.LanguageCode,
+                Img = user.Img,
+                DateFormat = user.DateFormat,
+                UserName = user.UserName
+            };
         }
     }
 }

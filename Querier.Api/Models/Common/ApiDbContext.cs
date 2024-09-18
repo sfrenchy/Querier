@@ -16,6 +16,7 @@ namespace Querier.Api.Models.Common
     {
         public UserDbContext(DbContextOptions<UserDbContext> options) : base(options)
         { }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -140,26 +141,6 @@ namespace Querier.Api.Models.Common
     }
     public partial class ApiDbContext : IdentityDbContext<ApiUser, ApiRole, string>
     {
-
-        public IConfiguration _configuration { get; }
-        public virtual DbSet<QRefreshToken> QRefreshTokens { get; set; }
-        public virtual DbSet<QNotification> QNotifications { get; set; }
-        public virtual DbSet<QPageCategory> QPageCategories { get; set; }
-        public virtual DbSet<QPage> QPages { get; set; }
-        public virtual DbSet<QPageRow> QPageRows { get; set; }
-        public virtual DbSet<QPageCard> QPageCards { get; set; }
-        public virtual DbSet<QPageCardDefinedConfiguration> QPageCardDefinedConfigurations { get; set; }
-        //public virtual DbSet<QTranslation> QTranslations { get; set; }
-        //public virtual DbSet<QHtmlPartialRef> QHtmlPartialRefs { get; set; }
-        public virtual DbSet<QCategoryRole> QCategoryRoles { get; set; }
-        public virtual DbSet<QPageRole> QPageRoles { get; set; }
-        public virtual DbSet<QCardRole> QCardRoles { get; set; }
-        //public virtual DbSet<QTheme> QThemes { get; set; }
-        //public virtual DbSet<QThemeVariable> QThemeVariables { get; set; }
-        public virtual DbSet<QDBConnection.QDBConnection> QDBConnections { get; set; }
-        // public virtual DbSet<UserNotification> Notifications { get; set; }
-        public virtual DbSet<QEntityAttribute> QEntityAttribute { get; set; }
-        public virtual DbSet<QUploadDefinition> QUploadDefinitions { get; set; }
         //public virtual DbSet<QApiUserAttributes> QApiUserAttributes { get; set; }
         //public virtual DbSet<QFileDeposit> QFileDeposit { get; set; }
         //public virtual DbSet<QFilesFromFileDeposit> QFilesFromFileDeposit { get; set; }
@@ -169,6 +150,31 @@ namespace Querier.Api.Models.Common
         {
             _configuration = configuration;
         }
+
+        public IConfiguration _configuration { get; }
+        public virtual DbSet<QRefreshToken> QRefreshTokens { get; set; }
+        public virtual DbSet<QNotification> QNotifications { get; set; }
+        public virtual DbSet<QPageCategory> QPageCategories { get; set; }
+        public virtual DbSet<QPage> QPages { get; set; }
+        public virtual DbSet<QPageRow> QPageRows { get; set; }
+        public virtual DbSet<QPageCard> QPageCards { get; set; }
+
+        public virtual DbSet<QPageCardDefinedConfiguration> QPageCardDefinedConfigurations { get; set; }
+
+        //public virtual DbSet<QTranslation> QTranslations { get; set; }
+        //public virtual DbSet<QHtmlPartialRef> QHtmlPartialRefs { get; set; }
+        public virtual DbSet<QCategoryRole> QCategoryRoles { get; set; }
+        public virtual DbSet<QPageRole> QPageRoles { get; set; }
+
+        public virtual DbSet<QCardRole> QCardRoles { get; set; }
+
+        //public virtual DbSet<QTheme> QThemes { get; set; }
+        //public virtual DbSet<QThemeVariable> QThemeVariables { get; set; }
+        public virtual DbSet<QDBConnection.QDBConnection> QDBConnections { get; set; }
+
+        // public virtual DbSet<UserNotification> Notifications { get; set; }
+        public virtual DbSet<QEntityAttribute> QEntityAttribute { get; set; }
+        public virtual DbSet<QUploadDefinition> QUploadDefinitions { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

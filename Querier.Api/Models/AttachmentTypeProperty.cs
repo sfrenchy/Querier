@@ -8,8 +8,10 @@ namespace Querier.Api.Models
     {
         [Required]
         public Stream contentStream { get; set; }
+
         [Required]
         public string contentType { get; set; }
+
         [Required]
         public string fileName{ get; set; }
     }

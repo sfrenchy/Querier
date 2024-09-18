@@ -10,6 +10,7 @@ namespace Querier.Api.Models.Notifications.MQMessages
         {
             return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this));
         }
+
         public string ToJSONString()
         {
             return JsonConvert.SerializeObject(this);

@@ -10,7 +10,8 @@ namespace Querier.Api.Models.QDBConnection
 {
     public class StoredProcedure
     {
-		public string Name { get;set; }
+        public string Name { get;set; }
+
         public string CSName
         {
             get
@@ -18,6 +19,7 @@ namespace Querier.Api.Models.QDBConnection
                 return SQLStringTools.NormalizeProcedureNameCSString(Name);
             }
         }
+
         [JsonProperty("SummableOutputColumns")]
         public List<string> SummableOutputColumns
         {
@@ -50,10 +52,12 @@ namespace Querier.Api.Models.QDBConnection
                 return result;
             }
         }
-		public List<ProcedureParameter> Parameters { get; set; }
-		public List<ProcedureOutput> OutputSet { get; set; }
+
+        public List<ProcedureParameter> Parameters { get; set; }
+        public List<ProcedureOutput> OutputSet { get; set; }
         public bool HasParameters { get { return Parameters != null && Parameters.Count > 0; } }
         public bool HasOutput { get { return OutputSet != null && OutputSet.Count > 0; } }
+
         public string InlineParameters {
             get {
                 string result = "";
@@ -67,6 +71,7 @@ namespace Querier.Api.Models.QDBConnection
                 return result;
             }
         }
+
         public string CSParameterSignature {
             get
             {
@@ -77,6 +82,7 @@ namespace Querier.Api.Models.QDBConnection
                 return result;
             }
         }
+
         public string CSReturnSignature {
             get
             {

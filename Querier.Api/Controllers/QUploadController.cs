@@ -21,16 +21,17 @@ namespace Querier.Api.Controllers
     [ApiController]
     public class QUploadController : ControllerBase
     {
+        private readonly IWebHostEnvironment _environment;
         private readonly ILogger _logger;
         private IQUploadService _uploadService;
-        private readonly IWebHostEnvironment _environment;
+
         public QUploadController(ILogger<QUploadController> logger, IQUploadService uploadService, IWebHostEnvironment hostEnvironment)
         {
             _logger = logger;
             _uploadService = uploadService;
             _environment = hostEnvironment;
         }
-        
+
         [HttpPost]
         [Route("UploadFromVM")]
         public async Task<IActionResult> UploadFromVMAsync([FromForm] HAUploadDefinitionVM upload)

@@ -4,16 +4,6 @@ namespace Querier.Api.Models.Auth
 {
     public class QCategoryRole
     {
-        public bool View { get; set; }
-        public bool Add { get; set; }
-        public bool Edit { get; set; }
-
-        public string ApiRoleId { get; set; }
-        public int HAPageCategoryId { get; set; }
-
-        public virtual ApiRole ApiRole { get; set; }
-        public virtual QPageCategory QPageCategory { get; set; }
-
         public QCategoryRole()
         {
 
@@ -27,5 +17,15 @@ namespace Querier.Api.Models.Auth
             Add = add;
             Edit = edit;
         }
+
+        public bool View { get; set; }
+        public bool Add { get; set; }
+        public bool Edit { get; set; }
+
+        public string ApiRoleId { get; set; }
+        public int HAPageCategoryId { get; set; }
+
+        public virtual ApiRole ApiRole { get; set; }
+        public virtual QPageCategory QPageCategory { get; set; }
     }
 }

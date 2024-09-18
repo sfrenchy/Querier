@@ -33,8 +33,8 @@ namespace Querier.Api.Services.Role
 
     public class RoleService : IRoleService
     {
-        private readonly IRoleRepository _repoRole;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
+        private readonly IRoleRepository _repoRole;
         private bool disposedValue;
 
         public RoleService(IRoleRepository repo, IDbContextFactory<ApiDbContext> contextFactory)
@@ -133,35 +133,6 @@ namespace Querier.Api.Services.Role
             return await _repoRole.UpdateCategoryRoleActionsList(categoriesRolesActions)
             && await _repoRole.UpdatePageRoleActionsList(pagesRolesActions)
             && await _repoRole.UpdateCardRoleActionsList(cardsRolesActions);
-        }
-
-
-        private List<CategoryActions> RemoveDataFromListActionsCategory(List<CategoryActions> actionsList, List<ApiRole> groups)
-        {
-            foreach (var action in actionsList)
-            {
-                if (groups.Exists(g => g.Id == action.RoleId))
-                {
-                    var itemToRemove = groups.FirstOrDefault(g => g.Id == action.RoleId);
-                    groups.Remove(itemToRemove);
-                }
-            }
-
-            return groups.Select(g => new CategoryActions(g.Id)).ToList();
-        }
-
-        private List<PageCartActions> RemoveDataFromListActionsPageCard(List<PageCartActions> actionsList, List<ApiRole> groups)
-        {
-            foreach (var action in actionsList)
-            {
-                if (groups.Exists(g => g.Id == action.RoleId))
-                {
-                    var itemToRemove = groups.FirstOrDefault(g => g.Id == action.RoleId);
-                    groups.Remove(itemToRemove);
-                }
-            }
-
-            return groups.Select(g => new PageCartActions(g.Id)).ToList();
         }
 
         public async Task<bool> AddActionsMissing(ActionsMissing actions)
@@ -278,6 +249,49 @@ namespace Querier.Api.Services.Role
             return MapToModel(roles);
         }
 
+        // // TODO: substituer le finaliseur uniquement si 'Dispose(bool disposing)' a du code pour libérer les ressources non managées
+        // ~RoleService()
+        // {
+        //     // Ne changez pas ce code. Placez le code de nettoyage dans la méthode 'Dispose(bool disposing)'
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Ne changez pas ce code. Placez le code de nettoyage dans la méthode 'Dispose(bool disposing)'
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
+
+        private List<CategoryActions> RemoveDataFromListActionsCategory(List<CategoryActions> actionsList, List<ApiRole> groups)
+        {
+            foreach (var action in actionsList)
+            {
+                if (groups.Exists(g => g.Id == action.RoleId))
+                {
+                    var itemToRemove = groups.FirstOrDefault(g => g.Id == action.RoleId);
+                    groups.Remove(itemToRemove);
+                }
+            }
+
+            return groups.Select(g => new CategoryActions(g.Id)).ToList();
+        }
+
+        private List<PageCartActions> RemoveDataFromListActionsPageCard(List<PageCartActions> actionsList, List<ApiRole> groups)
+        {
+            foreach (var action in actionsList)
+            {
+                if (groups.Exists(g => g.Id == action.RoleId))
+                {
+                    var itemToRemove = groups.FirstOrDefault(g => g.Id == action.RoleId);
+                    groups.Remove(itemToRemove);
+                }
+            }
+
+            return groups.Select(g => new PageCartActions(g.Id)).ToList();
+        }
+
         private ApiRole[] MapToModel(List<RoleRequest> roles)
         {
             List<ApiRole> listRoles = new List<ApiRole>();
@@ -311,20 +325,6 @@ namespace Querier.Api.Services.Role
                 // TODO: affecter aux grands champs une valeur null
                 disposedValue = true;
             }
-        }
-
-        // // TODO: substituer le finaliseur uniquement si 'Dispose(bool disposing)' a du code pour libérer les ressources non managées
-        // ~RoleService()
-        // {
-        //     // Ne changez pas ce code. Placez le code de nettoyage dans la méthode 'Dispose(bool disposing)'
-        //     Dispose(disposing: false);
-        // }
-
-        public void Dispose()
-        {
-            // Ne changez pas ce code. Placez le code de nettoyage dans la méthode 'Dispose(bool disposing)'
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
     }
 }

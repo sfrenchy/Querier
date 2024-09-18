@@ -3,6 +3,7 @@
     public class GoogleMapCard : IQCard
     {
         #region IAlhCardViewComponent
+
         public string Label => "Carte Google Map";
 
         public dynamic Configuration
@@ -13,6 +14,7 @@
                 return c;
             }
         }
+
         #endregion
     }
 }

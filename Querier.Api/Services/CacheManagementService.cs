@@ -15,12 +15,14 @@ namespace Querier.Api.Services
         /// </summary>
         /// <returns>Return a task</returns>
         Task FlushAllAsync();
+
         /// <summary>
         ///  this method removes the caches that contain the substring
         /// </summary>
         /// <returns>Return a task</returns>
         /// <param name="substring">the substring that will be taken as an argument</param>
         Task FlushBySubstringAsync(string substring);
+
         /// <summary>
         ///  this method removes the caches with the key
         /// </summary>
@@ -38,6 +40,7 @@ namespace Querier.Api.Services
             _configuration = configuration;
             _logger = logger;
         }
+
         public async Task FlushAllAsync()
         {
             _logger.LogInformation("Flushing distributed cache");

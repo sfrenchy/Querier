@@ -8,13 +8,6 @@ namespace Querier.Api.Models.Responses.Role
 {
     public class PageCartActions
     {
-        public int Id { get; set; }
-        public bool View { get; set; }
-        public bool Add { get; set; }
-        public bool Edit { get; set; }
-        public bool Remove { get; set; }
-        public string RoleId { get; set; }
-
         public PageCartActions(string roleId,  bool view = false, bool add = false, bool edit = false, bool remove = false)
         {
             View = view;
@@ -23,5 +16,12 @@ namespace Querier.Api.Models.Responses.Role
             Remove = remove;
             RoleId = roleId;
         }
+
+        public int Id { get; set; }
+        public bool View { get; set; }
+        public bool Add { get; set; }
+        public bool Edit { get; set; }
+        public bool Remove { get; set; }
+        public string RoleId { get; set; }
     }
 }

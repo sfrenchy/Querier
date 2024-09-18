@@ -11,14 +11,17 @@ namespace Querier.Api.Models.UI
         [Key]
         [Column("Id")]
         public int Id { get; set; }
+
         [Column("Label")]
         public string Label { get; set; }
+
         [Column("UserId")]
         public string UserId { get; set; }
 
         [ForeignKey("UserId")]
         [JsonIgnore]
         public virtual ApiUser User { get;set;}
+
         [JsonIgnore]
         public virtual List<QThemeVariable> QThemeVariables { get; set; }
     }

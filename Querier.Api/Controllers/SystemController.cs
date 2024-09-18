@@ -17,15 +17,17 @@ namespace Querier.Api.Controllers
     [ApiController]
     public class SystemController : ControllerBase
     {
-        private readonly ILogger<SystemController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IDBConnectionService _dbConnectionService;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
+        private readonly ILogger<SystemController> _logger;
+
         public SystemController(IHostApplicationLifetime hostApplicationLifetime, ILogger<SystemController> logger)
         { 
             _logger = logger;
             _hostApplicationLifetime = hostApplicationLifetime;
         }
+
         [HttpGet("StopApplication")]
         public IActionResult StopApplication()
         {

@@ -10,13 +10,15 @@ namespace Querier.Api.Models.QDBConnection
 		public int Order { get;set; }
 		public bool IsOutput { get;set; }
 		public bool IsNullable { get; set; }
-        public string SqlParameterType
+
+		public string SqlParameterType
         {
             get
             {
                 return SQLStringTools.SQLTypeToCSSqlParameterType(SQLType);
             }
         }
+
 		public string CSType 
         {
 			get

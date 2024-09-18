@@ -13,8 +13,9 @@ namespace Querier.Api.Controllers
     [ApiController]
     public class DownloadController : ControllerBase
     {
-        private readonly ILogger<DownloadController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<DownloadController> _logger;
+
         public DownloadController(IConfiguration configuration, ILogger<DownloadController> logger)
         {
             _logger = logger;

@@ -4,6 +4,5 @@
     {
         public string NameEmailTemplate { get; set; }
         public string ContentEmailTemplate { get; set; }
-
     }
 }

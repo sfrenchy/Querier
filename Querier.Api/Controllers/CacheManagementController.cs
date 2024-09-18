@@ -11,8 +11,9 @@ namespace Querier.Api.Controllers
     [ApiController]
     public class CacheManagementController : ControllerBase
     {
-        private readonly ILogger<CacheManagementService> _logger;
         private readonly ICacheManagementService _cacheManagementService;
+        private readonly ILogger<CacheManagementService> _logger;
+
         public CacheManagementController(ICacheManagementService cacheManagementService, ILogger<CacheManagementService> logger)
         {
             _cacheManagementService = cacheManagementService;

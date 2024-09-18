@@ -12,6 +12,7 @@ namespace Querier.Api.Models.UI
         public int Id { get; set; }
         public List<QPageRowVM> QPageRows { get; set; }
         public dynamic Roles { get; set; }
+
         public static QPageVM FromHAPage(QPage page)
         {
             return new QPageVM

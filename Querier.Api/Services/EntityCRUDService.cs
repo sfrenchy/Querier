@@ -19,24 +19,13 @@ namespace Querier.Api.Services
 {
     public class EntityCRUDService : IEntityCRUDService
     {
-        private readonly ILogger<EntityCRUDService> _logger;
         private readonly IDynamicContextList _dynamicContextList;
-        
+        private readonly ILogger<EntityCRUDService> _logger;
+
         public EntityCRUDService(IDynamicContextList dynamicContextList, ILogger<EntityCRUDService> logger)
         {
             _logger = logger;
             _dynamicContextList = dynamicContextList; 
-        }
-        private DbContext GetDbContextFromTypeName(string contextTypeName)
-        {
-            List<Type> contextTypes = AppDomain.CurrentDomain.GetAssemblies()
-                       .SelectMany(assembly => assembly.GetTypes())
-                       .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == contextTypeName).ToList();
-
-
-            DbContext target = ServiceActivator.GetScope().ServiceProvider.GetService(contextTypes.First()) as DbContext ??
-                               Activator.CreateInstance(contextTypes.First()) as DbContext;
-            return target;
         }
 
         public List<string> GetContexts()
@@ -130,6 +119,7 @@ namespace Querier.Api.Services
             DataTable dt = apiDbContext.Database.RawSqlQuery(SqlQuery); 
             return dt.Filter(Filters);
         }
+
         public IEnumerable<object> ReadFromSql(string contextTypeFullname, string SqlQuery, List<DataFilter> Filters)
         {
             DataTable dt = GetDatatableFromSql(contextTypeFullname, SqlQuery, Filters);
@@ -254,6 +244,18 @@ namespace Querier.Api.Services
             //");
 
             return result;
+        }
+
+        private DbContext GetDbContextFromTypeName(string contextTypeName)
+        {
+            List<Type> contextTypes = AppDomain.CurrentDomain.GetAssemblies()
+                       .SelectMany(assembly => assembly.GetTypes())
+                       .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == contextTypeName).ToList();
+
+
+            DbContext target = ServiceActivator.GetScope().ServiceProvider.GetService(contextTypes.First()) as DbContext ??
+                               Activator.CreateInstance(contextTypes.First()) as DbContext;
+            return target;
         }
     }
 }

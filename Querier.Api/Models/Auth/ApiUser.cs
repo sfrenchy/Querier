@@ -71,6 +71,7 @@ namespace Querier.Api.Models.Auth
                 
             }
         }
+
         private string? StringAttribute { get; set; }
         private int? IntAttribute { get; set; }
         private decimal? DecimalAttribute { get; set; }

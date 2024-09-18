@@ -6,6 +6,7 @@ namespace Querier.Api.Models.Auth
     {
         [Required]
         public string Token { get; set; }
+
         [Required]
         public string RefreshToken { get; set; }
     }

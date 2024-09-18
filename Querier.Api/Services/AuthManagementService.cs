@@ -18,23 +18,25 @@ namespace Querier.Api.Services
 {
     public interface IUserManagerService : IDisposable
     {
+        UserManager<ApiUser> Instance { get; }
         Task<ApiUser> FindByEmailAsync(string email);
         Task<bool> CheckPasswordAsync(ApiUser user, string password);
         Task<IList<string>> GetRolesAsync(ApiUser user);
         Task<IdentityResult> CreateAsync(ApiUser user, string password);
         Task<IdentityResult> AddToRoleAsync(ApiUser user, string role);
-        UserManager<ApiUser> Instance { get; }
     }
 
     public class UserManagerService : IUserManagerService
     {
         private readonly UserManager<ApiUser> _userManager;
 
-        public UserManager<ApiUser> Instance { get { return _userManager; } }
         public UserManagerService(UserManager<ApiUser> userManager)
         {
             _userManager = userManager;
         }
+
+        public UserManager<ApiUser> Instance { get { return _userManager; } }
+
         public Task<IdentityResult> AddToRoleAsync(ApiUser user, string role)
         {
             return _userManager.AddToRoleAsync(user, role);
@@ -82,10 +84,10 @@ namespace Querier.Api.Services
 
     public class AuthManagementService : IAuthManagementService
     {
-        private readonly IUserManagerService _userManager;
+        private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private readonly JwtConfig _jwtConfig;
         private readonly TokenValidationParameters _tokenValidationParameters;
-        private readonly IDbContextFactory<ApiDbContext> _contextFactory;
+        private readonly IUserManagerService _userManager;
 
         public AuthManagementService(IUserManagerService userManager, IOptionsMonitor<JwtConfig> optionsMonitor, TokenValidationParameters tokenValidationParameters, IDbContextFactory<ApiDbContext> contextFactory)
         {
@@ -94,6 +96,7 @@ namespace Querier.Api.Services
             _tokenValidationParameters = tokenValidationParameters;
             _contextFactory = contextFactory;
         }
+
         public async Task<SignUpResponse> SignUp(SignUpRequest user)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
@@ -234,6 +237,7 @@ namespace Querier.Api.Services
                 }
             }
         }
+
         public async Task<AuthResult> RefreshToken(TokenRequest tokenRequest)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())

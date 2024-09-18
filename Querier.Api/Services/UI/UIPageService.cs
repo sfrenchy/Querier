@@ -42,8 +42,8 @@ namespace Querier.Api.Services.UI
     }
     public class UIPageService : IUIPageService
     {
-        private readonly ILogger<UIPageService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
+        private readonly ILogger<UIPageService> _logger;
         private readonly Models.Interfaces.IQUploadService _uploadService;
 
 
@@ -334,7 +334,6 @@ namespace Querier.Api.Services.UI
                 }
             }
         }
-
     }
     
     public class IgnoreHAPageCardConfigurationPropertyConverter<T> : JsonConverter<T>

@@ -20,8 +20,8 @@ namespace Querier.Api.Services.UI
     }
     public class UICategoryService : IUICategoryService
     {
-        private readonly ILogger<UICategoryService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
+        private readonly ILogger<UICategoryService> _logger;
 
         public UICategoryService(ILogger<UICategoryService> logger, IDbContextFactory<ApiDbContext> contextFactory)
         {

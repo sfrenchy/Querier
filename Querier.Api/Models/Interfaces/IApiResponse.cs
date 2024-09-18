@@ -12,10 +12,12 @@ namespace Querier.Api.Models.Interfaces
         /// The error code
         /// </summary>
         public int ErrorCode { get; set; }
+
         /// <summary>
         /// The error message
         /// </summary>
         public string ErrorMessage { get; set; }
+
         /// <summary>
         /// Exception for the developers
         /// </summary>

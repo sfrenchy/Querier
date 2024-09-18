@@ -6,6 +6,7 @@ namespace Querier.Api.Models.UI
     {
         [Key]
         public int Id { get; set; }
+
         public string Code { get; set; }
         public string EnLabel { get; set; }
         public string FrLabel { get; set; }

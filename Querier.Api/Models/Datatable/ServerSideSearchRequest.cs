@@ -6,6 +6,7 @@
         /// Search value
         /// </summary>
         public string value { get; set; }
+
         /// <summary>
         /// true if the global filter should be treated as a regular expression for advanced searching, false otherwise
         /// </summary>

@@ -3,6 +3,5 @@
     public class QSendEmailForTestTemplateRequest
     {
         public int IdEmailTemplate { get; set; }
-
     }
 }

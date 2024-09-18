@@ -20,10 +20,11 @@ namespace Querier.Api.Controllers
     [ApiController]
     public class DBConnectionController : ControllerBase
     {
-        private readonly ILogger<DBConnectionController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IDBConnectionService _dbConnectionService;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
+        private readonly ILogger<DBConnectionController> _logger;
+
         public DBConnectionController(IHostApplicationLifetime hostApplicationLifetime, IDBConnectionService dbConnectionService, IConfiguration configuration, ILogger<DBConnectionController> logger)
         {
             _logger = logger;
@@ -31,6 +32,7 @@ namespace Querier.Api.Controllers
             _dbConnectionService = dbConnectionService;
             _hostApplicationLifetime = hostApplicationLifetime;
         }
+
         [HttpPost("AddDbConnection")]
         public async Task<IActionResult> AddDBConnectionAsync([FromBody] AddDBConnectionRequest connection)
         {

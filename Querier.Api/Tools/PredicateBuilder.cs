@@ -66,33 +66,6 @@ namespace Querier.Api.Tools
             return Expression.Lambda<T>(merge(first.Body, secondBody), first.Parameters);
         }
 
-        class ParameterRebinder : ExpressionVisitor
-        {
-            readonly Dictionary<ParameterExpression, ParameterExpression> map;
-
-            ParameterRebinder(Dictionary<ParameterExpression, ParameterExpression> map)
-            {
-                this.map = map ?? new Dictionary<ParameterExpression, ParameterExpression>();
-            }
-
-            public static Expression ReplaceParameters(Dictionary<ParameterExpression, ParameterExpression> map, Expression exp)
-            {
-                return new ParameterRebinder(map).Visit(exp);
-            }
-
-            protected override Expression VisitParameter(ParameterExpression p)
-            {
-                ParameterExpression replacement;
-
-                if (map.TryGetValue(p, out replacement))
-                {
-                    p = replacement;
-                }
-
-                return base.VisitParameter(p);
-            }
-        }
-
         public static IOrderedQueryable<T> OrderBy<T>(
     this IQueryable<T> source,
     string property)
@@ -161,6 +134,33 @@ namespace Querier.Api.Tools
                     .MakeGenericMethod(typeof(T), type)
                     .Invoke(null, new object[] { source, lambda });
             return (IOrderedQueryable<T>)result;
+        }
+
+        class ParameterRebinder : ExpressionVisitor
+        {
+            readonly Dictionary<ParameterExpression, ParameterExpression> map;
+
+            ParameterRebinder(Dictionary<ParameterExpression, ParameterExpression> map)
+            {
+                this.map = map ?? new Dictionary<ParameterExpression, ParameterExpression>();
+            }
+
+            public static Expression ReplaceParameters(Dictionary<ParameterExpression, ParameterExpression> map, Expression exp)
+            {
+                return new ParameterRebinder(map).Visit(exp);
+            }
+
+            protected override Expression VisitParameter(ParameterExpression p)
+            {
+                ParameterExpression replacement;
+
+                if (map.TryGetValue(p, out replacement))
+                {
+                    p = replacement;
+                }
+
+                return base.VisitParameter(p);
+            }
         }
     }
 }

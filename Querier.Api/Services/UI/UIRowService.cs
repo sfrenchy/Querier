@@ -18,12 +18,11 @@ namespace Querier.Api.Services.UI
         Task<QPage> AddRowAsync(int pageId);
         Task<QPageRowVM> DeleteRowAsync(int rowId);
         Task<List<QPageRowVM>> UpdateRowOrder(QPageVM page);
-
     }
     public class UIRowService : IUIRowService
     {
-        private readonly ILogger<UIRowService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
+        private readonly ILogger<UIRowService> _logger;
 
         public UIRowService(ILogger<UIRowService> logger, IDbContextFactory<ApiDbContext> contextFactory)
         {

@@ -10,12 +10,15 @@ namespace Querier.Api.Models.UI
         [Key]
         [Column("Id")]
         public int Id { get; set; }
+
         [Column("Title")]
         [Required]
         public string Title { get; set; }
+
         [Column("CardConfiguration")]
         [Required]
         public string CardConfiguration { get; set; }
+
         [NotMapped]
         public dynamic Configuration
         {
@@ -28,9 +31,11 @@ namespace Querier.Api.Models.UI
                 CardConfiguration = JsonConvert.SerializeObject(value);
             }
         }
+
         [Column("CardTypeLabel")]
         [Required]
         public string CardTypeLabel { get; set; }
+
         [Column("PackageLabel")]
         [Required]
         public string PackageLabel { get; set; }

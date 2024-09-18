@@ -9,8 +9,8 @@ namespace Querier.Api.Models.Interfaces
     {
         public Dictionary<Type, Type> ProceduresServices { get; }
         public Dictionary<string, Type> ProcedureNameService { get; }
+        public string DynamicContextName { get; }
 
         public void ConfigureServices(IServiceCollection services, string connectionString);
-        public string DynamicContextName { get; }
     }
 }

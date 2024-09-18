@@ -6,12 +6,14 @@ namespace Querier.Api.Services
 {
     public class DynamicContextList : IDynamicContextList
     {
-        private readonly  Dictionary<string, IDynamicContextProceduresServicesResolver> _dynamicContexts;
         private static DynamicContextList _instance;
+        private readonly  Dictionary<string, IDynamicContextProceduresServicesResolver> _dynamicContexts;
+
         private DynamicContextList()
         {
              _dynamicContexts =  new Dictionary<string, IDynamicContextProceduresServicesResolver>();
         }
+
         public static DynamicContextList Instance
         {
             get
@@ -21,6 +23,7 @@ namespace Querier.Api.Services
                 return _instance;
             }
         }
+
         public  Dictionary<string, IDynamicContextProceduresServicesResolver> DynamicContexts
         {
             get

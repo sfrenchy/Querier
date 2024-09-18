@@ -6,6 +6,7 @@ namespace Querier.Api.Models.Requests.Role
     {
         [Required(AllowEmptyStrings = true)]
         public string Id { get; set; }
+
         [Required]
         public string Name { get; set; }
     }

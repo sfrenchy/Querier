@@ -165,6 +165,7 @@ namespace Querier.Api.Controllers
             var response = await _svc.CheckPassword(Checkpassword);
             return Ok(response);
         }
+
         [HttpGet]
         [Route("emailConfirmation/{token}/{mail}")]
         public async Task<ActionResult> EmailConfirmation(string token, string mail)

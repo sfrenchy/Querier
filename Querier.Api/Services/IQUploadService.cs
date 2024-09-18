@@ -21,10 +21,10 @@ namespace Querier.Api.Services
 
     public class IQUploadService : Models.Interfaces.IQUploadService
     {
-        private readonly ILogger<IQUploadService> _logger;
+        private readonly IConfiguration _configuration;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private readonly IWebHostEnvironment _environment;
-        private readonly IConfiguration _configuration;
+        private readonly ILogger<IQUploadService> _logger;
 
         public IQUploadService(ILogger<IQUploadService> logger, IDbContextFactory<ApiDbContext> contextFactory, IWebHostEnvironment hostEnvironment, IConfiguration configuration)
         {
@@ -306,6 +306,7 @@ namespace Querier.Api.Services
                 }
             }
         }
+
         private async Task<QUploadDefinition> SaveUpload(HAUploadDefinitionFromApi upload, string pathResult, string pathUpload, string bodyHash)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())

@@ -8,11 +8,6 @@ namespace Querier.Api.Models.Responses.Role
 {
     public class CategoryActions
     {
-        public bool View { get; set; }
-        public bool Add { get; set; }
-        public bool Edit { get; set; }
-        public string RoleId { get; set; }
-
         public CategoryActions(string roleId, bool view = false, bool add = false, bool edit = false)
         {
             View = view;
@@ -20,5 +15,10 @@ namespace Querier.Api.Models.Responses.Role
             Edit = edit;
             RoleId = roleId;
         }
+
+        public bool View { get; set; }
+        public bool Add { get; set; }
+        public bool Edit { get; set; }
+        public string RoleId { get; set; }
     }
 }

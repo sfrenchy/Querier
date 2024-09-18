@@ -10,12 +10,16 @@ namespace Querier.Api.Models.UI
         [Key]
         [Column("Id")]
         public int Id { get; set; }
+
         [Column("Order")]
         public int Order { get; set; }
+
         [Column("HAPageId")]
         public int HAPageId { get; set; }
+
         [JsonIgnore]
         public virtual QPage QPage { get; set; }
+
         [JsonIgnore]
         public virtual List<QPageCard> QPageCards { get; set; }
 

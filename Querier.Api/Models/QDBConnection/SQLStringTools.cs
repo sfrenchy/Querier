@@ -67,6 +67,7 @@ namespace Querier.Api.Models.QDBConnection
             csName = csName.Replace("P_" ,"");
 			return SQLStringTools.ToPascalCase(csName);
         }
+
         public static string NormalizeProcedureNameCSString(string str)
         {
             string csName = str.Replace("@", "");

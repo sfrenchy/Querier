@@ -16,7 +16,6 @@ namespace Querier.Api.Models.Requests
         public Dictionary<string, string> ExportedColumns { get; set; } = new Dictionary<string, string>();
         public bool UseFilters { get; set; } = true;
         public QUploadNatureEnum Nature { get; set; }
-
     }
     
     public class ExportDataSourceBase

@@ -6,17 +6,6 @@ namespace Querier.Api.Models.Auth
 {
     public class QPageRole
     {
-        public bool View { get; set; }
-        public bool Add { get; set; }
-        public bool Edit { get; set; }
-        public bool Remove { get; set; }
-
-        public string ApiRoleId { get; set; }
-        public int HAPageId { get; set; }
-
-        public virtual ApiRole ApiRole { get; set; }
-        public virtual QPage QPage { get; set; }
-
         public QPageRole()
         {
 
@@ -31,5 +20,16 @@ namespace Querier.Api.Models.Auth
             Edit = edit;
             Remove = remove;
         }
+
+        public bool View { get; set; }
+        public bool Add { get; set; }
+        public bool Edit { get; set; }
+        public bool Remove { get; set; }
+
+        public string ApiRoleId { get; set; }
+        public int HAPageId { get; set; }
+
+        public virtual ApiRole ApiRole { get; set; }
+        public virtual QPage QPage { get; set; }
     }
 }

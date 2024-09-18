@@ -28,6 +28,7 @@ namespace Querier.Api.Tools
             }
             return null;
         }
+
         public static string? ComputeMd5Hash(byte[] objectAsBytes)
         {
             MD5 md5 = MD5.Create();

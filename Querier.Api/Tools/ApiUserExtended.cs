@@ -11,13 +11,21 @@ namespace Querier.Api.Tools
     public abstract class ApiUserExtended<T,U> where T : ApiUserExtended<T,U>, new() where U: ApiDbContext
     {
         private ApiUser _apiUser;
+        protected U _context;
         private IServiceScope _serviceScope;
         private UserManager<ApiUser> _userManager;
         private Type _userType = typeof(T);
-        protected U _context;
 
         protected ApiUserExtended()
         {
+        }
+
+        public ApiUser BaseUser
+        {
+            get
+            {
+                return _apiUser;
+            }
         }
 
         public static T FromEmail(string email)
@@ -49,14 +57,6 @@ namespace Querier.Api.Tools
             result._context = result._serviceScope.ServiceProvider.GetService<U>();
             return result;
         }
-        
-        public ApiUser BaseUser
-        {
-            get
-            {
-                return _apiUser;
-            }
-        }
 
         protected dynamic GetAttribute([CallerMemberName] string callerName = null)
         {
@@ -64,6 +64,7 @@ namespace Querier.Api.Tools
                 throw new NullReferenceException();
             return _apiUser.QApiUserAttributes.First(a => a.EntityAttribute.Label == callerName).EntityAttribute.Value;
         }
+
         private void SetAttribute(object? attributeValue, bool nullable, string callerName = null)
         {
             if (callerName == null)
@@ -89,10 +90,12 @@ namespace Querier.Api.Tools
             }
             _userManager.UpdateAsync(_apiUser).GetAwaiter().GetResult();
         }
+
         protected void SetAttribute<T>(object? attributeValue, [CallerMemberName] string callerName = null)
         {
             SetAttribute(attributeValue, Nullable.GetUnderlyingType(typeof(T)) != null, callerName);
         }
+
         protected void SetAttribute(object? attributeValue, [CallerMemberName] string callerName = null)
         {
             SetAttribute(attributeValue, false, callerName);

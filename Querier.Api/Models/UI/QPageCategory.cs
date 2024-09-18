@@ -11,14 +11,19 @@ namespace Querier.Api.Models.UI
         [Key]
         [Column("Id")]
         public int Id { get; set; }
+
         [Column("Label")]
         public string Label { get; set; }
+
         [Column("Description")]
         public string Description { get; set; }
+
         [Column("Icon")]
         public string Icon { get; set; }
+
         [JsonIgnore]
         public virtual List<QPage> QPages { get; set; }
+
         [JsonIgnore]
         public virtual List<QCategoryRole> QCategoryRoles { get; set; }
     }

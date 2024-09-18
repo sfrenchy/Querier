@@ -8,15 +8,18 @@ namespace Querier.Api.Models.Email
     public class ParametersEmail
     {
         private IConfiguration _configuration;
+
         public ParametersEmail(IConfiguration configuration, Dictionary<string, string> keyValues = null, ApiUser user = null)
         {
             this.User = user;
             this.KeyValues = keyValues;
             this._configuration = configuration;
         }
+
         public ApiUser User { get; private set; }
         public DateTime Date { get { return DateTime.Now; } }
         public Dictionary<string, string> KeyValues { get; private set; }
+
         public object Endpoints
         {
             get
@@ -38,6 +41,7 @@ namespace Querier.Api.Models.Email
                 };
             }
         }
+
         public DescriptionVariable DescriptionVariable { get { return new DescriptionVariable(); } }
     }
     public class DescriptionVariable

@@ -11,9 +11,10 @@ namespace Querier.Api.Tools
 {
     public abstract class DynamicContextServiceBase
     {
-        protected string _dynamicContextProcedureName = "";
         protected string _dynamicContextName = "";
+        protected string _dynamicContextProcedureName = "";
         protected Dictionary<string, int> _nbDigitsAfterComa = new Dictionary<string, int>();
+
         protected DistributedCacheEntryOptions DefaultDistributedCacheExpiryOptions
         {
             get
@@ -33,7 +34,7 @@ namespace Querier.Api.Tools
                     SlidingExpiration = TimeSpan.FromMinutes(30)
                 };
             }
-        } 
+        }
 
         protected T GetParameterValue<T>(object value)
         {
@@ -61,6 +62,7 @@ namespace Querier.Api.Tools
     public abstract class DynamicContextServiceBaseWithResult : DynamicContextServiceBase
     {
         public abstract List<string> GetSummableColumns();
+
         public Dictionary<string, object> ComputeReportSums<T>(List<T>? source)
         {
             Dictionary<string, object> sums = new Dictionary<string, object>();

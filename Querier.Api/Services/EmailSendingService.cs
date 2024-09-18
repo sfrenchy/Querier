@@ -15,12 +15,12 @@ namespace Querier.Api.Services
 {
     public interface IEmailSendingService
     {
-        Task<dynamic> SendEmailAsync(SendMailParamObject ObjectRequest, List<AttachmentTypeProperty> attachments = null);// type return : SendEmailResult
+        Task<dynamic> SendEmailAsync(SendMailParamObject ObjectRequest, List<AttachmentTypeProperty> attachments = null); // type return : SendEmailResult
     }
     public class SMTPEmailSendingService : IEmailSendingService
     {
-        private readonly ILogger<SMTPEmailSendingService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<SMTPEmailSendingService> _logger;
 
         public SMTPEmailSendingService(ILogger<SMTPEmailSendingService> logger, IConfiguration configuration)
         {

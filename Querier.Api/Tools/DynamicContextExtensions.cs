@@ -71,9 +71,9 @@ namespace Querier.Api.Tools
 
     public class OutputParameter<TValue>
     {
+        private TValue? _value;
         private bool _valueSet = false;
 
-        private TValue? _value;
         public TValue Value
         {
             get

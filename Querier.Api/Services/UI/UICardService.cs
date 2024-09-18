@@ -32,12 +32,11 @@ namespace Querier.Api.Services.UI
         object CardMaxWidth(int cardId, int cardRowId);
         Task<List<QPageCardDefinedConfiguration>> GetPredefinedCards();
         Task<List<QPageCard>> UpdateCardOrder(QPageRowVM row);
-
     }
     public class UICardService : IUICardService
     {
-        private readonly ILogger<UICardService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
+        private readonly ILogger<UICardService> _logger;
         private readonly Models.Interfaces.IQUploadService _uploadService;
 
         public UICardService(ILogger<UICardService> logger, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService)
@@ -297,6 +296,7 @@ namespace Querier.Api.Services.UI
                 return card;
             }
         }
+
         public object CardMaxWidth(int cardId, int cardRowId)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
@@ -313,6 +313,7 @@ namespace Querier.Api.Services.UI
                 return await apidbContext.QPageCardDefinedConfigurations.OrderBy(a => a.Title).ToListAsync();
             }
         }
+
         public async Task<List<QPageCard>> UpdateCardOrder(QPageRowVM row)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())

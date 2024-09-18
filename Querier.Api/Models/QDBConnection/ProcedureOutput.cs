@@ -4,7 +4,8 @@ namespace Querier.Api.Models.QDBConnection
 {
     public class ProcedureOutput
     {
-		public string Name { get; set;}
+        public string Name { get; set;}
+
         public string CSName 
         {
             get
@@ -12,11 +13,12 @@ namespace Querier.Api.Models.QDBConnection
                 return SQLStringTools.NormalizeCSString(Name);
             }
         }
-        
-		public int Order { get; set; }	
-		public bool IsNullable { get; set; }
-		public string SQLType { get; set; }
-		public string CSType
+
+        public int Order { get; set; }
+        public bool IsNullable { get; set; }
+        public string SQLType { get; set; }
+
+        public string CSType
         {
 			get
             {
@@ -28,6 +30,7 @@ namespace Querier.Api.Models.QDBConnection
                 return SQLStringTools.SQLTypeToCSType(sqlType, IsNullable);
             }
         }
+
         public string ColumnAttribute
         {
             get

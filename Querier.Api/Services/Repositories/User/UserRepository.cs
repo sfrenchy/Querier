@@ -34,13 +34,13 @@ namespace Querier.Api.Services.Repositories.User
 
     public class UserRepository : IUserRepository
     {
-        private readonly ApiDbContext _context;
-        private readonly ILogger<UserRepository> _logger;
-        private readonly UserManager<ApiUser> _userManager;
         private readonly IConfiguration _configuration;
-        private readonly IEmailSendingService _emailSending;
+        private readonly ApiDbContext _context;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
+        private readonly IEmailSendingService _emailSending;
+        private readonly ILogger<UserRepository> _logger;
         private readonly Models.Interfaces.IQUploadService _uploadService;
+        private readonly UserManager<ApiUser> _userManager;
 
         public UserRepository(ApiDbContext context, UserManager<ApiUser> userManager, ILogger<UserRepository> logger, IConfiguration configuration, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService)
         {
@@ -108,56 +108,6 @@ namespace Querier.Api.Services.Repositories.User
                 _logger.LogError(ex, ex.Message, null);
                 return null;
             }
-        }
-
-        private string GenerateRandomPassword()
-        {
-            // A mon avis, on peut passer par ici: var valid = new PasswordValidator<ApiUser>();
-            var opts = new PasswordOptions()
-            {
-                RequireDigit = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireDigit").Get<bool>(),
-                RequireLowercase = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireLowercase").Get<bool>(),
-                RequireNonAlphanumeric = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireNonAlphanumeric").Get<bool>(),
-                RequireUppercase = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireUppercase").Get<bool>(),
-                RequiredLength = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequiredLength").Get<int>(),
-                RequiredUniqueChars = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequiredUniqueChars").Get<int>()
-            };
-
-            string[] randomChars = new[] {
-                "ABCDEFGHJKLMNOPQRSTUVWXYZ",    // uppercase 
-                "abcdefghijkmnopqrstuvwxyz",    // lowercase
-                "0123456789",                   // digits
-                "!@$?_-"                        // non-alphanumeric
-            };
-
-            Random rand = new Random(Environment.TickCount);
-            List<char> chars = new List<char>();
-
-            if (opts.RequireUppercase)
-                chars.Insert(rand.Next(0, chars.Count), 
-                    randomChars[0][rand.Next(0, randomChars[0].Length)]);
-
-            if (opts.RequireLowercase)
-                chars.Insert(rand.Next(0, chars.Count), 
-                    randomChars[1][rand.Next(0, randomChars[1].Length)]);
-
-            if (opts.RequireDigit)
-                chars.Insert(rand.Next(0, chars.Count), 
-                    randomChars[2][rand.Next(0, randomChars[2].Length)]);
-
-            if (opts.RequireNonAlphanumeric)
-                chars.Insert(rand.Next(0, chars.Count), 
-                    randomChars[3][rand.Next(0, randomChars[3].Length)]);
-
-            for (int i = chars.Count; i < opts.RequiredLength
-                                      || chars.Distinct().Count() < opts.RequiredUniqueChars; i++)
-            {
-                string rcs = randomChars[rand.Next(0, randomChars.Length)];
-                chars.Insert(rand.Next(0, chars.Count), 
-                    rcs[rand.Next(0, rcs.Length)]);
-            }
-
-            return new string(chars.ToArray());
         }
 
         public async Task<bool> Add(ApiUser user)
@@ -355,6 +305,56 @@ namespace Querier.Api.Services.Repositories.User
                 _logger.LogError(ex, ex.Message, null);
                 return false;
             }
+        }
+
+        private string GenerateRandomPassword()
+        {
+            // A mon avis, on peut passer par ici: var valid = new PasswordValidator<ApiUser>();
+            var opts = new PasswordOptions()
+            {
+                RequireDigit = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireDigit").Get<bool>(),
+                RequireLowercase = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireLowercase").Get<bool>(),
+                RequireNonAlphanumeric = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireNonAlphanumeric").Get<bool>(),
+                RequireUppercase = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireUppercase").Get<bool>(),
+                RequiredLength = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequiredLength").Get<int>(),
+                RequiredUniqueChars = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequiredUniqueChars").Get<int>()
+            };
+
+            string[] randomChars = new[] {
+                "ABCDEFGHJKLMNOPQRSTUVWXYZ",    // uppercase 
+                "abcdefghijkmnopqrstuvwxyz",    // lowercase
+                "0123456789",                   // digits
+                "!@$?_-"                        // non-alphanumeric
+            };
+
+            Random rand = new Random(Environment.TickCount);
+            List<char> chars = new List<char>();
+
+            if (opts.RequireUppercase)
+                chars.Insert(rand.Next(0, chars.Count), 
+                    randomChars[0][rand.Next(0, randomChars[0].Length)]);
+
+            if (opts.RequireLowercase)
+                chars.Insert(rand.Next(0, chars.Count), 
+                    randomChars[1][rand.Next(0, randomChars[1].Length)]);
+
+            if (opts.RequireDigit)
+                chars.Insert(rand.Next(0, chars.Count), 
+                    randomChars[2][rand.Next(0, randomChars[2].Length)]);
+
+            if (opts.RequireNonAlphanumeric)
+                chars.Insert(rand.Next(0, chars.Count), 
+                    randomChars[3][rand.Next(0, randomChars[3].Length)]);
+
+            for (int i = chars.Count; i < opts.RequiredLength
+                                      || chars.Distinct().Count() < opts.RequiredUniqueChars; i++)
+            {
+                string rcs = randomChars[rand.Next(0, randomChars.Length)];
+                chars.Insert(rand.Next(0, chars.Count), 
+                    rcs[rand.Next(0, rcs.Length)]);
+            }
+
+            return new string(chars.ToArray());
         }
     }
 }

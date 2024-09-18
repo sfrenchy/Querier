@@ -10,14 +10,17 @@ namespace Querier.Api.Models.Requests
         /// The server side type of the context
         /// </summary>
         public string? ContextTypeName { get; set; }
+
         /// <summary>
         /// The server side type of the entity
         /// </summary>
         public string? EntityType { get; set; }
+
         /// <summary>
         /// The datatable server side request parameters
         /// </summary>
         public ServerSideRequest? DatatableParams { get; set; }
+
         public List<DataFilter> Filters { get; set; }
     }
 
@@ -27,10 +30,12 @@ namespace Querier.Api.Models.Requests
         /// The server side type of the context
         /// </summary>
         public string? ContextTypeName { get; set; }
+
         /// <summary>
         /// The server side type of the entity in context namespace and present in the according database context
         /// </summary>
         public string? EntityType { get; set; }
+
         /// <summary>
         /// The properties of the entity
         /// </summary>
@@ -43,10 +48,12 @@ namespace Querier.Api.Models.Requests
         /// The server side type of the context
         /// </summary>
         public string? ContextTypeName { get; set; }
+
         /// <summary>
         /// The server side type of the entity
         /// </summary>
         public string? EntityType { get; set; }
+
         /// <summary>
         /// The entity's key to delete
         /// </summary>
@@ -59,6 +66,7 @@ namespace Querier.Api.Models.Requests
         /// The server side type of the context
         /// </summary>
         public string? ContextTypeName { get; set; }
+
         /// <summary>
         /// The query to be executed
         /// </summary>
@@ -71,14 +79,17 @@ namespace Querier.Api.Models.Requests
         /// The server side type of the context
         /// </summary>
         public string? ContextTypeName { get; set; }
+
         /// <summary>
         /// The SqlQuery
         /// </summary>
         public string? SqlQuery { get; set; }
+
         /// <summary>
         /// The datatable server side request parameters
         /// </summary>
         public ServerSideRequest? DatatableParams { get; set; }
+
         public List<DataFilter> Filters { get; set; }
     }
 
@@ -87,7 +98,6 @@ namespace Querier.Api.Models.Requests
     /// </summary>
     public class DataFilter
     {
-
         public PropertyDefinition Column { get; set;}
         public string Operator { get; set; }
         public string Operand { get; set; }

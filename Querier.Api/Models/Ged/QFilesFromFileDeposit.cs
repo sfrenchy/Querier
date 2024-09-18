@@ -12,13 +12,21 @@ namespace Querier.Api.Models.Ged
         [Key]
         [Column("Id")]
         public int Id { get; set; }
+
         [Column("FileRef")]
         public string FileRef { get; set; }
+
         [Column("FileInformation")]
         [Required]
         [JsonString]
         public string FileInformation { get; set; }
-       
+
+        [Column("QFileDepositId")]
+        public int QFileDepositId { get; set; }
+
+        [JsonIgnore]
+        public virtual QFileDeposit QFileDeposit { get; set; }
+
         public T GetConfiguration<T>()
         {
             return JsonConvert.DeserializeObject<T>(FileInformation ?? "");
@@ -28,12 +36,6 @@ namespace Querier.Api.Models.Ged
         {
             FileInformation = JsonConvert.SerializeObject(val);
         }
-
-        [Column("QFileDepositId")]
-        public int QFileDepositId { get; set; }
-        [JsonIgnore]
-        public virtual QFileDeposit QFileDeposit { get; set; }
-
     }
 
     public class ConfigurationFileSystem

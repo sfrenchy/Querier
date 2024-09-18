@@ -129,7 +129,7 @@ namespace Querier.Api.Controllers.UI
         {
             return new OkObjectResult(await _uiPageService.ExportPage(model.PageId));
         }
-        
+
         [HttpPost("ExportPageConfiguration")]
         public async Task<IActionResult> ExportPageConfigurationAsync([FromBody] ExportPageRequest model)
         {
@@ -162,6 +162,5 @@ namespace Querier.Api.Controllers.UI
             }
             throw new FileLoadException("No file attached");
         }
-
     }
 }

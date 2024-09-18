@@ -15,10 +15,12 @@ namespace Querier.Api.Models.Datatable
         /// Nom technique de la colonne dans la BDD
         /// </summary>
         public string Data { get; set; }
+
         /// <summary>
         /// Nom de la propriété dans le model "Result"
         /// </summary>
         public string ResultPropertyName { get; set; }
+
         /// <summary>
         /// Type de la colonne
         /// </summary>

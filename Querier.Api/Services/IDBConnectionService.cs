@@ -59,10 +59,11 @@ namespace Querier.Api.Services
 
     public class DBConnectionService : IDBConnectionService
     {
-        private readonly ILogger<DBConnectionService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _apiDbContextFactory;
-        private readonly IServiceProvider _serviceProvider;
         private readonly IDynamicContextList _dynamicContextList;
+        private readonly ILogger<DBConnectionService> _logger;
+        private readonly IServiceProvider _serviceProvider;
+
         public DBConnectionService(IDynamicContextList dynamicContextList, IDbContextFactory<ApiDbContext> apiDbContextFactory, IServiceProvider serviceProvider, ILogger<DBConnectionService> logger)
         {
             _logger = logger;
@@ -312,7 +313,54 @@ namespace Querier.Api.Services
             result.State = QDBConnectionState.Available;
             File.Delete(sourceZipPath);
             return result;
-        }  
+        }
+
+        public async Task<DeleteDBConnectionResponse> DeleteDBConnectionAsync(DeleteDBConnectionRequest request)
+        {
+            using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
+            {
+                QDBConnection toDelete = apiDbContext.QDBConnections.Find(request.DBConnectionId);
+                int toDeleteId = toDelete.Id;
+                int assemblyUploadId = toDelete.AssemblyUploadDefinitionId;
+                int pdbUploadId = toDelete.PDBUploadDefinitionId;
+                int sourcesUploadId = toDelete.SourcesUploadDefinitionId;
+
+                apiDbContext.QDBConnections.Remove(toDelete);
+                apiDbContext.SaveChanges();
+
+                // await _uploadService.DeleteUploadAsync(assemblyUploadId);
+                // await _uploadService.DeleteUploadAsync(pdbUploadId);
+                // await _uploadService.DeleteUploadAsync(sourcesUploadId);
+
+                return new DeleteDBConnectionResponse()
+                {
+                   DeletedDBConnectionId = toDeleteId 
+                };
+            }
+        }
+
+        public async Task<ServerSideResponse<QDBConnectionResponse>> ReadDBConnectionAsync(ServerSideRequest request)
+        {
+            using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
+            {
+                ServerSideResponse<QDBConnectionResponse> r = new ServerSideResponse<QDBConnectionResponse>();
+                r.data = apiDbContext.QDBConnections.Select(c => new QDBConnectionResponse() {
+                        ApiRoute = c.ApiRoute,
+                        AssemblyUploadDefinitionId = c.AssemblyUploadDefinitionId,
+                        ConnectionString = c.ConnectionString,
+                        ConnectionType = c.ConnectionType.ToString(),
+                        Id = c.Id,
+                        Name = c.Name,
+                        PDBUploadDefinitionId = c.PDBUploadDefinitionId,
+                        SourcesUploadDefinitionId = c.SourcesUploadDefinitionId
+                    }).DatatableFilter(request, out int? countFiltered).ToList();
+                r.draw = request.draw;
+                r.recordsTotal = apiDbContext.QDBConnections.Count();
+                r.recordsFiltered = (int)countFiltered;
+                r.sums = new Dictionary<string, object>();
+                return r;
+            }
+        }
 
         private CSharpCompilation GenerateCode(string contextName, List<string> sourceFiles)
         {
@@ -357,7 +405,7 @@ namespace Querier.Api.Services
             
             return refs;
         }
-        
+
         static IReverseEngineerScaffolder CreateMssqlScaffolder() =>
             new ServiceCollection()
                .AddEntityFrameworkSqlServer()
@@ -374,6 +422,7 @@ namespace Querier.Api.Services
                .AddSingleton<AnnotationCodeGeneratorDependencies>()
                .BuildServiceProvider()
                .GetRequiredService<IReverseEngineerScaffolder>();
+
         static IReverseEngineerScaffolder CreateMySQLScaffolder() =>
             new ServiceCollection()
                .AddEntityFrameworkMySql()
@@ -390,6 +439,7 @@ namespace Querier.Api.Services
                .AddSingleton<AnnotationCodeGeneratorDependencies>()
                .BuildServiceProvider()
                .GetRequiredService<IReverseEngineerScaffolder>();
+
         static IReverseEngineerScaffolder CreatePgSQLScaffolder() =>
             new ServiceCollection()
                .AddEntityFrameworkNpgsql()
@@ -406,51 +456,5 @@ namespace Querier.Api.Services
                .AddSingleton<AnnotationCodeGeneratorDependencies>()
                .BuildServiceProvider()
                .GetRequiredService<IReverseEngineerScaffolder>();
-
-        public async Task<DeleteDBConnectionResponse> DeleteDBConnectionAsync(DeleteDBConnectionRequest request)
-        {
-            using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
-            {
-                QDBConnection toDelete = apiDbContext.QDBConnections.Find(request.DBConnectionId);
-                int toDeleteId = toDelete.Id;
-                int assemblyUploadId = toDelete.AssemblyUploadDefinitionId;
-                int pdbUploadId = toDelete.PDBUploadDefinitionId;
-                int sourcesUploadId = toDelete.SourcesUploadDefinitionId;
-
-                apiDbContext.QDBConnections.Remove(toDelete);
-                apiDbContext.SaveChanges();
-
-                // await _uploadService.DeleteUploadAsync(assemblyUploadId);
-                // await _uploadService.DeleteUploadAsync(pdbUploadId);
-                // await _uploadService.DeleteUploadAsync(sourcesUploadId);
-
-                return new DeleteDBConnectionResponse()
-                {
-                   DeletedDBConnectionId = toDeleteId 
-                };
-            }
-        }
-        public async Task<ServerSideResponse<QDBConnectionResponse>> ReadDBConnectionAsync(ServerSideRequest request)
-        {
-            using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
-            {
-                ServerSideResponse<QDBConnectionResponse> r = new ServerSideResponse<QDBConnectionResponse>();
-                r.data = apiDbContext.QDBConnections.Select(c => new QDBConnectionResponse() {
-                        ApiRoute = c.ApiRoute,
-                        AssemblyUploadDefinitionId = c.AssemblyUploadDefinitionId,
-                        ConnectionString = c.ConnectionString,
-                        ConnectionType = c.ConnectionType.ToString(),
-                        Id = c.Id,
-                        Name = c.Name,
-                        PDBUploadDefinitionId = c.PDBUploadDefinitionId,
-                        SourcesUploadDefinitionId = c.SourcesUploadDefinitionId
-                    }).DatatableFilter(request, out int? countFiltered).ToList();
-                r.draw = request.draw;
-                r.recordsTotal = apiDbContext.QDBConnections.Count();
-                r.recordsFiltered = (int)countFiltered;
-                r.sums = new Dictionary<string, object>();
-                return r;
-            }
-        }
     }
 }

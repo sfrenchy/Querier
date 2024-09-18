@@ -12,16 +12,21 @@ namespace Querier.Api.Models.UI
         [Key]
         [Column("Id")]
         public int Id { get; set; }
+
         [Column("Title")]
         public string Title { get; set; }
+
         [Column("Width")]
         public int Width { get; set; }
+
         [Column("CardTypeLabel")]
         [Required]
         public string CardTypeLabel { get; set; }
+
         [Column("Package")]
         [Required]
         public string Package { get; set; }
+
         [Column("CardConfiguration")]
         [Required]
         [JsonString]
@@ -33,12 +38,16 @@ namespace Querier.Api.Models.UI
             get => JsonConvert.DeserializeObject<dynamic>(CardConfiguration ?? "");
             set => CardConfiguration = JsonConvert.SerializeObject(value);
         }
+
         [Column("HAPageRowId")]
         public int HAPageRowId { get; set; }
+
         [Column("Order")]
         public int Order { get; set; }
+
         [JsonIgnore]
         public virtual QPageRow QPageRow { get; set; }
+
         [JsonIgnore]
         public virtual List<QCardRole> QCardRoles { get; set; }
 

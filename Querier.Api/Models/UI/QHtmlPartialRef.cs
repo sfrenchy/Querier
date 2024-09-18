@@ -10,16 +10,22 @@ namespace Querier.Api.Models.UI
         [Key]
         [Column("Id")]
         public int Id { get; set; }
+
         [Column("Language")]
         public string Language { get; set; }
+
         [Column("Zipped")]
         public bool Zipped { get; set; }
+
         [Column("HAPageCardId")]
         public int HAPageCardId { get; set; }
+
         [JsonIgnore]
         public virtual QPageCard QPageCard { get; set; }
+
         [Column("HAUploadDefinitionId")]
         public int HAUploadDefinitionId { get; set; }
+
         [JsonIgnore]
         public virtual QUploadDefinition QUploadDefinition { get; set; }
     }

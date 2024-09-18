@@ -21,8 +21,8 @@ namespace Querier.Api.Controllers
     [ApiController]
     public class EntityCRUDController : ControllerBase
     {
-        private readonly ILogger<EntityCRUDController> _logger;
         private readonly IEntityCRUDService _entityCRUDService;
+        private readonly ILogger<EntityCRUDController> _logger;
 
         public EntityCRUDController(IEntityCRUDService entityCRUDService, ILogger<EntityCRUDController> logger)
         {

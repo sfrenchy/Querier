@@ -3,8 +3,10 @@
     public class ReportCard : IQCard
     {
         #region IAlhCardViewComponent
+
         public string Label => "Carte de rapport";
         public bool HasFooter => true;
+
         public dynamic Configuration
         {
             get
@@ -13,8 +15,10 @@
                 return c;
             }
         }
+
         public int MinWidth => 8;
         public bool HasButton => true;
-        #endregion       
+
+        #endregion
     }
 }

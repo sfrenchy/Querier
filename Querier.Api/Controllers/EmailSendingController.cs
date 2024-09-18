@@ -17,8 +17,8 @@ namespace Querier.Api.Controllers
     [ApiController]
     public class EmailSendingController : ControllerBase
     {
-        private readonly ILogger<EmailSendingController> _logger;
         private readonly IEmailSendingService _emailSendingService;
+        private readonly ILogger<EmailSendingController> _logger;
 
         public EmailSendingController(IEmailSendingService emailSendingService, ILogger<EmailSendingController> logger)
         {

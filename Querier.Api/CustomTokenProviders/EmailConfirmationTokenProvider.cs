@@ -15,6 +15,5 @@ namespace Querier.Api.CustomTokenProviders
         }
     }
     public class EmailConfirmationTokenProviderOptions : DataProtectionTokenProviderOptions
-    {
-    }
+    {}
 }

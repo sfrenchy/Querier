@@ -28,18 +28,22 @@ namespace Querier.Api.Models.Common
         /// The list of available items
         /// </summary>
         private List<PropertyItemDefinition> _availableItems;
+
         /// <summary>
         /// The name of the property
         /// </summary>
         public string Name { get; set; }
+
         /// <summary>
         /// The CSharp type of the property (as string)
         /// </summary>
         public string Type { get; set; } = "string?";
+
         /// <summary>
         /// List of property options
         /// </summary>
         public List<PropertyOption> Options { get; set; } = new List<PropertyOption>() { PropertyOption.IsNullable };
+
         /// <summary>
         /// Custom getter and setter for the available items of the property
         /// </summary>
@@ -65,6 +69,7 @@ namespace Querier.Api.Models.Common
         /// The key of the item 
         /// </summary>
         public string Key { get; set; }
+
         /// <summary>
         /// the label of the item
         /// </summary>
@@ -76,11 +81,11 @@ namespace Querier.Api.Models.Common
         /// The name of the entity
         /// </summary>
         public string Name { get; set; }
+
         /// <summary>
         /// The properties of the entity
         /// </summary>
         public List<PropertyDefinition> Properties { get; set; }
-        
     }
 
     public class SQLQueryResult
@@ -89,14 +94,17 @@ namespace Querier.Api.Models.Common
         /// A boolean whose value will be true if the query succeeded and false if it didn't
         /// </summary>
         public bool QuerySuccessful { get; set; }
+
         /// <summary>
         /// The error message if the query didn't succeed
         /// </summary>
         public string ErrorMessage { get; set; }
+
         /// <summary>
         /// An entity definition
         /// </summary>
         public EntityDefinition Entity { get; set; }
+
         /// <summary>
         /// A list to contain the data from an sql query
         /// </summary>

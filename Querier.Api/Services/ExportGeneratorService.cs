@@ -29,13 +29,14 @@ namespace Querier.Api.Services
 
     public class ExportGeneratorService : IExportGeneratorService
     {
-        private readonly ILogger<ExportGeneratorService> _logger;
         private readonly IConfiguration _configuration;
-        private readonly IEntityCRUDService _entityCRUDService;
-        private readonly IServiceProvider _serviceProvider;
         private readonly IDynamicContextList _dynamicContextList;
-        private readonly Models.Interfaces.IQUploadService _uploadService;
+        private readonly IEntityCRUDService _entityCRUDService;
         private readonly HttpClient _httpClient;
+        private readonly ILogger<ExportGeneratorService> _logger;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly Models.Interfaces.IQUploadService _uploadService;
+
         public ExportGeneratorService(IConfiguration configuration, 
                                       ILogger<ExportGeneratorService> logger, 
                                       IEntityCRUDService entityCRUDService,
