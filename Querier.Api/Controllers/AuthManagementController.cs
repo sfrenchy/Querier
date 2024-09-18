@@ -20,33 +20,15 @@ namespace Querier.Api.Controllers
             _logger = logger;
         }
 
-        //[HttpPost]
-        //[Route("Register")]
-        //public async Task<IActionResult> Register([FromBody] UserRegistrationRequest user)
-        //{
-        //    if (ModelState.IsValid)
-        //    {
-        //        return Ok(await _authManagementService.Register(user));
-        //    }
-        //    return BadRequest(new RegistrationResponse()
-        //    {
-        //        Success = false,
-        //        Errors = new List<string>()
-        //        {
-        //            "Invalid payload"
-        //        }
-        //    });
-        //}
-
         [HttpPost]
-        [Route("GoogleAuth")]
-        public async Task<IActionResult> LoginFromGoogle([FromBody] GoogleLoginRequest user)
+        [Route("SignUp")]
+        public async Task<IActionResult> SignUp([FromBody] SignUpRequest user)
         {
             if (ModelState.IsValid)
             {
-                return Ok(await _authManagementService.GoogleLogin(user));
+                return Ok(await _authManagementService.SignUp(user));
             }
-            return BadRequest(new RegistrationResponse()
+            return BadRequest(new SignUpResponse()
             {
                 Success = false,
                 Errors = new List<string>()
@@ -56,15 +38,33 @@ namespace Querier.Api.Controllers
             });
         }
 
+        // [HttpPost]
+        // [Route("GoogleAuth")]
+        // public async Task<IActionResult> LoginFromGoogle([FromBody] GoogleLoginRequest user)
+        // {
+        //     if (ModelState.IsValid)
+        //     {
+        //         return Ok(await _authManagementService.GoogleLogin(user));
+        //     }
+        //     return BadRequest(new SignUpResponse()
+        //     {
+        //         Success = false,
+        //         Errors = new List<string>()
+        //         {
+        //             "Invalid payload"
+        //         }
+        //     });
+        // }
+
         [HttpPost]
-        [Route("Login")]
-        public async Task<IActionResult> Login([FromBody] UserLoginRequest user)
+        [Route("SignIn")]
+        public async Task<IActionResult> SignIn([FromBody] SignInRequest user)
         {
             if (ModelState.IsValid)
             {
-                return Ok(await _authManagementService.Login(user));
+                return Ok(await _authManagementService.SignIn(user));
             }
-            return BadRequest(new RegistrationResponse()
+            return BadRequest(new SignUpResponse()
             {
                 Success = false,
                 Errors = new List<string>()
@@ -83,7 +83,7 @@ namespace Querier.Api.Controllers
                 return Ok(await _authManagementService.RefreshToken(tokenRequest));
             }
 
-            return BadRequest(new RegistrationResponse()
+            return BadRequest(new SignUpResponse()
             {
                 Errors = new List<string>() {
                 "Invalid payload"

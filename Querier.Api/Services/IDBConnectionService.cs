@@ -60,13 +60,11 @@ namespace Querier.Api.Services
     public class DBConnectionService : IDBConnectionService
     {
         private readonly ILogger<DBConnectionService> _logger;
-        private readonly Models.Interfaces.IQUploadService _uploadService;
         private readonly IDbContextFactory<ApiDbContext> _apiDbContextFactory;
         private readonly IServiceProvider _serviceProvider;
         private readonly IDynamicContextList _dynamicContextList;
-        public DBConnectionService(IDynamicContextList dynamicContextList, IDbContextFactory<ApiDbContext> apiDbContextFactory, IServiceProvider serviceProvider, Models.Interfaces.IQUploadService uploadService, ILogger<DBConnectionService> logger)
+        public DBConnectionService(IDynamicContextList dynamicContextList, IDbContextFactory<ApiDbContext> apiDbContextFactory, IServiceProvider serviceProvider, ILogger<DBConnectionService> logger)
         {
-            _uploadService = uploadService;
             _logger = logger;
             _apiDbContextFactory = apiDbContextFactory;
             _serviceProvider = serviceProvider;
@@ -270,6 +268,7 @@ namespace Querier.Api.Services
             // Store connection to database
             QDBConnection newConnection = new QDBConnection();
             newConnection.ApiRoute = connection.ContextApiRoute;
+            /*
             newConnection.AssemblyUploadDefinitionId = await _uploadService.UploadFileFromApiAsync(
                 new HAUploadDefinitionFromApi() {
                     Definition = new SimpleUploadDefinition() {
@@ -300,6 +299,7 @@ namespace Querier.Api.Services
                     UploadStream = File.OpenRead(sourceZipPath)
                 }
             );
+            */
             newConnection.Name = connection.Name;
             newConnection.ConnectionString = connection.ConnectionString;
             newConnection.ConnectionType = connection.ConnectionType;
@@ -420,9 +420,9 @@ namespace Querier.Api.Services
                 apiDbContext.QDBConnections.Remove(toDelete);
                 apiDbContext.SaveChanges();
 
-                await _uploadService.DeleteUploadAsync(assemblyUploadId);
-                await _uploadService.DeleteUploadAsync(pdbUploadId);
-                await _uploadService.DeleteUploadAsync(sourcesUploadId);
+                // await _uploadService.DeleteUploadAsync(assemblyUploadId);
+                // await _uploadService.DeleteUploadAsync(pdbUploadId);
+                // await _uploadService.DeleteUploadAsync(sourcesUploadId);
 
                 return new DeleteDBConnectionResponse()
                 {

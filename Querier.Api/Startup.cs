@@ -177,14 +177,12 @@ namespace Querier.Api
             services.AddSingleton<IEntityCRUDService, EntityCRUDService>();
             services.AddSingleton<Models.Interfaces.IQUploadService, IQUploadService>();
             services.AddScoped<IAuthManagementService, AuthManagementService>();
-            services.AddSingleton<IEditModeService, EditModeService>();
             services.AddSingleton<IUICategoryService, UICategoryService>();
             services.AddSingleton<IUIPageService, UIPageService>();
             services.AddSingleton<IUIRowService, UIRowService>();
             services.AddSingleton<IUICardService, UICardService>();
             services.AddScoped<IUserManagerService, UserManagerService>();
             services.AddSingleton<IEmailSendingService, SMTPEmailSendingService>();
-            services.AddSingleton<IEmailTemplateCrudUserService, EmailTemplateCrudUserService>();
             services.AddSingleton<IDynamicContextResolver, DynamicContextResolver>();
             services.AddSingleton<ICacheManagementService, CacheManagementService>();
             services.AddSingleton<IExportGeneratorService, ExportGeneratorService>();
@@ -251,7 +249,6 @@ namespace Querier.Api
                     }
                 };
             });
-            services.AddSingleton<INotification, Notification>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleRepository, RoleRepository>();
@@ -404,27 +401,6 @@ namespace Querier.Api
             
             app.UseHealthChecks("/healthcheck");
             app.UseStaticFiles();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-                endpoints.MapHub<NotificationHub>("/notificationhub").RequireCors(builder =>
-                {
-                    if (_configuration["AllowAllCrossOrigins"] == "True")
-                    {
-                        builder
-                        .AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowAnyOrigin();
-                    }
-                    else
-                    {
-                        builder.WithOrigins(_configuration["AllowedOriginsList"])
-                            .WithHeaders(_configuration["AllowedHeadersList"])
-                            .WithMethods(_configuration["AllowedMethodsList"]);
-                    }
-                });
-            });
 
             var pluginsStartupTypes = _configuration.GetSection("ApplicationSettings:PluginsStartupTypes").Get<List<string>>() ?? new List<string>();
             List<Type> pluginTypes = new List<Type>();

@@ -74,10 +74,10 @@ namespace Querier.Api.Services
 
     public interface IAuthManagementService
     {
-        public Task<RegistrationResponse> Register(UserRegistrationRequest user);
-        public Task<RegistrationResponse> Login(UserLoginRequest user);
+        public Task<SignUpResponse> SignUp(SignUpRequest user);
+        public Task<SignUpResponse> SignIn(SignInRequest user);
         public Task<AuthResult> RefreshToken(TokenRequest tokenRequest);
-        public Task<RegistrationResponse> GoogleLogin(GoogleLoginRequest user);
+        public Task<SignUpResponse> GoogleLogin(GoogleLoginRequest user);
     }
 
     public class AuthManagementService : IAuthManagementService
@@ -94,7 +94,7 @@ namespace Querier.Api.Services
             _tokenValidationParameters = tokenValidationParameters;
             _contextFactory = contextFactory;
         }
-        public async Task<RegistrationResponse> Register(UserRegistrationRequest user)
+        public async Task<SignUpResponse> SignUp(SignUpRequest user)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
@@ -103,7 +103,7 @@ namespace Querier.Api.Services
             }
         }
 
-        public async Task<RegistrationResponse> Login(UserLoginRequest user)
+        public async Task<SignUpResponse> SignIn(SignInRequest user)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
@@ -111,7 +111,7 @@ namespace Querier.Api.Services
                 if (existingUser == null)
                 {
                     // We dont want to give to much information on why the request has failed for security reasons
-                    return new RegistrationResponse()
+                    return new SignUpResponse()
                     {
                         Success = false,
                         Errors = new List<string>(){
@@ -129,7 +129,7 @@ namespace Querier.Api.Services
                     AuthResult r = await UserMethods.GenerateJwtToken(existingUser, _jwtConfig, apidbContext);
                     var roles = await _userManager.GetRolesAsync(existingUser);
 
-                    return new RegistrationResponse()
+                    return new SignUpResponse()
                     {
                         Id = existingUser.Id,
                         FirstName = existingUser.FirstName,
@@ -148,7 +148,7 @@ namespace Querier.Api.Services
                 else
                 {
                     // We dont want to give to much information on why the request has failed for security reasons
-                    return new RegistrationResponse()
+                    return new SignUpResponse()
                     {
                         Success = false,
                         Errors = new List<string>(){
@@ -159,7 +159,7 @@ namespace Querier.Api.Services
             }
         }
 
-        public async Task<RegistrationResponse> GoogleLogin(GoogleLoginRequest user)
+        public async Task<SignUpResponse> GoogleLogin(GoogleLoginRequest user)
         {
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
@@ -194,7 +194,7 @@ namespace Querier.Api.Services
 
                         plugin.QuerierUserCreated(userCreated);
 
-                        return new RegistrationResponse()
+                        return new SignUpResponse()
                         {
                             Success = result.Success,
                             Email = user.Email,
@@ -208,7 +208,7 @@ namespace Querier.Api.Services
                     }
                     else
                     {
-                        return new RegistrationResponse()
+                        return new SignUpResponse()
                         {
                             Success = false,
                             Errors = isCreated.Errors.Select(x => x.Description).ToList()
@@ -218,7 +218,7 @@ namespace Querier.Api.Services
                 else
                 {
                     AuthResult r = await UserMethods.GenerateJwtToken(existingUser, _jwtConfig, apidbContext);
-                    return new RegistrationResponse()
+                    return new SignUpResponse()
                     {
                         Success = r.Success,
                         Email = user.Email,

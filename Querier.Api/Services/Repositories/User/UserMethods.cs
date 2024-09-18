@@ -21,14 +21,14 @@ namespace Querier.Api.Services.Repositories.User
     public static class UserMethods
     {
         //Code mort//
-        public static async Task<RegistrationResponse> Register([FromBody] UserRegistrationRequest user, UserManager<ApiUser> userManager, JwtConfig jwtConfig, ApiDbContext apiDbContext)
+        public static async Task<SignUpResponse> Register([FromBody] SignUpRequest user, UserManager<ApiUser> userManager, JwtConfig jwtConfig, ApiDbContext apiDbContext)
         {
             // check if the user with the same email exist
             var existingUser = await userManager.FindByEmailAsync(user.Email);
 
             if (existingUser != null)
             {
-                return new RegistrationResponse()
+                return new SignUpResponse()
                 {
                     Success = false,
                     Errors = new List<string>()
@@ -46,7 +46,7 @@ namespace Querier.Api.Services.Repositories.User
                 var result = await GenerateJwtToken(newUser, jwtConfig, apiDbContext);
                 var userObj = await userManager.FindByEmailAsync(user.Email);
 
-                return new RegistrationResponse()
+                return new SignUpResponse()
                 {
                     Success = true,
                     Errors = isCreated.Errors.Select(x => x.Description).ToList(),
@@ -60,7 +60,7 @@ namespace Querier.Api.Services.Repositories.User
                 };
             }
 
-            return new RegistrationResponse()
+            return new SignUpResponse()
             {
                 Success = false,
                 Errors = isCreated.Errors.Select(x => x.Description).ToList()

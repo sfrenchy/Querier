@@ -16,7 +16,6 @@
     <Compile Remove="Repositories\Data\**" />
     <Content Remove="Controllers\Charts\**" />
     <Content Remove="Repositories\Data\**" />
-    <Content Include="Services\Repositories\Application\Features.cs" />
     <EmbeddedResource Remove="Controllers\Charts\**" />
     <EmbeddedResource Remove="Repositories\Data\**" />
     <None Remove="Controllers\Charts\**" />
