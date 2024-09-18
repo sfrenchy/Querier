@@ -55,12 +55,12 @@ namespace Querier.Api.Models.Common
             modelBuilder.Entity<ApiUser>().HasData(new ApiUser
             {
                 Id = "3fcfa67e-b654-4df0-9558-d97cb90e415e", // primary key
-                UserName = "Administrateur",
+                UserName = "admin@querier.fr",
                 Email = "admin@querier.fr",
                 NormalizedEmail = "ADMIN@QUERIER.FR",
                 FirstName = "Admin",
                 LastName = "Admin",
-                NormalizedUserName = "ADMINISTRATEUR",
+                NormalizedUserName = "ADMIN@QUERIER.FR",
                 PasswordHash = hasher.HashPassword(null, "Admin-123"),
                 EmailConfirmed = true
             });
