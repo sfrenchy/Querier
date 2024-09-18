@@ -16,7 +16,6 @@
     <Compile Remove="Repositories\Data\**" />
     <Content Remove="Controllers\Charts\**" />
     <Content Remove="Repositories\Data\**" />
-    <Content Include="Services\MQServices\DataExportService.cs" />
     <Content Include="Services\Repositories\Application\Features.cs" />
     <EmbeddedResource Remove="Controllers\Charts\**" />
     <EmbeddedResource Remove="Repositories\Data\**" />
@@ -73,8 +72,6 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
-    <PackageReference Include="Quartz" Version="3.13.0" />
-    <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
     <PackageReference Include="StringTemplate4" Version="4.0.8" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.8" />
@@ -109,9 +106,6 @@
     <Content Include="Repositories\Quartz\Scripts\*.*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Controllers\ApplicationSpecificProperties.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">

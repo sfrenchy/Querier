@@ -9,7 +9,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using RabbitMQ.Client;
 using System.Data;
 using System.Linq;
 using System.Net.Http;
@@ -18,9 +17,7 @@ using Querier.Api.Models.Common;
 using CsvHelper.Configuration;
 using System.Text;
 using System.Threading.Tasks;
-using Querier.Api.Models;
 using Querier.Api.Models.Enums;
-using Microsoft.AspNetCore.Http;
 using Querier.Api.Tools;
 
 namespace Querier.Api.Services

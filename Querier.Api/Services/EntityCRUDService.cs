@@ -19,14 +19,12 @@ namespace Querier.Api.Services
 {
     public class EntityCRUDService : IEntityCRUDService
     {
-        private readonly ApiDbContextFactory _apiDbContextFactory;
         private readonly ILogger<EntityCRUDService> _logger;
         private readonly IDynamicContextList _dynamicContextList;
         
         public EntityCRUDService(IDynamicContextList dynamicContextList, ILogger<EntityCRUDService> logger)
         {
             _logger = logger;
-            //_apiDbContextFactory = apiDbContextFactory;
             _dynamicContextList = dynamicContextList; 
         }
         private DbContext GetDbContextFromTypeName(string contextTypeName)

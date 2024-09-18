@@ -417,3 +417,6 @@ Querier.Tools/obj/Querier.Tools.csproj.nuget.dgspec.json
 Querier.Tools/obj/Querier.Tools.csproj.nuget.g.props
 Querier.Tools/obj/Querier.Tools.csproj.nuget.g.targets
 Querier.Tools/obj/Debug/net8.0/Querier.Tools.assets.cache
+Querier.Api/querier.db
+Querier.Api/querier.db-shm
+Querier.Api/querier.db-wal

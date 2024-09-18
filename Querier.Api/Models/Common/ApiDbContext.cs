@@ -177,6 +177,8 @@ namespace Querier.Api.Models.Common
             switch (SQLEngine)
             {
                 default:
+                    optionsBuilder.UseLazyLoadingProxies().UseSqlite(_configuration.GetConnectionString("ApiDBConnection"));    
+                    break;
                 case "MSSQL":
                     optionsBuilder.UseLazyLoadingProxies().UseSqlServer(_configuration.GetConnectionString("ApiDBConnection"), x => x.MigrationsAssembly("HerdiaApp.Migration.SqlServer"));    
                     break;

@@ -45,15 +45,13 @@ namespace Querier.Api.Services.UI
         private readonly ILogger<UIPageService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private readonly Models.Interfaces.IQUploadService _uploadService;
-        private readonly IToastMessageEmitterService _toastMessageEmitterService;
 
 
-        public UIPageService(ILogger<UIPageService> logger, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService, IToastMessageEmitterService toastMessageEmitterService)
+        public UIPageService(ILogger<UIPageService> logger, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService)
         {
             _logger = logger;
             _contextFactory = contextFactory;
             _uploadService = uploadService;
-            _toastMessageEmitterService = toastMessageEmitterService;
         }
 
         public PageManagementResponse Index()
@@ -287,7 +285,7 @@ namespace Querier.Api.Services.UI
             exportAvailableMessage.Persistent = true;
             exportAvailableMessage.Type = ToastType.Success;
             _logger.LogInformation("Publishing export page configuration notification");
-            _toastMessageEmitterService.PublishToast(exportAvailableMessage);
+            //_toastMessageEmitterService.PublishToast(exportAvailableMessage);
 
             return new ExportPageResponse()
             { 

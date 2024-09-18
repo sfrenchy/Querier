@@ -23,13 +23,11 @@ namespace Querier.Api.Controllers
     {
         private readonly ILogger<EntityCRUDController> _logger;
         private readonly IEntityCRUDService _entityCRUDService;
-        private readonly IToastMessageEmitterService _toastMessageEmitterService;
 
-        public EntityCRUDController(IEntityCRUDService entityCRUDService, ILogger<EntityCRUDController> logger, IToastMessageEmitterService toastMessageEmitterService)//IKLogger logger)
+        public EntityCRUDController(IEntityCRUDService entityCRUDService, ILogger<EntityCRUDController> logger)
         {
             _logger = logger;
             _entityCRUDService = entityCRUDService;
-            _toastMessageEmitterService = toastMessageEmitterService;
         }
 
         [HttpGet("GetContexts")]
@@ -152,7 +150,7 @@ namespace Querier.Api.Controllers
                 sqlQueryStatusNotification.Recipient = "admin@querier.fr";
                 sqlQueryStatusNotification.Closable = false;
                 sqlQueryStatusNotification.Persistent = false;
-                _toastMessageEmitterService.PublishToast(sqlQueryStatusNotification);
+                //_toastMessageEmitterService.PublishToast(sqlQueryStatusNotification);
             }
             
             return new OkObjectResult(res);

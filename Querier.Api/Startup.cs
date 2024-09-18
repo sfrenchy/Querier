@@ -2,7 +2,6 @@ using Querier.Api.Models;
 using Querier.Api.Models.Auth;
 using Querier.Api.Models.Common;
 using Querier.Api.Services;
-using Querier.Api.Services.MQServices;
 using Querier.Api.Services.Role;
 using Querier.Api.Services.UI;
 using Querier.Api.Services.User;
@@ -28,11 +27,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using System.Runtime.Loader;
 using Querier.Api.Models.Interfaces;
-using Querier.Api.Models.Enums;
-using System.Collections;
-using System.Resources;
 using Newtonsoft.Json;
 using Querier.Api.CustomTokenProviders;
 using Querier.Api.Models.QDBConnection;
@@ -107,6 +102,10 @@ namespace Querier.Api
             switch (sqlEngine)
             {
                 default:
+                    services.AddDbContext<ApiDbContext>(options => options.UseSqlite(_configuration.GetConnectionString("ApiDBConnection")), ServiceLifetime.Singleton);
+                    services.AddDbContextFactory<ApiDbContext>(options => options.UseSqlite(_configuration.GetConnectionString("ApiDBConnection")));
+                    services.AddDbContext<UserDbContext>(options => options.UseSqlite(_configuration.GetConnectionString("ApiDBConnection")).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
+                    break;
                 case "MSSQL":
                     services.AddDbContext<ApiDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("ApiDBConnection"), x => x.MigrationsAssembly("HerdiaApp.Migration.SqlServer")), ServiceLifetime.Singleton);
                     services.AddDbContextFactory<ApiDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("ApiDBConnection")));
@@ -186,9 +185,6 @@ namespace Querier.Api
             services.AddScoped<IUserManagerService, UserManagerService>();
             services.AddSingleton<IEmailSendingService, SMTPEmailSendingService>();
             services.AddSingleton<IEmailTemplateCrudUserService, EmailTemplateCrudUserService>();
-            services.AddHostedService<ToastMessageReceiverService>();
-            services.AddHostedService<DataExportReceiverService>();
-            services.AddHostedService<DataImportReceiverService>();
             services.AddSingleton<IDynamicContextResolver, DynamicContextResolver>();
             services.AddSingleton<ICacheManagementService, CacheManagementService>();
             services.AddSingleton<IExportGeneratorService, ExportGeneratorService>();
@@ -260,9 +256,6 @@ namespace Querier.Api
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IRoleService, RoleService>();
-            services.AddScoped<IExportService, ExportService>();
-            services.AddScoped<IImportService, ImportService>();
-            services.AddSingleton<IToastMessageEmitterService, ToastMessageEmitterService>();
             services.AddScoped<IDBConnectionService, DBConnectionService>();
             
             // services.AddEntityFrameworkSqlServer()
@@ -451,8 +444,6 @@ namespace Querier.Api
                     ha.CreateTemplateEmail().GetAwaiter().GetResult();
                 }
             }
-
-            CreateTemplateEmail().GetAwaiter().GetResult();
         }
 
         /// <summary>
@@ -468,68 +459,6 @@ namespace Querier.Api
                 string path = Path.Combine(webRootPath, requiredDirectory);
                 if (!Directory.Exists(path))
                     Directory.CreateDirectory(path);
-            }
-        }
-
-        //Add email template dynamically, you just need to add the origin template in the directory Services/MailTemplating with the extension ".html"
-        private async Task CreateTemplateEmail()
-        {
-            //use to have IQUploadService and IDbContextFactory services 
-            using (var serviceScope = ServiceActivator.GetScope())
-            {
-                Models.Interfaces.IQUploadService uploadSrv;
-                IDbContextFactory<ApiDbContext> dbContextFactory;
-
-                uploadSrv = serviceScope.ServiceProvider.GetService<Models.Interfaces.IQUploadService>();
-                dbContextFactory = serviceScope.ServiceProvider.GetService<IDbContextFactory<ApiDbContext>>();
-
-                ResourceSet resourceSet = Properties.Resources.ResourceManager.GetResourceSet(System.Globalization.CultureInfo.CurrentCulture, true, true);
-                List<string> resourceNames = new List<string>();
-                foreach (DictionaryEntry resource in resourceSet)
-                {
-                    string resourceName = (string)resource.Key;
-                    int lastDotIndex = resourceName.LastIndexOf('.');
-                    string languageCode = "";
-                    if (lastDotIndex != -1)
-                    {
-                        languageCode = resourceName.Substring(lastDotIndex);
-                        if (languageCode.Contains(".de") || languageCode.Contains(".en") || languageCode.Contains(".fr"))
-                            resourceNames.Add(resourceName);
-                    }
-
-                }
-
-                foreach (string resourceName in resourceNames)
-                {
-                    //check if the template already exist 
-                    List<QUploadDefinition> templateCount;
-
-                    using (var apidbContext = dbContextFactory.CreateDbContext())
-                    {
-                        templateCount = apidbContext.QUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == resourceName).ToList();
-                    }
-
-                    //test if the default template exist and if the template already exist in db 
-                    if (templateCount.Count() == 0)
-                    {
-                        // convert string to stream
-                        byte[] byteArray = Encoding.UTF8.GetBytes(Properties.Resources.ResourceManager.GetString(resourceName));
-                        //byte[] byteArray = Encoding.ASCII.GetBytes(contents);
-                        MemoryStream stream = new MemoryStream(byteArray);
-
-                        HAUploadDefinitionFromApi requestParam = new HAUploadDefinitionFromApi()
-                        {
-                            Definition = new SimpleUploadDefinition
-                            {
-                                FileName = resourceName,
-                                MimeType = "text/html",
-                                Nature = QUploadNatureEnum.ApplicationEmail
-                            },
-                            UploadStream = stream
-                        };
-                        await uploadSrv.UploadFileFromApiAsync(requestParam);
-                    }
-                }
             }
         }
     }

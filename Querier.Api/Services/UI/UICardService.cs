@@ -39,14 +39,12 @@ namespace Querier.Api.Services.UI
         private readonly ILogger<UICardService> _logger;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private readonly Models.Interfaces.IQUploadService _uploadService;
-        private readonly IToastMessageEmitterService _toastMessageEmitterService;
 
-        public UICardService(ILogger<UICardService> logger, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService, IToastMessageEmitterService toastMessageEmitterService)
+        public UICardService(ILogger<UICardService> logger, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService)
         {
             _logger = logger;
             _contextFactory = contextFactory;
             _uploadService = uploadService;
-            _toastMessageEmitterService = toastMessageEmitterService;
         }
 
         public async Task<List<QPageCard>> GetCardsAsync(int rowId)
@@ -243,7 +241,7 @@ namespace Querier.Api.Services.UI
             exportAvailableMessage.Persistent = true;
             exportAvailableMessage.Type = ToastType.Success;
             _logger.LogInformation("Publishing export card configuration notification");
-            _toastMessageEmitterService.PublishToast(exportAvailableMessage);
+            //_toastMessageEmitterService.PublishToast(exportAvailableMessage);
 
             return new { Msg = $"The Card configuration is available to download" };
         }
