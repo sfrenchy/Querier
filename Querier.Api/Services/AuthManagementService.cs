@@ -86,15 +86,13 @@ namespace Querier.Api.Services
         private readonly JwtConfig _jwtConfig;
         private readonly TokenValidationParameters _tokenValidationParameters;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly IThemeService _themeService;
 
-        public AuthManagementService(IUserManagerService userManager, IOptionsMonitor<JwtConfig> optionsMonitor, TokenValidationParameters tokenValidationParameters, IDbContextFactory<ApiDbContext> contextFactory, IThemeService themeService)
+        public AuthManagementService(IUserManagerService userManager, IOptionsMonitor<JwtConfig> optionsMonitor, TokenValidationParameters tokenValidationParameters, IDbContextFactory<ApiDbContext> contextFactory)
         {
             _userManager = userManager;
             _jwtConfig = optionsMonitor.CurrentValue;
             _tokenValidationParameters = tokenValidationParameters;
             _contextFactory = contextFactory;
-            _themeService = themeService;
         }
         public async Task<RegistrationResponse> Register(UserRegistrationRequest user)
         {
@@ -128,7 +126,6 @@ namespace Querier.Api.Services
 
                 if (PasswordisCorrect && EmailConfirmed)
                 {
-                    _themeService.CreateDefaultTheme(existingUser.Id);
                     AuthResult r = await UserMethods.GenerateJwtToken(existingUser, _jwtConfig, apidbContext);
                     var roles = await _userManager.GetRolesAsync(existingUser);
 
@@ -192,7 +189,6 @@ namespace Querier.Api.Services
                     {
                         await _userManager.AddToRoleAsync(gUser, "User");
                         var result = await UserMethods.GenerateJwtToken(gUser, _jwtConfig, apidbContext);
-                        _themeService.CreateDefaultTheme(gUser.Id);
 
                         var userCreated = await _userManager.FindByEmailAsync(gUser.Email);
 
@@ -222,7 +218,6 @@ namespace Querier.Api.Services
                 else
                 {
                     AuthResult r = await UserMethods.GenerateJwtToken(existingUser, _jwtConfig, apidbContext);
-                    _themeService.CreateDefaultTheme(existingUser.Id);
                     return new RegistrationResponse()
                     {
                         Success = r.Success,
