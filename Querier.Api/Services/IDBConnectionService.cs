@@ -184,14 +184,14 @@ namespace Querier.Api.Services
                 srcZipContent.Add("ProcedureResultSet\\ProcedureResultSet.cs", procedureResultContent);
                 sourceFiles.Add(procedureResultContent);
 
-                var procedureReportRequestTemplate = new Template(File.ReadAllText("./DBTemplating/ProcedureReportRequests.st"), '$', '$');
+                var procedureReportRequestTemplate = new Template(File.ReadAllText("./Resources/DBTemplating/ProcedureReportRequests.st"), '$', '$');
                 procedureReportRequestTemplate.Add("nameSpace", connectionNamespace);
                 procedureReportRequestTemplate.Add("procedureList", storedProcedures);
                 string procedureReportRequestContent = procedureReportRequestTemplate.Render();
                 srcZipContent.Add("ProcedureReportRequests\\ProcedureReportRequests.cs", procedureReportRequestContent);
                 sourceFiles.Add(procedureReportRequestContent);
 
-                var procedureContextTemplate = new Template(File.ReadAllText("./DBTemplating/ProcedureContext.st"), '$', '$');
+                var procedureContextTemplate = new Template(File.ReadAllText("./Resources/DBTemplating/ProcedureContext.st"), '$', '$');
                 procedureContextTemplate.Add("nameSpace", connectionNamespace);
                 procedureContextTemplate.Add("contextNameSpace", contextName);
                 procedureContextTemplate.Add("procedureList", storedProcedures);
@@ -199,7 +199,7 @@ namespace Querier.Api.Services
                 srcZipContent.Add("ProcedureContext\\ProcedureContext.cs", procedureContextContent);
                 sourceFiles.Add(procedureContextContent);
                 
-                var procedureServiceTemplate = new Template(File.ReadAllText("./DBTemplating/ProcedureService.st"), '$', '$');
+                var procedureServiceTemplate = new Template(File.ReadAllText("./Resources/DBTemplating/ProcedureService.st"), '$', '$');
                 procedureServiceTemplate.Add("nameSpace", connectionNamespace);
                 procedureServiceTemplate.Add("contextNameSpace", contextName);
                 procedureServiceTemplate.Add("procedureList", storedProcedures);
@@ -207,7 +207,7 @@ namespace Querier.Api.Services
                 srcZipContent.Add("ProcedureService\\ProcedureService.cs", procedureServiceContent);
                 sourceFiles.Add(procedureServiceContent);
 
-                var procedureServiceResolverTemplate = new Template(File.ReadAllText("./DBTemplating/ProcedureServiceResolver.st"), '$', '$');
+                var procedureServiceResolverTemplate = new Template(File.ReadAllText("./Resources/DBTemplating/ProcedureServiceResolver.st"), '$', '$');
                 procedureServiceResolverTemplate.Add("nameSpace", connectionNamespace);
                 procedureServiceResolverTemplate.Add("contextNameSpace", contextName);
                 procedureServiceResolverTemplate.Add("procedureList", storedProcedures);
@@ -215,7 +215,7 @@ namespace Querier.Api.Services
                 srcZipContent.Add("ProcedureServiceResolver\\ProcedureServiceResolver.cs", procedureServiceResolverContent);
                 sourceFiles.Add(procedureServiceResolverContent);
 
-                var procedureControllerTemplate = new Template(File.ReadAllText("./DBTemplating/ProcedureController.st"), '$', '$');
+                var procedureControllerTemplate = new Template(File.ReadAllText("./Resources/DBTemplating/ProcedureController.st"), '$', '$');
                 procedureControllerTemplate.Add("nameSpace", connectionNamespace);
                 procedureControllerTemplate.Add("contextNameSpace", contextName);
                 procedureControllerTemplate.Add("procedureList", storedProcedures);

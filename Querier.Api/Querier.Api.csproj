@@ -50,7 +50,6 @@
     <PackageReference Include="ClosedXML" Version="0.102.3" />
     <PackageReference Include="EntityFramework" Version="6.5.1" />
     <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
-    <PackageReference Include="KissLog.AspNetCore" Version="5.3.0" />
     <PackageReference Include="MailKit" Version="4.7.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
@@ -130,12 +129,4 @@
       <UserProperties appsettings_1json__JsonSchema="" />
     </VisualStudio>
   </ProjectExtensions>
-  <ItemGroup>
-    <Content Include="Resources\EmailConfirmation.de.html" />
-    <Content Include="Resources\EmailConfirmation.en.html" />
-    <Content Include="Resources\EmailConfirmation.fr.html" />
-    <Content Include="Resources\EmailResetPassword.de.html" />
-    <Content Include="Resources\EmailResetPassword.en.html" />
-    <Content Include="Resources\EmailResetPassword.fr.html" />
-  </ItemGroup>
 </Project>

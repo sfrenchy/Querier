@@ -6,11 +6,6 @@ using Querier.Api.Services.MQServices;
 using Querier.Api.Services.Role;
 using Querier.Api.Services.UI;
 using Querier.Api.Services.User;
-using KissLog;
-using KissLog.AspNetCore;
-using KissLog.CloudListeners.Auth;
-using KissLog.CloudListeners.RequestLogsListener;
-using KissLog.Formatters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -72,21 +67,9 @@ namespace Querier.Api
             services.AddHttpContextAccessor();
             services.AddMemoryCache();
             services.AddDistributedMemoryCache();
-            services.AddStackExchangeRedisCache(options => { options.Configuration = _configuration["RedisCacheUrl"]; });
-            services.AddLogging(logging =>
+            services.AddStackExchangeRedisCache(options =>
             {
-                logging.AddKissLog(options =>
-                {
-                    options.Formatter = args =>
-                    {
-                        if (args.Exception == null)
-                            return args.DefaultValue;
-
-                        string exceptionStr = new ExceptionFormatter().Format(args.Exception, args.Logger);
-
-                        return string.Join(Environment.NewLine, args.DefaultValue, exceptionStr);
-                    };
-                });
+                options.Configuration = _configuration["RedisCacheUrl"];
             });
 
             services.AddSwaggerGen(c =>
@@ -444,8 +427,6 @@ namespace Querier.Api
             app.UseHealthChecks("/healthcheck");
             app.UseStaticFiles();
 
-            app.UseKissLogMiddleware(options => ConfigureKissLog(options));
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
@@ -503,15 +484,6 @@ namespace Querier.Api
                 if (!Directory.Exists(path))
                     Directory.CreateDirectory(path);
             }
-        }
-
-        private void ConfigureKissLog(IOptionsBuilder options)
-        {
-            KissLogConfiguration.Listeners
-                .Add(new RequestLogsApiListener(new Application(_configuration["KissLog.OrganizationId"], _configuration["KissLog.ApplicationId"]))
-                {
-                    ApiUrl = _configuration["KissLog.ApiUrl"]
-                });
         }
 
         //Add email template dynamically, you just need to add the origin template in the directory Services/MailTemplating with the extension ".html"
