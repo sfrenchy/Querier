@@ -1,11 +1,11 @@
 // ignore_for_file: no_leading_underscores_for_local_identifiers
 
 import 'package:flutter/material.dart';
-import 'package:garduino_dashboard/pages/home/widgets/header_widget.dart';
-import 'package:garduino_dashboard/responsive.dart';
-import 'package:garduino_dashboard/pages/home/widgets/activity_details_card.dart';
-import 'package:garduino_dashboard/pages/home/widgets/bar_graph_card.dart';
-import 'package:garduino_dashboard/pages/home/widgets/line_chart_card.dart';
+import 'package:querier/pages/home/widgets/header_widget.dart';
+import 'package:querier/responsive.dart';
+import 'package:querier/pages/home/widgets/activity_details_card.dart';
+import 'package:querier/pages/home/widgets/bar_graph_card.dart';
+import 'package:querier/pages/home/widgets/line_chart_card.dart';
 
 class HomePage extends StatelessWidget {
   final GlobalKey<ScaffoldState> scaffoldKey;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:garduino_dashboard/const.dart';
+import 'package:querier/const.dart';
 
 class CustomCard extends StatelessWidget {
   final Widget child;

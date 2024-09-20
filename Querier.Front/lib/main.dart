@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:garduino_dashboard/const.dart';
-import 'package:garduino_dashboard/dashboard.dart';
+import 'package:querier/const.dart';
+import 'package:querier/dashboard.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Garduino',
+      title: 'Querier',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
       theme: ThemeData(

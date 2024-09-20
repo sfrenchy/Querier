@@ -1,4 +1,4 @@
-name: garduino_dashboard
+name: querier
 description: A new Flutter project.
 
 publish_to: 'none' 

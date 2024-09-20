@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:garduino_dashboard/pages/home/home_page.dart';
-import 'package:garduino_dashboard/widgets/menu.dart';
-import 'package:garduino_dashboard/responsive.dart';
+import 'package:querier/pages/home/home_page.dart';
+import 'package:querier/widgets/menu.dart';
+import 'package:querier/responsive.dart';
 
 class DashBoard extends StatelessWidget {
   DashBoard({super.key});

@@ -2,13 +2,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:garduino_dashboard/responsive.dart';
-import 'package:garduino_dashboard/main.dart';
-import 'package:garduino_dashboard/model/menu_modal.dart';
+import 'package:querier/responsive.dart';
+import 'package:querier/main.dart';
+import 'package:querier/model/menu_modal.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:garduino_dashboard/widgets/history.dart';
-import 'package:garduino_dashboard/widgets/notifications.dart';
-import 'package:garduino_dashboard/widgets/settings_page.dart';
+import 'package:querier/widgets/history.dart';
+import 'package:querier/widgets/notifications.dart';
+import 'package:querier/widgets/settings_page.dart';
 
 import 'controller_page.dart';
 import 'aboutUs.dart';
