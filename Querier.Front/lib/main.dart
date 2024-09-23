@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:querier/const.dart';
 import 'package:querier/dashboard.dart';
+import 'package:querier/login_screen.dart';
+import 'package:querier/login_bloc.dart';
 
 void main() {
   runApp(const MyApp());
+  /*runApp(MultiBlocProvider(providers: [
+    BlocProvider<LoginBloc>(
+      create: (context) => LoginBloc(),
+    ),
+  ], child: DashBoard()));*/
 }
 
 class MyApp extends StatelessWidget {
@@ -34,7 +42,7 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: const Color(0xFF171821),
           fontFamily: 'IBMPlexSans',
           brightness: Brightness.dark),
-      home: DashBoard(),
+      home: LoginScreen(),
     );
   }
 }
