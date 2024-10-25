@@ -84,7 +84,7 @@ class _MenuState extends State<Menu> {
                       case 0: // Dashboard
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                              builder: (context) => const MyApp()),
+                              builder: (context) => const QuerierApp()),
                         );
                         break;
                       case 1: // Controller

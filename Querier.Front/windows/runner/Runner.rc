@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.dashboard.flutter.app" "\0"
-            VALUE "FileDescription", "garduino_dashboard" "\0"
+            VALUE "FileDescription", "querier" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "garduino_dashboard" "\0"
+            VALUE "InternalName", "querier" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2023 com.dashboard.flutter.app. All rights reserved." "\0"
-            VALUE "OriginalFilename", "garduino_dashboard.exe" "\0"
-            VALUE "ProductName", "garduino_dashboard" "\0"
+            VALUE "OriginalFilename", "querier.exe" "\0"
+            VALUE "ProductName", "querier" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

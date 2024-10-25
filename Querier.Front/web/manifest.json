@@ -1,6 +1,6 @@
 {
-    "name": "garduino_dashboard",
-    "short_name": "garduino_dashboard",
+    "name": "querier",
+    "short_name": "querier",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#hexcode",

@@ -5,20 +5,19 @@ part 'login_event.dart';
 part 'login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
-  LoginBloc() : super(LoginInitial());
-
-  @override
-  Stream<LoginState> mapEventToState(LoginEvent event) async* {
-    if (event is LoginButtonPressed) {
-      yield LoginLoading();
-
+  LoginBloc() : super(LoginInitial()) {
+    on<LoginButtonPressed>((event, emit) {
       try {
         // Replace this with your own login logic
-        await Future.delayed(const Duration(seconds: 2));
-        yield LoginSuccess();
+        Future.delayed(const Duration(seconds: 2));
+        if (event.email == "toto" && event.password == "tutu") {
+          LoginSuccess();
+        } else {
+          throw Exception("test exception");
+        }
       } catch (error) {
-        yield LoginFailure(error: error.toString());
+        print(LoginFailure(error: error.toString()));
       }
-    }
+    });
   }
 }

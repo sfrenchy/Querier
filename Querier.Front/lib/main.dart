@@ -6,11 +6,11 @@ import 'package:querier/login_screen.dart';
 import 'package:querier/login_bloc.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(QuerierApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class QuerierApp extends StatelessWidget {
+  const QuerierApp({super.key});
 
   @override
   Widget build(BuildContext context) {

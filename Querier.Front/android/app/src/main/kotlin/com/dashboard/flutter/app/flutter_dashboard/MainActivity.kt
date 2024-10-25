@@ -1,4 +1,4 @@
-package com.dashboard.flutter.app.garduino_dashboard
+package com.dashboard.flutter.app.querier
 
 import io.flutter.embedding.android.FlutterActivity
 
