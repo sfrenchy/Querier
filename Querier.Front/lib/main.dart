@@ -6,12 +6,7 @@ import 'package:querier/login_screen.dart';
 import 'package:querier/login_bloc.dart';
 
 void main() {
-  runApp(const MyApp());
-  /*runApp(MultiBlocProvider(providers: [
-    BlocProvider<LoginBloc>(
-      create: (context) => LoginBloc(),
-    ),
-  ], child: DashBoard()));*/
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -42,7 +37,11 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: const Color(0xFF171821),
           fontFamily: 'IBMPlexSans',
           brightness: Brightness.dark),
-      home: LoginScreen(),
+      home: MultiBlocProvider(providers: [
+        BlocProvider<LoginBloc>(
+          create: (context) => LoginBloc(),
+        ),
+      ], child: const LoginScreen()),
     );
   }
 }
