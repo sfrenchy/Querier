@@ -25,8 +25,18 @@ class _AddAPIScreenState extends State<AddAPIScreen> {
         listener: (context, state) {},
         child: BlocBuilder<AddAPIBloc, AddAPIState>(
           builder: (context, state) {
-            return const Padding(
-              padding: EdgeInsets.all(16.0),
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Return'),
+                    )
+                  ]),
             );
           },
         ),

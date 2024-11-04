@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:querier/model/available_api_url.dart';
+import 'package:querier/pages/add_api/add_api_bloc.dart';
+import 'package:querier/pages/add_api/add_api_screen.dart';
 import 'login_bloc.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -79,7 +81,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BlocProvider.value(
+                                value: BlocProvider.of<AddAPIBloc>(context),
+                                child: const AddAPIScreen(),
+                              ),
+                            ),
+                          );
+                        },
                         child: const Text('Add'),
                       )
                     ],

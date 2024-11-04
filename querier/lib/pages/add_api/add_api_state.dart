@@ -6,3 +6,5 @@ abstract class AddAPIState extends Equatable {
   @override
   List<Object> get props => [];
 }
+
+class AddAPIInitial extends AddAPIState {}
