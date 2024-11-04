@@ -3,16 +3,13 @@ part of 'login_bloc.dart';
 abstract class DropdownState {}
 
 class DropdownOptionSelectedState extends LoginState {
-  final List<AvailableApiUrl> options; // Changer ici
-  final AvailableApiUrl selectedOption; // Changer ici
+  final List<AvailableApiUrl> urls;
+  final AvailableApiUrl selectedUrl;
 
-  const DropdownOptionSelectedState(this.options, this.selectedOption);
+  const DropdownOptionSelectedState(this.urls, this.selectedUrl);
 
   @override
-  List<Object> get props => [
-        options,
-        selectedOption
-      ]; // Ajoutez cela pour que l'état soit équitablement comparé.
+  List<Object> get props => [urls, selectedUrl];
 }
 
 abstract class LoginState extends Equatable {

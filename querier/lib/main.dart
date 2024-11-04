@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:querier/const.dart';
-import 'package:querier/dashboard.dart';
 import 'package:querier/pages/login/login_screen.dart';
 import 'package:querier/pages/login/login_bloc.dart';
 
 void main() {
-  runApp(QuerierApp());
+  runApp(const QuerierApp());
 }
 
 class QuerierApp extends StatelessWidget {

@@ -4,7 +4,7 @@ import 'package:querier/model/available_api_url.dart';
 import 'login_bloc.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -47,8 +47,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
             // Vérification de l'état actuel pour récupérer les options et la sélection
             if (state is DropdownOptionSelectedState) {
-              selectedOption = state.selectedOption;
-              options = state.options;
+              selectedOption = state.selectedUrl;
+              options = state.urls;
               print(
                   "Current selected option in UI: $selectedOption"); // Debugging line
             }
@@ -58,22 +58,31 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  DropdownButton<AvailableApiUrl>(
-                    value: selectedOption,
-                    hint: const Text("Sélectionnez une option"),
-                    items: options.map((AvailableApiUrl apiUrl) {
-                      return DropdownMenuItem<AvailableApiUrl>(
-                        value: apiUrl,
-                        child: Text(apiUrl.url), // Utiliser le label ici
-                      );
-                    }).toList(),
-                    onChanged: (AvailableApiUrl? newValue) {
-                      if (newValue != null) {
-                        print(
-                            "UI selected option: $newValue"); // Log pour vérifier la sélection de l’UI
-                        loginBloc.add(ApiUrlOptionEvent(newValue));
-                      }
-                    },
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButton<AvailableApiUrl>(
+                          isExpanded: true,
+                          value: selectedOption,
+                          hint: const Text("Sélectionnez un serveur"),
+                          items: options.map((AvailableApiUrl apiUrl) {
+                            return DropdownMenuItem<AvailableApiUrl>(
+                              value: apiUrl,
+                              child: Text(apiUrl.url), // Utiliser le label ici
+                            );
+                          }).toList(),
+                          onChanged: (AvailableApiUrl? newValue) {
+                            if (newValue != null) {
+                              loginBloc.add(ApiUrlChangeEvent(newValue));
+                            }
+                          },
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {},
+                        child: const Text('Add'),
+                      )
+                    ],
                   ),
                   const SizedBox(height: 16),
                   TextFormField(

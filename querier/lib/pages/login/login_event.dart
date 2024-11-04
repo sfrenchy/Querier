@@ -1,18 +1,18 @@
 part of 'login_bloc.dart';
 
-class ApiUrlOptionEvent extends LoginEvent {
-  final AvailableApiUrl selectedApiUrl;
-
-  ApiUrlOptionEvent(this.selectedApiUrl);
-  @override
-  String toString() => 'ApiUrlOptionEvent change [id: $selectedApiUrl.id]';
-}
-
 abstract class LoginEvent extends Equatable {
   const LoginEvent();
 
   @override
   List<Object> get props => [];
+}
+
+class ApiUrlChangeEvent extends LoginEvent {
+  final AvailableApiUrl selectedApiUrl;
+
+  ApiUrlChangeEvent(this.selectedApiUrl);
+  @override
+  String toString() => 'ApiUrlOptionEvent change [id: $selectedApiUrl.id]';
 }
 
 class LoginButtonPressed extends LoginEvent {

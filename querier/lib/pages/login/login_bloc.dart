@@ -7,34 +7,35 @@ part 'login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   final List<AvailableApiUrl> apiUrls = [
-    AvailableApiUrl(id: '1', url: 'Option 1'),
-    AvailableApiUrl(id: '2', url: 'Option 2'),
-    AvailableApiUrl(id: '3', url: 'Option 3'),
-    AvailableApiUrl(id: '4', url: 'Option 4'),
+    AvailableApiUrl(id: '1', url: 'https://localhost:5001/api'),
   ];
   AvailableApiUrl? selectedApiUrl;
 
   LoginBloc() : super(LoginInitial()) {
-    emit(DropdownOptionSelectedState(apiUrls, apiUrls.first)); // Modifié ici
+    emit(DropdownOptionSelectedState(apiUrls, apiUrls.first));
     selectedApiUrl = apiUrls.first;
     _emitDropdownState();
 
     on<LoginButtonPressed>((event, emit) async {
+      String url = event.apiUrl;
+      String username = event.email;
+      String password = event.password;
+      print(
+          "LoginButtonPressed - url: $url, email: $username, password: $password");
       try {
         await Future.delayed(const Duration(seconds: 2));
         if (event.email == "toto" && event.password == "tutu") {
           emit(LoginSuccess());
         } else {
-          emit(LoginFailure(error: "test exception"));
+          emit(const LoginFailure(error: "test exception"));
         }
       } catch (error) {
         emit(LoginFailure(error: error.toString()));
       }
     });
 
-    on<ApiUrlOptionEvent>((event, emit) {
+    on<ApiUrlChangeEvent>((event, emit) {
       selectedApiUrl = event.selectedApiUrl;
-      print("Selected option updated to: $selectedApiUrl"); // Debugging line
       _emitDropdownState();
     });
   }
