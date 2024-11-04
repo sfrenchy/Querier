@@ -401,7 +401,9 @@ namespace Querier.Api
             
             app.UseHealthChecks("/healthcheck");
             app.UseStaticFiles();
-
+            app.UseEndpoints(endpoints => {
+                endpoints.MapControllers();
+            });
             var pluginsStartupTypes = _configuration.GetSection("ApplicationSettings:PluginsStartupTypes").Get<List<string>>() ?? new List<string>();
             List<Type> pluginTypes = new List<Type>();
             if (pluginsStartupTypes != null)
