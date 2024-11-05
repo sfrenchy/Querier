@@ -12,7 +12,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   AvailableApiUrl? selectedApiUrl;
 
   LoginBloc() : super(LoginInitial()) {
-    emit(DropdownOptionSelectedState(apiUrls, apiUrls.first));
+    emit(DropdownAvailableApiSelectedState(apiUrls, apiUrls.first));
     selectedApiUrl = apiUrls.first;
     _emitDropdownState();
 
@@ -41,6 +41,6 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   }
 
   void _emitDropdownState() {
-    emit(DropdownOptionSelectedState(apiUrls, selectedApiUrl!));
+    emit(DropdownAvailableApiSelectedState(apiUrls, selectedApiUrl!));
   }
 }

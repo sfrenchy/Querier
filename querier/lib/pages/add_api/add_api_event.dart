@@ -6,3 +6,28 @@ abstract class AddAPIEvent extends Equatable {
   @override
   List<Object> get props => [];
 }
+
+class AddAPIProtocolChangeEvent extends AddAPIEvent {
+  final String selectedProtocol;
+  const AddAPIProtocolChangeEvent(this.selectedProtocol);
+}
+
+class AddAPIHostChangeEvent extends AddAPIEvent {
+  final String host;
+  const AddAPIHostChangeEvent(this.host);
+}
+
+class AddAPIPortChangeEvent extends AddAPIEvent {
+  final int port;
+  const AddAPIPortChangeEvent(this.port);
+}
+
+class AddAPIURLPathChangeEvent extends AddAPIEvent {
+  final String urlPath;
+  const AddAPIURLPathChangeEvent(this.urlPath);
+}
+
+class AddAPIURLChangeEvent extends AddAPIEvent {
+  final String apiURl;
+  const AddAPIURLChangeEvent(this.apiURl);
+}

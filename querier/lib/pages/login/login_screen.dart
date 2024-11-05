@@ -48,11 +48,9 @@ class _LoginScreenState extends State<LoginScreen> {
             List<AvailableApiUrl> options = [];
 
             // Vérification de l'état actuel pour récupérer les options et la sélection
-            if (state is DropdownOptionSelectedState) {
+            if (state is DropdownAvailableApiSelectedState) {
               selectedOption = state.selectedUrl;
               options = state.urls;
-              print(
-                  "Current selected option in UI: $selectedOption"); // Debugging line
             }
 
             return Padding(
@@ -66,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: DropdownButton<AvailableApiUrl>(
                           isExpanded: true,
                           value: selectedOption,
-                          hint: const Text("Sélectionnez un serveur"),
+                          hint: const Text("API Url"),
                           items: options.map((AvailableApiUrl apiUrl) {
                             return DropdownMenuItem<AvailableApiUrl>(
                               value: apiUrl,
