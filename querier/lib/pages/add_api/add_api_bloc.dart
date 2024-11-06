@@ -15,8 +15,8 @@ class AddAPIBloc extends Bloc<AddAPIEvent, AddAPIState> {
   AddAPIBloc() : super(const AddAPIInitial("localhost", 5001, "api/v1")) {
     on<AddAPIProtocolChangeEvent>((event, emit) {
       selectedProtocol = event.selectedProtocol;
-      _computeAPIUrl();
       _emitDropdownState();
+      _computeAPIUrl();
     });
 
     on<AddAPIHostChangeEvent>((event, emit) {
