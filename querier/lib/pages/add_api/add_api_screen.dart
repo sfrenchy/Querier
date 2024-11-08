@@ -82,6 +82,7 @@ class _AddAPIScreenState extends State<AddAPIScreen> {
                             },
                           ),
                         ),
+                        const SizedBox(height: 16.0),
                       ],
                     ),
                     Row(
@@ -169,7 +170,24 @@ class _AddAPIScreenState extends State<AddAPIScreen> {
                           ),
                         ),
                       ],
-                    )
+                    ),
+                    const SizedBox(height: 32.0),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () {},
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () {},
+                            child: const Text('Save'),
+                          ),
+                        )
+                      ],
+                    ),
                   ]),
             );
           },
