@@ -8,8 +8,8 @@ abstract class LoginState extends Equatable {
 }
 
 class DropdownAvailableApiSelectedState extends LoginState {
-  final List<AvailableApiUrl> urls;
-  final AvailableApiUrl selectedUrl;
+  final List<String> urls;
+  final String selectedUrl;
 
   const DropdownAvailableApiSelectedState(this.urls, this.selectedUrl);
 

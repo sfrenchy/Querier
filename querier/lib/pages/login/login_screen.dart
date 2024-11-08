@@ -44,8 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
         },
         child: BlocBuilder<LoginBloc, LoginState>(
           builder: (context, state) {
-            AvailableApiUrl? selectedOption;
-            List<AvailableApiUrl> options = [];
+            String? selectedOption;
+            List<String> options = [];
 
             // Vérification de l'état actuel pour récupérer les options et la sélection
             if (state is DropdownAvailableApiSelectedState) {
@@ -61,17 +61,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: DropdownButton<AvailableApiUrl>(
+                        child: DropdownButton<String>(
                           isExpanded: true,
                           value: selectedOption,
                           hint: const Text("API Url"),
-                          items: options.map((AvailableApiUrl apiUrl) {
-                            return DropdownMenuItem<AvailableApiUrl>(
+                          items: options.map((String apiUrl) {
+                            return DropdownMenuItem<String>(
                               value: apiUrl,
-                              child: Text(apiUrl.url), // Utiliser le label ici
+                              child: Text(apiUrl),
                             );
                           }).toList(),
-                          onChanged: (AvailableApiUrl? newValue) {
+                          onChanged: (String? newValue) {
                             if (newValue != null) {
                               loginBloc.add(ApiUrlChangeEvent(newValue));
                             }
@@ -117,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? () {
                             loginBloc.add(
                               LoginButtonPressed(
-                                apiUrl: selectedOption?.url ?? "",
+                                apiUrl: selectedOption ?? "",
                                 email: _emailController.text,
                                 password: _passwordController.text,
                               ),

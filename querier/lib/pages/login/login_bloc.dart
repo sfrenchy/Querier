@@ -1,19 +1,20 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:querier/model/available_api_url.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'login_event.dart';
 part 'login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
-  final List<AvailableApiUrl> apiUrls = [
-    AvailableApiUrl(id: '1', url: 'https://localhost:5001/api'),
-  ];
-  AvailableApiUrl? selectedApiUrl;
+  List<String> apiUrls = [];
+  String? selectedApiUrl;
 
   LoginBloc() : super(LoginInitial()) {
-    emit(DropdownAvailableApiSelectedState(apiUrls, apiUrls.first));
-    selectedApiUrl = apiUrls.first;
+    _initialize();
+    emit(DropdownAvailableApiSelectedState(
+        apiUrls, apiUrls.isNotEmpty ? apiUrls.first : ""));
+    selectedApiUrl = apiUrls.isNotEmpty ? apiUrls.first : "";
     _emitDropdownState();
 
     on<LoginButtonPressed>((event, emit) async {
@@ -38,9 +39,20 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       selectedApiUrl = event.selectedApiUrl;
       _emitDropdownState();
     });
+
+    on<RefreshApiUrlsEvent>((event, emit) async {
+      await _initialize();
+    });
   }
 
   void _emitDropdownState() {
     emit(DropdownAvailableApiSelectedState(apiUrls, selectedApiUrl!));
+  }
+
+  Future<void> _initialize() async {
+    final prefs = await SharedPreferences.getInstance();
+    apiUrls = prefs.getStringList("APIURLS") ?? [];
+    selectedApiUrl = apiUrls.first;
+    _emitDropdownState();
   }
 }

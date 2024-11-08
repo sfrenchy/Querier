@@ -32,3 +32,5 @@ class AddAPIURL extends AddAPIState {
   @override
   List<Object> get props => [apiURL];
 }
+
+class AddAPISaveSuccess extends AddAPIState {}

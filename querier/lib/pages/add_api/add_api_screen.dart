@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:querier/pages/add_api/add_api_bloc.dart';
+import 'package:querier/pages/login/login_bloc.dart';
 
 class AddAPIScreen extends StatefulWidget {
   const AddAPIScreen({super.key});
@@ -33,7 +34,13 @@ class _AddAPIScreenState extends State<AddAPIScreen> {
         title: const Text('Add API Screen'),
       ),
       body: BlocListener<AddAPIBloc, AddAPIState>(
-        listener: (context, state) {},
+        listener: (context, state) {
+          if (state is AddAPISaveSuccess) {
+            // Remplacez par un état approprié
+            // Déclencher le rafraîchissement dans LoginBloc
+            context.read<LoginBloc>().add(RefreshApiUrlsEvent());
+          }
+        },
         child: BlocBuilder<AddAPIBloc, AddAPIState>(
           builder: (context, state) {
             String selectedProtocol =
@@ -176,13 +183,18 @@ class _AddAPIScreenState extends State<AddAPIScreen> {
                       children: [
                         Expanded(
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
                             child: const Text('Cancel'),
                           ),
                         ),
                         Expanded(
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              addAPIBloc.add(AddAPISaveEvent());
+                              Navigator.pop(context);
+                            },
                             child: const Text('Save'),
                           ),
                         )

@@ -31,3 +31,5 @@ class AddAPIURLChangeEvent extends AddAPIEvent {
   final String apiURl;
   const AddAPIURLChangeEvent(this.apiURl);
 }
+
+class AddAPISaveEvent extends AddAPIEvent {}

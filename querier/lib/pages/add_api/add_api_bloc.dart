@@ -1,5 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:querier/pages/login/login_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'add_api_event.dart';
 part 'add_api_state.dart';
@@ -13,6 +15,13 @@ class AddAPIBloc extends Bloc<AddAPIEvent, AddAPIState> {
   String apiUrl = "";
 
   AddAPIBloc() : super(const AddAPIInitial("localhost", 5001, "api/v1")) {
+    // Émettre l'état initial après la configuration des valeurs initiales
+    emit(AddAPIInitial(host, port, urlPath));
+    Future.delayed(Duration(milliseconds: 50), () {
+      _emitDropdownState();
+      _computeAPIUrl();
+    });
+
     on<AddAPIProtocolChangeEvent>((event, emit) {
       selectedProtocol = event.selectedProtocol;
       _emitDropdownState();
@@ -34,11 +43,13 @@ class AddAPIBloc extends Bloc<AddAPIEvent, AddAPIState> {
       _computeAPIUrl();
     });
 
-    // Émettre l'état initial après la configuration des valeurs initiales
-    emit(AddAPIInitial(host, port, urlPath));
-    Future.delayed(Duration(milliseconds: 50), () {
-      _emitDropdownState();
-      _computeAPIUrl();
+    on<AddAPISaveEvent>((event, emit) async {
+      final prefs = await SharedPreferences.getInstance();
+
+      List<String> URLS = prefs.getStringList("APIURLS") ?? [];
+      URLS.add(apiUrl);
+      prefs.setStringList("APIURLS", URLS);
+      emit(AddAPISaveSuccess());
     });
   }
 
