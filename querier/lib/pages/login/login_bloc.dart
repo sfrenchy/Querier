@@ -55,7 +55,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   Future<void> _initialize() async {
     final prefs = await SharedPreferences.getInstance();
     apiUrls = prefs.getStringList("APIURLS") ?? [];
-    selectedApiUrl = apiUrls.first;
+    selectedApiUrl = apiUrls.isNotEmpty ? apiUrls.first : "";
     _emitDropdownState();
   }
 }

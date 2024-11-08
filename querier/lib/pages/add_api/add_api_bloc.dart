@@ -8,10 +8,10 @@ part 'add_api_state.dart';
 
 class AddAPIBloc extends Bloc<AddAPIEvent, AddAPIState> {
   final List<String> protocols = ["http", "https"];
-  String selectedProtocol = "http";
+  String selectedProtocol = "https";
   String host = "localhost";
   int port = 5001;
-  String urlPath = "api/v1";
+  String urlPath = "api";
   String apiUrl = "";
   final dio = Dio();
 
@@ -52,8 +52,10 @@ class AddAPIBloc extends Bloc<AddAPIEvent, AddAPIState> {
       final prefs = await SharedPreferences.getInstance();
 
       List<String> URLS = prefs.getStringList("APIURLS") ?? [];
-      URLS.add(apiUrl);
-      prefs.setStringList("APIURLS", URLS);
+      if (!URLS.contains(apiUrl)) {
+        URLS.add(apiUrl);
+        prefs.setStringList("APIURLS", URLS);
+      }
       emit(AddAPISaveSuccess());
     });
 

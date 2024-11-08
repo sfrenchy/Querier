@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:querier/dashboard.dart';
+import 'package:querier/model/available_api_url.dart';
 import 'package:querier/pages/add_api/add_api_bloc.dart';
 import 'package:querier/pages/add_api/add_api_screen.dart';
 import 'package:querier/pages/configure_api/admin_configuration_screen.dart';
@@ -31,33 +33,23 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         title: const Text('Login Screen'),
       ),
-      body: MultiBlocListener(
-        listeners: [
-          BlocListener<LoginBloc, LoginState>(
-            listener: (context, state) {
-              if (state is LoginFailure) {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(SnackBar(
-                    content: Text(state.error),
-                    duration: const Duration(seconds: 3),
-                  ));
-              }
-            },
-          ),
-          BlocListener<AddAPIBloc, AddAPIState>(
-            listener: (context, state) {
-              if (state is APIConfigurationError) {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: Colors.red,
-                  ));
-              }
-            },
-          ),
-        ],
+      body: BlocListener<LoginBloc, LoginState>(
+        listener: (context, state) {
+          if (state is LoginFailure) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(
+                content: Text(state.error),
+                duration: const Duration(seconds: 3),
+              ));
+          }
+          if (state is LoginSuccess) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => DashBoard()),
+            );
+          }
+        },
         child: BlocBuilder<LoginBloc, LoginState>(
           builder: (context, state) {
             return BlocBuilder<AddAPIBloc, AddAPIState>(
