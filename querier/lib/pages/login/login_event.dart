@@ -8,12 +8,14 @@ abstract class LoginEvent extends Equatable {
 }
 
 class ApiUrlChangeEvent extends LoginEvent {
-  final AvailableApiUrl selectedApiUrl;
+  final String selectedApiUrl;
 
   ApiUrlChangeEvent(this.selectedApiUrl);
   @override
   String toString() => 'ApiUrlOptionEvent change [id: $selectedApiUrl.id]';
 }
+
+class RefreshApiUrlsEvent extends LoginEvent {}
 
 class LoginButtonPressed extends LoginEvent {
   final String apiUrl;
