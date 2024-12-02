@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http;
 namespace Querier.Api.Controllers
 {
     /// <summary>
-    /// Controller for handling authentication and user management operations
+    /// Controller for handling authentication operations
     /// </summary>
     /// <remarks>
     /// This controller provides endpoints for:
