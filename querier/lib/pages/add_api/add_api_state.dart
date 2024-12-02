@@ -34,3 +34,21 @@ class AddAPIURL extends AddAPIState {
 }
 
 class AddAPISaveSuccess extends AddAPIState {}
+
+class APIConfigurationChecked extends AddAPIState {
+  final bool isConfigured;
+
+  const APIConfigurationChecked({required this.isConfigured});
+
+  @override
+  List<Object> get props => [isConfigured];
+}
+
+class APIConfigurationError extends AddAPIState {
+  final String message;
+
+  const APIConfigurationError(this.message);
+
+  @override
+  List<Object> get props => [message];
+}
