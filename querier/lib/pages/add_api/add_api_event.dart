@@ -33,3 +33,13 @@ class AddAPIURLChangeEvent extends AddAPIEvent {
 }
 
 class AddAPISaveEvent extends AddAPIEvent {}
+
+class AddAPIInitializeEvent extends AddAPIEvent {}
+
+class CheckAPIConfigurationEvent extends AddAPIEvent {
+  final String apiUrl;
+  const CheckAPIConfigurationEvent(this.apiUrl);
+
+  @override
+  List<Object> get props => [apiUrl];
+}
