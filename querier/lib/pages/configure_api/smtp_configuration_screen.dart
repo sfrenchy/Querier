@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'smtp_configuration_bloc.dart';
 import 'package:querier/utils/validators.dart';
-import 'package:flutter/services.dart';
 
 class SMTPConfigurationScreen extends StatefulWidget {
   const SMTPConfigurationScreen({super.key});
