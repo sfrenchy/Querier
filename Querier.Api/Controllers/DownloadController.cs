@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Querier.Api.Controllers
 {
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class DownloadController : ControllerBase
     {

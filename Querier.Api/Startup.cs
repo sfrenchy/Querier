@@ -69,6 +69,12 @@ namespace Querier.Api
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
+                
+                // Ensure this path matches where your XML file is actually being generated
+                var xmlFile = $"Querier.Api.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+                
                 // Swagger 2.+ support
                 c.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme
                 {
@@ -186,6 +192,7 @@ namespace Querier.Api
             services.AddSingleton<IDynamicContextResolver, DynamicContextResolver>();
             services.AddSingleton<ICacheManagementService, CacheManagementService>();
             services.AddSingleton<IExportGeneratorService, ExportGeneratorService>();
+            services.AddScoped<ISettingService, SettingService>();
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
