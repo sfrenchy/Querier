@@ -16,7 +16,7 @@ using Querier.Api.Models.Requests;
 namespace Querier.Api.Controllers
 {
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class DBConnectionController : ControllerBase
     {

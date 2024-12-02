@@ -17,7 +17,7 @@ using IQUploadService = Querier.Api.Models.Interfaces.IQUploadService;
 namespace Querier.Api.Controllers
 {
     [AllowAnonymous]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class QUploadController : ControllerBase
     {
