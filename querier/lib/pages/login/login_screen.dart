@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:querier/model/available_api_url.dart';
 import 'package:querier/pages/add_api/add_api_bloc.dart';
 import 'package:querier/pages/add_api/add_api_screen.dart';
+import 'package:querier/pages/configure_api/admin_configuration_screen.dart';
 import 'login_bloc.dart';
-import 'package:querier/pages/configure_api/configure_api_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -146,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      const ConfigureAPIScreen(),
+                                      const AdminConfigurationScreen(),
                                 ),
                               );
                             },
