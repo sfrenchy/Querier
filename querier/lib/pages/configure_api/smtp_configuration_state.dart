@@ -19,3 +19,12 @@ class SmtpConfigurationFailure extends SmtpConfigurationState {
   @override
   List<Object> get props => [error];
 }
+
+class SmtpConfigurationSuccessWithAuth extends SmtpConfigurationState {
+  final Map<String, dynamic> authData;
+
+  SmtpConfigurationSuccessWithAuth(this.authData);
+
+  @override
+  List<Object> get props => [authData];
+}

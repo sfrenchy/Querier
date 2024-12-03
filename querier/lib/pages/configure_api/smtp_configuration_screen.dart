@@ -69,12 +69,14 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
       ),
       child: BlocConsumer<SmtpConfigurationBloc, SmtpConfigurationState>(
         listener: (context, state) {
-          if (state is SmtpConfigurationSuccess) {
+          if (state is SmtpConfigurationSuccessWithAuth) {
+            Navigator.of(context).pushReplacementNamed('/home');
+          } else if (state is SmtpConfigurationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('SMTP Configuration saved successfully')),
             );
-            Navigator.of(context).pop();
+            Navigator.of(context).pushReplacementNamed('/login');
           } else if (state is SmtpConfigurationFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.error)),
