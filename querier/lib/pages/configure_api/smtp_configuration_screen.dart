@@ -2,9 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'smtp_configuration_bloc.dart';
 import 'package:querier/utils/validators.dart';
+import 'package:flutter/services.dart';
+import 'package:querier/services/wizard_service.dart';
 
 class SMTPConfigurationScreen extends StatefulWidget {
-  const SMTPConfigurationScreen({super.key});
+  final String apiUrl;
+  final String adminName;
+  final String adminFirstName;
+  final String adminEmail;
+  final String adminPassword;
+
+  const SMTPConfigurationScreen({
+    super.key,
+    required this.apiUrl,
+    required this.adminName,
+    required this.adminFirstName,
+    required this.adminEmail,
+    required this.adminPassword,
+  });
 
   @override
   State<SMTPConfigurationScreen> createState() =>
@@ -49,7 +64,9 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => SmtpConfigurationBloc(),
+      create: (context) => SmtpConfigurationBloc(
+        WizardService(widget.apiUrl),
+      ),
       child: BlocConsumer<SmtpConfigurationBloc, SmtpConfigurationState>(
         listener: (context, state) {
           if (state is SmtpConfigurationSuccess) {
@@ -84,10 +101,18 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
                   TextFormField(
                     controller: _portController,
                     keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
                     decoration: const InputDecoration(
                       labelText: 'SMTP Port',
                       border: OutlineInputBorder(),
+                      helperText: 'Enter a port number between 1-65535',
                     ),
+                    validator: (value) => !Validators.isValidPort(value ?? '')
+                        ? 'Please enter a valid port (1-65535)'
+                        : null,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -126,6 +151,10 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
                               : () {
                                   context.read<SmtpConfigurationBloc>().add(
                                         SubmitSmtpConfigurationEvent(
+                                          adminName: widget.adminName,
+                                          adminFirstName: widget.adminFirstName,
+                                          adminEmail: widget.adminEmail,
+                                          adminPassword: widget.adminPassword,
                                           host: _hostController.text,
                                           port: _portController.text,
                                           username: _usernameController.text,

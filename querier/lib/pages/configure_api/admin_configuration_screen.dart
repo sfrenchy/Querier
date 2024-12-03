@@ -5,7 +5,12 @@ import 'admin_configuration_bloc.dart';
 import 'package:querier/utils/validators.dart';
 
 class AdminConfigurationScreen extends StatefulWidget {
-  const AdminConfigurationScreen({super.key});
+  final String apiUrl;
+
+  const AdminConfigurationScreen({
+    super.key,
+    required this.apiUrl,
+  });
 
   @override
   State<AdminConfigurationScreen> createState() =>
@@ -43,7 +48,7 @@ class _AdminConfigurationScreenState extends State<AdminConfigurationScreen> {
       _isFormValid = _nameController.text.isNotEmpty &&
           _firstNameController.text.isNotEmpty &&
           Validators.isValidEmail(_emailController.text) &&
-          _passwordController.text.isNotEmpty;
+          Validators.isValidPassword(_passwordController.text);
     });
   }
 
@@ -57,7 +62,13 @@ class _AdminConfigurationScreenState extends State<AdminConfigurationScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const SMTPConfigurationScreen(),
+                builder: (context) => SMTPConfigurationScreen(
+                  adminName: _nameController.text,
+                  adminFirstName: _firstNameController.text,
+                  adminEmail: _emailController.text,
+                  adminPassword: _passwordController.text,
+                  apiUrl: widget.apiUrl,
+                ),
               ),
             );
           } else if (state is AdminConfigurationFailure) {
@@ -106,10 +117,19 @@ class _AdminConfigurationScreenState extends State<AdminConfigurationScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Password',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      helperText:
+                          'Must be at least 12 characters with numbers, upper/lowercase letters, and symbols',
+                      errorText: _passwordController.text.isNotEmpty
+                          ? Validators.getPasswordError(
+                              _passwordController.text)
+                          : null,
                     ),
+                    validator: (value) =>
+                        Validators.getPasswordError(value ?? ''),
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
