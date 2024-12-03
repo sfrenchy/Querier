@@ -49,5 +49,5 @@ class QuerierApp extends StatelessWidget {
     );
   }
 }
-//add connection page in this code
-//add UI in different page..
+// Add connection page in this code
+// Add UI in different pages

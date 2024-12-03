@@ -63,7 +63,7 @@ class ApiClient {
     return _instance!;
   }
 
-  // Méthode pour se connecter et stocker les tokens
+  // Method to sign in and store tokens
   Future<bool> signIn(String login, String password) async {
     try {
       final response = await _dio.post('/AuthManagement/SignIn', data: {
@@ -128,5 +128,10 @@ class ApiClient {
 
   Future<Response> delete(String endpoint) async {
     return await _dio.delete(endpoint);
+  }
+
+  // Helper method to configure authentication headers
+  void setAuthToken(String token) {
+    _dio.options.headers['Authorization'] = 'Bearer $token';
   }
 }
