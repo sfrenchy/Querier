@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/pages/login/login_bloc.dart';
 import 'add_api_bloc.dart';
 
@@ -13,6 +14,8 @@ class AddApiScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BlocProvider(
       create: (context) => AddApiBloc(),
       child: BlocConsumer<AddApiBloc, AddApiState>(
@@ -29,7 +32,7 @@ class AddApiScreen extends StatelessWidget {
         builder: (context, state) {
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Add API'),
+              title: Text(l10n.addApi),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.save),
@@ -44,15 +47,15 @@ class AddApiScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildProtocolSelector(context, state),
+                  _buildProtocolSelector(context, state, l10n),
                   const SizedBox(height: 16),
-                  _buildHostField(context),
+                  _buildHostField(context, l10n),
                   const SizedBox(height: 16),
-                  _buildPortField(context),
+                  _buildPortField(context, l10n),
                   const SizedBox(height: 16),
-                  _buildPathField(context),
+                  _buildPathField(context, l10n),
                   const SizedBox(height: 24),
-                  _buildPreview(state),
+                  _buildPreview(state, l10n),
                 ],
               ),
             ),
@@ -62,11 +65,12 @@ class AddApiScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProtocolSelector(BuildContext context, AddApiState state) {
+  Widget _buildProtocolSelector(
+      BuildContext context, AddApiState state, AppLocalizations l10n) {
     return SegmentedButton<String>(
-      segments: const [
-        ButtonSegment<String>(value: 'http', label: Text('HTTP')),
-        ButtonSegment<String>(value: 'https', label: Text('HTTPS')),
+      segments: [
+        ButtonSegment<String>(value: 'http', label: Text(l10n.http)),
+        ButtonSegment<String>(value: 'https', label: Text(l10n.https)),
       ],
       selected: {state.protocol},
       onSelectionChanged: (Set<String> newSelection) {
@@ -77,14 +81,14 @@ class AddApiScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHostField(BuildContext context) {
+  Widget _buildHostField(BuildContext context, AppLocalizations l10n) {
     return TextFormField(
       controller: _hostController,
-      decoration: const InputDecoration(
-        labelText: 'Host',
+      decoration: InputDecoration(
+        labelText: l10n.host,
         hintText: 'example.com',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.dns),
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.dns),
       ),
       onChanged: (value) => context.read<AddApiBloc>().add(
             HostChanged(value),
@@ -92,14 +96,14 @@ class AddApiScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPortField(BuildContext context) {
+  Widget _buildPortField(BuildContext context, AppLocalizations l10n) {
     return TextFormField(
       controller: _portController,
-      decoration: const InputDecoration(
-        labelText: 'Port',
+      decoration: InputDecoration(
+        labelText: l10n.port,
         hintText: '5000',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.numbers),
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.numbers),
       ),
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -109,14 +113,14 @@ class AddApiScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPathField(BuildContext context) {
+  Widget _buildPathField(BuildContext context, AppLocalizations l10n) {
     return TextFormField(
       controller: _urlPathController,
-      decoration: const InputDecoration(
-        labelText: 'API Path',
+      decoration: InputDecoration(
+        labelText: l10n.apiPath,
         hintText: 'api/v1',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.link),
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.link),
       ),
       onChanged: (value) => context.read<AddApiBloc>().add(
             PathChanged(value),
@@ -124,16 +128,16 @@ class AddApiScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPreview(AddApiState state) {
+  Widget _buildPreview(AddApiState state, AppLocalizations l10n) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Preview:',
-              style: TextStyle(
+            Text(
+              '${l10n.preview}:',
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),

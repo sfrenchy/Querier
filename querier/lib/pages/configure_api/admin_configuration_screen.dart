@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'smtp_configuration_screen.dart';
 import 'admin_configuration_bloc.dart';
 import 'package:querier/utils/validators.dart';
@@ -54,6 +55,8 @@ class _AdminConfigurationScreenState extends State<AdminConfigurationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BlocProvider(
       create: (context) => AdminConfigurationBloc(),
       child: BlocConsumer<AdminConfigurationBloc, AdminConfigurationState>(
@@ -80,7 +83,7 @@ class _AdminConfigurationScreenState extends State<AdminConfigurationScreen> {
         builder: (context, state) {
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Configure SuperAdmin'),
+              title: Text(l10n.configureSuperAdmin),
             ),
             body: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -88,28 +91,28 @@ class _AdminConfigurationScreenState extends State<AdminConfigurationScreen> {
                 children: [
                   TextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.name,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _firstNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'First Name',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.firstName,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _emailController,
                     decoration: InputDecoration(
-                      labelText: 'Email',
+                      labelText: l10n.email,
                       border: const OutlineInputBorder(),
                       errorText: _emailController.text.isNotEmpty &&
                               !Validators.isValidEmail(_emailController.text)
-                          ? 'Please enter a valid email'
+                          ? l10n.validEmail
                           : null,
                     ),
                   ),
@@ -118,10 +121,9 @@ class _AdminConfigurationScreenState extends State<AdminConfigurationScreen> {
                     controller: _passwordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      labelText: 'Password',
+                      labelText: l10n.password,
                       border: const OutlineInputBorder(),
-                      helperText:
-                          'Must be at least 12 characters with numbers, upper/lowercase letters, and symbols',
+                      helperText: l10n.passwordRequirements,
                       errorText: _passwordController.text.isNotEmpty
                           ? Validators.getPasswordError(
                               _passwordController.text)
@@ -150,7 +152,7 @@ class _AdminConfigurationScreenState extends State<AdminConfigurationScreen> {
                               : null,
                       child: state is AdminConfigurationLoading
                           ? const CircularProgressIndicator()
-                          : const Text('Next'),
+                          : Text(l10n.next),
                     ),
                   ),
                 ],

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:querier/blocs/language_bloc.dart';
 import 'package:querier/pages/add_api/add_api_screen.dart';
 import 'package:querier/pages/configure_api/admin_configuration_screen.dart';
 import 'login_bloc.dart';
@@ -12,9 +14,14 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login'),
+        title: Text(l10n.login),
+        actions: [
+          _buildLanguageSelector(context),
+        ],
       ),
       body: BlocConsumer<LoginBloc, LoginState>(
         listener: (context, state) {
@@ -36,9 +43,9 @@ class LoginScreen extends StatelessWidget {
                 _buildApiUrlDropdown(context, state),
                 const SizedBox(height: 24),
                 if (state.isConfigured) ...[
-                  _buildEmailField(),
+                  _buildEmailField(context),
                   const SizedBox(height: 16),
-                  _buildPasswordField(),
+                  _buildPasswordField(context),
                   const SizedBox(height: 32),
                   _buildLoginButton(context, state),
                 ] else if (state.selectedUrl.isNotEmpty) ...[
@@ -59,6 +66,7 @@ class LoginScreen extends StatelessWidget {
   }
 
   Widget _buildApiUrlDropdown(BuildContext context, LoginState state) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
@@ -72,7 +80,7 @@ class LoginScreen extends StatelessWidget {
               child: DropdownButton<String>(
                 isExpanded: true,
                 value: state.selectedUrl.isEmpty ? null : state.selectedUrl,
-                hint: const Text('Select API URL'),
+                hint: Text(l10n.selectApiUrl),
                 items: state.urls.map((url) {
                   return DropdownMenuItem(
                     value: url,
@@ -101,11 +109,12 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmailField() {
+  Widget _buildEmailField(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return TextFormField(
       controller: _emailController,
-      decoration: const InputDecoration(
-        labelText: 'Email',
+      decoration: InputDecoration(
+        labelText: l10n.email,
         border: OutlineInputBorder(),
         prefixIcon: Icon(Icons.email),
       ),
@@ -114,11 +123,12 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPasswordField() {
+  Widget _buildPasswordField(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return TextFormField(
       controller: _passwordController,
-      decoration: const InputDecoration(
-        labelText: 'Password',
+      decoration: InputDecoration(
+        labelText: l10n.password,
         border: OutlineInputBorder(),
         prefixIcon: Icon(Icons.lock),
       ),
@@ -128,6 +138,7 @@ class LoginScreen extends StatelessWidget {
   }
 
   Widget _buildLoginButton(BuildContext context, LoginState state) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
       height: 48,
@@ -155,15 +166,13 @@ class LoginScreen extends StatelessWidget {
                   strokeWidth: 2,
                 ),
               )
-            : const Text(
-                'Login',
-                style: TextStyle(fontSize: 16),
-              ),
+            : Text(l10n.login),
       ),
     );
   }
 
   Widget _buildConfigureButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
       height: 48,
@@ -183,8 +192,39 @@ class LoginScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
         ),
-        child: const Text('Configure API'),
+        child: Text(l10n.configureApi),
       ),
+    );
+  }
+
+  Widget _buildLanguageSelector(BuildContext context) {
+    return PopupMenuButton<Locale>(
+      icon: const Icon(Icons.language),
+      onSelected: (Locale locale) {
+        context.read<LanguageBloc>().changeLanguage(locale);
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<Locale>>[
+        PopupMenuItem<Locale>(
+          value: const Locale('en'),
+          child: Row(
+            children: const [
+              Text('🇬🇧 '),
+              SizedBox(width: 8),
+              Text('English'),
+            ],
+          ),
+        ),
+        PopupMenuItem<Locale>(
+          value: const Locale('fr'),
+          child: Row(
+            children: const [
+              Text('🇫🇷 '),
+              SizedBox(width: 8),
+              Text('Français'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
