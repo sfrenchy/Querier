@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:querier/const.dart';
 import 'package:querier/pages/add_api/add_api_bloc.dart';
+import 'package:querier/pages/home/home_screen.dart';
 import 'package:querier/pages/login/login_screen.dart';
 import 'package:querier/pages/login/login_bloc.dart';
 
@@ -40,6 +41,10 @@ class QuerierApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
         home: const LoginScreen(),
+        routes: {
+          '/home': (context) => const HomeScreen(),
+          '/login': (context) => const LoginScreen(),
+        },
       ),
     );
   }

@@ -9,12 +9,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using System.Linq;
 
 namespace Querier.Api.Services
 {
     public class WizardService : IWizardService
     {
         private readonly UserManager<ApiUser> _userManager;
+        private readonly RoleManager<ApiRole> _roleManager;
         private readonly ISettingService _settingService;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
@@ -22,11 +24,13 @@ namespace Querier.Api.Services
 
         public WizardService(
             UserManager<ApiUser> userManager,
+            RoleManager<ApiRole> roleManager,
             ISettingService settingService,
             IDbContextFactory<ApiDbContext> contextFactory,
             ILogger<WizardService> logger)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _settingService = settingService;
             _contextFactory = contextFactory;
             _logger = logger;
@@ -39,12 +43,18 @@ namespace Querier.Api.Services
                 _logger.LogInformation("Acquiring setup lock...");
                 await _semaphore.WaitAsync();
                 
-                _logger.LogInformation("Creating database context and starting transaction...");
-                using var context = await _contextFactory.CreateDbContextAsync();
-                await using var transaction = await context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
-                
                 try
                 {
+                    if (!await _roleManager.RoleExistsAsync("Admin"))
+                    {
+                        _logger.LogInformation("Creating Admin role...");
+                        var createRoleResult = await _roleManager.CreateAsync(new ApiRole { Name = "Admin" });
+                        if (!createRoleResult.Succeeded)
+                        {
+                            return (false, "Failed to create Admin role");
+                        }
+                    }
+
                     _logger.LogInformation("Creating admin user with email: {Email}", request.Admin.Email);
                     var adminUser = new ApiUser
                     {
@@ -55,39 +65,23 @@ namespace Querier.Api.Services
                         EmailConfirmed = true
                     };
 
-                    var userStore = new UserStore<ApiUser, ApiRole, ApiDbContext, string>(context);
-                    var userManager = new UserManager<ApiUser>(
-                        userStore,
-                        Options.Create(new IdentityOptions()),
-                        new PasswordHasher<ApiUser>(),
-                        null, null, null, null, null, null);
-
-                    var createResult = await userManager.CreateAsync(adminUser, request.Admin.Password);
+                    var createResult = await _userManager.CreateAsync(adminUser, request.Admin.Password);
                     if (!createResult.Succeeded)
                     {
-                        _logger.LogError("Failed to create admin user: {Errors}", string.Join(", ", createResult.Errors));
-                        return (false, "Failed to create admin user: " + string.Join(", ", createResult.Errors));
-                    }
-
-                    var roleStore = new RoleStore<ApiRole, ApiDbContext, string>(context);
-                    var roleManager = new RoleManager<ApiRole>(
-                        roleStore,
-                        null, null, null, null);
-
-                    if (!await roleManager.RoleExistsAsync("Admin"))
-                    {
-                        _logger.LogInformation("Creating Admin role...");
-                        await roleManager.CreateAsync(new ApiRole { Name = "Admin" });
+                        var errors = createResult.Errors.Select(e => $"{e.Code}: {e.Description}");
+                        _logger.LogError("Failed to create admin user: {Errors}", string.Join(", ", errors));
+                        return (false, "Failed to create admin user: " + string.Join(", ", errors));
                     }
 
                     _logger.LogInformation("Assigning admin role...");
-                    var roleResult = await userManager.AddToRoleAsync(adminUser, "Admin");
+                    var roleResult = await _userManager.AddToRoleAsync(adminUser, "Admin");
                     if (!roleResult.Succeeded)
                     {
                         _logger.LogError("Failed to assign admin role");
                         return (false, "Failed to assign admin role");
                     }
 
+                    using var context = await _contextFactory.CreateDbContextAsync();
                     _logger.LogInformation("Configuring SMTP settings...");
                     var smtpSettings = new[]
                     {
@@ -120,17 +114,12 @@ namespace Querier.Api.Services
                     }
 
                     await context.SaveChangesAsync();
-                    
-                    _logger.LogInformation("Committing transaction...");
-                    await transaction.CommitAsync();
-
                     _logger.LogInformation("Setup completed successfully");
                     return (true, null);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Setup failed with error: {Message}", ex.Message);
-                    await transaction.RollbackAsync();
                     return (false, $"Setup failed: {ex.Message}");
                 }
             }

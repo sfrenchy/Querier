@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:querier/repositories/api_endpoints.dart';
 
 class WizardService {
   final Dio _dio;
@@ -19,7 +20,7 @@ class WizardService {
   }) async {
     try {
       final response = await _dio.post(
-        '$baseUrl/wizard/setup',
+        ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.setup),
         data: {
           'admin': {
             'name': name,
