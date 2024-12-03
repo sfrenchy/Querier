@@ -8,7 +8,6 @@ part 'login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   ApiClient? _apiClient;
-
   LoginBloc() : super(const LoginState()) {
     on<UrlChanged>(_onUrlChanged);
     on<LoginSubmitted>(_onLoginSubmitted);
@@ -100,7 +99,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   }
 
   Future<void> _onLoadSavedUrls(
-      LoadSavedUrls event, Emitter<LoginState> emit) async {
+    LoadSavedUrls event, Emitter<LoginState> emit) async {
     final prefs = await SharedPreferences.getInstance();
     final urls = prefs.getStringList('APIURLS') ?? [];
     add(UpdateUrlsList(urls));
