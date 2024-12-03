@@ -13,7 +13,7 @@ using System.Collections.Generic;
 namespace Querier.Api.Controllers.UI
 {
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class UIRowController : ControllerBase
     {
