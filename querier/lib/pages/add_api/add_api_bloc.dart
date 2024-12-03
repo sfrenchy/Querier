@@ -1,85 +1,55 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dio/dio.dart';
 
 part 'add_api_event.dart';
 part 'add_api_state.dart';
 
-class AddAPIBloc extends Bloc<AddAPIEvent, AddAPIState> {
-  final List<String> protocols = ["http", "https"];
-  String selectedProtocol = "https";
-  String host = "localhost";
-  int port = 5001;
-  String urlPath = "api";
-  String apiUrl = "";
-  final dio = Dio();
+class AddApiBloc extends Bloc<AddApiEvent, AddApiState> {
+  AddApiBloc() : super(AddApiState.initial()) {
+    on<ProtocolChanged>(_onProtocolChanged);
+    on<HostChanged>(_onHostChanged);
+    on<PortChanged>(_onPortChanged);
+    on<PathChanged>(_onPathChanged);
+    on<SaveApiUrl>(_onSaveApiUrl);
+  }
 
-  AddAPIBloc() : super(const AddAPIInitial("localhost", 5001, "api/v1")) {
-    on<AddAPIInitializeEvent>((event, emit) {
-      emit(AddAPIInitial(host, port, urlPath));
-      _emitDropdownState(emit);
-      _computeAPIUrl(emit);
-    });
+  void _onProtocolChanged(ProtocolChanged event, Emitter<AddApiState> emit) {
+    emit(state.copyWith(protocol: event.protocol));
+  }
 
-    // Trigger initialization
-    add(AddAPIInitializeEvent());
+  void _onHostChanged(HostChanged event, Emitter<AddApiState> emit) {
+    emit(state.copyWith(host: event.host));
+  }
 
-    // Update other handlers to pass emit
-    on<AddAPIProtocolChangeEvent>((event, emit) {
-      selectedProtocol = event.selectedProtocol;
-      _emitDropdownState(emit);
-      _computeAPIUrl(emit);
-      add(CheckAPIConfigurationEvent(apiUrl));
-    });
+  void _onPortChanged(PortChanged event, Emitter<AddApiState> emit) {
+    emit(state.copyWith(port: event.port));
+  }
 
-    on<AddAPIHostChangeEvent>((event, emit) {
-      host = event.host;
-      _computeAPIUrl(emit);
-    });
+  void _onPathChanged(PathChanged event, Emitter<AddApiState> emit) {
+    emit(state.copyWith(path: event.path));
+  }
 
-    on<AddAPIPortChangeEvent>((event, emit) {
-      port = event.port;
-      _computeAPIUrl(emit);
-    });
+  Future<void> _onSaveApiUrl(
+      SaveApiUrl event, Emitter<AddApiState> emit) async {
+    if (state.host.isEmpty || state.port == 0 || state.path.isEmpty) {
+      emit(AddApiError('Please fill in all fields'));
+      return;
+    }
 
-    on<AddAPIURLPathChangeEvent>((event, emit) {
-      urlPath = event.urlPath;
-      _computeAPIUrl(emit);
-    });
-
-    on<AddAPISaveEvent>((event, emit) async {
+    try {
       final prefs = await SharedPreferences.getInstance();
+      final urls = prefs.getStringList('APIURLS') ?? [];
 
-      List<String> URLS = prefs.getStringList("APIURLS") ?? [];
-      if (!URLS.contains(apiUrl)) {
-        URLS.add(apiUrl);
-        prefs.setStringList("APIURLS", URLS);
+      if (!urls.contains(state.fullUrl)) {
+        urls.add(state.fullUrl);
+        await prefs.setStringList('APIURLS', urls);
+        emit(AddApiSuccess());
+      } else {
+        emit(AddApiError('This API URL already exists'));
       }
-      emit(AddAPISaveSuccess());
-    });
-
-    on<CheckAPIConfigurationEvent>((event, emit) async {
-      try {
-        final response = await dio.get('${event.apiUrl}/settings/configured');
-        if (response.statusCode == 200) {
-          emit(APIConfigurationChecked(isConfigured: response.data as bool));
-        } else {
-          emit(
-              const APIConfigurationError('Failed to check API configuration'));
-        }
-      } catch (e) {
-        emit(const APIConfigurationError('Could not connect to API'));
-      }
-    });
-  }
-
-  void _computeAPIUrl(Emitter<AddAPIState> emit) {
-    apiUrl = "$selectedProtocol://$host:$port/$urlPath";
-    emit(AddAPIURL(apiUrl));
-  }
-
-  void _emitDropdownState(Emitter<AddAPIState> emit) {
-    emit(DropdownProtocolSelectedState(protocols, selectedProtocol));
+    } catch (e) {
+      emit(AddApiError(e.toString()));
+    }
   }
 }

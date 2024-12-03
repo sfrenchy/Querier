@@ -1,8 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:querier/services/wizard_service.dart';
-import 'package:dio/dio.dart';
-import 'package:querier/repositories/api_endpoints.dart';
+import 'package:querier/api/api_client.dart';
 
 part 'smtp_configuration_event.dart';
 part 'smtp_configuration_state.dart';
@@ -10,10 +9,12 @@ part 'smtp_configuration_state.dart';
 class SmtpConfigurationBloc
     extends Bloc<SmtpConfigurationEvent, SmtpConfigurationState> {
   final WizardService _wizardService;
-  final dio = Dio();
+  final ApiClient _apiClient;
 
-  SmtpConfigurationBloc(this._wizardService)
-      : super(SmtpConfigurationInitial()) {
+  SmtpConfigurationBloc(String baseUrl)
+      : _wizardService = WizardService(baseUrl),
+        _apiClient = ApiClient(baseUrl),
+        super(SmtpConfigurationInitial()) {
     on<SubmitSmtpConfigurationEvent>((event, emit) async {
       emit(SmtpConfigurationLoading());
       try {
@@ -30,15 +31,10 @@ class SmtpConfigurationBloc
         );
 
         if (success) {
-          // Tenter de se connecter après la configuration
           try {
-            final response = await dio.post(
-              ApiEndpoints.buildUrl(
-                  _wizardService.baseUrl, ApiEndpoints.signIn),
-              data: {
-                'email': event.adminEmail,
-                'password': event.adminPassword,
-              },
+            final response = await _apiClient.signIn(
+              event.adminEmail,
+              event.adminPassword,
             );
 
             if (response.statusCode == 200) {
@@ -47,7 +43,6 @@ class SmtpConfigurationBloc
               emit(SmtpConfigurationSuccess());
             }
           } catch (authError) {
-            // Si l'authentification échoue, on émet quand même un succès de configuration
             emit(SmtpConfigurationSuccess());
           }
         } else {

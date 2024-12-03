@@ -1,36 +1,47 @@
 part of 'login_bloc.dart';
 
-abstract class LoginState extends Equatable {
-  const LoginState();
-
-  @override
-  List<Object> get props => [];
-}
-
-class DropdownAvailableApiSelectedState extends LoginState {
+class LoginState extends Equatable {
   final List<String> urls;
   final String selectedUrl;
+  final bool isConfigured;
+  final bool isLoading;
+  final bool isAuthenticated;
+  final String? error;
 
-  const DropdownAvailableApiSelectedState(this.urls, this.selectedUrl);
+  const LoginState({
+    this.urls = const [],
+    this.selectedUrl = '',
+    this.isConfigured = false,
+    this.isLoading = false,
+    this.isAuthenticated = false,
+    this.error,
+  });
+
+  LoginState copyWith({
+    List<String>? urls,
+    String? selectedUrl,
+    bool? isConfigured,
+    bool? isLoading,
+    bool? isAuthenticated,
+    String? error,
+  }) {
+    return LoginState(
+      urls: urls ?? this.urls,
+      selectedUrl: selectedUrl ?? this.selectedUrl,
+      isConfigured: isConfigured ?? this.isConfigured,
+      isLoading: isLoading ?? this.isLoading,
+      isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      error: error,
+    );
+  }
 
   @override
-  List<Object> get props => [urls, selectedUrl];
-}
-
-class LoginInitial extends LoginState {}
-
-class LoginLoading extends LoginState {}
-
-class LoginSuccess extends LoginState {}
-
-class LoginFailure extends LoginState {
-  final String error;
-
-  const LoginFailure({required this.error});
-
-  @override
-  List<Object> get props => [error];
-
-  @override
-  String toString() => 'LoginFailure { error: $error }';
+  List<Object?> get props => [
+        urls,
+        selectedUrl,
+        isConfigured,
+        isLoading,
+        isAuthenticated,
+        error,
+      ];
 }

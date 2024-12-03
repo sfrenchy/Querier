@@ -212,12 +212,6 @@ namespace Querier.Api
             services.AddScoped<IWizardService, WizardService>();
             services.AddScoped<ISettingService, SettingService>();
             services.AddScoped<IUserManagerService, UserManagerService>();
-            services.AddSingleton<IEmailSendingService, SMTPEmailSendingService>();
-            services.AddSingleton<IDynamicContextResolver, DynamicContextResolver>();
-            services.AddSingleton<ICacheManagementService, CacheManagementService>();
-            services.AddSingleton<IExportGeneratorService, ExportGeneratorService>();
-            services.AddScoped<ISettingService, SettingService>();
-            services.AddScoped<IUserManagerService, UserManagerService>();
             services.AddScoped<IEmailSendingService, SMTPEmailSendingService>();
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IUserRepository, UserRepository>();

@@ -64,9 +64,7 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => SmtpConfigurationBloc(
-        WizardService(widget.apiUrl),
-      ),
+      create: (context) => SmtpConfigurationBloc(widget.apiUrl),
       child: BlocConsumer<SmtpConfigurationBloc, SmtpConfigurationState>(
         listener: (context, state) {
           if (state is SmtpConfigurationSuccessWithAuth) {

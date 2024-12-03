@@ -4,31 +4,71 @@ abstract class LoginEvent extends Equatable {
   const LoginEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
-class ApiUrlChangeEvent extends LoginEvent {
-  final String selectedApiUrl;
+class UrlChanged extends LoginEvent {
+  final String url;
 
-  ApiUrlChangeEvent(this.selectedApiUrl);
+  const UrlChanged(this.url);
+
   @override
-  String toString() => 'ApiUrlOptionEvent change [id: $selectedApiUrl.id]';
+  List<Object?> get props => [url];
 }
 
-class RefreshApiUrlsEvent extends LoginEvent {}
-
-class LoginButtonPressed extends LoginEvent {
-  final String apiUrl;
+class LoginSubmitted extends LoginEvent {
   final String email;
   final String password;
 
-  const LoginButtonPressed(
-      {required this.apiUrl, required this.email, required this.password});
+  const LoginSubmitted({
+    required this.email,
+    required this.password,
+  });
 
   @override
-  List<Object> get props => [apiUrl, email, password];
+  List<Object?> get props => [email, password];
+}
 
+class LoadSavedUrls extends LoginEvent {}
+
+class SetLoadingState extends LoginEvent {
+  final bool isLoading;
+  const SetLoadingState(this.isLoading);
   @override
-  String toString() =>
-      'LoginButtonPressed { apiUrl: $apiUrl, email: $email, password: $password }';
+  List<Object?> get props => [isLoading];
+}
+
+class SetConfigurationState extends LoginEvent {
+  final bool isConfigured;
+  const SetConfigurationState(this.isConfigured);
+  @override
+  List<Object?> get props => [isConfigured];
+}
+
+class SetError extends LoginEvent {
+  final String? error;
+  const SetError(this.error);
+  @override
+  List<Object?> get props => [error];
+}
+
+class SetAuthenticated extends LoginEvent {
+  final bool isAuthenticated;
+  const SetAuthenticated(this.isAuthenticated);
+  @override
+  List<Object?> get props => [isAuthenticated];
+}
+
+class UpdateUrlsList extends LoginEvent {
+  final List<String> urls;
+  const UpdateUrlsList(this.urls);
+  @override
+  List<Object?> get props => [urls];
+}
+
+class UpdateSelectedUrl extends LoginEvent {
+  final String url;
+  const UpdateSelectedUrl(this.url);
+  @override
+  List<Object?> get props => [url];
 }
