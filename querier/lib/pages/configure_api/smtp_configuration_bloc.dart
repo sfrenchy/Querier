@@ -24,7 +24,7 @@ class SmtpConfigurationBloc
           email: event.adminEmail,
           password: event.adminPassword,
           smtpHost: event.host,
-          smtpPort: int.parse(event.port),
+          smtpPort: event.port,
           smtpUsername: event.username,
           smtpPassword: event.password,
           useSSL: event.useSSL,
@@ -53,4 +53,28 @@ class SmtpConfigurationBloc
       }
     });
   }
+}
+
+class TestSmtpConfigurationEvent extends SmtpConfigurationEvent {
+  final String host;
+  final int port;
+  final String username;
+  final String password;
+  final String senderEmail;
+  final String senderName;
+  final bool useSsl;
+
+  const TestSmtpConfigurationEvent({
+    required this.host,
+    required this.port,
+    required this.username,
+    required this.password,
+    required this.senderEmail,
+    required this.senderName,
+    required this.useSsl,
+  });
+
+  @override
+  List<Object> get props =>
+      [host, port, username, password, senderEmail, senderName, useSsl];
 }

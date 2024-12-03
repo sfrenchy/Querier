@@ -5,6 +5,9 @@ import 'package:querier/pages/home/home_screen.dart';
 import 'package:querier/pages/login/login_bloc.dart';
 import 'package:querier/pages/login/login_screen.dart';
 import 'package:querier/pages/add_api/add_api_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:querier/blocs/language_bloc.dart';
 
 void main() {
   runApp(const QuerierApp());
@@ -23,27 +26,45 @@ class QuerierApp extends StatelessWidget {
         BlocProvider<AddApiBloc>(
           create: (context) => AddApiBloc(),
         ),
-      ],
-      child: MaterialApp(
-        title: 'Querier',
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.dark,
-        theme: ThemeData(
-          primaryColor: MaterialColor(
-            primaryColorCode,
-            <int, Color>{
-              50: const Color(primaryColorCode).withOpacity(0.1),
-              // autres nuances...
-            },
-          ),
-          scaffoldBackgroundColor: const Color(0xFF171821),
-          fontFamily: 'IBMPlexSans',
-          brightness: Brightness.dark,
+        BlocProvider<LanguageBloc>(
+          create: (context) => LanguageBloc(),
         ),
-        home: LoginScreen(),
-        routes: {
-          '/home': (context) => const HomeScreen(),
-          '/login': (context) => LoginScreen(),
+      ],
+      child: BlocBuilder<LanguageBloc, Locale>(
+        builder: (context, locale) {
+          return MaterialApp(
+            locale: locale,
+            title: 'Querier',
+            debugShowCheckedModeBanner: false,
+            themeMode: ThemeMode.dark,
+            theme: ThemeData(
+              primaryColor: MaterialColor(
+                primaryColorCode,
+                <int, Color>{
+                  50: const Color(primaryColorCode).withOpacity(0.1),
+                  // autres nuances...
+                },
+              ),
+              scaffoldBackgroundColor: const Color(0xFF171821),
+              fontFamily: 'IBMPlexSans',
+              brightness: Brightness.dark,
+            ),
+            home: LoginScreen(),
+            routes: {
+              '/home': (context) => const HomeScreen(),
+              '/login': (context) => LoginScreen(),
+            },
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              Locale('fr'),
+            ],
+          );
         },
       ),
     );

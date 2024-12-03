@@ -1,6 +1,8 @@
 part of 'smtp_configuration_bloc.dart';
 
 abstract class SmtpConfigurationState extends Equatable {
+  const SmtpConfigurationState();
+
   @override
   List<Object> get props => [];
 }
@@ -13,9 +15,19 @@ class SmtpConfigurationSuccess extends SmtpConfigurationState {}
 
 class SmtpConfigurationFailure extends SmtpConfigurationState {
   final String error;
+  const SmtpConfigurationFailure(this.error);
+  @override
+  List<Object> get props => [error];
+}
 
-  SmtpConfigurationFailure(this.error);
+// Ajout des états pour le test SMTP
+class SmtpTestLoading extends SmtpConfigurationState {}
 
+class SmtpTestSuccess extends SmtpConfigurationState {}
+
+class SmtpTestFailure extends SmtpConfigurationState {
+  final String error;
+  const SmtpTestFailure(this.error);
   @override
   List<Object> get props => [error];
 }
