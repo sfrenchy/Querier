@@ -1,53 +1,55 @@
 part of 'add_api_bloc.dart';
 
-abstract class AddAPIState extends Equatable {
-  const AddAPIState();
-
-  @override
-  List<Object> get props => [];
-}
-
-class DropdownProtocolSelectedState extends AddAPIState {
-  final List<String> protocols;
-  final String selectedProtocol;
-
-  const DropdownProtocolSelectedState(this.protocols, this.selectedProtocol);
-
-  @override
-  List<Object> get props => [protocols, selectedProtocol];
-}
-
-class AddAPIInitial extends AddAPIState {
+class AddApiState extends Equatable {
+  final String protocol;
   final String host;
   final int port;
-  final String urlPath;
-  const AddAPIInitial(this.host, this.port, this.urlPath);
+  final String path;
+
+  const AddApiState({
+    required this.protocol,
+    required this.host,
+    required this.port,
+    required this.path,
+  });
+
+  factory AddApiState.initial() {
+    return const AddApiState(
+      protocol: 'https',
+      host: '',
+      port: 5000,
+      path: 'api/v1',
+    );
+  }
+
+  String get fullUrl => '$protocol://$host:$port/$path';
+
+  AddApiState copyWith({
+    String? protocol,
+    String? host,
+    int? port,
+    String? path,
+  }) {
+    return AddApiState(
+      protocol: protocol ?? this.protocol,
+      host: host ?? this.host,
+      port: port ?? this.port,
+      path: path ?? this.path,
+    );
+  }
+
   @override
-  List<Object> get props => [host, port, urlPath];
+  List<Object> get props => [protocol, host, port, path];
 }
 
-class AddAPIURL extends AddAPIState {
-  final String apiURL;
-  const AddAPIURL(this.apiURL);
-  @override
-  List<Object> get props => [apiURL];
+class AddApiSuccess extends AddApiState {
+  AddApiSuccess() : super(protocol: '', host: '', port: 0, path: '');
 }
 
-class AddAPISaveSuccess extends AddAPIState {}
-
-class APIConfigurationChecked extends AddAPIState {
-  final bool isConfigured;
-
-  const APIConfigurationChecked({required this.isConfigured});
-
-  @override
-  List<Object> get props => [isConfigured];
-}
-
-class APIConfigurationError extends AddAPIState {
+class AddApiError extends AddApiState {
   final String message;
 
-  const APIConfigurationError(this.message);
+  AddApiError(this.message) : super(protocol: '', host: '', port: 0, path: '');
 
   @override
   List<Object> get props => [message];

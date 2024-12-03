@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:querier/const.dart';
-import 'package:querier/pages/add_api/add_api_bloc.dart';
 import 'package:querier/pages/home/home_screen.dart';
-import 'package:querier/pages/login/login_screen.dart';
 import 'package:querier/pages/login/login_bloc.dart';
+import 'package:querier/pages/login/login_screen.dart';
+import 'package:querier/pages/add_api/add_api_bloc.dart';
 
 void main() {
   runApp(const QuerierApp());
@@ -20,8 +20,8 @@ class QuerierApp extends StatelessWidget {
         BlocProvider<LoginBloc>(
           create: (context) => LoginBloc(),
         ),
-        BlocProvider<AddAPIBloc>(
-          create: (context) => AddAPIBloc(),
+        BlocProvider<AddApiBloc>(
+          create: (context) => AddApiBloc(),
         ),
       ],
       child: MaterialApp(
@@ -40,10 +40,10 @@ class QuerierApp extends StatelessWidget {
           fontFamily: 'IBMPlexSans',
           brightness: Brightness.dark,
         ),
-        home: const LoginScreen(),
+        home: LoginScreen(),
         routes: {
           '/home': (context) => const HomeScreen(),
-          '/login': (context) => const LoginScreen(),
+          '/login': (context) => LoginScreen(),
         },
       ),
     );

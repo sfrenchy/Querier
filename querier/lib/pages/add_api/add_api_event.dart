@@ -1,45 +1,38 @@
 part of 'add_api_bloc.dart';
 
-abstract class AddAPIEvent extends Equatable {
-  const AddAPIEvent();
+abstract class AddApiEvent extends Equatable {
+  const AddApiEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
-class AddAPIProtocolChangeEvent extends AddAPIEvent {
-  final String selectedProtocol;
-  const AddAPIProtocolChangeEvent(this.selectedProtocol);
+class ProtocolChanged extends AddApiEvent {
+  final String protocol;
+  const ProtocolChanged(this.protocol);
+  @override
+  List<Object?> get props => [protocol];
 }
 
-class AddAPIHostChangeEvent extends AddAPIEvent {
+class HostChanged extends AddApiEvent {
   final String host;
-  const AddAPIHostChangeEvent(this.host);
-}
-
-class AddAPIPortChangeEvent extends AddAPIEvent {
-  final int port;
-  const AddAPIPortChangeEvent(this.port);
-}
-
-class AddAPIURLPathChangeEvent extends AddAPIEvent {
-  final String urlPath;
-  const AddAPIURLPathChangeEvent(this.urlPath);
-}
-
-class AddAPIURLChangeEvent extends AddAPIEvent {
-  final String apiURl;
-  const AddAPIURLChangeEvent(this.apiURl);
-}
-
-class AddAPISaveEvent extends AddAPIEvent {}
-
-class AddAPIInitializeEvent extends AddAPIEvent {}
-
-class CheckAPIConfigurationEvent extends AddAPIEvent {
-  final String apiUrl;
-  const CheckAPIConfigurationEvent(this.apiUrl);
-
+  const HostChanged(this.host);
   @override
-  List<Object> get props => [apiUrl];
+  List<Object?> get props => [host];
 }
+
+class PortChanged extends AddApiEvent {
+  final int port;
+  const PortChanged(this.port);
+  @override
+  List<Object?> get props => [port];
+}
+
+class PathChanged extends AddApiEvent {
+  final String path;
+  const PathChanged(this.path);
+  @override
+  List<Object?> get props => [path];
+}
+
+class SaveApiUrl extends AddApiEvent {}

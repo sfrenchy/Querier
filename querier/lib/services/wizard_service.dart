@@ -1,11 +1,9 @@
-import 'package:dio/dio.dart';
-import 'package:querier/repositories/api_endpoints.dart';
+import 'package:querier/api/api_client.dart';
 
 class WizardService {
-  final Dio _dio;
-  final String baseUrl;
+  final ApiClient _apiClient;
 
-  WizardService(this.baseUrl) : _dio = Dio();
+  WizardService(String baseUrl) : _apiClient = ApiClient(baseUrl);
 
   Future<bool> setup({
     required String name,
@@ -19,25 +17,17 @@ class WizardService {
     required bool useSSL,
   }) async {
     try {
-      final response = await _dio.post(
-        ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.setup),
-        data: {
-          'admin': {
-            'name': name,
-            'firstName': firstName,
-            'email': email,
-            'password': password,
-          },
-          'smtp': {
-            'host': smtpHost,
-            'port': smtpPort,
-            'username': smtpUsername,
-            'password': smtpPassword,
-            'useSSL': useSSL,
-          },
-        },
+      return await _apiClient.setup(
+        name: name,
+        firstName: firstName,
+        email: email,
+        password: password,
+        smtpHost: smtpHost,
+        smtpPort: smtpPort,
+        smtpUsername: smtpUsername,
+        smtpPassword: smtpPassword,
+        useSSL: useSSL,
       );
-      return response.statusCode == 200;
     } catch (e) {
       throw Exception('Failed to setup: ${e.toString()}');
     }
