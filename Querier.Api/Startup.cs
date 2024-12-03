@@ -217,71 +217,8 @@ namespace Querier.Api
             services.AddSingleton<ICacheManagementService, CacheManagementService>();
             services.AddSingleton<IExportGeneratorService, ExportGeneratorService>();
             services.AddScoped<ISettingService, SettingService>();
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(jwt =>
-            {
-                jwt.SaveToken = true;
-                jwt.TokenValidationParameters = tokenValidationParameters;
-                jwt.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        var path = context.HttpContext.Request.Path;
-                        if (!path.StartsWithSegments("/notificationhub")) return Task.CompletedTask;
-                        using (var serviceScope = ServiceActivator.GetScope())
-                        {
-                            IOptionsMonitor<JwtConfig> option = (IOptionsMonitor<JwtConfig>)serviceScope.ServiceProvider.GetService(typeof(IOptionsMonitor<JwtConfig>));
-                            UserManager<ApiUser> userManager = serviceScope.ServiceProvider.GetService<UserManager<ApiUser>>();
-                            ApiDbContext apiDbContext = serviceScope.ServiceProvider.GetService<ApiDbContext>();
-                            // If the request is for our hub...
-                            var userMail = context.Request.Query["email"];
-
-                            ApiUser user = userManager.FindByEmailAsync(userMail).GetAwaiter().GetResult();
-                            var jwtTokenHandler = new JwtSecurityTokenHandler();
-                            var k = Encoding.ASCII.GetBytes(option.CurrentValue.Secret);
-                            var tokenDescriptor = new SecurityTokenDescriptor
-                            {
-                                Subject = new ClaimsIdentity(new[]
-                                {
-                                    new Claim("Id", user.Id),
-                                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                                    new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                                }),
-                                Expires = DateTime.UtcNow.Add(option.CurrentValue.ExpiryTimeFrame),
-                                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(k), SecurityAlgorithms.HmacSha256Signature)
-                            };
-
-                            var token = jwtTokenHandler.CreateToken(tokenDescriptor);
-                            var jwtToken = jwtTokenHandler.WriteToken(token);
-
-                            var refreshToken = new QRefreshToken
-                            {
-                                JwtId = token.Id,
-                                IsUsed = false,
-                                UserId = user.Id,
-                                AddedDate = DateTime.UtcNow,
-                                ExpiryDate = DateTime.UtcNow.AddYears(1),
-                                IsRevoked = false,
-                                Token = Utils.RandomString(25) + Guid.NewGuid()
-                            };
-
-                            apiDbContext.QRefreshTokens.AddAsync(refreshToken).GetAwaiter().GetResult();
-                            apiDbContext.SaveChangesAsync().GetAwaiter().GetResult();
-
-                            context.Token = jwtToken;
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
-            });
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IUserManagerService, UserManagerService>();
+            services.AddScoped<IEmailSendingService, SMTPEmailSendingService>();
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IAuthManagementService, AuthManagementService>();
