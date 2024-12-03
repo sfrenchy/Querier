@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:querier/api_client.dart';
 import 'package:querier/model/available_api_url.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,7 +26,9 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           "LoginButtonPressed - url: $url, email: $username, password: $password");
       try {
         await Future.delayed(const Duration(seconds: 2));
-        if (event.email == "toto" && event.password == "tutu") {
+        final apiClient = ApiClient(baseUrl: url);
+        final success = await apiClient.signIn(username, password);
+        if (success) {
           emit(LoginSuccess());
         } else {
           emit(const LoginFailure(error: "test exception"));
@@ -52,7 +55,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   Future<void> _initialize() async {
     final prefs = await SharedPreferences.getInstance();
     apiUrls = prefs.getStringList("APIURLS") ?? [];
-    selectedApiUrl = apiUrls.first;
+    selectedApiUrl = apiUrls.isNotEmpty ? apiUrls.first : "";
     _emitDropdownState();
   }
 }
