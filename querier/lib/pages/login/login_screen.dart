@@ -33,17 +33,33 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         title: const Text('Login Screen'),
       ),
-      body: BlocListener<LoginBloc, LoginState>(
-        listener: (context, state) {
-          if (state is LoginFailure) {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(SnackBar(
-                content: Text(state.error),
-                duration: const Duration(seconds: 3),
-              ));
-          }
-        },
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<LoginBloc, LoginState>(
+            listener: (context, state) {
+              if (state is LoginFailure) {
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(SnackBar(
+                    content: Text(state.error),
+                    duration: const Duration(seconds: 3),
+                  ));
+              }
+            },
+          ),
+          BlocListener<AddAPIBloc, AddAPIState>(
+            listener: (context, state) {
+              if (state is APIConfigurationError) {
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
+                  ));
+              }
+            },
+          ),
+        ],
         child: BlocBuilder<LoginBloc, LoginState>(
           builder: (context, state) {
             return BlocBuilder<AddAPIBloc, AddAPIState>(
