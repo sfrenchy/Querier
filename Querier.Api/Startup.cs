@@ -35,6 +35,8 @@ using Querier.Api.Services.Repositories.Role;
 using Querier.Api.Services.Repositories.User;
 using Querier.Api.Tools;
 using IQUploadService = Querier.Api.Services.IQUploadService;
+using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Querier.Api
 {
@@ -108,12 +110,32 @@ namespace Querier.Api
             switch (sqlEngine)
             {
                 default:
-                    services.AddDbContext<ApiDbContext>(options => options.UseSqlite(_configuration.GetConnectionString("ApiDBConnection")), ServiceLifetime.Singleton);
-                    services.AddDbContextFactory<ApiDbContext>(options => options.UseSqlite(_configuration.GetConnectionString("ApiDBConnection")));
-                    services.AddDbContext<UserDbContext>(options => options.UseSqlite(_configuration.GetConnectionString("ApiDBConnection")).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
+                    // Register DbContext options
+                    services.AddSingleton<DbContextOptions<ApiDbContext>>(provider =>
+                        new DbContextOptionsBuilder<ApiDbContext>()
+                            .UseSqlite(_configuration.GetConnectionString("ApiDBConnection"))
+                            .Options);
+
+                    services.AddSingleton<DbContextOptions<UserDbContext>>(provider =>
+                        new DbContextOptionsBuilder<UserDbContext>()
+                            .UseSqlite(_configuration.GetConnectionString("ApiDBConnection"))
+                            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+                            .Options);
+
+                    // Register DbContexts as scoped
+                    services.AddDbContext<ApiDbContext>(options => 
+                        options.UseSqlite(_configuration.GetConnectionString("ApiDBConnection")));
+
+                    services.AddDbContext<UserDbContext>(options => 
+                        options.UseSqlite(_configuration.GetConnectionString("ApiDBConnection"))
+                        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+
+                    // Register factory
+                    services.AddDbContextFactory<ApiDbContext>();
                     break;
                 case "MSSQL":
-                    services.AddDbContext<ApiDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("ApiDBConnection"), x => x.MigrationsAssembly("HerdiaApp.Migration.SqlServer")), ServiceLifetime.Singleton);
+                    services.AddDbContext<ApiDbContext>(options => 
+                        options.UseSqlServer(_configuration.GetConnectionString("ApiDBConnection")));
                     services.AddDbContextFactory<ApiDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("ApiDBConnection")));
                     services.AddDbContext<UserDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("ApiDBConnection")).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
                     break;
@@ -180,85 +202,21 @@ namespace Querier.Api
 
             services.AddSingleton(tokenValidationParameters);
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddSingleton<IEntityCRUDService, EntityCRUDService>();
-            services.AddSingleton<Models.Interfaces.IQUploadService, IQUploadService>();
-            services.AddScoped<IAuthManagementService, AuthManagementService>();
-            services.AddSingleton<IUICategoryService, UICategoryService>();
-            services.AddSingleton<IUIPageService, UIPageService>();
-            services.AddSingleton<IUIRowService, UIRowService>();
-            services.AddSingleton<IUICardService, UICardService>();
-            services.AddScoped<IUserManagerService, UserManagerService>();
-            services.AddSingleton<IEmailSendingService, SMTPEmailSendingService>();
-            services.AddSingleton<IDynamicContextResolver, DynamicContextResolver>();
-            services.AddSingleton<ICacheManagementService, CacheManagementService>();
-            services.AddSingleton<IExportGeneratorService, ExportGeneratorService>();
+            services.AddScoped<IEntityCRUDService, EntityCRUDService>();
+            services.AddScoped<Models.Interfaces.IQUploadService, IQUploadService>();
+            services.AddScoped<IUICategoryService, UICategoryService>();
+            services.AddScoped<IUIPageService, UIPageService>();
+            services.AddScoped<IUIRowService, UIRowService>();
+            services.AddScoped<IUICardService, UICardService>();
+            services.AddScoped<IExportGeneratorService, ExportGeneratorService>();
+            services.AddScoped<IWizardService, WizardService>();
             services.AddScoped<ISettingService, SettingService>();
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(jwt =>
-            {
-                jwt.SaveToken = true;
-                jwt.TokenValidationParameters = tokenValidationParameters;
-                jwt.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        var path = context.HttpContext.Request.Path;
-                        if (!path.StartsWithSegments("/notificationhub")) return Task.CompletedTask;
-                        using (var serviceScope = ServiceActivator.GetScope())
-                        {
-                            IOptionsMonitor<JwtConfig> option = (IOptionsMonitor<JwtConfig>)serviceScope.ServiceProvider.GetService(typeof(IOptionsMonitor<JwtConfig>));
-                            UserManager<ApiUser> userManager = serviceScope.ServiceProvider.GetService<UserManager<ApiUser>>();
-                            ApiDbContext apiDbContext = serviceScope.ServiceProvider.GetService<ApiDbContext>();
-                            // If the request is for our hub...
-                            var userMail = context.Request.Query["email"];
-
-                            ApiUser user = userManager.FindByEmailAsync(userMail).GetAwaiter().GetResult();
-                            var jwtTokenHandler = new JwtSecurityTokenHandler();
-                            var k = Encoding.ASCII.GetBytes(option.CurrentValue.Secret);
-                            var tokenDescriptor = new SecurityTokenDescriptor
-                            {
-                                Subject = new ClaimsIdentity(new[]
-                                {
-                                    new Claim("Id", user.Id),
-                                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                                    new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                                }),
-                                Expires = DateTime.UtcNow.Add(option.CurrentValue.ExpiryTimeFrame),
-                                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(k), SecurityAlgorithms.HmacSha256Signature)
-                            };
-
-                            var token = jwtTokenHandler.CreateToken(tokenDescriptor);
-                            var jwtToken = jwtTokenHandler.WriteToken(token);
-
-                            var refreshToken = new QRefreshToken
-                            {
-                                JwtId = token.Id,
-                                IsUsed = false,
-                                UserId = user.Id,
-                                AddedDate = DateTime.UtcNow,
-                                ExpiryDate = DateTime.UtcNow.AddYears(1),
-                                IsRevoked = false,
-                                Token = Utils.RandomString(25) + Guid.NewGuid()
-                            };
-
-                            apiDbContext.QRefreshTokens.AddAsync(refreshToken).GetAwaiter().GetResult();
-                            apiDbContext.SaveChangesAsync().GetAwaiter().GetResult();
-
-                            context.Token = jwtToken;
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
-            });
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IUserManagerService, UserManagerService>();
+            services.AddScoped<IEmailSendingService, SMTPEmailSendingService>();
             services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IAuthManagementService, AuthManagementService>();
+            services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IDBConnectionService, DBConnectionService>();
             
@@ -292,8 +250,6 @@ namespace Querier.Api
 
             // Load dynamically API DB assemblies
             
-            var provider = services.BuildServiceProvider();
-            Console.WriteLine("Configuring Dynamic Contexts");
             var optionsBuilder = new DbContextOptionsBuilder<ApiDbContext>();
             
             using (ApiDbContext apiDbContext = new ApiDbContext(optionsBuilder.Options, _configuration))
@@ -314,9 +270,12 @@ namespace Querier.Api
                         IDynamicContextProceduresServicesResolver assemblyServiceResolver = (IDynamicContextProceduresServicesResolver) Activator.CreateInstance(assemblyServiceResolverType);
                         assemblyServiceResolver.ConfigureServices(services, connection.ConnectionString);
                         // services.AddSingleton(typeof(IDynamicContextProceduresServicesResolver), assemblyServiceResolver.GetType());
-                        var dynamicContextListService = provider.GetRequiredService<IDynamicContextList>();
-                        Console.WriteLine($"Adding DynamicContext {connection.Name}");
-                        dynamicContextListService.DynamicContexts.Add(connection.Name, assemblyServiceResolver);
+                        using (var tempProvider = services.BuildServiceProvider())
+                        {
+                            var dynamicContextListService = tempProvider.GetRequiredService<IDynamicContextList>();
+                            Console.WriteLine($"Adding DynamicContext {connection.Name}");
+                            dynamicContextListService.DynamicContexts.Add(connection.Name, assemblyServiceResolver);
+                        }
                         foreach (KeyValuePair<Type, Type> service in assemblyServiceResolver.ProceduresServices)
                         {
                             //Console.WriteLine($"Registering service {service.Key}");
@@ -371,7 +330,11 @@ namespace Querier.Api
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(
+            IApplicationBuilder app, 
+            IWebHostEnvironment env,
+            ApiDbContext dbContext,  // Add services you need
+            UserDbContext userContext)
         {
             ServiceActivator.Configure(app.ApplicationServices);
             
