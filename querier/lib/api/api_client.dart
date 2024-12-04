@@ -245,4 +245,8 @@ class ApiClient {
       rethrow;
     }
   }
+
+  Future<void> storeRefreshToken(String refreshToken) async {
+    await _secureStorage.write(key: 'refresh_token', value: refreshToken);
+  }
 }

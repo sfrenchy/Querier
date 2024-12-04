@@ -42,7 +42,7 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
     return BlocProvider(
       create: (context) => SmtpConfigurationBloc(widget.apiUrl),
       child: BlocConsumer<SmtpConfigurationBloc, SmtpConfigurationState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is SmtpConfigurationSuccess) {
             Navigator.pushReplacementNamed(context, '/home');
           } else if (state is SmtpConfigurationFailure) {
@@ -62,6 +62,7 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
             final refreshToken = state.authResponse['RefreshToken'];
 
             context.read<ApiClient>().setAuthToken(token);
+            await context.read<ApiClient>().storeRefreshToken(refreshToken);
 
             Navigator.of(context).pushNamedAndRemoveUntil(
               '/home',
