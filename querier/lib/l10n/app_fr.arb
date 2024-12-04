@@ -56,5 +56,16 @@
     "settings": "Paramètres",
     "users": "Utilisateurs",
     "roles": "Rôles",
-    "services": "Services"
+    "services": "Services",
+    "addUser": "Ajouter un utilisateur",
+    "addRole": "Ajouter un rôle",
+    "editRole": "Modifier le rôle",
+    "nameRequired": "Le nom est requis",
+    "errorSavingRole": "Erreur lors de l'enregistrement du rôle",
+    "deleteRole": "Supprimer le rôle",
+    "deleteRoleTitle": "Supprimer le rôle",
+    "deleteRoleConfirmation": "Êtes-vous sûr de vouloir supprimer ce rôle ?",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "errorDeletingRole": "Erreur lors de la suppression du rôle"
 } 

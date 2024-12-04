@@ -176,6 +176,10 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
                                           username: _usernameController.text,
                                           password: _passwordController.text,
                                           useSSL: _useSsl,
+                                          senderEmail:
+                                              _senderEmailController.text,
+                                          senderName:
+                                              _senderNameController.text,
                                         ),
                                       );
                                 },

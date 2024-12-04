@@ -17,6 +17,15 @@ class SettingUsersScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.users),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: l10n.addUser,
+              onPressed: () {
+                Navigator.pushNamed(context, '/users/add');
+              },
+            ),
+          ],
         ),
         body: BlocBuilder<UsersBloc, UsersState>(
           builder: (context, state) {

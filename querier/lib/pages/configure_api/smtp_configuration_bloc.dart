@@ -28,6 +28,8 @@ class SmtpConfigurationBloc
           smtpUsername: event.username,
           smtpPassword: event.password,
           useSSL: event.useSSL,
+          senderEmail: event.senderEmail,
+          senderName: event.senderName,
         );
 
         if (success) {

@@ -21,6 +21,9 @@ class ApiEndpoints {
   // Role endpoints
   static const String roles = '/role/getall';
   static const String roleById = '/role/{id}';
+  static const String addRole = '/role/addrole';
+  static const String updateRole = '/role/updaterole';
+  static const String deleteRole = '/role/deleterole/{id}';
 
   // Helper method pour construire les URLs complètes
   static String buildUrl(String baseUrl, String endpoint) {

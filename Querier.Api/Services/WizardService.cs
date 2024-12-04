@@ -89,7 +89,9 @@ namespace Querier.Api.Services
                         new QSetting { Name = "smtp:port", Value = request.Smtp.Port.ToString() },
                         new QSetting { Name = "smtp:username", Value = request.Smtp.Username },
                         new QSetting { Name = "smtp:password", Value = request.Smtp.Password },
-                        new QSetting { Name = "smtp:useSSL", Value = request.Smtp.UseSSL.ToString() }
+                        new QSetting { Name = "smtp:useSSL", Value = request.Smtp.UseSSL.ToString() },
+                        new QSetting { Name = "smtp:senderEmail", Value = request.Smtp.SenderEmail },
+                        new QSetting { Name = "smtp:senderName", Value = request.Smtp.SenderName }
                     };
 
                     await context.QSettings.AddRangeAsync(smtpSettings);

@@ -68,6 +68,8 @@ class ApiClient {
     required String smtpUsername,
     required String smtpPassword,
     required bool useSSL,
+    required String senderEmail,
+    required String senderName,
   }) async {
     final response = await _dio.post(
       ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.setup),
@@ -84,6 +86,8 @@ class ApiClient {
           'username': smtpUsername,
           'password': smtpPassword,
           'useSSL': useSSL,
+          'senderEmail': senderEmail,
+          'senderName': senderName,
         },
       },
     );
@@ -194,6 +198,50 @@ class ApiClient {
       }
     } catch (e) {
       print('Error in getAllRoles: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> addRole(String name) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.addRole),
+        data: {'id': '', 'name': name},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error in addRole: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> updateRole(String id, String name) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.updateRole),
+        data: {
+          'Id': id,
+          'Name': name,
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error in updateRole: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> deleteRole(String id) async {
+    try {
+      final response = await _dio.delete(
+        ApiEndpoints.buildUrl(
+          baseUrl,
+          ApiEndpoints.replaceUrlParams(ApiEndpoints.deleteRole, {'id': id}),
+        ),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error in deleteRole: $e');
       rethrow;
     }
   }
