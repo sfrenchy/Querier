@@ -100,6 +100,7 @@ namespace Querier.Api.Controllers
         /// <response code="401">If the user is not authenticated</response>
         /// <response code="403">If the user is not authorized</response>
         /// <response code="500">If there was an internal server error</response>
+        
         [HttpPost]
         public async Task<IActionResult> UpdateSettings([FromBody] QSetting setting)
         {
@@ -129,29 +130,5 @@ namespace Querier.Api.Controllers
             var configuredSetting = await _settingService.Configure(setting);
             return Ok(configuredSetting);
         }   
-
-        /// <summary>
-        /// Checks if the application has been configured
-        /// </summary>
-        /// <remarks>
-        /// This endpoint can be accessed without authentication and returns the configuration state of the application.
-        /// 
-        /// Sample request:
-        ///     GET /api/v1/settings/configured
-        /// </remarks>
-        /// <returns>True if the application is configured, false otherwise</returns>
-        /// <response code="200">Returns the configuration state</response>
-        /// <response code="401">If the user is not authenticated</response>
-        /// <response code="403">If the user is not authorized</response>
-        /// <response code="500">If there was an internal server error</response>
-        [HttpGet("configured")]
-        [AllowAnonymous]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        [Produces("application/json")]
-        public async Task<ActionResult<bool>> GetIsConfigured()
-        {
-            return await _settingService.GetIsConfigured();
-        }
     }
 }

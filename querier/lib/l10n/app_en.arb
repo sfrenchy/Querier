@@ -36,5 +36,21 @@
     "testConnection": "Test Connection",
     "testingConnection": "Testing connection...",
     "connectionSuccess": "Connection successful",
-    "connectionFailed": "Connection failed"
+    "connectionFailed": "Connection failed",
+    "welcome": "Welcome, {username}",
+    "@welcome": {
+        "placeholders": {
+            "username": {
+                "type": "String"
+            }
+        }
+    },
+    "recentQueries": "Recent Queries",
+    "activityChart": "Activity",
+    "noQueries": "No recent queries",
+    "totalQueries": "Total Queries",
+    "successfulQueries": "Successful",
+    "failedQueries": "Failed",
+    "averageTime": "Average Time",
+    "logout": "Logout"
 } 

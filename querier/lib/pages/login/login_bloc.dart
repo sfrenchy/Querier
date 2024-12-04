@@ -7,8 +7,9 @@ part 'login_event.dart';
 part 'login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
-  ApiClient? _apiClient;
-  LoginBloc() : super(const LoginState()) {
+  final ApiClient _apiClient;
+
+  LoginBloc(this._apiClient) : super(const LoginState()) {
     on<UrlChanged>(_onUrlChanged);
     on<LoginSubmitted>(_onLoginSubmitted);
     on<LoadSavedUrls>(_onLoadSavedUrls);
@@ -31,7 +32,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   }
 
   Future<void> _onUrlChanged(UrlChanged event, Emitter<LoginState> emit) async {
-    _apiClient = ApiClient(event.url);
+    _apiClient.updateBaseUrl(event.url);
+    emit(state.copyWith(selectedUrl: event.url));
 
     add(const SetLoadingState(true));
     add(UpdateUrlsList([]));
@@ -39,7 +41,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     add(UpdateSelectedUrl(event.url));
 
     try {
-      final isConfigured = await _apiClient!.isConfigured();
+      final isConfigured = await _apiClient.isConfigured();
       print('API configured response: $isConfigured');
 
       final prefs = await SharedPreferences.getInstance();
@@ -74,13 +76,12 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     add(const SetLoadingState(true));
 
     try {
-      _apiClient = ApiClient(state.selectedUrl);
-      final response = await _apiClient!.signIn(event.email, event.password);
+      final response = await _apiClient.signIn(event.email, event.password);
 
       if (response.statusCode == 200 && response.data != null) {
         final token = response.data['Token'];
         if (token != null) {
-          _apiClient!.setAuthToken(token.toString());
+          _apiClient.setAuthToken(token.toString());
           add(const SetAuthenticated(true));
           add(const SetLoadingState(false));
         } else {
@@ -99,7 +100,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   }
 
   Future<void> _onLoadSavedUrls(
-    LoadSavedUrls event, Emitter<LoginState> emit) async {
+      LoadSavedUrls event, Emitter<LoginState> emit) async {
     final prefs = await SharedPreferences.getInstance();
     final urls = prefs.getStringList('APIURLS') ?? [];
     add(UpdateUrlsList(urls));

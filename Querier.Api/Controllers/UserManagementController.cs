@@ -6,6 +6,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using Microsoft.Extensions.Logging;
+using System.Linq;
+using Microsoft.AspNetCore.Identity;
+using Querier.Api.Models.Auth;
 
 namespace Querier.Api.Controllers
 {
@@ -42,10 +47,14 @@ namespace Querier.Api.Controllers
     public class UserManagementController : ControllerBase
     {
         private readonly IUserService _svc;
+        private readonly ILogger<UserManagementController> _logger;
+        private readonly UserManager<ApiUser> _userManager;
 
-        public UserManagementController(IUserService svc)
+        public UserManagementController(IUserService svc, ILogger<UserManagementController> logger, UserManager<ApiUser> userManager)
         {
             _svc = svc;
+            _logger = logger;
+            _userManager = userManager;
         }
 
         /// <summary>
@@ -289,6 +298,52 @@ namespace Querier.Api.Controllers
         {            
             var response = await _svc.EmailConfirmation(new EmailConfirmation { Email = mail, Token = token });
             return Ok(response);
+        }
+
+        /// <summary>
+        /// Retrieves the current user's profile
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     GET /api/v1/usermanagement/me
+        /// </remarks>
+        /// <returns>The current user's details</returns>
+        /// <response code="200">Returns the current user</response>
+        /// <response code="401">If the user is not authenticated</response>
+        [HttpGet("me")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Me()
+        {
+            // Essayer d'abord de récupérer l'ID, puis l'email en fallback
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    _logger.LogWarning("No user identifier found in token");
+                    return Unauthorized();
+                }
+                // Chercher l'utilisateur par email
+                var userByEmail = await _userManager.FindByEmailAsync(userEmail);
+                if (userByEmail == null)
+                {
+                    _logger.LogWarning($"No user found with email: {userEmail}");
+                    return NotFound();
+                }
+                userId = userByEmail.Id;
+            }
+
+            var user = await _svc.View(userId);
+            if (user == null)
+            {
+                _logger.LogWarning($"No user found with ID: {userId}");
+                return NotFound();
+            }
+
+            return Ok(user);
         }
     }
 }

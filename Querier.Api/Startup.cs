@@ -37,6 +37,8 @@ using Querier.Api.Tools;
 using IQUploadService = Querier.Api.Services.IQUploadService;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Querier.Api
 {
@@ -327,6 +329,82 @@ namespace Querier.Api
                 options.SerializerSettings.NullValueHandling = NullValueHandling.Include;
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
+
+            // Mise à jour de la configuration du logging
+            services.AddLogging(builder =>
+            {
+                builder.ClearProviders();
+                builder.AddConsole(options =>
+                {
+                    options.IncludeScopes = true;
+                    options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] ";
+                });
+                builder.AddDebug();
+                
+                // Définir le niveau de log minimum à Information ou Debug pour voir plus de détails
+                builder.SetMinimumLevel(LogLevel.Debug);
+                
+                // Configuration spécifique pour certaines catégories
+                builder.AddFilter("Microsoft", LogLevel.Warning)
+                       .AddFilter("System", LogLevel.Warning)
+                       .AddFilter("Querier.Api", LogLevel.Debug);
+            });
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.SaveToken = true;
+                options.RequireHttpsMetadata = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = _configuration["JwtConfig:Issuer"],
+                    ValidAudience = _configuration["JwtConfig:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(_configuration["JwtConfig:Secret"])),
+                    ClockSkew = TimeSpan.Zero
+                };
+                // Ajoutez ces événements pour le debug
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
+                        logger.LogError($"Authentication failed: {context.Exception}");
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
+                    {
+                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
+                        logger.LogInformation("Token validated successfully");
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            // Désactivez l'authentification par cookie si elle est configurée
+            services.AddControllers();
+            
+            // Configurez CORS si nécessaire
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder =>
+                    {
+                        builder
+                            .AllowAnyOrigin()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                    });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -342,30 +420,30 @@ namespace Querier.Api
             app.UseDeveloperExceptionPage();
             //app.UseExceptionHandler("/error");
 
-            app.UseAuthentication();
-            app.UseHttpsRedirection();
-
-            app.UseRouting();
-            app.UseAuthorization();
-
             app.UseCors(builder =>
             {
-                if (_configuration["AllowAllCrossOrigins"] == "True")
-                {
-                    builder
-                        .AllowAnyOrigin()
-                        .AllowAnyHeader()
-                        .AllowAnyMethod();
-                }
-                else
-                {
-                    builder
-                        .WithOrigins(_configuration["AllowedOriginsList"])
-                        .WithHeaders(_configuration["AllowedHeadersList"])
-                        .WithMethods(_configuration["AllowedMethodsList"]);
-                }
+                builder
+                    .AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
             });
-            
+
+            app.UseRouting();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+                // Configurer les endpoints publics explicitement
+                endpoints.MapControllerRoute(
+                    name: "public",
+                    pattern: "api/v1/settings/configured",
+                    defaults: new { controller = "PublicSettings", action = "GetIsConfigured" }
+                ).WithMetadata(new AllowAnonymousAttribute());
+            });
+
             app.UseSwagger();
             app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
             
