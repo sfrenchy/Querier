@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'smtp_configuration_bloc.dart';
+import 'package:querier/api/api_client.dart';
 
 class SMTPConfigurationScreen extends StatefulWidget {
   final String adminName;
@@ -55,6 +56,16 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
           } else if (state is SmtpTestFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(l10n.connectionFailed)),
+            );
+          } else if (state is SmtpConfigurationSuccessWithAuth) {
+            final token = state.authResponse['Token'];
+            final refreshToken = state.authResponse['RefreshToken'];
+
+            context.read<ApiClient>().setAuthToken(token);
+
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              '/home',
+              (route) => false,
             );
           }
         },
