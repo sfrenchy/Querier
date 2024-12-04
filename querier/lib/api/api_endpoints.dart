@@ -14,13 +14,13 @@ class ApiEndpoints {
   static const String setup = '/wizard/setup';
 
   // User endpoints
-  static const String users = '/users';
+  static const String users = '/usermanagement/getall';
   static const String currentUser = '/usermanagement/me';
   static const String userById = '/users/{id}';
 
   // Role endpoints
-  static const String roles = '/roles';
-  static const String roleById = '/roles/{id}';
+  static const String roles = '/role/getall';
+  static const String roleById = '/role/{id}';
 
   // Helper method pour construire les URLs complètes
   static String buildUrl(String baseUrl, String endpoint) {

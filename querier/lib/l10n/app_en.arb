@@ -52,5 +52,9 @@
     "successfulQueries": "Successful",
     "failedQueries": "Failed",
     "averageTime": "Average Time",
-    "logout": "Logout"
+    "logout": "Logout",
+    "settings": "Settings",
+    "users": "Users",
+    "roles": "Roles",
+    "services": "Services"
 } 

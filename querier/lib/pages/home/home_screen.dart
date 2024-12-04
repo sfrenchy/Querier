@@ -40,6 +40,55 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              drawer: Drawer(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    DrawerHeader(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      child: Text(
+                        l10n.settings,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                        ),
+                      ),
+                    ),
+                    ExpansionTile(
+                      leading: const Icon(Icons.settings),
+                      title: Text(l10n.settings),
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.people),
+                          title: Text(l10n.users),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/users');
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.security),
+                          title: Text(l10n.roles),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/roles');
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.miscellaneous_services),
+                          title: Text(l10n.services),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/services');
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
               body: RefreshIndicator(
                 onRefresh: () async {
                   context.read<HomeBloc>().add(RefreshDashboard());

@@ -52,5 +52,9 @@
     "successfulQueries": "Réussies",
     "failedQueries": "Échouées",
     "averageTime": "Temps moyen",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "settings": "Paramètres",
+    "users": "Utilisateurs",
+    "roles": "Rôles",
+    "services": "Services"
 } 

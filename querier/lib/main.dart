@@ -11,6 +11,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/blocs/language_bloc.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/config.dart';
+import 'package:querier/pages/settings/users/setting_users_screen.dart';
+import 'package:querier/pages/settings/roles/setting_roles_screen.dart';
+import 'package:querier/pages/settings/services/setting_services_screen.dart';
 
 void main() {
   runApp(const QuerierApp());
@@ -59,6 +62,9 @@ class QuerierApp extends StatelessWidget {
             routes: {
               '/home': (context) => const HomeScreen(),
               '/login': (context) => LoginScreen(),
+              '/users': (context) => const SettingUsersScreen(),
+              '/roles': (context) => const SettingRolesScreen(),
+              '/services': (context) => const SettingServicesScreen(),
             },
             localizationsDelegates: const [
               AppLocalizations.delegate,

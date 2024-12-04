@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_endpoints.dart';
+import 'package:querier/models/user.dart';
+import 'package:querier/models/role.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -146,5 +148,53 @@ class ApiClient {
       ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.signOut),
       data: {},
     );
+  }
+
+  Future<List<User>> getAllUsers() async {
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.users),
+      );
+
+      print('API Response: ${response.data}'); // Debug log
+
+      if (response.data is List) {
+        return (response.data as List).map((userData) {
+          print('Processing user data: $userData'); // Debug log
+          return User.fromJson(userData);
+        }).toList();
+      } else {
+        // Si la réponse contient une propriété data ou users
+        final usersList = response.data['data'] ?? response.data['users'] ?? [];
+        return (usersList as List)
+            .map((userData) => User.fromJson(userData))
+            .toList();
+      }
+    } catch (e, stackTrace) {
+      print('Error in getAllUsers: $e\n$stackTrace'); // Debug log
+      rethrow;
+    }
+  }
+
+  Future<List<Role>> getAllRoles() async {
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.roles),
+      );
+
+      if (response.data is List) {
+        return (response.data as List)
+            .map((roleData) => Role.fromJson(roleData))
+            .toList();
+      } else {
+        final rolesList = response.data['data'] ?? response.data['roles'] ?? [];
+        return (rolesList as List)
+            .map((roleData) => Role.fromJson(roleData))
+            .toList();
+      }
+    } catch (e) {
+      print('Error in getAllRoles: $e');
+      rethrow;
+    }
   }
 }
