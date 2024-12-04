@@ -36,5 +36,21 @@
     "testConnection": "Tester la connexion",
     "testingConnection": "Test de la connexion...",
     "connectionSuccess": "Connexion réussie",
-    "connectionFailed": "Échec de la connexion"
+    "connectionFailed": "Échec de la connexion",
+    "welcome": "Bienvenue, {username}",
+    "@welcome": {
+        "placeholders": {
+            "username": {
+                "type": "String"
+            }
+        }
+    },
+    "recentQueries": "Requêtes récentes",
+    "activityChart": "Activité",
+    "noQueries": "Aucune requête récente",
+    "totalQueries": "Total des requêtes",
+    "successfulQueries": "Réussies",
+    "failedQueries": "Échouées",
+    "averageTime": "Temps moyen",
+    "logout": "Déconnexion"
 } 

@@ -15,7 +15,7 @@ class ApiEndpoints {
 
   // User endpoints
   static const String users = '/users';
-  static const String currentUser = '/users/me';
+  static const String currentUser = '/usermanagement/me';
   static const String userById = '/users/{id}';
 
   // Role endpoints
@@ -42,4 +42,10 @@ class ApiEndpoints {
     });
     return result;
   }
+
+  // User endpoints
+  static const String userProfile = '/usermanagement/view/{id}';
+  static const String recentQueries = '/queries/recent';
+  static const String queryStats = '/queries/stats';
+  static const String activity = '/queries/activity';
 }

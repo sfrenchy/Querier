@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:querier/const.dart';
 import 'package:querier/pages/home/home_screen.dart';
 import 'package:querier/pages/login/login_bloc.dart';
@@ -8,6 +9,8 @@ import 'package:querier/pages/add_api/add_api_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/blocs/language_bloc.dart';
+import 'package:querier/api/api_client.dart';
+import 'package:querier/config.dart';
 
 void main() {
   runApp(const QuerierApp());
@@ -20,8 +23,11 @@ class QuerierApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        Provider<ApiClient>(
+          create: (context) => ApiClient(Config.apiBaseUrl),
+        ),
         BlocProvider<LoginBloc>(
-          create: (context) => LoginBloc(),
+          create: (context) => LoginBloc(context.read<ApiClient>()),
         ),
         BlocProvider<AddApiBloc>(
           create: (context) => AddApiBloc(),

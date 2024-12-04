@@ -1,11 +1,21 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_endpoints.dart';
 
 class ApiClient {
   final Dio _dio;
-  final String baseUrl;
+  String baseUrl;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  ApiClient(this.baseUrl) : _dio = Dio();
+  ApiClient(this.baseUrl) : _dio = Dio() {
+    updateBaseUrl(baseUrl);
+  }
+
+  void updateBaseUrl(String newBaseUrl) {
+    baseUrl = newBaseUrl;
+    _dio.options.baseUrl = baseUrl;
+  }
 
   // Auth methods
   Future<Response> signIn(String email, String password) async {
@@ -98,5 +108,43 @@ class ApiClient {
 
   void clearAuthToken() {
     _dio.options.headers.remove('Authorization');
+  }
+
+  Future<Response> getUserData(String id) async {
+    final endpoint = ApiEndpoints.replaceUrlParams(
+      ApiEndpoints.userProfile,
+      {'id': id},
+    );
+    return _dio.get(ApiEndpoints.buildUrl(baseUrl, endpoint));
+  }
+
+  Future<List<String>> getRecentQueries() async {
+    final response = await _dio.get(
+      ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.recentQueries),
+    );
+    return List<String>.from(response.data);
+  }
+
+  Future<Map<String, int>> getQueryStats() async {
+    final response = await _dio.get(
+      ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.queryStats),
+    );
+    return Map<String, int>.from(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> getActivityData() async {
+    final response = await _dio.get(
+      ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.activity),
+    );
+    return List<Map<String, dynamic>>.from(response.data);
+  }
+
+  Future<void> logout() async {
+    await _secureStorage.delete(key: 'access_token');
+    await _secureStorage.delete(key: 'refresh_token');
+    await _dio.post(
+      ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.signOut),
+      data: {},
+    );
   }
 }

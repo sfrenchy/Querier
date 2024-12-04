@@ -57,19 +57,25 @@ namespace Querier.Api.Services.Repositories.User
         {
             try
             {
-                if (string.IsNullOrEmpty(id))
+                var user = await _userManager.FindByIdAsync(id);
+                
+                if (user == null)
                 {
-                    _logger.LogError("UserId is null");
+                    user = await _userManager.FindByEmailAsync(id);
+                }
+
+                if (user == null)
+                {
+                    _logger.LogError($"User with id/email {id} not found");
                     return null;
                 }
-                var user = await _userManager.FindByIdAsync(id);
-                var roles = await _userManager.GetRolesAsync(user);
 
+                var roles = await _userManager.GetRolesAsync(user);
                 return (user, roles.ToList());
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.Message, null);
+                _logger.LogError(ex, $"Error getting user with roles for id/email {id}");
                 return null;
             }
         }

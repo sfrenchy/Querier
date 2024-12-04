@@ -13,6 +13,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Querier.Api.Services.Repositories.User;
 using Querier.Api.Tools;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 
 namespace Querier.Api.Services
 {
