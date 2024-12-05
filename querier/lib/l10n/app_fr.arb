@@ -67,5 +67,20 @@
     "deleteRoleConfirmation": "Êtes-vous sûr de vouloir supprimer ce rôle ?",
     "cancel": "Annuler",
     "delete": "Supprimer",
-    "errorDeletingRole": "Erreur lors de la suppression du rôle"
+    "errorDeletingRole": "Erreur lors de la suppression du rôle",
+    "editUser": "Modifier l'utilisateur",
+    "errorSavingUser": "Erreur lors de l'enregistrement",
+    "emailRequired": "L'email est requis",
+    "firstNameRequired": "Le prénom est requis",
+    "passwordRequired": "Le mot de passe est requis",
+    "userName": "Nom d'utilisateur",
+    "userNameRequired": "Le nom d'utilisateur est requis",
+    "deleteUser": "Supprimer l'utilisateur",
+    "deleteUserTitle": "Supprimer l'utilisateur",
+    "deleteUserConfirmation": "Êtes-vous sûr de vouloir supprimer cet utilisateur ?",
+    "errorDeletingUser": "Erreur lors de la suppression de l'utilisateur",
+    "emailStatus": "Statut Email",
+    "emailVerified": "Email vérifié",
+    "emailNotVerified": "Email non vérifié",
+    "resendVerificationEmail": "Renvoyer l'email de vérification"
 } 

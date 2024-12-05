@@ -301,11 +301,6 @@ namespace Querier.Api.Services.User
             updateUser.FirstName = user.FirstName;
             updateUser.LastName = user.LastName;
             updateUser.Email = user.Email;
-            updateUser.LanguageCode = user.LanguageCode;
-            updateUser.Phone = user.Phone;
-            updateUser.Img = user.Img;
-            updateUser.DateFormat = user.DateFormat;
-            updateUser.UserName = user.UserName;
         }
 
         private ApiUser MapToModel(UserRequest user)
@@ -315,10 +310,6 @@ namespace Querier.Api.Services.User
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                LanguageCode = user.LanguageCode,
-                Phone = user.Phone,
-                Img = user.Img,
-                DateFormat = user.DateFormat,
                 UserName = user.UserName
             };
         }
@@ -335,7 +326,8 @@ namespace Querier.Api.Services.User
                 LanguageCode = user.LanguageCode,
                 Img = user.Img,
                 DateFormat = user.DateFormat,
-                UserName = user.UserName
+                UserName = user.UserName,
+                IsEmailConfirmed = user.EmailConfirmed
             };
         }
     }

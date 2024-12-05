@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:querier/const.dart';
 import 'package:querier/models/role.dart';
+import 'package:querier/models/user.dart';
 import 'package:querier/pages/home/home_screen.dart';
 import 'package:querier/pages/login/login_bloc.dart';
 import 'package:querier/pages/login/login_screen.dart';
@@ -16,7 +17,7 @@ import 'package:querier/pages/settings/roles/bloc/roles_bloc.dart';
 import 'package:querier/pages/settings/users/setting_users_screen.dart';
 import 'package:querier/pages/settings/roles/setting_roles_screen.dart';
 import 'package:querier/pages/settings/services/setting_services_screen.dart';
-import 'package:querier/pages/settings/users/add_user_screen.dart';
+import 'package:querier/pages/settings/users/user_form_screen.dart';
 import 'package:querier/pages/settings/roles/role_form_screen.dart';
 
 void main() {
@@ -72,7 +73,11 @@ class QuerierApp extends StatelessWidget {
               '/users': (context) => const SettingUsersScreen(),
               '/roles': (context) => const SettingRolesScreen(),
               '/services': (context) => const SettingServicesScreen(),
-              '/users/add': (context) => const AddUserScreen(),
+              '/users/form': (context) {
+                final user =
+                    ModalRoute.of(context)?.settings.arguments as User?;
+                return UserFormScreen(userToEdit: user);
+              },
               '/roles/form': (context) {
                 final role =
                     ModalRoute.of(context)?.settings.arguments as Role?;

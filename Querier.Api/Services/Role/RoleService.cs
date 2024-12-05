@@ -27,7 +27,7 @@ namespace Querier.Api.Services.Role
         Task<bool> InsertViewPageRole(InsertViewPageRoleRequest request);
         Task<List<RoleResponse>> GetRolesForUser(string idUser);
         Task<List<GetAllPagesWithRolesResponse>> GetAllPagesWithRoles();
-        public ApiRole[] UseMapToModel(List<RoleRequest> roles);
+        ApiRole[] UseMapToModel(List<string> roleNames);
     }
 
 
@@ -244,9 +244,9 @@ namespace Querier.Api.Services.Role
             }
         }
 
-        public ApiRole[] UseMapToModel(List<RoleRequest> roles)
+        public ApiRole[] UseMapToModel(List<string> roleNames)
         {
-            return MapToModel(roles);
+            return roleNames.Select(name => new ApiRole { Name = name }).ToArray();
         }
 
         // // TODO: substituer le finaliseur uniquement si 'Dispose(bool disposing)' a du code pour libérer les ressources non managées
@@ -290,26 +290,6 @@ namespace Querier.Api.Services.Role
             }
 
             return groups.Select(g => new PageCartActions(g.Id)).ToList();
-        }
-
-        private ApiRole[] MapToModel(List<RoleRequest> roles)
-        {
-            List<ApiRole> listRoles = new List<ApiRole>();
-            foreach (RoleRequest role in roles)
-            {
-                ApiRole apiRole = new ApiRole
-                {
-                    Id = role.Id,
-                    Name = role.Name
-                };
-
-                if (apiRole != null)
-                {
-                    listRoles.Add(apiRole);
-                }
-            }
-
-            return listRoles.ToArray();
         }
 
         protected virtual void Dispose(bool disposing)

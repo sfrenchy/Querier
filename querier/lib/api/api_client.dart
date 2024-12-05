@@ -249,4 +249,61 @@ class ApiClient {
   Future<void> storeRefreshToken(String refreshToken) async {
     await _secureStorage.write(key: 'refresh_token', value: refreshToken);
   }
+
+  Future<bool> addUser(String email, String firstName, String lastName,
+      String password, List<String> roles) async {
+    try {
+      final response = await _dio.put(
+        ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.addUser),
+        data: {
+          'email': email,
+          'firstName': firstName,
+          'lastName': lastName,
+          'password': password,
+          'userName': email,
+          'roles': roles,
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error in addUser: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> updateUser(String id, String email, String firstName,
+      String lastName, List<String> roles) async {
+    try {
+      final response = await _dio.put(
+        ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.updateUser),
+        data: {
+          'id': id,
+          'email': email,
+          'firstName': firstName,
+          'lastName': lastName,
+          'userName': email,
+          'roles': roles,
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error in updateUser: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> deleteUser(String id) async {
+    try {
+      final response = await _dio.delete(
+        ApiEndpoints.buildUrl(
+          baseUrl,
+          ApiEndpoints.replaceUrlParams(ApiEndpoints.deleteUser, {'id': id}),
+        ),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error in deleteUser: $e');
+      rethrow;
+    }
+  }
 }

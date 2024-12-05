@@ -22,7 +22,7 @@ class SettingUsersScreen extends StatelessWidget {
               icon: const Icon(Icons.add),
               tooltip: l10n.addUser,
               onPressed: () {
-                Navigator.pushNamed(context, '/users/add');
+                Navigator.pushNamed(context, '/users/form');
               },
             ),
           ],
@@ -44,6 +44,7 @@ class SettingUsersScreen extends StatelessWidget {
                   child: SizedBox(
                     width: double.infinity,
                     child: DataTable(
+                      showCheckboxColumn: false,
                       columnSpacing: 24.0,
                       columns: [
                         DataColumn(
@@ -67,13 +68,42 @@ class SettingUsersScreen extends StatelessWidget {
                                     fontWeight: FontWeight.bold)),
                           ),
                         ),
+                        DataColumn(
+                          label: Expanded(
+                            child: Text(l10n.emailStatus,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                        ),
                       ],
                       rows: state.users.map((user) {
-                        return DataRow(cells: [
-                          DataCell(Text(user.lastName)),
-                          DataCell(Text(user.firstName)),
-                          DataCell(Text(user.email)),
-                        ]);
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(user.lastName)),
+                            DataCell(Text(user.firstName)),
+                            DataCell(Text(user.email)),
+                            DataCell(
+                              Icon(
+                                user.isEmailConfirmed
+                                    ? Icons.check_circle
+                                    : Icons.error_outline,
+                                color: user.isEmailConfirmed
+                                    ? Colors.green
+                                    : Colors.orange,
+                              ),
+                            ),
+                          ],
+                          onSelectChanged: (_) async {
+                            final result = await Navigator.pushNamed(
+                              context,
+                              '/users/form',
+                              arguments: user,
+                            );
+                            if (result == true) {
+                              context.read<UsersBloc>().add(LoadUsers());
+                            }
+                          },
+                        );
                       }).toList(),
                     ),
                   ),

@@ -18,5 +18,6 @@ namespace Querier.Api.Models.Responses.User
         public string DateFormat { get; set; }
         public string Currency { get; set; }
         public string AreaUnit { get; set; }
+        public bool IsEmailConfirmed { get; set; }
     }
 }

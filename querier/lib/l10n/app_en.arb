@@ -67,5 +67,20 @@
     "deleteRoleConfirmation": "Are you sure you want to delete this role?",
     "cancel": "Cancel",
     "delete": "Delete",
-    "errorDeletingRole": "Error deleting role"
+    "errorDeletingRole": "Error deleting role",
+    "editUser": "Edit User",
+    "errorSavingUser": "Error saving user",
+    "emailRequired": "Email is required",
+    "firstNameRequired": "First name is required",
+    "passwordRequired": "Password is required",
+    "userName": "Username",
+    "userNameRequired": "Username is required",
+    "deleteUser": "Delete user",
+    "deleteUserTitle": "Delete User",
+    "deleteUserConfirmation": "Are you sure you want to delete this user?",
+    "errorDeletingUser": "Error deleting user",
+    "emailStatus": "Email Status",
+    "emailVerified": "Email verified",
+    "emailNotVerified": "Email not verified",
+    "resendVerificationEmail": "Resend verification email"
 } 

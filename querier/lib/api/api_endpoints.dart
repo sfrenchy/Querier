@@ -15,8 +15,11 @@ class ApiEndpoints {
 
   // User endpoints
   static const String users = '/usermanagement/getall';
+  static const String addUser = '/usermanagement/add';
+  static const String updateUser = '/usermanagement/update';
   static const String currentUser = '/usermanagement/me';
   static const String userById = '/users/{id}';
+  static const String deleteUser = '/usermanagement/delete/{id}';
 
   // Role endpoints
   static const String roles = '/role/getall';
