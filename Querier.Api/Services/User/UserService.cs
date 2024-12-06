@@ -33,6 +33,7 @@ namespace Querier.Api.Services.User
         public Task<object> ResetPassword(ResetPassword reset_password_infos);
         public Task<object> CheckPassword(CheckPassword Checkpassword);
         public Task<bool> EmailConfirmation(EmailConfirmation emailConfirmation);
+        public Task<(bool Succeeded, string Error)> ConfirmEmailAndSetPassword(EmailConfirmationRequest request);
     }
     public class UserService : IUserService
     {
@@ -97,7 +98,6 @@ namespace Querier.Api.Services.User
 
         public async Task<bool> Delete(string id)
         {
-            //_herdiaApp.herdiaAppUserDeleted(id);
             return await _repo.Delete(id);
         }
 
@@ -220,7 +220,7 @@ namespace Querier.Api.Services.User
                 CopyEmail = "",
                 ParameterEmailToFillContent = ParamsEmail 
             };
-            response = await _emailSending.SendEmailAsync(mailObject);
+            response = null;//await _emailSending.SendEmailAsync(mailObject);
 
             return response;
         }
@@ -294,6 +294,44 @@ namespace Querier.Api.Services.User
                 return false;
             var result = await _userManager.ConfirmEmailAsync(user, token);
             return result.Succeeded;
+        }
+
+        public async Task<(bool Succeeded, string Error)> ConfirmEmailAndSetPassword(EmailConfirmationRequest request)
+        {
+            try
+            {
+                if (request.Password != request.ConfirmPassword)
+                {
+                    return (false, "Les mots de passe ne correspondent pas.");
+                }
+
+                var user = await _userManager.FindByEmailAsync(request.Email);
+                if (user == null)
+                {
+                    return (false, "Utilisateur non trouvé.");
+                }
+
+                var confirmResult = await _userManager.ConfirmEmailAsync(user, request.Token);
+                if (!confirmResult.Succeeded)
+                {
+                    return (false, "Le lien de confirmation n'est plus valide.");
+                }
+
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var passwordResult = await _userManager.ResetPasswordAsync(user, token, request.Password);
+
+                if (!passwordResult.Succeeded)
+                {
+                    return (false, "Le mot de passe ne respecte pas les critères de sécurité.");
+                }
+
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la confirmation d'email");
+                return (false, "Une erreur est survenue.");
+            }
         }
 
         private void MapToModel(UserRequest user, ApiUser updateUser)

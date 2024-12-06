@@ -38,6 +38,13 @@ namespace Querier.Api.Services
         /// <param name="value">The value of the setting</param>
         /// <returns>The created setting</returns>
         Task<QSetting> CreateSetting(string name, string value);
+        /// <summary>
+        /// Get the value of a setting. If defaultValue is provided and the setting doesn't exist, creates it.
+        /// </summary>
+        /// <param name="name">The name/key of the setting</param>
+        /// <param name="defaultValue">Optional default value. If provided and setting doesn't exist, creates it</param>
+        /// <returns>The value of the setting</returns>
+        Task<string?> GetSettingValue(string name, string? defaultValue = null);
     }
 
     

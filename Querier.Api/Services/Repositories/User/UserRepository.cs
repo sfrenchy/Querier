@@ -41,8 +41,9 @@ namespace Querier.Api.Services.Repositories.User
         private readonly ILogger<UserRepository> _logger;
         private readonly Models.Interfaces.IQUploadService _uploadService;
         private readonly UserManager<ApiUser> _userManager;
-
-        public UserRepository(ApiDbContext context, UserManager<ApiUser> userManager, ILogger<UserRepository> logger, IConfiguration configuration, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService)
+        private readonly ISettingService _settings;
+        private readonly IEmailTemplateService _emailTemplateService;
+        public UserRepository(ApiDbContext context, UserManager<ApiUser> userManager, IEmailTemplateService emailTemplateService, ISettingService settings, ILogger<UserRepository> logger, IConfiguration configuration, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService)
         {
             _context = context;
             _logger = logger;
@@ -51,6 +52,8 @@ namespace Querier.Api.Services.Repositories.User
             _emailSending = emailSending;
             _contextFactory = contextFactory;
             _uploadService = uploadService;
+            _settings = settings;
+            _emailTemplateService = emailTemplateService;
         }
 
         public async Task<(ApiUser user, List<string> roles)?> GetWithRoles(string id)
@@ -134,13 +137,25 @@ namespace Querier.Api.Services.Repositories.User
                     return false;
                 }
 
-                // Generate a token for email confirmation
                 string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                string tokenTimeValidity = _configuration.GetSection("ApplicationSettings:EmailConfirmationTokenValidityLifeSpanDays").Get<string>();
-                string emailFrom = _configuration.GetSection("ApplicationSettings:SMTP:mailFrom").Get<string>();
+                string tokenValidity = await _settings.GetSettingValue("email:confirmationTokenValidityLifeSpanDays", "2");
+                string baseUrl = await _settings.GetSettingValue("application:baseUrl", "https://localhost:5001");
                 
+                await _emailSending.SendTemplatedEmailAsync(
+                    user.Email,
+                    "Confirmation de votre email",
+                    "EmailConfirmation",
+                    user.LanguageCode ?? "en",
+                    new Dictionary<string, string> { 
+                        { "Token", token }, 
+                        { "TokenValidity", tokenValidity }, 
+                        { "BaseUrl", baseUrl },
+                        { "FirstName", user.FirstName },
+                        { "LastName", user.LastName },
+                        { "Email", user.Email }
+                    }
+                );
                 return true;
-
             }
             catch (Exception ex)
             {

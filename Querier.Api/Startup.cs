@@ -221,6 +221,7 @@ namespace Querier.Api
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IDBConnectionService, DBConnectionService>();
+            services.AddScoped<IEmailTemplateService, EmailTemplateService>();
             
             // services.AddEntityFrameworkSqlServer()
             //     .AddLogging()

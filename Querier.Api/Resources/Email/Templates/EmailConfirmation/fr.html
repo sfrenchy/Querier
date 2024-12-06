@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Confirmation d'email</title>
+    $css$
+</head>
+<body>
+    <div class="email-container">
+        <div class="logo-container">
+            <img src="$BaseUrl$/images/querier_logo_no_bg_big.png" alt="Querier Logo" class="logo">
+        </div>
+        <h1>Bienvenue sur Querier</h1>
+        <p>Bonjour $FirstName$ $LastName$,</p>
+        <p>Merci de confirmer votre adresse email en cliquant sur le lien ci-dessous :</p>
+        <a href="$BaseUrl$/email_confirmation?token=$Token$&mail=$Email$" class="button">Confirmer mon email</a>
+        <p>Ce lien est valable pendant $TokenValidity$ jours.</p>
+    </div>
+</body>
+</html> 
