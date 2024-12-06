@@ -33,10 +33,10 @@ class SmtpTestFailure extends SmtpConfigurationState {
 }
 
 class SmtpConfigurationSuccessWithAuth extends SmtpConfigurationState {
-  final Map<String, dynamic> authData;
+  final Map<String, dynamic> authResponse;
 
-  SmtpConfigurationSuccessWithAuth(this.authData);
+  const SmtpConfigurationSuccessWithAuth(this.authResponse);
 
   @override
-  List<Object> get props => [authData];
+  List<Object> get props => [authResponse];
 }

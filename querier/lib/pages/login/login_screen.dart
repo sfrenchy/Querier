@@ -40,6 +40,13 @@ class LoginScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 32.0),
+                  child: Image.asset(
+                    'assets/images/querier_logo_no_bg_big.png',
+                    width: 200,
+                  ),
+                ),
                 _buildApiUrlDropdown(context, state),
                 const SizedBox(height: 24),
                 if (state.isConfigured) ...[

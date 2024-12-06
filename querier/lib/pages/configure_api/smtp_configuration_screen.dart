@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'smtp_configuration_bloc.dart';
+import 'package:querier/api/api_client.dart';
 
 class SMTPConfigurationScreen extends StatefulWidget {
   final String adminName;
@@ -41,7 +42,7 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
     return BlocProvider(
       create: (context) => SmtpConfigurationBloc(widget.apiUrl),
       child: BlocConsumer<SmtpConfigurationBloc, SmtpConfigurationState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is SmtpConfigurationSuccess) {
             Navigator.pushReplacementNamed(context, '/home');
           } else if (state is SmtpConfigurationFailure) {
@@ -55,6 +56,17 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
           } else if (state is SmtpTestFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(l10n.connectionFailed)),
+            );
+          } else if (state is SmtpConfigurationSuccessWithAuth) {
+            final token = state.authResponse['Token'];
+            final refreshToken = state.authResponse['RefreshToken'];
+
+            context.read<ApiClient>().setAuthToken(token);
+            await context.read<ApiClient>().storeRefreshToken(refreshToken);
+
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              '/home',
+              (route) => false,
             );
           }
         },
@@ -176,6 +188,10 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
                                           username: _usernameController.text,
                                           password: _passwordController.text,
                                           useSSL: _useSsl,
+                                          senderEmail:
+                                              _senderEmailController.text,
+                                          senderName:
+                                              _senderNameController.text,
                                         ),
                                       );
                                 },

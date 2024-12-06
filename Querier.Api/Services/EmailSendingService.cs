@@ -10,117 +10,88 @@ using Microsoft.Extensions.Logging;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using System.Net;
+using System.Net.Mail;
+using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 namespace Querier.Api.Services
 {
     public interface IEmailSendingService
     {
-        Task<dynamic> SendEmailAsync(SendMailParamObject ObjectRequest, List<AttachmentTypeProperty> attachments = null); // type return : SendEmailResult
+        Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = false);
+        Task<bool> SendTemplatedEmailAsync(string to, string subject, string templateName, string language, Dictionary<string, string> parameters);
     }
+
     public class SMTPEmailSendingService : IEmailSendingService
     {
-        private readonly IConfiguration _configuration;
         private readonly ILogger<SMTPEmailSendingService> _logger;
+        private readonly ISettingService _settings;
+        private readonly IEmailTemplateService _emailTemplateService;
 
-        public SMTPEmailSendingService(ILogger<SMTPEmailSendingService> logger, IConfiguration configuration)
+        public SMTPEmailSendingService(
+            ILogger<SMTPEmailSendingService> logger, 
+            ISettingService settings,
+            IEmailTemplateService emailTemplateService)
         {
             _logger = logger;
-            _configuration = configuration;
+            _settings = settings;
+            _emailTemplateService = emailTemplateService;
         }
 
-        public async Task<dynamic> SendEmailAsync(SendMailParamObject ObjectRequest, List<AttachmentTypeProperty> attachments = null)
+        public async Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = false)
         {
-            //variable come from appSettings
-            var mailCredential = _configuration.GetSection("ApplicationSettings:SMTP:SmtpCredentialMail").Get<string>();
-            var PasswordCredential = _configuration.GetSection("ApplicationSettings:SMTP:SmtpCredentialPassword").Get<string>();
-            var defaultCredentialSmtp = _configuration.GetSection("ApplicationSettings:SMTP:SmtpUseDefaultCredentials").Get<bool>();
-            var hostSmtp = _configuration.GetSection("ApplicationSettings:SMTP:SmtpHost").Get<string>();
-            var PortSmtp = _configuration.GetSection("ApplicationSettings:SMTP:SmtpPort").Get<int>();
-            var sslSmtp = _configuration.GetSection("ApplicationSettings:SMTP:SmtpEnableSsl").Get<bool>();
-            
-            string Content = ObjectRequest.bodyEmail;
-            if (ObjectRequest.bodyHtmlEmail == true)
+            try
             {
-                //fill body content
-                //! warning the propertys of ObjectRequest.VariablesFillBodyContent need to be same with key $xxx$ fill in body html content
-                var template = new Template(ObjectRequest.bodyEmail, '$', '$');
-                ParametersEmail parameters = ObjectRequest.ParameterEmailToFillContent;
-                template.Add("param", parameters);
-                Content = template.Render();
-            }
-            
-            using (var message = new MimeMessage())
-            {
-                message.From.Add(new MailboxAddress(ObjectRequest.EmailFrom, ObjectRequest.EmailFrom));
-                ObjectRequest.EmailTo.Split(';').ToList().ForEach(m => message.To.Add(new MailboxAddress(m, m)));
-                
-                message.Subject = ObjectRequest.SubjectEmail;
-                var bodyBuilder = new BodyBuilder
-                {
-                    TextBody = Content,
-                    HtmlBody = Content
-                };
-                
-                
-                if (attachments != null && attachments.Count != 0)
-                {
-                    foreach (var attachement in attachments)
-                    {
-                        bodyBuilder.Attachments.Add(attachement.fileName, attachement.contentStream, ContentType.Parse(attachement.contentType));
-                    }
-                }
-                
-                message.Body = bodyBuilder.ToMessageBody();
-                
-                string responseMessage;
-                dynamic response;
-                try
-                {
-                    using (var client = new SmtpClient())
-                    {
-                        if (sslSmtp)
-                        {
-                            // SecureSocketOptions.StartTls force a secure connection over TLS
-                            await client.ConnectAsync(hostSmtp, PortSmtp, SecureSocketOptions.StartTls);
-                        }
-                        else
-                        {
-                            await client.ConnectAsync(hostSmtp, PortSmtp);
-                        }
-                        
-                        if (defaultCredentialSmtp)
-                        {
-                            await client.AuthenticateAsync(
-                                userName: mailCredential, // the userName is the exact string "apikey" and not the API key itself.
-                                password: PasswordCredential // password is the API key
-                            );
-                        }
+                var smtpHost = await _settings.GetSettingValue("smtp:host");
+                var smtpPort = int.Parse(await _settings.GetSettingValue("smtp:port", "587"));
+                var smtpUsername = await _settings.GetSettingValue("smtp:username");
+                var smtpPassword = await _settings.GetSettingValue("smtp:password");
+                var mailFrom = await _settings.GetSettingValue("smtp:senderEmail");
+                var useSsl = bool.Parse(await _settings.GetSettingValue("smtp:useSSL", "true"));
+                var requiresAuth = bool.Parse(await _settings.GetSettingValue("smtp:requiresAuth", "false"));
 
-                        await client.SendAsync(message);
-                        await client.DisconnectAsync(true);
-                    }
-                    responseMessage = "Email was send, it's fine";
-                    response = new { success = true, message = responseMessage };
-                }
-                catch (Exception ex)
+                using var client = new SmtpClient();
+                await client.ConnectAsync(smtpHost, smtpPort, useSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
+                if (requiresAuth)
                 {
-                    Console.WriteLine(ex.ToString());
-                    responseMessage = ex.ToString();
-                    response = new { success = false, message = responseMessage };
+                    await client.AuthenticateAsync(smtpUsername, smtpPassword);
                 }
-                finally
+
+                var message = new MimeMessage
                 {
-                    //close the stream:
-                    if (attachments != null && attachments.Count != 0)
-                    {
-                        for (int i = 0; i < attachments.Count; i++)
-                        {
-                            var attachObject = attachments[i];
-                            attachObject.contentStream.Close();
-                        }
-                    }
-                }
-                return response;
+                    From = { new MailboxAddress("", mailFrom) },
+                    To = { new MailboxAddress("", to) },
+                    Subject = subject,
+                    Body = new TextPart(isHtml ? "html" : "plain") { Text = body }
+                };
+
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error sending email to {to}");
+                return false;
+            }
+        }
+
+        public async Task<bool> SendTemplatedEmailAsync(
+            string to, 
+            string subject, 
+            string templateName, 
+            string language,
+            Dictionary<string, string> parameters)
+        {
+            try
+            {
+                var body = await _emailTemplateService.GetTemplateAsync(templateName, language, parameters);
+                return await SendEmailAsync(to, subject, body, isHtml: true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error sending templated email to {to}");
+                return false;
             }
         }
     }

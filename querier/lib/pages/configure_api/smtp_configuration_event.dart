@@ -18,6 +18,8 @@ class SubmitSmtpConfigurationEvent extends SmtpConfigurationEvent {
   final String username;
   final String password;
   final bool useSSL;
+  final String senderEmail;
+  final String senderName;
 
   const SubmitSmtpConfigurationEvent({
     required this.adminName,
@@ -30,6 +32,8 @@ class SubmitSmtpConfigurationEvent extends SmtpConfigurationEvent {
     required this.username,
     required this.password,
     required this.useSSL,
+    required this.senderEmail,
+    required this.senderName,
   });
 
   @override
@@ -44,5 +48,7 @@ class SubmitSmtpConfigurationEvent extends SmtpConfigurationEvent {
         username,
         password,
         useSSL,
+        senderEmail,
+        senderName,
       ];
 }

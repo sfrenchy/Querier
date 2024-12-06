@@ -41,8 +41,9 @@ namespace Querier.Api.Services.Repositories.User
         private readonly ILogger<UserRepository> _logger;
         private readonly Models.Interfaces.IQUploadService _uploadService;
         private readonly UserManager<ApiUser> _userManager;
-
-        public UserRepository(ApiDbContext context, UserManager<ApiUser> userManager, ILogger<UserRepository> logger, IConfiguration configuration, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService)
+        private readonly ISettingService _settings;
+        private readonly IEmailTemplateService _emailTemplateService;
+        public UserRepository(ApiDbContext context, UserManager<ApiUser> userManager, IEmailTemplateService emailTemplateService, ISettingService settings, ILogger<UserRepository> logger, IConfiguration configuration, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService)
         {
             _context = context;
             _logger = logger;
@@ -51,6 +52,8 @@ namespace Querier.Api.Services.Repositories.User
             _emailSending = emailSending;
             _contextFactory = contextFactory;
             _uploadService = uploadService;
+            _settings = settings;
+            _emailTemplateService = emailTemplateService;
         }
 
         public async Task<(ApiUser user, List<string> roles)?> GetWithRoles(string id)
@@ -134,72 +137,25 @@ namespace Querier.Api.Services.Repositories.User
                     return false;
                 }
 
-                //send mail for email confirmation
-                //create mail
-
-                //get the body of the mail from the uploaderManager
-                //Get the uploadID
-                List<QUploadDefinition> result;
-                //get the name of the template html for email confirmation with the good language:
-                string EmailConfirmationTemplateName;
-                switch (user.LanguageCode)
-                {
-                    case "fr-FR":
-                        EmailConfirmationTemplateName = _configuration.GetSection("ApplicationSettings:TemplateFile:Email:Fr:EmailConfirmationTemplateName").Get<string>();
-                        break;
-                    case "en-GB":
-                        EmailConfirmationTemplateName = _configuration.GetSection("ApplicationSettings:TemplateFile:Email:En:EmailConfirmationTemplateName").Get<string>();
-                        break;
-                    case "de-DE":
-                        EmailConfirmationTemplateName = _configuration.GetSection("ApplicationSettings:TemplateFile:Email:De:EmailConfirmationTemplateName").Get<string>();
-                        break;
-                    default:
-                        EmailConfirmationTemplateName = _configuration.GetSection("ApplicationSettings:TemplateFile:Email:En:EmailConfirmationTemplateName").Get<string>();
-                        break;
-                }
-
-                using (var apidbContext = _contextFactory.CreateDbContext())
-                {
-                    result = apidbContext.QUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == EmailConfirmationTemplateName).ToList();
-                }
-
-                //GetUploadStream
-                Stream fileStream = await _uploadService.GetUploadStream(result.First().Id);
-                byte[] byteArrayFile;
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    fileStream.CopyTo(ms);
-                    byteArrayFile = ms.ToArray();
-                }
-                string bodyEmail = System.Text.Encoding.UTF8.GetString(byteArrayFile);
-
-                string emailFrom = _configuration.GetSection("ApplicationSettings:SMTP:mailFrom").Get<string>();
-                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-
-                //create ParametersEmail it will be use for fill the content of the email 
-                string tokenTimeValidity = _configuration.GetSection("ApplicationSettings:EmailConfirmationTokenValidityLifeSpanDays").Get<string>();
-                Dictionary<string, string> keyValues = new Dictionary<string, string>
-                {
-                    { "token", HttpUtility.UrlEncode(token) },
-                    { "tokenTimeValidityInDays", tokenTimeValidity }
-                };
-                ParametersEmail ParamsEmail = new ParametersEmail(_configuration, keyValues, user);
-
-                //send mail
-                SendMailParamObject mailObject = new SendMailParamObject() 
-                { 
-                    EmailTo = user.Email, 
-                    EmailFrom = emailFrom, 
-                    bodyEmail = bodyEmail, 
-                    SubjectEmail = "email confirmation", 
-                    bodyHtmlEmail = true, 
-                    CopyEmail = "",
-                    ParameterEmailToFillContent = ParamsEmail 
-                };
-                var response = await _emailSending.SendEmailAsync(mailObject);
-
+                string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                string tokenValidity = await _settings.GetSettingValue("email:confirmationTokenValidityLifeSpanDays", "2");
+                string baseUrl = await _settings.GetSettingValue("application:baseUrl", "https://localhost:5001");
+                
+                await _emailSending.SendTemplatedEmailAsync(
+                    user.Email,
+                    "Confirmation de votre email",
+                    "EmailConfirmation",
+                    user.LanguageCode ?? "en",
+                    new Dictionary<string, string> { 
+                        { "Token", token }, 
+                        { "TokenValidity", tokenValidity }, 
+                        { "BaseUrl", baseUrl },
+                        { "FirstName", user.FirstName },
+                        { "LastName", user.LastName },
+                        { "Email", user.Email }
+                    }
+                );
                 return true;
-
             }
             catch (Exception ex)
             {

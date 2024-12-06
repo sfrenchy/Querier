@@ -347,6 +347,42 @@ namespace Querier.Api.Models.Common
                 Capabilities = CapabilitiesEnum.None,
                 Tag = "facture"
             });
+
+            // Configuration de QCategoryRole
+            modelBuilder.Entity<QCategoryRole>(entity =>
+            {
+                entity.ToTable("QCategoryRole");
+                entity.HasKey(e => new { e.ApiRoleId, e.HAPageCategoryId });
+                
+                entity.HasOne<ApiRole>()
+                    .WithMany(r => r.QCategoryRoles)
+                    .HasForeignKey(cr => cr.ApiRoleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configuration de QPageRole
+            modelBuilder.Entity<QPageRole>(entity =>
+            {
+                entity.ToTable("QPageRole");
+                entity.HasKey(e => new { e.ApiRoleId, e.HAPageId });
+                
+                entity.HasOne<ApiRole>()
+                    .WithMany(r => r.QPageRoles)
+                    .HasForeignKey(cr => cr.ApiRoleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configuration de QCardRole
+            modelBuilder.Entity<QCardRole>(entity =>
+            {
+                entity.ToTable("QCardRole");
+                entity.HasKey(e => new { e.ApiRoleId, e.HAPageCardId });
+                
+                entity.HasOne<ApiRole>()
+                    .WithMany(r => r.QCardRoles)
+                    .HasForeignKey(cr => cr.ApiRoleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

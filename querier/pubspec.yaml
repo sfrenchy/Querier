@@ -103,3 +103,6 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
   generate: true  # Important pour la génération des fichiers de traduction
+
+  assets:
+    - assets/images/

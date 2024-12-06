@@ -15,6 +15,8 @@ class WizardService {
     required String smtpUsername,
     required String smtpPassword,
     required bool useSSL,
+    required senderEmail,
+    required senderName,
   }) async {
     try {
       return await _apiClient.setup(
@@ -27,6 +29,8 @@ class WizardService {
         smtpUsername: smtpUsername,
         smtpPassword: smtpPassword,
         useSSL: useSSL,
+        senderEmail: senderEmail,
+        senderName: senderName,
       );
     } catch (e) {
       throw Exception('Failed to setup: ${e.toString()}');

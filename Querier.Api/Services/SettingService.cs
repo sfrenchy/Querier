@@ -5,16 +5,19 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Querier.Api.Models;
 using Querier.Api.Models.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Querier.Api.Services
 {
     public class SettingService : ISettingService
     {
         private readonly ApiDbContext _context;
+        private readonly ILogger<SettingService> _logger;
 
-        public SettingService(ApiDbContext context)
+        public SettingService(ApiDbContext context, ILogger<SettingService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<QSetting> GetSettings()
@@ -75,6 +78,30 @@ namespace Querier.Api.Services
             await _context.SaveChangesAsync();
             
             return setting;
+        }
+
+        public async Task<string?> GetSettingValue(string name, string? defaultValue = null)
+        {
+            try
+            {
+                var setting = await _context.QSettings
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.Name == name);
+                    
+                if (setting == null && defaultValue != null)
+                {
+                    // Créer le paramètre avec la valeur par défaut
+                    setting = await CreateSetting(name, defaultValue);
+                    return setting.Value;
+                }
+
+                return setting?.Value;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting setting value for {name}");
+                return null;
+            }
         }
     } 
 } 

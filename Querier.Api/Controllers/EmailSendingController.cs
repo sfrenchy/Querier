@@ -60,8 +60,8 @@ namespace Querier.Api.Controllers
                     }
                 }
             }
-            var response = await _emailSendingService.SendEmailAsync(ObjectRequest, ListAttachment);
-            return Ok(response);
+            // var respponse = await _emailSendingService.SendEmailAsync(ObjectRequest, ListAttachment);
+            return Ok();
         }
 
         [HttpPost("SendEmailBySmtpTest")]
@@ -75,7 +75,7 @@ namespace Querier.Api.Controllers
                 SubjectEmail = "This is a test from Querier to check email settings. If you read this, it works",
                 bodyHtmlEmail = false
             };
-            return Ok(await _emailSendingService.SendEmailAsync(ObjectRequest));
+            return Ok(); //await _emailSendingService.SendEmailAsync(ObjectRequest));
         }
     }
 }
