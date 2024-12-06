@@ -28,6 +28,16 @@ class HomeScreen extends StatelessWidget {
           if (state is HomeLoaded) {
             return Scaffold(
               appBar: AppBar(
+                leading: Builder(
+                  builder: (BuildContext context) => IconButton(
+                    icon: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Image.asset(
+                          'assets/images/querier_logo_no_bg_big.png'),
+                    ),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
+                ),
                 title: Text(l10n.welcome(state.username)),
                 actions: [
                   IconButton(
