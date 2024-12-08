@@ -14,6 +14,7 @@ import 'package:querier/blocs/language_bloc.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/config.dart';
 import 'package:querier/pages/settings/roles/bloc/roles_bloc.dart';
+import 'package:querier/pages/settings/users/bloc/users_bloc.dart';
 import 'package:querier/pages/settings/users/setting_users_screen.dart';
 import 'package:querier/pages/settings/roles/setting_roles_screen.dart';
 import 'package:querier/pages/settings/services/setting_services_screen.dart';
@@ -46,6 +47,9 @@ class QuerierApp extends StatelessWidget {
         ),
         BlocProvider<RolesBloc>(
           create: (context) => RolesBloc(context.read<ApiClient>()),
+        ),
+        BlocProvider<UsersBloc>(
+          create: (context) => UsersBloc(context.read<ApiClient>()),
         ),
       ],
       child: BlocBuilder<LanguageBloc, Locale>(

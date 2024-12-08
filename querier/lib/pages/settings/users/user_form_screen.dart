@@ -65,31 +65,38 @@ class _UserFormScreenState extends State<UserFormScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final apiClient = context.read<ApiClient>();
       bool success;
-
       if (widget.userToEdit != null) {
-        success = await apiClient.updateUser(
-          widget.userToEdit!.id,
-          _emailController.text,
-          _firstNameController.text,
-          _lastNameController.text,
-          _selectedRoles,
-        );
+        success = await context.read<ApiClient>().updateUser(
+              widget.userToEdit!.id,
+              _emailController.text,
+              _firstNameController.text,
+              _lastNameController.text,
+              _selectedRoles,
+            );
       } else {
-        success = await apiClient.addUser(
-          _emailController.text,
-          _firstNameController.text,
-          _lastNameController.text,
-          '',
-          _selectedRoles,
-        );
+        success = await context.read<ApiClient>().addUser(
+              _emailController.text,
+              _firstNameController.text,
+              _lastNameController.text,
+              '',
+              _selectedRoles,
+            );
       }
 
       if (!mounted) return;
 
       if (success) {
-        Navigator.pop(context, true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.userToEdit != null
+                  ? l10n.userUpdatedSuccessfully
+                  : l10n.userAddedSuccessfully,
+            ),
+          ),
+        );
+        Navigator.pop(context, success);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.errorSavingUser)),

@@ -84,5 +84,7 @@
     "emailNotVerified": "Email not verified",
     "resendVerificationEmail": "Resend verification email",
     "confirmationEmailSent": "Confirmation email sent successfully",
-    "errorSendingEmail": "Error sending confirmation email"
+    "errorSendingEmail": "Error sending confirmation email",
+    "userAddedSuccessfully": "User added successfully",
+    "userUpdatedSuccessfully": "User updated successfully"
 } 
