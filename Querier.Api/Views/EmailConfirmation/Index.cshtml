@@ -1,48 +1,153 @@
-@{
-    ViewData["Title"] = "Confirmation d'email";
-}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Confirmation d'email</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #61baac;
+            --secondary-color: #807a70;
+            --background-color: #171821;
+            --card-background: #1E1F2B;
+            --text-color: #ffffff;
+        }
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h2 class="card-title text-center">Confirmation d'email</h2>
-                    
-                    @if (ViewData["Error"] != null)
-                    {
-                        <div class="alert alert-danger">
-                            @ViewData["Error"]
-                        </div>
-                    }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
 
-                    <form method="post">
-                        <input type="hidden" name="Token" value="@ViewData["Token"]" />
-                        <input type="hidden" name="Email" value="@ViewData["Email"]" />
-                        
-                        <div class="form-group">
-                            <label>Nouveau mot de passe</label>
-                            <input type="password" class="form-control" name="Password" required 
-                                   minlength="12" />
-                            <small class="form-text text-muted">
-                                Le mot de passe doit contenir au moins 12 caractères, incluant des majuscules,
-                                minuscules, chiffres et caractères spéciaux.
-                            </small>
-                        </div>
+        .container {
+            max-width: 600px;
+            margin: 48px auto;
+            padding: 0 16px;
+        }
 
-                        <div class="form-group mt-3">
-                            <label>Confirmer le mot de passe</label>
-                            <input type="password" class="form-control" name="ConfirmPassword" required />
-                        </div>
+        .logo {
+            width: 150px;
+            height: auto;
+            margin: 0 auto 24px;
+            display: block;
+        }
 
-                        <div class="text-center mt-4">
-                            <button type="submit" class="btn btn-primary">
-                                Confirmer mon email et définir mon mot de passe
-                            </button>
-                        </div>
-                    </form>
+        .card {
+            background-color: var(--card-background);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 24px;
+            color: var(--text-color);
+        }
+
+        .alert {
+            background-color: #CF6679;
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--primary-color);
+            border-radius: 4px;
+            background-color: var(--card-background);
+            color: var(--text-color);
+            box-sizing: border-box;
+        }
+
+        .form-text {
+            font-size: 12px;
+            color: var(--secondary-color);
+            margin-top: 4px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-4 {
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="/images/querier_logo_no_bg_big.png" alt="Querier Logo" class="logo">
+        <div class="card">
+            <h2 class="card-title">Confirmation d'email</h2>
+            
+            @if (ViewData["Error"] != null)
+            {
+                <div class="alert">
+                    @ViewData["Error"]
                 </div>
-            </div>
+            }
+
+            <form method="post">
+                <input type="hidden" name="Token" value="@ViewData["Token"]" />
+                <input type="hidden" name="Email" value="@ViewData["Email"]" />
+                
+                <div class="form-group">
+                    <label>Nouveau mot de passe</label>
+                    <input type="password" class="form-control" name="Password" required minlength="12" />
+                    <small class="form-text">
+                        Le mot de passe doit contenir au moins 12 caractères, incluant des majuscules,
+                        minuscules, chiffres et caractères spéciaux.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>Confirmer le mot de passe</label>
+                    <input type="password" class="form-control" name="ConfirmPassword" required />
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn">
+                        Confirmer mon email et définir mon mot de passe
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-</div> 
+</body>
+</html> 

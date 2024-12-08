@@ -1,19 +1,90 @@
-@{
-    ViewData["Title"] = "Email confirmé";
-}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Email confirmé</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #61baac;
+            --secondary-color: #807a70;
+            --background-color: #171821;
+            --card-background: #1E1F2B;
+            --text-color: #ffffff;
+        }
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h2 class="card-title">Email confirmé !</h2>
-                    <p class="card-text">
-                        Votre email a été confirmé et votre mot de passe a été défini avec succès.
-                    </p>
-                    <a href="/login" class="btn btn-primary">Se connecter</a>
-                </div>
-            </div>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 48px auto;
+            padding: 0 16px;
+        }
+
+        .logo {
+            width: 150px;
+            height: auto;
+            margin: 0 auto 24px;
+            display: block;
+        }
+
+        .card {
+            background-color: var(--card-background);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: var(--text-color);
+        }
+
+        .card-text {
+            margin-bottom: 24px;
+            color: var(--secondary-color);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="/images/querier_logo_no_bg_big.png" alt="Querier Logo" class="logo">
+        <div class="card">
+            <h2 class="card-title">Email confirmé !</h2>
+            <p class="card-text">
+                Votre email a été confirmé et votre mot de passe a été défini avec succès.
+            </p>
+            <a href="/login" class="btn">Se connecter</a>
         </div>
     </div>
-</div> 
+</body>
+</html> 

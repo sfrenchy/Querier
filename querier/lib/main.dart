@@ -19,6 +19,7 @@ import 'package:querier/pages/settings/roles/setting_roles_screen.dart';
 import 'package:querier/pages/settings/services/setting_services_screen.dart';
 import 'package:querier/pages/settings/users/user_form_screen.dart';
 import 'package:querier/pages/settings/roles/role_form_screen.dart';
+import 'package:querier/theme/theme.dart';
 
 void main() {
   runApp(const QuerierApp());
@@ -53,19 +54,7 @@ class QuerierApp extends StatelessWidget {
             locale: locale,
             title: 'Querier',
             debugShowCheckedModeBanner: false,
-            themeMode: ThemeMode.dark,
-            theme: ThemeData(
-              primaryColor: MaterialColor(
-                primaryColorCode,
-                <int, Color>{
-                  50: const Color(primaryColorCode).withOpacity(0.1),
-                  // autres nuances...
-                },
-              ),
-              scaffoldBackgroundColor: const Color(0xFF171821),
-              fontFamily: 'IBMPlexSans',
-              brightness: Brightness.dark,
-            ),
+            theme: QuerierTheme.darkTheme,
             home: LoginScreen(),
             routes: {
               '/home': (context) => const HomeScreen(),
