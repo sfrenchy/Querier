@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using Querier.Api.Models.Auth;
+using Querier.Api.Models.Requests;
 
 namespace Querier.Api.Controllers
 {
@@ -46,13 +47,13 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public class UserManagementController : ControllerBase
     {
-        private readonly IUserService _svc;
+        private readonly IUserService _userService;
         private readonly ILogger<UserManagementController> _logger;
         private readonly UserManager<ApiUser> _userManager;
 
         public UserManagementController(IUserService svc, ILogger<UserManagementController> logger, UserManager<ApiUser> userManager)
         {
-            _svc = svc;
+            _userService = svc;
             _logger = logger;
             _userManager = userManager;
         }
@@ -78,7 +79,7 @@ namespace Querier.Api.Controllers
             if (string.IsNullOrEmpty(id))
                 return BadRequest("Request parameter is not valid");
 
-            return Ok(await _svc.View(id));
+            return Ok(await _userService.View(id));
         }
 
         /// <summary>
@@ -106,7 +107,7 @@ namespace Querier.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest("Request body is not valid");
 
-            if (await _svc.Add(user))
+            if (await _userService.Add(user))
                 return Ok(true);
             else
                 return StatusCode(500);
@@ -135,7 +136,7 @@ namespace Querier.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest("Request body is not valid");
 
-            if (await _svc.Update(user))
+            if (await _userService.Update(user))
                 return Ok(true);
             else
                 return StatusCode(500);
@@ -159,7 +160,7 @@ namespace Querier.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest("Request is not valid");
 
-            var res = await _svc.Delete(id);
+            var res = await _userService.Delete(id);
             if (res)
                 return Ok(res);
 
@@ -189,7 +190,7 @@ namespace Querier.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest("Request is not valid");
 
-            var res = await _svc.GetAll(datatableRequest);
+            var res = await _userService.GetAll(datatableRequest);
             return Ok(res);
         }
 
@@ -210,7 +211,7 @@ namespace Querier.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest("Request is not valid");
 
-            var res = await _svc.GetAll();
+            var res = await _userService.GetAll();
             return Ok(res);
         }
 
@@ -232,7 +233,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> SendMailForForgotPassword([FromBody] SendMailForgotPassword user_mail)
         {
-            var response = await _svc.SendMailForForgotPassword(user_mail);
+            var response = await _userService.SendMailForForgotPassword(user_mail);
             return Ok(response);
         }
 
@@ -255,7 +256,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> ResetPassword([FromBody] ResetPassword reset_password_infos)
         {
-            var response = await _svc.ResetPassword(reset_password_infos);
+            var response = await _userService.ResetPassword(reset_password_infos);
             return Ok(response);
         }
 
@@ -277,7 +278,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> CheckPassword([FromBody] CheckPassword Checkpassword)
         {
-            var response = await _svc.CheckPassword(Checkpassword);
+            var response = await _userService.CheckPassword(Checkpassword);
             return Ok(response);
         }
 
@@ -296,7 +297,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> EmailConfirmation(string token, string mail)
         {            
-            var response = await _svc.EmailConfirmation(new EmailConfirmation { Email = mail, Token = token });
+            var response = await _userService.EmailConfirmation(new EmailConfirmation { Email = mail, Token = token });
             return Ok(response);
         }
 
@@ -316,34 +317,27 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Me()
         {
-            // Essayer d'abord de récupérer l'ID, puis l'email en fallback
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
-                if (string.IsNullOrEmpty(userEmail))
-                {
-                    _logger.LogWarning("No user identifier found in token");
-                    return Unauthorized();
-                }
-                // Chercher l'utilisateur par email
-                var userByEmail = await _userManager.FindByEmailAsync(userEmail);
-                if (userByEmail == null)
-                {
-                    _logger.LogWarning($"No user found with email: {userEmail}");
-                    return NotFound();
-                }
-                userId = userByEmail.Id;
-            }
-
-            var user = await _svc.View(userId);
+            var user = await _userService.GetCurrentUser(User);
             if (user == null)
             {
-                _logger.LogWarning($"No user found with ID: {userId}");
                 return NotFound();
             }
 
             return Ok(user);
+        }
+
+        [HttpPost("resend-confirmation")]
+        [Authorize]
+        public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationEmailRequest request)
+        {
+            var result = await _userService.ResendConfirmationEmail(request.UserId);
+
+            if (result)
+            {
+                return Ok();
+            }
+
+            return BadRequest("Failed to send confirmation email");
         }
     }
 }

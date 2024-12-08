@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Querier.Api.Services.User;
+using System;
 using System.Threading.Tasks;
 
 namespace Querier.Api.Controllers
@@ -16,7 +17,7 @@ namespace Querier.Api.Controllers
         [HttpGet("/email_confirmation")]
         public IActionResult Index([FromQuery] string token, [FromQuery] string mail)
         {
-            ViewData["Token"] = token;
+            ViewData["Token"] = Uri.UnescapeDataString(token);
             ViewData["Email"] = mail;
             return View();
         }
@@ -24,6 +25,8 @@ namespace Querier.Api.Controllers
         [HttpPost("/email_confirmation")]
         public async Task<IActionResult> Confirm([FromForm] EmailConfirmationRequest request)
         {
+            request.ConfirmPassword = request.Password;
+            
             var result = await _userService.ConfirmEmailAndSetPassword(request);
             if (result.Succeeded)
             {

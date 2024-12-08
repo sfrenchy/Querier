@@ -82,5 +82,7 @@
     "emailStatus": "Email Status",
     "emailVerified": "Email verified",
     "emailNotVerified": "Email not verified",
-    "resendVerificationEmail": "Resend verification email"
+    "resendVerificationEmail": "Resend verification email",
+    "confirmationEmailSent": "Confirmation email sent successfully",
+    "errorSendingEmail": "Error sending confirmation email"
 } 

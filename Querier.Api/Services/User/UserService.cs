@@ -17,24 +17,10 @@ using Microsoft.Extensions.Logging;
 using System.Web;
 using Querier.Api.Services.Repositories.User;
 using Querier.Api.Services.Role;
+using System.Security.Claims;
 
 namespace Querier.Api.Services.User
 {
-    public interface IUserService
-    {
-        public Task<UserResponse> View(string id);
-        public Task<bool> Add(UserRequest user);
-        public Task<bool> Update(UserRequest user);
-        public Task<bool> Delete(string id);
-        public Task<string> GetPasswordHash(string idUser);
-        public Task<ServerSideResponse<UserResponse>> GetAll(ServerSideRequest datatableRequest);
-        public Task<List<UserResponse>> GetAll();
-        public Task<object> SendMailForForgotPassword(SendMailForgotPassword user_mail);
-        public Task<object> ResetPassword(ResetPassword reset_password_infos);
-        public Task<object> CheckPassword(CheckPassword Checkpassword);
-        public Task<bool> EmailConfirmation(EmailConfirmation emailConfirmation);
-        public Task<(bool Succeeded, string Error)> ConfirmEmailAndSetPassword(EmailConfirmationRequest request);
-    }
     public class UserService : IUserService
     {
         private readonly IConfiguration _configuration;
@@ -46,9 +32,10 @@ namespace Querier.Api.Services.User
         private readonly Models.Interfaces.IQUploadService _uploadService;
 
         private readonly UserManager<ApiUser> _userManager;
+        private readonly ISettingService _settings;
 
         // private readonly IQPlugin _herdiaApp;
-        public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, Models.Interfaces.IQUploadService uploadService, IRoleService roleService/*, IQPlugin herdiaApp*/)
+        public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, ISettingService settings, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, Models.Interfaces.IQUploadService uploadService, IRoleService roleService/*, IQPlugin herdiaApp*/)
         {
             _repo = repo;
             _logger = logger;
@@ -58,7 +45,7 @@ namespace Querier.Api.Services.User
             _contextFactory = contextFactory;
             _uploadService = uploadService;
             _roleService = roleService;
-            // _herdiaApp = herdiaApp;
+            _settings = settings;
         }
 
         public async Task<bool> Add(UserRequest user)
@@ -311,7 +298,8 @@ namespace Querier.Api.Services.User
                     return (false, "Utilisateur non trouvé.");
                 }
 
-                var confirmResult = await _userManager.ConfirmEmailAsync(user, request.Token);
+                var decodedToken = Uri.UnescapeDataString(request.Token);
+                var confirmResult = await _userManager.ConfirmEmailAsync(user, decodedToken);
                 if (!confirmResult.Succeeded)
                 {
                     return (false, "Le lien de confirmation n'est plus valide.");
@@ -332,6 +320,81 @@ namespace Querier.Api.Services.User
                 _logger.LogError(ex, "Erreur lors de la confirmation d'email");
                 return (false, "Une erreur est survenue.");
             }
+        }
+
+        public async Task<bool> SendConfirmationEmail(ApiUser user, string token)
+        {
+            try
+            {
+                string tokenValidity = await _settings.GetSettingValue("email:confirmationTokenValidityLifeSpanDays", "2");
+                string baseUrl = await _settings.GetSettingValue("application:baseUrl", "https://localhost:5001");
+
+                var parameters = new Dictionary<string, string>
+                {
+                    { "FirstName", user.FirstName },
+                    { "LastName", user.LastName },
+                    { "Token", Uri.EscapeDataString(token) },
+                    { "Email", user.Email },
+                    { "TokenValidity", tokenValidity },
+                    { "BaseUrl", baseUrl }
+                };
+
+                return await _emailSending.SendTemplatedEmailAsync(
+                    user.Email,
+                    "Confirmation d'email",
+                    "EmailConfirmation",
+                    user.LanguageCode ?? "fr",
+                    parameters
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending confirmation email");
+                return false;
+            }
+        }
+
+        public async Task<UserResponse> GetCurrentUser(ClaimsPrincipal userClaims)
+        {
+            var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                var userEmail = userClaims.FindFirst(ClaimTypes.Email)?.Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    _logger.LogWarning("No user identifier found in token");
+                    return null;
+                }
+                
+                var userByEmail = await _userManager.FindByEmailAsync(userEmail);
+                if (userByEmail == null)
+                {
+                    _logger.LogWarning($"No user found with email: {userEmail}");
+                    return null;
+                }
+                userId = userByEmail.Id;
+            }
+
+            return await View(userId);
+        }
+
+        public async Task<bool> ResendConfirmationEmail(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogWarning($"User not found with ID: {userId}");
+                return false;
+            }
+
+            if (user.EmailConfirmed)
+            {
+                _logger.LogWarning($"Email already confirmed for user: {userId}");
+                return false;
+            }
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            return await SendConfirmationEmail(user, token);
         }
 
         private void MapToModel(UserRequest user, ApiUser updateUser)

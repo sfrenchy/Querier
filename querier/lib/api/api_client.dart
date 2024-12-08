@@ -306,4 +306,17 @@ class ApiClient {
       rethrow;
     }
   }
+
+  Future<bool> resendConfirmationEmail(String userId) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.resendConfirmationEmail),
+        data: {'userId': userId},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error resending confirmation email: $e');
+      rethrow;
+    }
+  }
 }

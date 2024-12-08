@@ -222,10 +222,47 @@ class _UserFormScreenState extends State<UserFormScreen> {
                     if (!widget.userToEdit!.isEmailConfirmed) ...[
                       const Spacer(),
                       TextButton.icon(
-                        onPressed: () {
-                          // TODO: Implémenter la logique de renvoi
-                        },
-                        icon: const Icon(Icons.send),
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                setState(() => _isLoading = true);
+                                try {
+                                  final success = await context
+                                      .read<ApiClient>()
+                                      .resendConfirmationEmail(
+                                          widget.userToEdit!.id);
+                                  if (!mounted) return;
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        success
+                                            ? l10n.confirmationEmailSent
+                                            : l10n.errorSendingEmail,
+                                      ),
+                                    ),
+                                  );
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(e.toString())),
+                                  );
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _isLoading = false);
+                                  }
+                                }
+                              },
+                        icon: _isLoading
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              )
+                            : const Icon(Icons.send),
                         label: Text(l10n.resendVerificationEmail),
                       ),
                     ],
