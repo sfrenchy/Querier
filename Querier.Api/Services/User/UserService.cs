@@ -298,10 +298,18 @@ namespace Querier.Api.Services.User
                     return (false, "Utilisateur non trouvé.");
                 }
 
-                var decodedToken = Uri.UnescapeDataString(request.Token);
+                if (user.EmailConfirmed)
+                {
+                    return (false, "Cet email est déjà confirmé.");
+                }
+
+                var decodedToken = Uri.UnescapeDataString(request.Token)
+                    .Replace(" ", "+");
+
                 var confirmResult = await _userManager.ConfirmEmailAsync(user, decodedToken);
                 if (!confirmResult.Succeeded)
                 {
+                    _logger.LogError($"Email confirmation failed for user {user.Id}. Errors: {string.Join(", ", confirmResult.Errors.Select(e => e.Description))}");
                     return (false, "Le lien de confirmation n'est plus valide.");
                 }
 
@@ -310,6 +318,7 @@ namespace Querier.Api.Services.User
 
                 if (!passwordResult.Succeeded)
                 {
+                    _logger.LogError($"Password reset failed for user {user.Id}. Errors: {string.Join(", ", passwordResult.Errors.Select(e => e.Description))}");
                     return (false, "Le mot de passe ne respecte pas les critères de sécurité.");
                 }
 
@@ -329,11 +338,13 @@ namespace Querier.Api.Services.User
                 string tokenValidity = await _settings.GetSettingValue("email:confirmationTokenValidityLifeSpanDays", "2");
                 string baseUrl = await _settings.GetSettingValue("application:baseUrl", "https://localhost:5001");
 
+                var encodedToken = Uri.EscapeDataString(token);
+
                 var parameters = new Dictionary<string, string>
                 {
                     { "FirstName", user.FirstName },
                     { "LastName", user.LastName },
-                    { "Token", Uri.EscapeDataString(token) },
+                    { "Token", encodedToken },
                     { "Email", user.Email },
                     { "TokenValidity", tokenValidity },
                     { "BaseUrl", baseUrl }
