@@ -13,7 +13,7 @@ using System.Linq;
 
 namespace Querier.Api.Services
 {
-    public class WizardService : IWizardService
+    public class WizardService : IWizardService, IDisposable
     {
         private readonly UserManager<ApiUser> _userManager;
         private readonly RoleManager<ApiRole> _roleManager;
@@ -21,6 +21,7 @@ namespace Querier.Api.Services
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         private readonly ILogger<WizardService> _logger;
+        private bool _disposed = false;
 
         public WizardService(
             UserManager<ApiUser> userManager,
@@ -41,10 +42,15 @@ namespace Querier.Api.Services
             try
             {
                 _logger.LogInformation("Acquiring setup lock...");
-                await _semaphore.WaitAsync();
+                if (!await _semaphore.WaitAsync(TimeSpan.FromMinutes(1)))
+                {
+                    return (false, "Setup lock timeout");
+                }
                 
                 try
                 {
+                    using var context = await _contextFactory.CreateDbContextAsync();
+                    
                     if (!await _roleManager.RoleExistsAsync("Admin"))
                     {
                         _logger.LogInformation("Creating Admin role...");
@@ -60,6 +66,13 @@ namespace Querier.Api.Services
                     }
 
                     _logger.LogInformation("Creating admin user with email: {Email}", request.Admin.Email);
+                    var existingUser = await _userManager.FindByEmailAsync(request.Admin.Email);
+                    if (existingUser != null)
+                    {
+                        _logger.LogWarning("User with email {Email} already exists", request.Admin.Email);
+                        return (false, "User already exists");
+                    }
+
                     var adminUser = new ApiUser
                     {
                         UserName = request.Admin.Email,
@@ -81,11 +94,11 @@ namespace Querier.Api.Services
                     var roleResult = await _userManager.AddToRoleAsync(adminUser, "Admin");
                     if (!roleResult.Succeeded)
                     {
-                        _logger.LogError("Failed to assign admin role");
-                        return (false, "Failed to assign admin role");
+                        var errors = roleResult.Errors.Select(e => $"{e.Code}: {e.Description}");
+                        _logger.LogError("Failed to assign admin role: {Errors}", string.Join(", ", errors));
+                        return (false, "Failed to assign admin role: " + string.Join(", ", errors));
                     }
 
-                    using var context = await _contextFactory.CreateDbContextAsync();
                     _logger.LogInformation("Configuring SMTP settings...");
                     var smtpSettings = new[]
                     {
@@ -134,6 +147,29 @@ namespace Querier.Api.Services
                 _semaphore.Release();
                 _logger.LogInformation("Setup lock released");
             }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _semaphore.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
+        ~WizardService()
+        {
+            Dispose(false);
         }
     }
 } 

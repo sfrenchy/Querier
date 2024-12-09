@@ -76,10 +76,11 @@ namespace Querier.Api.Models.Common
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             var SQLEngine = _configuration.GetSection("SQLEngine").Get<string>();
 
             modelBuilder.ApplyConfiguration(new QEntityAttribute.QEntityAttributeConfiguration());
-            base.OnModelCreating(modelBuilder);
 
             switch (SQLEngine)
             {
@@ -115,25 +116,25 @@ namespace Querier.Api.Models.Common
                 Description = "Indicate if the application is configured",
                 Type = "boolean"
             }); 
-            modelBuilder.Entity<ApiRole>(b =>
+
+            modelBuilder.Entity<ApiUserRole>(entity =>
             {
-                b.Property(e => e.Discriminator)
-                 .HasDefaultValue("ApiRole");
+                entity.ToTable("AspNetUserRoles");
+                
+                entity.HasOne<ApiUser>()
+                    .WithMany(u => u.UserRoles)
+                    .HasForeignKey(ur => ur.UserId)
+                    .IsRequired();
+
+                entity.HasOne<ApiRole>()
+                    .WithMany(r => r.UserRoles)
+                    .HasForeignKey(ur => ur.RoleId)
+                    .IsRequired();
             });
 
-            modelBuilder.Entity<ApiUserRole>(b =>
+            modelBuilder.Entity<IdentityUserRole<string>>(entity =>
             {
-                b.ToTable("AspNetUserRoles");
-                
-                // Supprime les colonnes supplémentaires
-
-                b.HasOne(ur => ur.User)
-                    .WithMany(u => u.UserRoles)
-                    .HasForeignKey(ur => ur.UserId);
-
-                b.HasOne(ur => ur.Role)
-                    .WithMany()
-                    .HasForeignKey(ur => ur.RoleId);
+                entity.HasKey(ur => new { ur.UserId, ur.RoleId });
             });
 
             var hasher = new PasswordHasher<ApiUser>();
