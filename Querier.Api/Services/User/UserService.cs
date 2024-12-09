@@ -458,8 +458,35 @@ namespace Querier.Api.Services.User
                 LastName = user.LastName,
                 Email = user.Email,
                 IsEmailConfirmed = user.EmailConfirmed,
+                Phone = user.Phone,
+                LanguageCode = user.LanguageCode,
+                Img = user.Img,
+                UserName = user.UserName,
+                DateFormat = user.DateFormat,
                 Roles = user.UserRoles?.Select(ur => new RoleResponse { Name = ur.Role.Name }).ToList() ?? new List<RoleResponse>()
             };
+        }
+
+        public async Task<IEnumerable<UserResponse>> GetAllAsync()
+        {
+            // Charger les utilisateurs avec leurs rôles
+            var users = await _userManager.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .ToListAsync();
+
+            var userResponses = new List<UserResponse>();
+
+            foreach (var user in users)
+            {
+                // Récupérer explicitement les rôles pour chaque utilisateur
+                var roles = await _roleService.GetRolesForUser(user.Id);
+                var userResponse = MapToVM(user);
+                userResponse.Roles = roles; // Utiliser les rôles récupérés via le roleService
+                userResponses.Add(userResponse);
+            }
+
+            return userResponses;
         }
     }
 }

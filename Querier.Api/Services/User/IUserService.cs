@@ -29,5 +29,6 @@ namespace Querier.Api.Services.User
         public Task<bool> SendConfirmationEmail(ApiUser user, string token);
         public Task<UserResponse> GetCurrentUser(ClaimsPrincipal userClaims);
         public Task<bool> ResendConfirmationEmail(string userId);
+        public Task<IEnumerable<UserResponse>> GetAllAsync();
     }
 }

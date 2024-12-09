@@ -12,6 +12,9 @@ using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using Querier.Api.Models.Auth;
 using Querier.Api.Models.Requests;
+using Querier.Api.Models.Responses.User;
+using Querier.Api.Models.Responses.Role;
+using System.Collections.Generic;
 
 namespace Querier.Api.Controllers
 {
@@ -206,13 +209,10 @@ namespace Querier.Api.Controllers
         [Route("GetAll")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult> GetAllAync()
+        public async Task<IActionResult> GetAll()
         {
-            if (!ModelState.IsValid)
-                return BadRequest("Request is not valid");
-
-            var res = await _userService.GetAll();
-            return Ok(res);
+            var users = await _userService.GetAllAsync();
+            return Ok(users);
         }
 
         /// <summary>
