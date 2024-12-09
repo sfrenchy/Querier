@@ -54,4 +54,6 @@ class ApiEndpoints {
   static const String recentQueries = '/queries/recent';
   static const String queryStats = '/queries/stats';
   static const String activity = '/queries/activity';
+  static const String resendConfirmationEmail =
+      '/usermanagement/resend-confirmation';
 }

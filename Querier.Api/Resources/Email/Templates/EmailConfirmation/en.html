@@ -3,18 +3,98 @@
 <head>
     <meta charset="utf-8">
     <title>Email confirmation</title>
-    $css$
+    <style>
+        :root {
+            --primary-color: #61baac;
+            --secondary-color: #807a70;
+            --background-color: #171821;
+            --card-background: #1E1F2B;
+            --text-color: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 48px auto;
+            padding: 20px;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            width: 150px;
+            height: auto;
+        }
+
+        .card {
+            background-color: var(--card-background);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        p {
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 20px 0;
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .footer {
+            margin-top: 24px;
+            color: var(--secondary-color);
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <div class="email-container">
         <div class="logo-container">
             <img src="$BaseUrl$/images/querier_logo_no_bg_big.png" alt="Querier Logo" class="logo">
         </div>
-        <h1>Welcome to Querier</h1>
-        <p>Hello $FirstName$ $LastName$,</p>
-        <p>Please confirm your email address by clicking the link below:</p>
-        <a href="$BaseUrl$/email_confirmation?token=$Token$&mail=$Email$" class="button">Confirm my email</a>
-        <p>This link is valid for $TokenValidity$ days.</p>
+        <div class="card">
+            <h1>Welcome to Querier</h1>
+            <p>Hello $FirstName$ $LastName$,</p>
+            <p>Please confirm your email address by clicking the link below:</p>
+            <div style="text-align: center;">
+                <a href="$BaseUrl$/email_confirmation?token=$Token$&mail=$Email$" class="button">
+                    Confirm my email
+                </a>
+            </div>
+            <div class="footer">
+                This link is valid for $TokenValidity$ days.
+            </div>
+        </div>
     </div>
 </body>
 </html> 

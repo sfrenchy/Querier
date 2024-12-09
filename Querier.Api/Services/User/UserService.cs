@@ -17,24 +17,12 @@ using Microsoft.Extensions.Logging;
 using System.Web;
 using Querier.Api.Services.Repositories.User;
 using Querier.Api.Services.Role;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using Querier.Api.Models.Responses.Role;
 
 namespace Querier.Api.Services.User
 {
-    public interface IUserService
-    {
-        public Task<UserResponse> View(string id);
-        public Task<bool> Add(UserRequest user);
-        public Task<bool> Update(UserRequest user);
-        public Task<bool> Delete(string id);
-        public Task<string> GetPasswordHash(string idUser);
-        public Task<ServerSideResponse<UserResponse>> GetAll(ServerSideRequest datatableRequest);
-        public Task<List<UserResponse>> GetAll();
-        public Task<object> SendMailForForgotPassword(SendMailForgotPassword user_mail);
-        public Task<object> ResetPassword(ResetPassword reset_password_infos);
-        public Task<object> CheckPassword(CheckPassword Checkpassword);
-        public Task<bool> EmailConfirmation(EmailConfirmation emailConfirmation);
-        public Task<(bool Succeeded, string Error)> ConfirmEmailAndSetPassword(EmailConfirmationRequest request);
-    }
     public class UserService : IUserService
     {
         private readonly IConfiguration _configuration;
@@ -46,9 +34,10 @@ namespace Querier.Api.Services.User
         private readonly Models.Interfaces.IQUploadService _uploadService;
 
         private readonly UserManager<ApiUser> _userManager;
+        private readonly ISettingService _settings;
 
         // private readonly IQPlugin _herdiaApp;
-        public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, Models.Interfaces.IQUploadService uploadService, IRoleService roleService/*, IQPlugin herdiaApp*/)
+        public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, ISettingService settings, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, Models.Interfaces.IQUploadService uploadService, IRoleService roleService/*, IQPlugin herdiaApp*/)
         {
             _repo = repo;
             _logger = logger;
@@ -58,7 +47,7 @@ namespace Querier.Api.Services.User
             _contextFactory = contextFactory;
             _uploadService = uploadService;
             _roleService = roleService;
-            // _herdiaApp = herdiaApp;
+            _settings = settings;
         }
 
         public async Task<bool> Add(UserRequest user)
@@ -75,25 +64,40 @@ namespace Querier.Api.Services.User
                 return false;
             }
             
-            return await _repo.AddRole(newUser, _roleService.UseMapToModel(user.Roles));
+            var roles = await _roleService.GetAll();
+            var selectedRoles = roles.Where(r => user.Roles.Contains(r.Name))
+                .Select(r => new ApiRole { Id = r.Id, Name = r.Name })
+                .ToArray();
+            return await _repo.AddRole(newUser, selectedRoles);
         }
 
-        public async Task<bool> Update(UserRequest user)
+        public async Task<bool> Edit(UserRequest user)
         {
             var foundUser = await _repo.GetById(user.Id);
             if (foundUser == null)
             {
-                _logger.LogError($"User with Id {user.Id} not found");
                 return false;
             }
+
             MapToModel(user, foundUser);
             if (!await _repo.Edit(foundUser))
             {
                 return false;
             }
-            //_herdiaApp.herdiaAppUserUpdated(user);
 
-            return await _repo.AddRole(foundUser, _roleService.UseMapToModel(user.Roles));
+            var roles = await _roleService.GetAll();
+            var selectedRoles = roles.Where(r => user.Roles.Contains(r.Name))
+                .Select(r => new ApiRole { Id = r.Id, Name = r.Name })
+                .ToArray();
+            
+            await _repo.RemoveRoles(foundUser);
+            
+            return await _repo.AddRole(foundUser, selectedRoles);
+        }
+
+        public async Task<bool> Update(UserRequest user)
+        {
+            return await Edit(user);
         }
 
         public async Task<bool> Delete(string id)
@@ -131,10 +135,16 @@ namespace Querier.Api.Services.User
         public async Task<List<UserResponse>> GetAll()
         {
             List<UserResponse> result = new List<UserResponse>();
-            var userList = await _repo.GetAll();
+            var userList = await _userManager.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .ToListAsync();
+
             userList.ForEach(user =>
             {
-                result.Add(MapToVM(user));
+                var vm = MapToVM(user);
+                vm.Roles = user.UserRoles?.Select(ur => new RoleResponse { Name = ur.Role.Name }).ToList() ?? new List<RoleResponse>();
+                result.Add(vm);
             });
             return result;
         }
@@ -311,9 +321,18 @@ namespace Querier.Api.Services.User
                     return (false, "Utilisateur non trouvé.");
                 }
 
-                var confirmResult = await _userManager.ConfirmEmailAsync(user, request.Token);
+                if (user.EmailConfirmed)
+                {
+                    return (false, "Cet email est déjà confirmé.");
+                }
+
+                var decodedToken = Uri.UnescapeDataString(request.Token)
+                    .Replace(" ", "+");
+
+                var confirmResult = await _userManager.ConfirmEmailAsync(user, decodedToken);
                 if (!confirmResult.Succeeded)
                 {
+                    _logger.LogError($"Email confirmation failed for user {user.Id}. Errors: {string.Join(", ", confirmResult.Errors.Select(e => e.Description))}");
                     return (false, "Le lien de confirmation n'est plus valide.");
                 }
 
@@ -322,6 +341,7 @@ namespace Querier.Api.Services.User
 
                 if (!passwordResult.Succeeded)
                 {
+                    _logger.LogError($"Password reset failed for user {user.Id}. Errors: {string.Join(", ", passwordResult.Errors.Select(e => e.Description))}");
                     return (false, "Le mot de passe ne respecte pas les critères de sécurité.");
                 }
 
@@ -332,6 +352,83 @@ namespace Querier.Api.Services.User
                 _logger.LogError(ex, "Erreur lors de la confirmation d'email");
                 return (false, "Une erreur est survenue.");
             }
+        }
+
+        public async Task<bool> SendConfirmationEmail(ApiUser user, string token)
+        {
+            try
+            {
+                string tokenValidity = await _settings.GetSettingValue("email:confirmationTokenValidityLifeSpanDays", "2");
+                string baseUrl = await _settings.GetSettingValue("application:baseUrl", "https://localhost:5001");
+
+                var encodedToken = Uri.EscapeDataString(token);
+
+                var parameters = new Dictionary<string, string>
+                {
+                    { "FirstName", user.FirstName },
+                    { "LastName", user.LastName },
+                    { "Token", encodedToken },
+                    { "Email", user.Email },
+                    { "TokenValidity", tokenValidity },
+                    { "BaseUrl", baseUrl }
+                };
+
+                return await _emailSending.SendTemplatedEmailAsync(
+                    user.Email,
+                    "Confirmation d'email",
+                    "EmailConfirmation",
+                    user.LanguageCode ?? "fr",
+                    parameters
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending confirmation email");
+                return false;
+            }
+        }
+
+        public async Task<UserResponse> GetCurrentUser(ClaimsPrincipal userClaims)
+        {
+            var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                var userEmail = userClaims.FindFirst(ClaimTypes.Email)?.Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    _logger.LogWarning("No user identifier found in token");
+                    return null;
+                }
+                
+                var userByEmail = await _userManager.FindByEmailAsync(userEmail);
+                if (userByEmail == null)
+                {
+                    _logger.LogWarning($"No user found with email: {userEmail}");
+                    return null;
+                }
+                userId = userByEmail.Id;
+            }
+
+            return await View(userId);
+        }
+
+        public async Task<bool> ResendConfirmationEmail(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogWarning($"User not found with ID: {userId}");
+                return false;
+            }
+
+            if (user.EmailConfirmed)
+            {
+                _logger.LogWarning($"Email already confirmed for user: {userId}");
+                return false;
+            }
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            return await SendConfirmationEmail(user, token);
         }
 
         private void MapToModel(UserRequest user, ApiUser updateUser)
@@ -360,13 +457,36 @@ namespace Querier.Api.Services.User
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
+                IsEmailConfirmed = user.EmailConfirmed,
                 Phone = user.Phone,
                 LanguageCode = user.LanguageCode,
                 Img = user.Img,
-                DateFormat = user.DateFormat,
                 UserName = user.UserName,
-                IsEmailConfirmed = user.EmailConfirmed
+                DateFormat = user.DateFormat,
+                Roles = user.UserRoles?.Select(ur => new RoleResponse { Name = ur.Role.Name }).ToList() ?? new List<RoleResponse>()
             };
+        }
+
+        public async Task<IEnumerable<UserResponse>> GetAllAsync()
+        {
+            // Charger les utilisateurs avec leurs rôles
+            var users = await _userManager.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .ToListAsync();
+
+            var userResponses = new List<UserResponse>();
+
+            foreach (var user in users)
+            {
+                // Récupérer explicitement les rôles pour chaque utilisateur
+                var roles = await _roleService.GetRolesForUser(user.Id);
+                var userResponse = MapToVM(user);
+                userResponse.Roles = roles; // Utiliser les rôles récupérés via le roleService
+                userResponses.Add(userResponse);
+            }
+
+            return userResponses;
         }
     }
 }

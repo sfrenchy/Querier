@@ -3,13 +3,21 @@ using System.Collections.Generic;
 
 namespace Querier.Api.Models.Auth
 {
-    public class ApiRole: IdentityRole
+    public class ApiRole : IdentityRole
     {
-        public ApiRole(): base() {}
-        public ApiRole(string name): base(name) {}
+        public ApiRole() : base()
+        {
+            UserRoles = new HashSet<ApiUserRole>();
+        }
 
-        public virtual List<QCategoryRole> QCategoryRoles { get; set; }
-        public virtual List<QCardRole> QCardRoles { get; set; }
-        public virtual List<QPageRole> QPageRoles { get; set; }
+        public ApiRole(string roleName) : base(roleName)
+        {
+            UserRoles = new HashSet<ApiUserRole>();
+        }
+
+        public virtual ICollection<ApiUserRole> UserRoles { get; set; }
+        public virtual ICollection<QCategoryRole> QCategoryRoles { get; set; }
+        public virtual ICollection<QPageRole> QPageRoles { get; set; }
+        public virtual ICollection<QCardRole> QCardRoles { get; set; }
     }
 }

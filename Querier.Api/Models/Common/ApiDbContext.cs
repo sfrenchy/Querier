@@ -48,7 +48,8 @@ namespace Querier.Api.Models.Common
         // public virtual DbSet<UserNotification> Notifications { get; set; }
         public virtual DbSet<QEntityAttribute> QEntityAttribute { get; set; }
         public virtual DbSet<QUploadDefinition> QUploadDefinitions { get; set; }
-
+        public DbSet<ApiRole> ApiRoles { get; set; }
+        public DbSet<ApiUserRole> ApiUserRoles { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 
@@ -75,10 +76,11 @@ namespace Querier.Api.Models.Common
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             var SQLEngine = _configuration.GetSection("SQLEngine").Get<string>();
 
             modelBuilder.ApplyConfiguration(new QEntityAttribute.QEntityAttributeConfiguration());
-            base.OnModelCreating(modelBuilder);
 
             switch (SQLEngine)
             {
@@ -114,6 +116,26 @@ namespace Querier.Api.Models.Common
                 Description = "Indicate if the application is configured",
                 Type = "boolean"
             }); 
+
+            modelBuilder.Entity<ApiUserRole>(entity =>
+            {
+                entity.ToTable("AspNetUserRoles");
+                
+                entity.HasOne<ApiUser>()
+                    .WithMany(u => u.UserRoles)
+                    .HasForeignKey(ur => ur.UserId)
+                    .IsRequired();
+
+                entity.HasOne<ApiRole>()
+                    .WithMany(r => r.UserRoles)
+                    .HasForeignKey(ur => ur.RoleId)
+                    .IsRequired();
+            });
+
+            modelBuilder.Entity<IdentityUserRole<string>>(entity =>
+            {
+                entity.HasKey(ur => new { ur.UserId, ur.RoleId });
+            });
 
             var hasher = new PasswordHasher<ApiUser>();
 
@@ -386,3 +408,4 @@ namespace Querier.Api.Models.Common
         }
     }
 }
+ 

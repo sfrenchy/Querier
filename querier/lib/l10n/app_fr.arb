@@ -82,5 +82,9 @@
     "emailStatus": "Statut Email",
     "emailVerified": "Email vérifié",
     "emailNotVerified": "Email non vérifié",
-    "resendVerificationEmail": "Renvoyer l'email de vérification"
+    "resendVerificationEmail": "Renvoyer l'email de vérification",
+    "confirmationEmailSent": "Email de confirmation envoyé avec succès",
+    "errorSendingEmail": "Erreur lors de l'envoi de l'email de confirmation",
+    "userAddedSuccessfully": "Utilisateur ajouté avec succès",
+    "userUpdatedSuccessfully": "Utilisateur mis à jour avec succès"
 } 

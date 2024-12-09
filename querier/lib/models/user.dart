@@ -1,22 +1,20 @@
+import 'package:querier/models/role.dart';
+
 class User {
   final String id;
   final String email;
   final String firstName;
   final String lastName;
-  final String userName;
-  final List<String> roles;
-  final List<String> selectedRoles;
   final bool isEmailConfirmed;
+  final List<Role> roles;
 
   User({
     required this.id,
     required this.email,
     required this.firstName,
     required this.lastName,
-    required this.userName,
-    required this.roles,
-    this.selectedRoles = const [],
     required this.isEmailConfirmed,
+    required this.roles,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -25,10 +23,14 @@ class User {
       email: json['Email'] ?? '',
       firstName: json['FirstName'] ?? '',
       lastName: json['LastName'] ?? '',
-      userName: json['UserName'] ?? '',
-      roles: List<String>.from(json['Roles'] ?? []),
-      selectedRoles: List<String>.from(json['Roles'] ?? []),
       isEmailConfirmed: json['IsEmailConfirmed'] ?? false,
+      roles: (json['Roles'] as List<dynamic>? ?? []).map((r) {
+        if (r is String) {
+          return Role(id: '', name: r);
+        } else {
+          return Role.fromJson(r as Map<String, dynamic>);
+        }
+      }).toList(),
     );
   }
 }

@@ -33,7 +33,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
       _emailController.text = widget.userToEdit!.email;
       _firstNameController.text = widget.userToEdit!.firstName;
       _lastNameController.text = widget.userToEdit!.lastName;
-      _selectedRoles = widget.userToEdit!.selectedRoles;
+      _selectedRoles = widget.userToEdit!.roles.map((r) => r.name).toList();
     }
   }
 
@@ -45,7 +45,11 @@ class _UserFormScreenState extends State<UserFormScreen> {
         _isLoadingRoles = false;
       });
     } catch (e) {
-      // Gérer l'erreur
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
       setState(() => _isLoadingRoles = false);
     }
   }
@@ -65,31 +69,38 @@ class _UserFormScreenState extends State<UserFormScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final apiClient = context.read<ApiClient>();
       bool success;
-
       if (widget.userToEdit != null) {
-        success = await apiClient.updateUser(
-          widget.userToEdit!.id,
-          _emailController.text,
-          _firstNameController.text,
-          _lastNameController.text,
-          _selectedRoles,
-        );
+        success = await context.read<ApiClient>().updateUser(
+              widget.userToEdit!.id,
+              _emailController.text,
+              _firstNameController.text,
+              _lastNameController.text,
+              _selectedRoles,
+            );
       } else {
-        success = await apiClient.addUser(
-          _emailController.text,
-          _firstNameController.text,
-          _lastNameController.text,
-          '',
-          _selectedRoles,
-        );
+        success = await context.read<ApiClient>().addUser(
+              _emailController.text,
+              _firstNameController.text,
+              _lastNameController.text,
+              '',
+              _selectedRoles,
+            );
       }
 
       if (!mounted) return;
 
       if (success) {
-        Navigator.pop(context, true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.userToEdit != null
+                  ? l10n.userUpdatedSuccessfully
+                  : l10n.userAddedSuccessfully,
+            ),
+          ),
+        );
+        Navigator.pop(context, success);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.errorSavingUser)),
@@ -222,10 +233,47 @@ class _UserFormScreenState extends State<UserFormScreen> {
                     if (!widget.userToEdit!.isEmailConfirmed) ...[
                       const Spacer(),
                       TextButton.icon(
-                        onPressed: () {
-                          // TODO: Implémenter la logique de renvoi
-                        },
-                        icon: const Icon(Icons.send),
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                setState(() => _isLoading = true);
+                                try {
+                                  final success = await context
+                                      .read<ApiClient>()
+                                      .resendConfirmationEmail(
+                                          widget.userToEdit!.id);
+                                  if (!mounted) return;
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        success
+                                            ? l10n.confirmationEmailSent
+                                            : l10n.errorSendingEmail,
+                                      ),
+                                    ),
+                                  );
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(e.toString())),
+                                  );
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _isLoading = false);
+                                  }
+                                }
+                              },
+                        icon: _isLoading
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              )
+                            : const Icon(Icons.send),
                         label: Text(l10n.resendVerificationEmail),
                       ),
                     ],
@@ -276,13 +324,17 @@ class _UserFormScreenState extends State<UserFormScreen> {
                       ),
                       ...(_availableRoles.map((role) => CheckboxListTile(
                             title: Text(role.name),
-                            value: _selectedRoles.contains(role.name),
+                            value: _selectedRoles
+                                .map((r) => r.toLowerCase())
+                                .contains(role.name.toLowerCase()),
                             onChanged: (bool? value) {
                               setState(() {
                                 if (value == true) {
                                   _selectedRoles.add(role.name);
                                 } else {
-                                  _selectedRoles.remove(role.name);
+                                  _selectedRoles.removeWhere((r) =>
+                                      r.toLowerCase() ==
+                                      role.name.toLowerCase());
                                 }
                               });
                             },
