@@ -38,6 +38,7 @@ namespace Querier.Api.Controllers
         public async Task<IActionResult> Setup([FromBody] SetupRequest request)
         {
             _logger.LogInformation("Starting setup process...");
+            _logger.LogInformation("Request data: {@Request}", request);
             
             var isConfigured = await _settingService.GetIsConfigured();
             if (isConfigured)
@@ -51,7 +52,8 @@ namespace Querier.Api.Controllers
             
             if (!result.Success)
             {
-                _logger.LogError("Setup failed: {Error}", result.Error);
+                _logger.LogError("Setup failed with error: {Error}", result.Error);
+                _logger.LogError("Request validation state: {@ModelState}", ModelState);
                 return UnprocessableEntity(result.Error);
             }
 

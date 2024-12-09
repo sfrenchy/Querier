@@ -33,7 +33,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
       _emailController.text = widget.userToEdit!.email;
       _firstNameController.text = widget.userToEdit!.firstName;
       _lastNameController.text = widget.userToEdit!.lastName;
-      _selectedRoles = widget.userToEdit!.selectedRoles;
+      _selectedRoles = widget.userToEdit!.roles.map((r) => r.name).toList();
     }
   }
 
@@ -45,7 +45,11 @@ class _UserFormScreenState extends State<UserFormScreen> {
         _isLoadingRoles = false;
       });
     } catch (e) {
-      // Gérer l'erreur
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
       setState(() => _isLoadingRoles = false);
     }
   }
@@ -320,13 +324,17 @@ class _UserFormScreenState extends State<UserFormScreen> {
                       ),
                       ...(_availableRoles.map((role) => CheckboxListTile(
                             title: Text(role.name),
-                            value: _selectedRoles.contains(role.name),
+                            value: _selectedRoles
+                                .map((r) => r.toLowerCase())
+                                .contains(role.name.toLowerCase()),
                             onChanged: (bool? value) {
                               setState(() {
                                 if (value == true) {
                                   _selectedRoles.add(role.name);
                                 } else {
-                                  _selectedRoles.remove(role.name);
+                                  _selectedRoles.removeWhere((r) =>
+                                      r.toLowerCase() ==
+                                      role.name.toLowerCase());
                                 }
                               });
                             },

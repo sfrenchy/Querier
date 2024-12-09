@@ -18,6 +18,8 @@ using System.Web;
 using Querier.Api.Services.Repositories.User;
 using Querier.Api.Services.Role;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using Querier.Api.Models.Responses.Role;
 
 namespace Querier.Api.Services.User
 {
@@ -62,25 +64,40 @@ namespace Querier.Api.Services.User
                 return false;
             }
             
-            return await _repo.AddRole(newUser, _roleService.UseMapToModel(user.Roles));
+            var roles = await _roleService.GetAll();
+            var selectedRoles = roles.Where(r => user.Roles.Contains(r.Name))
+                .Select(r => new ApiRole { Id = r.Id, Name = r.Name })
+                .ToArray();
+            return await _repo.AddRole(newUser, selectedRoles);
         }
 
-        public async Task<bool> Update(UserRequest user)
+        public async Task<bool> Edit(UserRequest user)
         {
             var foundUser = await _repo.GetById(user.Id);
             if (foundUser == null)
             {
-                _logger.LogError($"User with Id {user.Id} not found");
                 return false;
             }
+
             MapToModel(user, foundUser);
             if (!await _repo.Edit(foundUser))
             {
                 return false;
             }
-            //_herdiaApp.herdiaAppUserUpdated(user);
 
-            return await _repo.AddRole(foundUser, _roleService.UseMapToModel(user.Roles));
+            var roles = await _roleService.GetAll();
+            var selectedRoles = roles.Where(r => user.Roles.Contains(r.Name))
+                .Select(r => new ApiRole { Id = r.Id, Name = r.Name })
+                .ToArray();
+            
+            await _repo.RemoveRoles(foundUser);
+            
+            return await _repo.AddRole(foundUser, selectedRoles);
+        }
+
+        public async Task<bool> Update(UserRequest user)
+        {
+            return await Edit(user);
         }
 
         public async Task<bool> Delete(string id)
@@ -118,10 +135,16 @@ namespace Querier.Api.Services.User
         public async Task<List<UserResponse>> GetAll()
         {
             List<UserResponse> result = new List<UserResponse>();
-            var userList = await _repo.GetAll();
+            var userList = await _userManager.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .ToListAsync();
+
             userList.ForEach(user =>
             {
-                result.Add(MapToVM(user));
+                var vm = MapToVM(user);
+                vm.Roles = user.UserRoles?.Select(ur => new RoleResponse { Name = ur.Role.Name }).ToList() ?? new List<RoleResponse>();
+                result.Add(vm);
             });
             return result;
         }
@@ -434,12 +457,8 @@ namespace Querier.Api.Services.User
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                Phone = user.Phone,
-                LanguageCode = user.LanguageCode,
-                Img = user.Img,
-                DateFormat = user.DateFormat,
-                UserName = user.UserName,
-                IsEmailConfirmed = user.EmailConfirmed
+                IsEmailConfirmed = user.EmailConfirmed,
+                Roles = user.UserRoles?.Select(ur => new RoleResponse { Name = ur.Role.Name }).ToList() ?? new List<RoleResponse>()
             };
         }
     }

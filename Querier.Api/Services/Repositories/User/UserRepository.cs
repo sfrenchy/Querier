@@ -30,6 +30,7 @@ namespace Querier.Api.Services.Repositories.User
         Task<ApiUserList> GetAll(ServerSideRequest datatableRequest);
         Task<List<ApiUser>> GetAll();
         Task<bool> AddRole(ApiUser user, ApiRole[] role);
+        Task<bool> RemoveRoles(ApiUser user);
     }
 
     public class UserRepository : IUserRepository
@@ -265,6 +266,21 @@ namespace Querier.Api.Services.Repositories.User
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message, null);
+                return false;
+            }
+        }
+
+        public async Task<bool> RemoveRoles(ApiUser user)
+        {
+            try
+            {
+                var userRoles = await _userManager.GetRolesAsync(user);
+                await _userManager.RemoveFromRolesAsync(user, userRoles);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error removing roles for user {user.Id}");
                 return false;
             }
         }

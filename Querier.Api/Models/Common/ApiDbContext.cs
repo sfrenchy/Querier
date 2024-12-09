@@ -48,7 +48,8 @@ namespace Querier.Api.Models.Common
         // public virtual DbSet<UserNotification> Notifications { get; set; }
         public virtual DbSet<QEntityAttribute> QEntityAttribute { get; set; }
         public virtual DbSet<QUploadDefinition> QUploadDefinitions { get; set; }
-
+        public DbSet<ApiRole> ApiRoles { get; set; }
+        public DbSet<ApiUserRole> ApiUserRoles { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 
@@ -114,6 +115,26 @@ namespace Querier.Api.Models.Common
                 Description = "Indicate if the application is configured",
                 Type = "boolean"
             }); 
+            modelBuilder.Entity<ApiRole>(b =>
+            {
+                b.Property(e => e.Discriminator)
+                 .HasDefaultValue("ApiRole");
+            });
+
+            modelBuilder.Entity<ApiUserRole>(b =>
+            {
+                b.ToTable("AspNetUserRoles");
+                
+                // Supprime les colonnes supplémentaires
+
+                b.HasOne(ur => ur.User)
+                    .WithMany(u => u.UserRoles)
+                    .HasForeignKey(ur => ur.UserId);
+
+                b.HasOne(ur => ur.Role)
+                    .WithMany()
+                    .HasForeignKey(ur => ur.RoleId);
+            });
 
             var hasher = new PasswordHasher<ApiUser>();
 
@@ -386,3 +407,4 @@ namespace Querier.Api.Models.Common
         }
     }
 }
+ 

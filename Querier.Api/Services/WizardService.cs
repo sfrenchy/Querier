@@ -48,7 +48,11 @@ namespace Querier.Api.Services
                     if (!await _roleManager.RoleExistsAsync("Admin"))
                     {
                         _logger.LogInformation("Creating Admin role...");
-                        var createRoleResult = await _roleManager.CreateAsync(new ApiRole { Name = "Admin" });
+                        var adminRole = new ApiRole { 
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        };
+                        var createRoleResult = await _roleManager.CreateAsync(adminRole);
                         if (!createRoleResult.Succeeded)
                         {
                             return (false, "Failed to create Admin role");
@@ -89,7 +93,7 @@ namespace Querier.Api.Services
                         new QSetting { Name = "smtp:port", Value = request.Smtp.Port.ToString() },
                         new QSetting { Name = "smtp:username", Value = request.Smtp.Username },
                         new QSetting { Name = "smtp:password", Value = request.Smtp.Password },
-                        new QSetting { Name = "smtp:useSSL", Value = request.Smtp.UseSSL.ToString() },
+                        new QSetting { Name = "smtp:useSSL", Value = request.Smtp.useSSL.ToString() },
                         new QSetting { Name = "smtp:senderEmail", Value = request.Smtp.SenderEmail },
                         new QSetting { Name = "smtp:senderName", Value = request.Smtp.SenderName }
                     };

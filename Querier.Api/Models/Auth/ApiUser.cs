@@ -18,6 +18,7 @@ namespace Querier.Api.Models.Auth
         public string Img { get; set; }
         public string DateFormat { get; set; }
         public virtual List<QApiUserAttributes> QApiUserAttributes { get; set; }
+        public virtual ICollection<ApiUserRole> UserRoles { get; set; } = new List<ApiUserRole>();
     }
 
     public partial class QApiUserAttributes
@@ -88,5 +89,11 @@ namespace Querier.Api.Models.Auth
                 builder.Property(p => p.DateTimeAttribute);
             }
         }
+    }
+
+    public class ApiUserRole : IdentityUserRole<string>
+    {
+        public virtual ApiUser User { get; set; }
+        public virtual ApiRole Role { get; set; }
     }
 }
