@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/api/api_client.dart';
+import 'package:querier/widgets/app_drawer.dart';
+import 'package:querier/widgets/user_avatar.dart';
 import 'bloc/home_bloc.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -33,72 +35,26 @@ class HomeScreen extends StatelessWidget {
                     icon: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Image.asset(
-                          'assets/images/querier_logo_no_bg_big.png'),
+                        'assets/images/querier_logo_no_bg_big.png',
+                        width: 40,
+                        height: 40,
+                      ),
                     ),
                     onPressed: () => Scaffold.of(context).openDrawer(),
                   ),
                 ),
-                title: Text(l10n.welcome(state.username)),
                 actions: [
-                  IconButton(
-                    icon: const Icon(Icons.logout),
-                    tooltip: l10n.logout,
-                    onPressed: () {
-                      context.read<HomeBloc>().add(LogoutRequested());
-                      Navigator.pushReplacementNamed(context, '/login');
-                    },
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: UserAvatar(
+                      firstName: state.firstName,
+                      lastName: state.lastName,
+                      onTap: () => Navigator.pushNamed(context, '/profile'),
+                    ),
                   ),
                 ],
               ),
-              drawer: Drawer(
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    DrawerHeader(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      child: Text(
-                        l10n.settings,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                        ),
-                      ),
-                    ),
-                    ExpansionTile(
-                      leading: const Icon(Icons.settings),
-                      title: Text(l10n.settings),
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.people),
-                          title: Text(l10n.users),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.pushNamed(context, '/users');
-                          },
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.security),
-                          title: Text(l10n.roles),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.pushNamed(context, '/roles');
-                          },
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.miscellaneous_services),
-                          title: Text(l10n.services),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.pushNamed(context, '/services');
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              drawer: const AppDrawer(),
               body: RefreshIndicator(
                 onRefresh: () async {
                   context.read<HomeBloc>().add(RefreshDashboard());

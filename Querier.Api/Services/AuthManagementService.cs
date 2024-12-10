@@ -16,6 +16,7 @@ using Querier.Api.Tools;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Text.Json;
 
 namespace Querier.Api.Services
 {

@@ -6,11 +6,17 @@ import 'package:querier/pages/add_api/add_api_screen.dart';
 import 'package:querier/pages/configure_api/admin_configuration_screen.dart';
 import 'login_bloc.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  LoginScreen({super.key});
+  bool _showPassword = false;
 
   @override
   Widget build(BuildContext context) {
@@ -138,8 +144,18 @@ class LoginScreen extends StatelessWidget {
         labelText: l10n.password,
         border: OutlineInputBorder(),
         prefixIcon: Icon(Icons.lock),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _showPassword ? Icons.visibility_off : Icons.visibility,
+          ),
+          onPressed: () {
+            setState(() {
+              _showPassword = !_showPassword;
+            });
+          },
+        ),
       ),
-      obscureText: true,
+      obscureText: !_showPassword,
       textInputAction: TextInputAction.done,
     );
   }

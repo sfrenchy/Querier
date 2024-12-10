@@ -21,6 +21,8 @@ import 'package:querier/pages/settings/services/setting_services_screen.dart';
 import 'package:querier/pages/settings/users/user_form_screen.dart';
 import 'package:querier/pages/settings/roles/role_form_screen.dart';
 import 'package:querier/theme/theme.dart';
+import 'package:querier/providers/auth_provider.dart';
+import 'package:querier/pages/profile/profile_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -35,12 +37,16 @@ class QuerierApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        ChangeNotifierProvider(
+          create: (context) => AuthProvider(
+              ApiClient(Config.apiBaseUrl, navigatorKey.currentState!)),
+        ),
         Provider<ApiClient>(
           create: (context) =>
               ApiClient(Config.apiBaseUrl, navigatorKey.currentState!),
         ),
         BlocProvider<LoginBloc>(
-          create: (context) => LoginBloc(context.read<ApiClient>()),
+          create: (context) => LoginBloc(context.read<ApiClient>(), context),
         ),
         BlocProvider<AddApiBloc>(
           create: (context) => AddApiBloc(),
@@ -66,6 +72,7 @@ class QuerierApp extends StatelessWidget {
             routes: {
               '/home': (context) => const HomeScreen(),
               '/login': (context) => LoginScreen(),
+              '/profile': (context) => const ProfileScreen(),
               '/users': (context) => const SettingUsersScreen(),
               '/roles': (context) => const SettingRolesScreen(),
               '/services': (context) => const SettingServicesScreen(),
