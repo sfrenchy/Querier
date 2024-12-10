@@ -118,22 +118,5 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="EmailConfirmation.de" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Email\EmailConfirmation.de.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-  </data>
-  <data name="EmailConfirmation.en" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Email\EmailConfirmation.en.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-  </data>
-  <data name="EmailConfirmation.fr" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Email\EmailConfirmation.fr.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-  </data>
-  <data name="EmailResetPassword.de" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Email\EmailResetPassword.de.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-  </data>
-  <data name="EmailResetPassword.en" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Email\EmailResetPassword.en.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-  </data>
-  <data name="EmailResetPassword.fr" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Email\EmailResetPassword.fr.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-  </data>
+  
 </root>

@@ -2,7 +2,7 @@ using $nameSpace$.ProcedureResultSets;
 using $nameSpace$.ProcedureParameters;
 using Microsoft.Data.SqlClient;
 using System.ComponentModel;
-using Querier.Tools.DynamicContextExtensions;
+using Querier.Api.Tools; //using Querier.Tools.DynamicContextExtensions;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;

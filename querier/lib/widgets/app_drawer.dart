@@ -50,6 +50,16 @@ class AppDrawer extends StatelessWidget {
               Navigator.pushReplacementNamed(context, '/home');
             },
           ),
+          if (authProvider.userRoles.contains('Admin') ||
+              authProvider.userRoles.contains('DB Connection Manager')) ...[
+            ListTile(
+              leading: const Icon(Icons.storage),
+              title: Text(l10n.databases),
+              onTap: () {
+                Navigator.pushNamed(context, '/databases');
+              },
+            ),
+          ],
           if (isAdmin) ...[
             ExpansionTile(
               leading: const Icon(Icons.settings),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:querier/const.dart';
+import 'package:querier/models/db_connection.dart';
 import 'package:querier/models/role.dart';
 import 'package:querier/models/user.dart';
 import 'package:querier/pages/home/home_screen.dart';
@@ -23,6 +24,9 @@ import 'package:querier/pages/settings/roles/role_form_screen.dart';
 import 'package:querier/theme/theme.dart';
 import 'package:querier/providers/auth_provider.dart';
 import 'package:querier/pages/profile/profile_screen.dart';
+import 'package:querier/pages/databases/databases_screen.dart';
+import 'package:querier/pages/databases/database_form_screen.dart';
+import 'package:querier/pages/databases/database_details_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -85,6 +89,17 @@ class QuerierApp extends StatelessWidget {
                 final role =
                     ModalRoute.of(context)?.settings.arguments as Role?;
                 return RoleFormScreen(roleToEdit: role);
+              },
+              '/databases': (context) => const DatabasesScreen(),
+              '/databases/form': (context) {
+                final connection =
+                    ModalRoute.of(context)?.settings.arguments as DBConnection?;
+                return DatabaseFormScreen(connectionToEdit: connection);
+              },
+              '/databases/details': (context) {
+                final connection =
+                    ModalRoute.of(context)?.settings.arguments as DBConnection;
+                return DatabaseDetailsScreen(connection: connection);
               },
             },
             localizationsDelegates: const [
