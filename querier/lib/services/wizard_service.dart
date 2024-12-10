@@ -1,9 +1,11 @@
 import 'package:querier/api/api_client.dart';
+import 'package:flutter/material.dart';
 
 class WizardService {
   final ApiClient _apiClient;
 
-  WizardService(String baseUrl) : _apiClient = ApiClient(baseUrl);
+  WizardService(String baseUrl, NavigatorState navigator)
+      : _apiClient = ApiClient(baseUrl, navigator);
 
   Future<bool> setup({
     required String name,

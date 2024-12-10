@@ -45,30 +45,38 @@ namespace Querier.Api
     public class Startup
     {
         private readonly IConfiguration _configuration;
-        private readonly IWebHostEnvironment _environment;
-        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public Startup(IConfiguration configuration, IWebHostEnvironment webHostEnvironment, IWebHostEnvironment hostEnvironment)
+        public Startup(IConfiguration configuration)
         {
-            _webHostEnvironment = webHostEnvironment;
             _configuration = configuration;
-            _environment = hostEnvironment;
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public async void ConfigureServices(IServiceCollection services)
         {
-            var clientId = _configuration.GetSection("GoogleAuthSettings:ClientID").Get<string>();
-            var clientSecret = _configuration.GetSection("GoogleAuthSettings:ClientSecret").Get<string>();
-            
             services.AddSingleton(services);
             services.AddHttpContextAccessor();
             services.AddMemoryCache();
             services.AddDistributedMemoryCache();
+
+            // Configurer Redis avec les valeurs par défaut pour le moment
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = _configuration["RedisCacheUrl"];
+                options.Configuration = "localhost:6379";
             });
+
+            // ... configuration de la base de données ...
+            switch (_configuration["SQLEngine"])
+            {
+                case "SQLite":
+                    services.AddDbContext<ApiDbContext>();
+                    services.AddDbContextFactory<ApiDbContext>();
+                    break;
+                // ... autres cas ...
+            }
+
+            // Ajouter ISettingService après la configuration de la base de données
+            services.AddScoped<ISettingService, SettingService>();
 
             services.AddSwaggerGen(c =>
             {
@@ -155,15 +163,29 @@ namespace Querier.Api
             }
             
             services.Configure<JwtConfig>(_configuration.GetSection("JwtConfig"));
-            services.Configure<IdentityOptions>(options =>
+            services.Configure<IdentityOptions>(async options =>
             {
-                options.Password.RequireDigit = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireDigit").Get<bool>();
-                options.Password.RequireLowercase = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireLowercase").Get<bool>();
-                options.Password.RequireNonAlphanumeric = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireNonAlphanumeric").Get<bool>();
-                options.Password.RequireUppercase = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireUppercase").Get<bool>();
-                options.Password.RequiredLength = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequiredLength").Get<int>();
-                options.Password.RequiredUniqueChars = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequiredUniqueChars").Get<int>();
-                options.Tokens.EmailConfirmationTokenProvider = "emailconfirmation";
+                using (var serviceProvider = services.BuildServiceProvider())
+                {
+                    var settingService = serviceProvider.GetRequiredService<ISettingService>();
+                    
+                    // Récupérer les règles de mot de passe depuis la BDD
+                    var requireDigit = await settingService.GetSettingValue("api:password:requireDigit", "true");
+                    var requireLowercase = await settingService.GetSettingValue("api:password:requireLowercase", "true");
+                    var requireNonAlphanumeric = await settingService.GetSettingValue("api:password:requireNonAlphanumeric", "true");
+                    var requireUppercase = await settingService.GetSettingValue("api:password:requireUppercase", "true");
+                    var requiredLength = await settingService.GetSettingValue("api:password:requiredLength", "12");
+                    var requiredUniqueChars = await settingService.GetSettingValue("api:password:requiredUniqueChars", "1");
+
+                    // Appliquer les règles
+                    options.Password.RequireDigit = bool.Parse(requireDigit);
+                    options.Password.RequireLowercase = bool.Parse(requireLowercase);
+                    options.Password.RequireNonAlphanumeric = bool.Parse(requireNonAlphanumeric);
+                    options.Password.RequireUppercase = bool.Parse(requireUppercase);
+                    options.Password.RequiredLength = int.Parse(requiredLength);
+                    options.Password.RequiredUniqueChars = int.Parse(requiredUniqueChars);
+                    options.Tokens.EmailConfirmationTokenProvider = "emailconfirmation";
+                }
             });
             services.AddDefaultIdentity<ApiUser>(options =>
             {
@@ -174,17 +196,23 @@ namespace Querier.Api
                 .AddEntityFrameworkStores<UserDbContext>()
                 .AddDefaultTokenProviders()
                 .AddTokenProvider<EmailConfirmationTokenProvider<ApiUser>>("emailconfirmation");
-            services.AddAuthentication()
-                .AddGoogle(opts =>
+            services.AddScoped<ISettingService, SettingService>();
+            using (var serviceProvider = services.BuildServiceProvider())
+            {
+                var settingService = serviceProvider.GetRequiredService<ISettingService>();
+                var validityDays = settingService.GetSettingValue("api:email:confirmationTokenValidityLifeSpanDays", "2").Result;
+                var resetPasswordValidity = settingService.GetSettingValue("api:email:ResetPasswordTokenValidityLifeSpanMinutes", "15").Result;
+
+                services.Configure<EmailConfirmationTokenProviderOptions>(opt =>
                 {
-                    opts.ClientId = clientId;
-                    opts.ClientSecret = clientSecret;
-                    opts.SignInScheme = IdentityConstants.ExternalScheme;
+                    opt.TokenLifespan = TimeSpan.FromDays(int.Parse(validityDays));
                 });
-            services.Configure<EmailConfirmationTokenProviderOptions>(opt =>
-                opt.TokenLifespan = TimeSpan.FromDays(_configuration.GetSection("ApplicationSettings:EmailConfirmationTokenValidityLifeSpanDays").Get<int>()));
-            services.Configure<DataProtectionTokenProviderOptions>(opt =>
-                opt.TokenLifespan = TimeSpan.FromMinutes(_configuration.GetSection("ApplicationSettings:ResetPasswordTokenValidityLifeSpanMinutes").Get<int>()));
+
+                services.Configure<DataProtectionTokenProviderOptions>(opt =>
+                {
+                    opt.TokenLifespan = TimeSpan.FromMinutes(int.Parse(resetPasswordValidity));
+                });
+            }
             var key = Encoding.ASCII.GetBytes(_configuration["JwtConfig:Secret"]);
 
             var tokenValidationParameters = new TokenValidationParameters
@@ -212,7 +240,6 @@ namespace Querier.Api
             services.AddScoped<IUICardService, UICardService>();
             services.AddScoped<IExportGeneratorService, ExportGeneratorService>();
             services.AddScoped<IWizardService, WizardService>();
-            services.AddScoped<ISettingService, SettingService>();
             services.AddScoped<IUserManagerService, UserManagerService>();
             services.AddScoped<IEmailSendingService, SMTPEmailSendingService>();
             services.AddScoped<IRoleRepository, RoleRepository>();
@@ -412,22 +439,55 @@ namespace Querier.Api
         public void Configure(
             IApplicationBuilder app, 
             IWebHostEnvironment env,
-            ApiDbContext dbContext,  // Add services you need
-            UserDbContext userContext)
+            ApiDbContext dbContext)
         {
+            // Créer un scope pour résoudre ISettingService
+            using (var scope = app.ApplicationServices.CreateScope())
+            {
+                var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
+
+                // Récupérer les paramètres CORS depuis la BDD
+                var allowedHosts = settingService.GetSettingValue("api:allowedHosts", "*").Result?.Split(',');
+                var allowedOrigins = settingService.GetSettingValue("api:allowedOrigins", "*").Result?.Split(',');
+                var allowedMethods = settingService.GetSettingValue("api:allowedMethods", "GET,POST,DELETE,OPTIONS,PUT").Result?.Split(',');
+                var allowedHeaders = settingService.GetSettingValue("api:allowedHeaders", "X-Request-Token,Accept,Content-Type,Authorization").Result?.Split(',');
+
+                app.UseCors(builder =>
+                {
+                    if (allowedOrigins.Contains("*"))
+                    {
+                        builder.AllowAnyOrigin();
+                    }
+                    else
+                    {
+                        builder.WithOrigins(allowedOrigins);
+                    }
+
+                    if (allowedHeaders.Contains("*"))
+                    {
+                        builder.AllowAnyHeader();
+                    }
+                    else
+                    {
+                        builder.WithHeaders(allowedHeaders);
+                    }
+
+                    if (allowedMethods.Contains("*"))
+                    {
+                        builder.AllowAnyMethod();
+                    }
+                    else
+                    {
+                        builder.WithMethods(allowedMethods);
+                    }
+                });
+            }
+
             ServiceActivator.Configure(app.ApplicationServices);
             
 
             app.UseDeveloperExceptionPage();
             //app.UseExceptionHandler("/error");
-
-            app.UseCors(builder =>
-            {
-                builder
-                    .AllowAnyOrigin()
-                    .AllowAnyHeader()
-                    .AllowAnyMethod();
-            });
 
             app.UseRouting();
 
@@ -470,22 +530,6 @@ namespace Querier.Api
                     ha.ConfigureApp(app, env);
                     ha.CreateTemplateEmail().GetAwaiter().GetResult();
                 }
-            }
-        }
-
-        /// <summary>
-        /// Used to create needed directories in the content directory
-        /// </summary>
-        /// <param name="requiredContentDirectories">The list of required directories</param>
-        private void EnsurePathExists(List<string> requiredContentDirectories)
-        {
-            string webRootPath = _webHostEnvironment.WebRootPath;
-
-            foreach (string requiredDirectory in requiredContentDirectories)
-            {
-                string path = Path.Combine(webRootPath, requiredDirectory);
-                if (!Directory.Exists(path))
-                    Directory.CreateDirectory(path);
             }
         }
     }

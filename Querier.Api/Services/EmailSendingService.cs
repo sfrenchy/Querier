@@ -42,13 +42,13 @@ namespace Querier.Api.Services
         {
             try
             {
-                var smtpHost = await _settings.GetSettingValue("smtp:host");
-                var smtpPort = int.Parse(await _settings.GetSettingValue("smtp:port", "587"));
-                var smtpUsername = await _settings.GetSettingValue("smtp:username");
-                var smtpPassword = await _settings.GetSettingValue("smtp:password");
-                var mailFrom = await _settings.GetSettingValue("smtp:senderEmail");
-                var useSsl = bool.Parse(await _settings.GetSettingValue("smtp:useSSL", "true"));
-                var requiresAuth = bool.Parse(await _settings.GetSettingValue("smtp:requiresAuth", "false"));
+                var smtpHost = await _settings.GetSettingValue("api:smtp:host");
+                var smtpPort = int.Parse(await _settings.GetSettingValue("api:smtp:port", "587"));
+                var smtpUsername = await _settings.GetSettingValue("api:smtp:username");
+                var smtpPassword = await _settings.GetSettingValue("api:smtp:password");
+                var mailFrom = await _settings.GetSettingValue("api:smtp:senderEmail");
+                var useSsl = bool.Parse(await _settings.GetSettingValue("api:smtp:useSSL", "true"));
+                var requiresAuth = bool.Parse(await _settings.GetSettingValue("api:smtp:requiresAuth", "false"));
 
                 using var client = new SmtpClient();
                 await client.ConnectAsync(smtpHost, smtpPort, useSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);

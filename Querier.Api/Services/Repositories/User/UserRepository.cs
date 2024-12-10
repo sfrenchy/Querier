@@ -130,7 +130,7 @@ namespace Querier.Api.Services.Repositories.User
                     return false;
                 }
 
-                string generatedPassword = GenerateRandomPassword();
+                string generatedPassword = await GenerateRandomPassword();
                 var res = await _userManager.CreateAsync(user, generatedPassword);
                 if (!res.Succeeded)
                 {
@@ -139,8 +139,12 @@ namespace Querier.Api.Services.Repositories.User
                 }
 
                 string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                string tokenValidity = await _settings.GetSettingValue("email:confirmationTokenValidityLifeSpanDays", "2");
-                string baseUrl = await _settings.GetSettingValue("application:baseUrl", "https://localhost:5001");
+                string tokenValidity = await _settings.GetSettingValue("api:email:confirmationTokenValidityLifeSpanDays", "2");
+                string baseUrl = string.Concat(
+                    await _settings.GetSettingValue("api:scheme", "https"), "://",
+                    await _settings.GetSettingValue("api:host", "localhost"), ":",
+                    await _settings.GetSettingValue("api:port", "5001")
+                );
                 
                 await _emailSending.SendTemplatedEmailAsync(
                     user.Email,
@@ -285,17 +289,16 @@ namespace Querier.Api.Services.Repositories.User
             }
         }
 
-        private string GenerateRandomPassword()
+        private async Task<string> GenerateRandomPassword()
         {
-            // A mon avis, on peut passer par ici: var valid = new PasswordValidator<ApiUser>();
             var opts = new PasswordOptions()
             {
-                RequireDigit = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireDigit").Get<bool>(),
-                RequireLowercase = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireLowercase").Get<bool>(),
-                RequireNonAlphanumeric = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireNonAlphanumeric").Get<bool>(),
-                RequireUppercase = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequireUppercase").Get<bool>(),
-                RequiredLength = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequiredLength").Get<int>(),
-                RequiredUniqueChars = _configuration.GetSection("ApplicationSettings:AuthenticationPasswordRules:RequiredUniqueChars").Get<int>()
+                RequireDigit = bool.Parse(await _settings.GetSettingValue("api:password:requireDigit", "true")),
+                RequireLowercase = bool.Parse(await _settings.GetSettingValue("api:password:requireLowercase", "true")),
+                RequireNonAlphanumeric = bool.Parse(await _settings.GetSettingValue("api:password:requireNonAlphanumeric", "true")),
+                RequireUppercase = bool.Parse(await _settings.GetSettingValue("api:password:requireUppercase", "true")),
+                RequiredLength = int.Parse(await _settings.GetSettingValue("api:password:requiredLength", "12")),
+                RequiredUniqueChars = int.Parse(await _settings.GetSettingValue("api:password:requiredUniqueChars", "1"))
             };
 
             string[] randomChars = new[] {

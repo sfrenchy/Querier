@@ -102,19 +102,20 @@ namespace Querier.Api.Services
                     _logger.LogInformation("Configuring SMTP settings...");
                     var smtpSettings = new[]
                     {
-                        new QSetting { Name = "smtp:host", Value = request.Smtp.Host },
-                        new QSetting { Name = "smtp:port", Value = request.Smtp.Port.ToString() },
-                        new QSetting { Name = "smtp:username", Value = request.Smtp.Username },
-                        new QSetting { Name = "smtp:password", Value = request.Smtp.Password },
-                        new QSetting { Name = "smtp:useSSL", Value = request.Smtp.useSSL.ToString() },
-                        new QSetting { Name = "smtp:senderEmail", Value = request.Smtp.SenderEmail },
-                        new QSetting { Name = "smtp:senderName", Value = request.Smtp.SenderName }
+                        new QSetting { Name = "api:smtp:host", Value = request.Smtp.Host },
+                        new QSetting { Name = "api:smtp:port", Value = request.Smtp.Port.ToString() },
+                        new QSetting { Name = "api:smtp:username", Value = request.Smtp.Username },
+                        new QSetting { Name = "api:smtp:password", Value = request.Smtp.Password },
+                        new QSetting { Name = "api:smtp:useSSL", Value = request.Smtp.useSSL.ToString() },
+                        new QSetting { Name = "api:smtp:senderEmail", Value = request.Smtp.SenderEmail },
+                        new QSetting { Name = "api:smtp:senderName", Value = request.Smtp.SenderName },
+                        new QSetting { Name = "api:smtp:requiresAuth", Value = request.Smtp.RequireAuth.ToString() },
                     };
 
                     await context.QSettings.AddRangeAsync(smtpSettings);
 
                     var isConfiguredSetting = await context.QSettings
-                        .FirstOrDefaultAsync(s => s.Name == "isConfigured");
+                        .FirstOrDefaultAsync(s => s.Name == "api:isConfigured");
 
                     if (isConfiguredSetting != null)
                     {
@@ -127,7 +128,7 @@ namespace Querier.Api.Services
                         _logger.LogInformation("Creating new isConfigured setting");
                         await context.QSettings.AddAsync(new QSetting 
                         { 
-                            Name = "isConfigured", 
+                            Name = "api:isConfigured", 
                             Value = "true" 
                         });
                     }

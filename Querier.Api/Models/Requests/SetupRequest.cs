@@ -23,5 +23,6 @@ namespace Querier.Api.Models.Requests
         public bool useSSL { get; set; }
         public string SenderEmail { get; set; }
         public string SenderName { get; set; }
+        public bool RequireAuth { get;set; }
     }
 } 

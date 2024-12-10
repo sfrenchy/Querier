@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Querier.Api.Services
 {
+
     public class SettingService : ISettingService
     {
         private readonly ApiDbContext _context;
@@ -41,7 +42,7 @@ namespace Querier.Api.Services
         {
             try
             {
-                var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == "isConfigured");
+                var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == "api:isConfigured");
                 if (setting == null) return false;
                 return setting.Value.ToLower() == "true";
             }
@@ -101,6 +102,31 @@ namespace Querier.Api.Services
             {
                 _logger.LogError(ex, $"Error getting setting value for {name}");
                 return null;
+            }
+        }
+
+        public async Task<QSetting> UpdateSettingIfExists(string name, string value)
+        {
+            var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == name);
+            if (setting != null)
+            {
+                setting.Value = value;
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                setting = new QSetting { Name = name, Value = value };
+                _context.QSettings.Add(setting);
+                await _context.SaveChangesAsync();
+            }
+            return setting;
+        }
+
+        public async Task UpdateSettings(Dictionary<string, string> settings)
+        {
+            foreach (var (name, value) in settings)
+            {
+                await UpdateSettingIfExists(name, value);
             }
         }
     } 

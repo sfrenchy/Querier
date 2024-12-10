@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Querier.Api.Tools;
 using static Google.Apis.Auth.JsonWebToken;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Querier.Api.Services.Repositories.User
 {
@@ -185,15 +186,26 @@ namespace Querier.Api.Services.Repositories.User
             var jwtTokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(jwtConfig.Secret);
 
+            // Récupérer les rôles de l'utilisateur
+            var scope = ServiceActivator.GetScope();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApiUser>>();
+            var userRoles = await userManager.GetRolesAsync(user);
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+            };
+
+            // Ajouter un claim pour chaque rôle
+            foreach (var role in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim("Id", user.Id),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddHours(6),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),

@@ -22,6 +22,8 @@ import 'package:querier/pages/settings/users/user_form_screen.dart';
 import 'package:querier/pages/settings/roles/role_form_screen.dart';
 import 'package:querier/theme/theme.dart';
 
+final navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
   runApp(const QuerierApp());
 }
@@ -34,7 +36,8 @@ class QuerierApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         Provider<ApiClient>(
-          create: (context) => ApiClient(Config.apiBaseUrl),
+          create: (context) =>
+              ApiClient(Config.apiBaseUrl, navigatorKey.currentState!),
         ),
         BlocProvider<LoginBloc>(
           create: (context) => LoginBloc(context.read<ApiClient>()),
@@ -87,6 +90,7 @@ class QuerierApp extends StatelessWidget {
               Locale('en'),
               Locale('fr'),
             ],
+            navigatorKey: navigatorKey,
           );
         },
       ),
