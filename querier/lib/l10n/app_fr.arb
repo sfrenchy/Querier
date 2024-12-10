@@ -119,5 +119,21 @@
     "smtpSenderEmail": "Email de l'expéditeur",
     "smtpSenderName": "Nom de l'expéditeur",
     "home": "Accueil",
-    "profile": "Profil"
+    "profile": "Profil",
+    "databases": "Bases de données",
+    "deleteDatabase": "Supprimer la base de données",
+    "deleteDatabaseConfirmation": "Êtes-vous sûr de vouloir supprimer cette connexion à la base de données ?",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "editDatabase": "Modifier la base de données",
+    "addDatabase": "Ajouter une base de données",
+    "database": "Base de données",
+    "databaseType": "Type de base de données",
+    "add": "Ajouter",
+    "connectionString": "Chaîne de connexion",
+    "apiRoute": "Route API",
+    "generateProcedures": "Générer les procédures stockées",
+    "status": "Statut",
+    "active": "Actif",
+    "inactive": "Inactif"
 } 

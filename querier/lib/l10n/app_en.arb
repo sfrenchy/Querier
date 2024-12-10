@@ -118,5 +118,21 @@
     "errorSavingConfiguration": "Error saving configuration",
     "useAuthentication": "Use authentication",
     "home": "Home",
-    "profile": "Profile"
+    "profile": "Profile",
+    "databases": "Databases",
+    "deleteDatabase": "Delete Database",
+    "deleteDatabaseConfirmation": "Are you sure you want to delete this database connection?",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "editDatabase": "Edit Database",
+    "addDatabase": "Add Database",
+    "database": "Database",
+    "databaseType": "Database Type",
+    "add": "Add",
+    "connectionString": "Connection String",
+    "apiRoute": "API Route",
+    "generateProcedures": "Generate Stored Procedures",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive"
 } 

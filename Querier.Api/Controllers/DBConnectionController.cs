@@ -131,5 +131,16 @@ namespace Querier.Api.Controllers
         {
             return Ok(await _dbConnectionService.DeleteDBConnectionAsync(request));
         }
+
+        /// <summary>
+        /// Gets all database connections
+        /// </summary>
+        /// <returns>List of database connections</returns>
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAll()
+        {
+            return Ok(await _dbConnectionService.GetAll());
+        }
     }
 }

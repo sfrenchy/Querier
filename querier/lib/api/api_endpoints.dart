@@ -60,4 +60,10 @@ class ApiEndpoints {
   // Settings endpoints
   static const String apiConfiguration = 'settings/api-configuration';
   static const String updateApiConfiguration = 'settings/api-configuration';
+
+  // Database connections endpoints
+  static const String dbConnections = 'dbconnection';
+  static const String deleteDbConnection = 'dbconnection/deletedbconnection';
+  static const String addDbConnection = 'dbconnection/adddbconnection';
+  static const String updateDbConnection = 'dbconnection/{id}';
 }

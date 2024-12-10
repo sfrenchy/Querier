@@ -101,13 +101,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Models\QDBConnection\QDBConnection.cs" />
-    <Content Include="Services\DBTemplating\*.*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Services\MailTemplating\*.*">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Repositories\Quartz\Scripts\*.*">
+    <Content Include="Resources\DBTemplating\*.*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

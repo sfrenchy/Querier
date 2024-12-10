@@ -281,10 +281,11 @@ namespace Querier.Api
             // Load dynamically API DB assemblies
             
             var optionsBuilder = new DbContextOptionsBuilder<ApiDbContext>();
-            
+            /*
             using (ApiDbContext apiDbContext = new ApiDbContext(optionsBuilder.Options, _configuration))
             {
                 apiDbContext.Database.EnsureCreated();
+                
                 foreach(QDBConnection connection in apiDbContext.QDBConnections.ToList())
                 {
                     Console.WriteLine("Loading assembly for " + connection.Name);
@@ -317,8 +318,9 @@ namespace Querier.Api
                         availableDynamicContexts.Add(assemblyServiceResolver.DynamicContextName);
                     }
                 }
+                
             }
-            
+            */
             foreach (string assemblyToLoad in loadAssemblies)
             {
                 pluginAssemblies.Add(Assembly.LoadFrom(Path.Combine(assemblyPath, assemblyToLoad)));

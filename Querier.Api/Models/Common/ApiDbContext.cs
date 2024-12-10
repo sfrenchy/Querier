@@ -323,24 +323,6 @@ namespace Querier.Api.Models.Common
                 .HasIndex(d => d.ApiRoute)
                 .IsUnique();
 
-            modelBuilder.Entity<QDBConnection.QDBConnection>()
-                .HasOne(e => e.AssemblyUploadDefinition)
-                .WithMany()
-                .HasForeignKey(e => e.AssemblyUploadDefinitionId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<QDBConnection.QDBConnection>()
-                .HasOne(e => e.PDBUploadDefinition)
-                .WithMany()
-                .HasForeignKey(e => e.PDBUploadDefinitionId)
-                .OnDelete(DeleteBehavior.Restrict);
-            
-            modelBuilder.Entity<QDBConnection.QDBConnection>()
-                .HasOne(e => e.SourcesUploadDefinition)
-                .WithMany()
-                .HasForeignKey(e => e.SourcesUploadDefinitionId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             //add unique constrain on colomn tags from table QFileDeposit
             modelBuilder.Entity<QFileDeposit>()
                 .HasIndex(d => d.Tag)

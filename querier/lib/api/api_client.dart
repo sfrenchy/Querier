@@ -6,6 +6,7 @@ import 'package:querier/models/user.dart';
 import 'package:querier/models/role.dart';
 import 'package:querier/models/api_configuration.dart';
 import 'package:flutter/material.dart';
+import 'package:querier/models/db_connection.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -367,5 +368,45 @@ class ApiClient {
     } catch (e) {
       return false;
     }
+  }
+
+  Future<Response> put(String endpoint, {dynamic data}) async {
+    final response = await _dio.put(
+      ApiEndpoints.buildUrl(baseUrl, endpoint),
+      data: data,
+    );
+    return response;
+  }
+
+  Future<Response> post(String endpoint, {dynamic data}) async {
+    final response = await _dio.post(
+      ApiEndpoints.buildUrl(baseUrl, endpoint),
+      data: data,
+    );
+    return response;
+  }
+
+  Future<Response> get(String endpoint) async {
+    final response = await _dio.get(
+      ApiEndpoints.buildUrl(baseUrl, endpoint),
+    );
+    return response;
+  }
+
+  Future<Response> delete(String endpoint, {dynamic data}) async {
+    final response = await _dio.delete(
+      ApiEndpoints.buildUrl(baseUrl, endpoint),
+      data: data,
+    );
+    return response;
+  }
+
+  Future<List<DBConnection>> getDBConnections() async {
+    final response = await _dio.get(
+      ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.dbConnections),
+    );
+    return (response.data as List)
+        .map((json) => DBConnection.fromJson(json))
+        .toList();
   }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'smtp_configuration_bloc.dart';
@@ -29,7 +28,6 @@ class SMTPConfigurationScreen extends StatefulWidget {
 
 class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
   final _formKey = GlobalKey<FormState>();
-  bool _useSsl = true;
 
   @override
   Widget build(BuildContext context) {
@@ -71,17 +69,38 @@ class _SMTPConfigurationScreenState extends State<SMTPConfigurationScreen> {
           return Scaffold(
             appBar: AppBar(
               title: Text(l10n.smtpConfiguration),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      _formKey.currentState!.save();
+                    }
+                  },
+                  child: Text(l10n.save),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    context
+                        .read<SmtpConfigurationBloc>()
+                        .add(TestSmtpConfigurationEvent(
+                          host: '', // TODO: Get values from form
+                          port: 0,
+                          username: '',
+                          password: '',
+                          senderEmail: '',
+                          senderName: '',
+                          useSsl: true,
+                        ));
+                  },
+                  child: Text(l10n.testConnection),
+                ),
+              ],
             ),
             body: Padding(
               padding: const EdgeInsets.all(16.0),
               child: SmtpConfigurationForm(
                 formKey: _formKey,
-                showTestButton: true,
-                onTest: () {
-                  if (_formKey.currentState!.validate()) {
-                    // TODO: Implémenter le test
-                  }
-                },
                 onSaveValues: (host, port, username, password, useSSL,
                     senderEmail, senderName, requireAuth) {
                   context.read<SmtpConfigurationBloc>().add(
