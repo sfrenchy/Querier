@@ -56,4 +56,8 @@ class ApiEndpoints {
   static const String activity = '/queries/activity';
   static const String resendConfirmationEmail =
       '/usermanagement/resend-confirmation';
+
+  // Settings endpoints
+  static const String apiConfiguration = 'settings/api-configuration';
+  static const String updateApiConfiguration = 'settings/api-configuration';
 }

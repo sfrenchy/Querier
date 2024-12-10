@@ -358,8 +358,12 @@ namespace Querier.Api.Services.User
         {
             try
             {
-                string tokenValidity = await _settings.GetSettingValue("email:confirmationTokenValidityLifeSpanDays", "2");
-                string baseUrl = await _settings.GetSettingValue("application:baseUrl", "https://localhost:5001");
+                string tokenValidity = await _settings.GetSettingValue("api:email:confirmationTokenValidityLifeSpanDays", "2");
+                string baseUrl = string.Concat(
+                    await _settings.GetSettingValue("api:scheme", "https"), "://",
+                    await _settings.GetSettingValue("api:host", "localhost"), ":",
+                    await _settings.GetSettingValue("api:port", "5001")
+                );
 
                 var encodedToken = Uri.EscapeDataString(token);
 

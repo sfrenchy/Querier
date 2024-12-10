@@ -4,14 +4,36 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_endpoints.dart';
 import 'package:querier/models/user.dart';
 import 'package:querier/models/role.dart';
+import 'package:querier/models/api_configuration.dart';
+import 'package:flutter/material.dart';
 
 class ApiClient {
   final Dio _dio;
   String baseUrl;
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final FlutterSecureStorage _secureStorage;
+  final NavigatorState _navigator;
 
-  ApiClient(this.baseUrl) : _dio = Dio() {
+  ApiClient(this.baseUrl, this._navigator)
+      : _dio = Dio(),
+        _secureStorage = const FlutterSecureStorage() {
     updateBaseUrl(baseUrl);
+    _setupInterceptors();
+  }
+
+  void _setupInterceptors() {
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401) {
+            await _secureStorage.delete(key: 'access_token');
+            await _secureStorage.delete(key: 'refresh_token');
+
+            _navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+          }
+          return handler.next(error);
+        },
+      ),
+    );
   }
 
   void updateBaseUrl(String newBaseUrl) {
@@ -317,6 +339,30 @@ class ApiClient {
     } catch (e) {
       print('Error resending confirmation email: $e');
       rethrow;
+    }
+  }
+
+  Future<ApiConfiguration> getApiConfiguration() async {
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.apiConfiguration),
+      );
+      return ApiConfiguration.fromJson(response.data);
+    } catch (e) {
+      print('Error in getApiConfiguration: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> updateApiConfiguration(ApiConfiguration config) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.apiConfiguration),
+        data: config.toJson(),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
     }
   }
 }

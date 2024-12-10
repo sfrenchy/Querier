@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:querier/services/wizard_service.dart';
@@ -11,9 +12,9 @@ class SmtpConfigurationBloc
   final WizardService _wizardService;
   final ApiClient _apiClient;
 
-  SmtpConfigurationBloc(String baseUrl)
-      : _wizardService = WizardService(baseUrl),
-        _apiClient = ApiClient(baseUrl),
+  SmtpConfigurationBloc(String baseUrl, NavigatorState navigator)
+      : _wizardService = WizardService(baseUrl, navigator),
+        _apiClient = ApiClient(baseUrl, navigator),
         super(SmtpConfigurationInitial()) {
     on<SubmitSmtpConfigurationEvent>((event, emit) async {
       emit(SmtpConfigurationLoading());

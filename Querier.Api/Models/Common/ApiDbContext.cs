@@ -111,7 +111,7 @@ namespace Querier.Api.Models.Common
             modelBuilder.Entity<QSetting>().HasData(new QSetting
             {
                 Id = 1,
-                Name = "isConfigured",
+                Name = "api:isConfigured",
                 Value = "false",
                 Description = "Indicate if the application is configured",
                 Type = "boolean"
@@ -404,6 +404,12 @@ namespace Querier.Api.Models.Common
                     .WithMany(r => r.QCardRoles)
                     .HasForeignKey(cr => cr.ApiRoleId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Ajouter la contrainte d'unicité sur QSetting.Name
+            modelBuilder.Entity<QSetting>(entity =>
+            {
+                entity.HasIndex(e => e.Name).IsUnique();
             });
         }
     }
