@@ -13,19 +13,24 @@ class HomeLoading extends HomeState {}
 
 class HomeLoaded extends HomeState {
   final String username;
-  final List<String> recentQueries;
+  final String firstName;
+  final String lastName;
   final Map<String, int> queryStats;
   final List<Map<String, dynamic>> activityData;
+  final List<String> recentQueries;
 
   const HomeLoaded({
     required this.username,
-    required this.recentQueries,
+    required this.firstName,
+    required this.lastName,
     required this.queryStats,
     required this.activityData,
+    required this.recentQueries,
   });
 
   @override
-  List<Object> get props => [username, recentQueries, queryStats, activityData];
+  List<Object> get props =>
+      [username, firstName, lastName, queryStats, activityData, recentQueries];
 }
 
 class HomeError extends HomeState {

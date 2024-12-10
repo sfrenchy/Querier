@@ -117,5 +117,7 @@
     "smtpUsername": "Nom d'utilisateur SMTP",
     "smtpPassword": "Mot de passe SMTP",
     "smtpSenderEmail": "Email de l'expéditeur",
-    "smtpSenderName": "Nom de l'expéditeur"
+    "smtpSenderName": "Nom de l'expéditeur",
+    "home": "Accueil",
+    "profile": "Profil"
 } 

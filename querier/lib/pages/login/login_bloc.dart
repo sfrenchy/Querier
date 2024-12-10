@@ -1,15 +1,18 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:querier/api/api_client.dart';
+import 'package:querier/providers/auth_provider.dart';
 
 part 'login_event.dart';
 part 'login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   final ApiClient _apiClient;
+  final BuildContext context;
 
-  LoginBloc(this._apiClient) : super(const LoginState()) {
+  LoginBloc(this._apiClient, this.context) : super(const LoginState()) {
     on<UrlChanged>(_onUrlChanged);
     on<LoginSubmitted>(_onLoginSubmitted);
     on<LoadSavedUrls>(_onLoadSavedUrls);
@@ -77,11 +80,15 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
     try {
       final response = await _apiClient.signIn(event.email, event.password);
+      print('Login response received: ${response.data}');
 
       if (response.statusCode == 200 && response.data != null) {
         final token = response.data['Token'];
+        final roles =
+            (response.data['Roles'] as List<dynamic>?)?.cast<String>() ?? [];
         if (token != null) {
           _apiClient.setAuthToken(token.toString());
+          context.read<AuthProvider>().updateToken(token.toString(), roles);
           add(const SetAuthenticated(true));
           add(const SetLoadingState(false));
         } else {

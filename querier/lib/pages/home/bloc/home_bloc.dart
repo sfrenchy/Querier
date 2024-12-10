@@ -25,6 +25,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       emit(HomeLoaded(
         username: userData.data['name'] ?? '',
+        firstName: userData.data['FirstName'] ?? '',
+        lastName: userData.data['LastName'] ?? '',
         recentQueries: List<String>.from(recentQueries),
         queryStats: Map<String, int>.from(stats),
         activityData: List<Map<String, dynamic>>.from(activity),
@@ -45,6 +47,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
         emit(HomeLoaded(
           username: userData.data['name'] ?? '',
+          firstName: userData.data['FirstName'] ?? '',
+          lastName: userData.data['LastName'] ?? '',
           recentQueries: List<String>.from(recentQueries),
           queryStats: Map<String, int>.from(stats),
           activityData: List<Map<String, dynamic>>.from(activity),

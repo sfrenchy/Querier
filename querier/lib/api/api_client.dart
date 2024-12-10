@@ -43,10 +43,13 @@ class ApiClient {
 
   // Auth methods
   Future<Response> signIn(String email, String password) async {
-    return _dio.post(
+    print('Attempting sign in for email: $email');
+    final response = await _dio.post(
       ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.signIn),
       data: {'email': email, 'password': password},
     );
+    print('Sign in response: ${response.data}');
+    return response;
   }
 
   Future<Response> signOut() async {

@@ -116,5 +116,7 @@
     "errorLoadingConfiguration": "Error loading configuration",
     "configurationSaved": "Configuration saved",
     "errorSavingConfiguration": "Error saving configuration",
-    "useAuthentication": "Use authentication"
+    "useAuthentication": "Use authentication",
+    "home": "Home",
+    "profile": "Profile"
 } 
