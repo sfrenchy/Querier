@@ -40,8 +40,8 @@ namespace $nameSpace$.Services
 
         public void ConfigureServices(IServiceCollection services, string connectionString)
         {
-            services.AddDbContext<$contextNameSpace$>(options => options.UseSqlServer(connectionString));
-            services.AddDbContextFactory<$contextNameSpace$>(options => options.UseSqlServer(connectionString));
+            services.AddPooledDbContextFactory<$contextNameSpace$>(options => 
+                options.UseSqlServer(connectionString));
         \}
 
         public string DynamicContextName { get { return "$contextNameSpace$"; \} \}

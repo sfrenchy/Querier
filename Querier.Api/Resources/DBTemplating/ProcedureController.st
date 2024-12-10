@@ -15,7 +15,7 @@ namespace $nameSpace$.Mvc
     $procedureList: {procedure|
     [Authorize]
     [ApiController]
-    [Route("api/$contextRoute$/[controller]")]
+    [Route("api/v1/$contextRoute$/[controller]")]
     public partial class $procedure.CSName$Controller : ControllerBase
     {
         private readonly ILogger<$procedure.CSName$Controller> _logger;

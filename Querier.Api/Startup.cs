@@ -281,77 +281,17 @@ namespace Querier.Api
             // Load dynamically API DB assemblies
             
             var optionsBuilder = new DbContextOptionsBuilder<ApiDbContext>();
-            /*
+            
             using (ApiDbContext apiDbContext = new ApiDbContext(optionsBuilder.Options, _configuration))
             {
-                apiDbContext.Database.EnsureCreated();
-                
+                var serviceProvider = services.BuildServiceProvider();
+                var loggerFactory = services.BuildServiceProvider().GetService<ILoggerFactory>();
+                var logger = loggerFactory.CreateLogger<Startup>();
                 foreach(QDBConnection connection in apiDbContext.QDBConnections.ToList())
                 {
-                    Console.WriteLine("Loading assembly for " + connection.Name);
-                    var dbAssembly = Assembly.LoadFrom(connection.AssemblyUploadDefinition.Path);
-                    pluginAssemblies.Add(dbAssembly);
-                    Type dynamicInterfaceType = typeof(IDynamicContextProceduresServicesResolver);
-                    if (dbAssembly.GetTypes().Any(t => dynamicInterfaceType.IsAssignableFrom(t)))
-                    {
-                        if (dbAssembly.GetTypes().Count(t => dynamicInterfaceType.IsAssignableFrom(t)) != 1)
-                            throw new Exception("One and only one IDynamicContextProceduresServicesResolver per assembly must be implemented");
-
-                        Type assemblyServiceResolverType = dbAssembly.GetTypes().First(t => dynamicInterfaceType.IsAssignableFrom(t));
-                        IDynamicContextProceduresServicesResolver assemblyServiceResolver = (IDynamicContextProceduresServicesResolver) Activator.CreateInstance(assemblyServiceResolverType);
-                        assemblyServiceResolver.ConfigureServices(services, connection.ConnectionString);
-                        // services.AddSingleton(typeof(IDynamicContextProceduresServicesResolver), assemblyServiceResolver.GetType());
-                        using (var tempProvider = services.BuildServiceProvider())
-                        {
-                            var dynamicContextListService = tempProvider.GetRequiredService<IDynamicContextList>();
-                            Console.WriteLine($"Adding DynamicContext {connection.Name}");
-                            dynamicContextListService.DynamicContexts.Add(connection.Name, assemblyServiceResolver);
-                        }
-                        foreach (KeyValuePair<Type, Type> service in assemblyServiceResolver.ProceduresServices)
-                        {
-                            //Console.WriteLine($"Registering service {service.Key}");
-                            services.AddSingleton(service.Key, service.Value);
-                        }
-
-                        mvc.AddApplicationPart(dbAssembly);
-                        Console.WriteLine($"New available dynamic context: {connection.Name}");
-                        availableDynamicContexts.Add(assemblyServiceResolver.DynamicContextName);
-                    }
+                    await AssemblyLoader.LoadAssemblyFromQDBConnection(connection, serviceProvider, mvc.PartManager, logger);
                 }
                 
-            }
-            */
-            foreach (string assemblyToLoad in loadAssemblies)
-            {
-                pluginAssemblies.Add(Assembly.LoadFrom(Path.Combine(assemblyPath, assemblyToLoad)));
-            }
-
-            foreach (string startupType in pluginsStartupTypes)
-            {
-                Type type = Type.GetType(startupType, true);
-                pluginTypes.Add(type);
-                pluginAssemblies.Add(type.Assembly);
-            }
-
-            foreach (var ha in from Type plugin in pluginTypes
-                     let ha = (IQPlugin)Activator.CreateInstance(plugin)
-                     select ha)
-            {
-                var m = ha.GetSpecificProperties();
-                if (m.RequiredDynamicContexts.All(i => availableDynamicContexts.Contains(i)))
-                {
-                    ha.ConfigureServices(services, _configuration);
-                }
-                else
-                {
-                    Console.WriteLine($"Unable to load services for application as I need some DynamicContexts ({String.Join(", ", m.RequiredDynamicContexts.ToArray())})");
-                }
-                services.AddSingleton(typeof(IQPlugin), ha);
-            }
-
-            foreach (Assembly a in pluginAssemblies)
-            {
-                mvc.AddApplicationPart(a);
             }
 
             mvc.AddNewtonsoftJson(options => {
