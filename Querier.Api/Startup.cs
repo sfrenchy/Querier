@@ -39,6 +39,7 @@ using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
+using Swashbuckle.AspNetCore.Swagger;
 
 namespace Querier.Api
 {
@@ -285,13 +286,14 @@ namespace Querier.Api
             using (ApiDbContext apiDbContext = new ApiDbContext(optionsBuilder.Options, _configuration))
             {
                 var serviceProvider = services.BuildServiceProvider();
-                var loggerFactory = services.BuildServiceProvider().GetService<ILoggerFactory>();
+                var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
                 var logger = loggerFactory.CreateLogger<Startup>();
+                var swaggerProvider = serviceProvider.GetRequiredService<ISwaggerProvider>();
                 foreach(QDBConnection connection in apiDbContext.QDBConnections.ToList())
                 {
                     await AssemblyLoader.LoadAssemblyFromQDBConnection(connection, serviceProvider, mvc.PartManager, logger);
                 }
-                
+                AssemblyLoader.RegenerateSwagger(swaggerProvider, logger);
             }
 
             mvc.AddNewtonsoftJson(options => {

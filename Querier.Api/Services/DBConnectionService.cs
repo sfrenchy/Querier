@@ -52,6 +52,7 @@ using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Builder;
 
 namespace Querier.Api.Services
 {
@@ -62,16 +63,28 @@ namespace Querier.Api.Services
         private readonly ILogger<DBConnectionService> _logger;
         private readonly IServiceProvider _serviceProvider;
         private readonly ApplicationPartManager _partManager;
-        private readonly IOptions<SwaggerGenOptions> _swaggerGenOptions;
+        private readonly IApiDescriptionGroupCollectionProvider _apiDescriptionProvider;
+        private readonly ISchemaGenerator _schemaGenerator;
+        private readonly ISwaggerProvider _swaggerProvider;
 
-        public DBConnectionService(IDynamicContextList dynamicContextList, IDbContextFactory<ApiDbContext> apiDbContextFactory, IServiceProvider serviceProvider, ILogger<DBConnectionService> logger, ApplicationPartManager partManager, IOptions<SwaggerGenOptions> swaggerGenOptions)
+        public DBConnectionService(
+            IDynamicContextList dynamicContextList,
+            IDbContextFactory<ApiDbContext> apiDbContextFactory,
+            IServiceProvider serviceProvider,
+            ILogger<DBConnectionService> logger,
+            ApplicationPartManager partManager,
+            IApiDescriptionGroupCollectionProvider apiDescriptionProvider,
+            ISchemaGenerator schemaGenerator,
+            ISwaggerProvider swaggerProvider)
         {
             _logger = logger;
             _apiDbContextFactory = apiDbContextFactory;
             _serviceProvider = serviceProvider;
             _dynamicContextList = dynamicContextList;
             _partManager = partManager;
-            _swaggerGenOptions = swaggerGenOptions;
+            _apiDescriptionProvider = apiDescriptionProvider;
+            _schemaGenerator = schemaGenerator;
+            _swaggerProvider = swaggerProvider;
         }
 
         public async Task<AddDBConnectionResponse> AddConnectionAsync(AddDBConnectionRequest connection)
@@ -318,6 +331,9 @@ namespace Querier.Api.Services
             result.State = QDBConnectionState.Available;
             File.Delete(sourceZipPath);
             await AssemblyLoader.LoadAssemblyFromQDBConnection(newConnection, _serviceProvider, _partManager, _logger);
+
+            AssemblyLoader.RegenerateSwagger(_swaggerProvider, _logger);
+
             return result;
         }
 

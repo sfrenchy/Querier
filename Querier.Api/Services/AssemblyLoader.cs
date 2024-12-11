@@ -12,6 +12,9 @@ using System.Linq;
 using System.IO;
 using Querier.Api.Models.Interfaces;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Querier.Api.Services
 {
@@ -89,18 +92,6 @@ namespace Querier.Api.Services
                                 }
                             }
                             
-                            // Régénérer le swagger
-                            try 
-                            {
-                                var swaggerProvider = serviceProvider.GetRequiredService<ISwaggerProvider>();
-                                var swagger = swaggerProvider.GetSwagger("v1", null, "/");
-                                logger.LogInformation($"Swagger regenerated with {swagger.Paths.Count} paths");
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.LogError(ex, "Error regenerating Swagger");
-                            }
-                            
                             logger.LogInformation($"Successfully loaded assembly {fileName} for context {connection.Name}");
                         }
                     }
@@ -109,6 +100,33 @@ namespace Querier.Api.Services
                         logger.LogError(ex, $"Error loading assembly {fileName}");
                     }
                 }
+            }
+        }
+
+        public static void RegenerateSwagger(ISwaggerProvider swaggerProvider, ILogger logger)
+        {
+            try
+            {
+                // Forcer le rechargement des descriptions d'API
+                if (swaggerProvider is ISwaggerProvider provider)
+                {
+                    // Vider le cache interne du SwaggerProvider
+                    var field = provider.GetType().GetField("_cache", 
+                        System.Reflection.BindingFlags.NonPublic | 
+                        System.Reflection.BindingFlags.Instance);
+                    
+                    if (field != null)
+                    {
+                        field.SetValue(provider, null);
+                    }
+                }
+
+                var swagger = swaggerProvider.GetSwagger("v1", null, "/");
+                logger.LogInformation($"Swagger regenerated with {swagger.Paths.Count} paths");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error regenerating Swagger");
             }
         }
     }
