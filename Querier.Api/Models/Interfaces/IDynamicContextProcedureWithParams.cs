@@ -16,6 +16,6 @@ namespace Querier.Api.Models.Interfaces
         /// </summary>
         /// <returns>Return a task</returns>
         /// <param name="parameters">argument that contains a key/value dictionary that corresponds to the input parameters of the procedure</param>
-        Task DatasAsync(Dictionary<string, object> parameters);
+        Task ExecuteAsync(Dictionary<string, object> parameters);
     }
 }

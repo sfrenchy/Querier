@@ -7,7 +7,6 @@ namespace Querier.Api.Models.Interfaces
 {
     public interface IDynamicContextProcedureWithParamsAndResult
     {
-        Task<List<dynamic>?> DatasAsync(Dictionary<string, object> parameters);
-        Task<ServerSideResponse<dynamic>?> ReportDatasAsync(Dictionary<string, object> parameters, ServerSideRequest DatatableParams);
+        Task<List<dynamic>?> ExecuteAsync(Dictionary<string, object> parameters);
     }
 }
