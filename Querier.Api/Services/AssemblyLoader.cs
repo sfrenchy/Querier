@@ -107,18 +107,16 @@ namespace Querier.Api.Services
         {
             try
             {
-                // Forcer le rechargement des descriptions d'API
-                if (swaggerProvider is ISwaggerProvider provider)
+                // Forcer un rechargement complet du document Swagger
+                var apiDescriptionGroups = swaggerProvider.GetType()
+                    .GetField("_apiDescriptionGroupCollectionProvider", 
+                        BindingFlags.NonPublic | BindingFlags.Instance)?
+                    .GetValue(swaggerProvider) as IApiDescriptionGroupCollectionProvider;
+
+                if (apiDescriptionGroups != null)
                 {
-                    // Vider le cache interne du SwaggerProvider
-                    var field = provider.GetType().GetField("_cache", 
-                        System.Reflection.BindingFlags.NonPublic | 
-                        System.Reflection.BindingFlags.Instance);
-                    
-                    if (field != null)
-                    {
-                        field.SetValue(provider, null);
-                    }
+                    // Déclencher une actualisation des descriptions d'API
+                    var apiDescriptions = apiDescriptionGroups.ApiDescriptionGroups;
                 }
 
                 var swagger = swaggerProvider.GetSwagger("v1", null, "/");
