@@ -83,7 +83,6 @@ namespace Querier.Api.Services
         public Task<SignUpResponse> SignUp(SignUpRequest user);
         public Task<SignUpResponse> SignIn(SignInRequest user);
         public Task<AuthResult> RefreshToken(TokenRequest tokenRequest);
-        public Task<SignUpResponse> GoogleLogin(GoogleLoginRequest user);
     }
 
     public class AuthManagementService : IAuthManagementService
@@ -147,9 +146,6 @@ namespace Querier.Api.Services
                         Token = r.Token,
                         Email = existingUser.Email,
                         UserName = existingUser.UserName,
-                        DateFormat = existingUser.DateFormat,
-                        Img = existingUser.Img,
-                        LanguageCode = existingUser.LanguageCode
                     };
                 }
                 else
@@ -166,81 +162,7 @@ namespace Querier.Api.Services
             }
         }
 
-        public async Task<SignUpResponse> GoogleLogin(GoogleLoginRequest user)
-        {
-            using (var apidbContext = _contextFactory.CreateDbContext())
-            {
-                var plugin = ServiceActivator.GetScope().ServiceProvider.GetService(typeof(IQPlugin)) as IQPlugin;
-                //Check google token, it will crash if it isn't valid 
-                var isTokenValid = await UserMethods.VerifyGoogleToken(user.AuthToken);
-                var existingUser = await _userManager.FindByEmailAsync(user.Email);
-
-                //if user doesn't exist, create it in DB
-                if (existingUser == null)
-                {
-                    //generate a password
-                    var guid = Guid.NewGuid().ToString();
-                    var pw = ExtensionMethods.GetSHA1Hash(guid);
-
-                    var gUser = new ApiUser
-                    {
-                        FirstName = user.FirstName,
-                        LastName = user.LastName,
-                        Email = user.Email,
-                        UserName = user.LastName,
-                    };
-
-                    var isCreated = await _userManager.CreateAsync(gUser, pw);
-
-                    if (isCreated.Succeeded)
-                    {
-                        await _userManager.AddToRoleAsync(gUser, "User");
-                        var result = await UserMethods.GenerateJwtToken(gUser, _jwtConfig, apidbContext);
-
-                        var userCreated = await _userManager.FindByEmailAsync(gUser.Email);
-
-                        plugin.QuerierUserCreated(userCreated);
-
-                        return new SignUpResponse()
-                        {
-                            Success = result.Success,
-                            Email = user.Email,
-                            LastName = gUser.LastName,
-                            FirstName = gUser.FirstName,
-                            Id = userCreated.Id,
-                            Token = result.Token,
-                            RefreshToken = result.RefreshToken,
-                            LanguageCode = userCreated.LanguageCode
-                        };
-                    }
-                    else
-                    {
-                        return new SignUpResponse()
-                        {
-                            Success = false,
-                            Errors = isCreated.Errors.Select(x => x.Description).ToList()
-                        };
-                    }
-                }
-                else
-                {
-                    AuthResult r = await UserMethods.GenerateJwtToken(existingUser, _jwtConfig, apidbContext);
-                    return new SignUpResponse()
-                    {
-                        Success = r.Success,
-                        Email = user.Email,
-                        LastName = existingUser.LastName,
-                        FirstName = existingUser.FirstName,
-                        Id = existingUser.Id,
-                        Token = r.Token,
-                        RefreshToken = r.RefreshToken,
-                        DateFormat = existingUser.DateFormat,
-                        Img = existingUser.Img,
-                        LanguageCode = existingUser.LanguageCode
-                    };
-                }
-            }
-        }
+        
 
         public async Task<AuthResult> RefreshToken(TokenRequest tokenRequest)
         {

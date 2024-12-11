@@ -16,8 +16,5 @@ namespace Querier.Api.Models.Auth
         }
 
         public virtual ICollection<ApiUserRole> UserRoles { get; set; }
-        public virtual ICollection<QCategoryRole> QCategoryRoles { get; set; }
-        public virtual ICollection<QPageRole> QPageRoles { get; set; }
-        public virtual ICollection<QCardRole> QCardRoles { get; set; }
     }
 }

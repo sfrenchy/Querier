@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Querier.Api.Models;
 using Querier.Api.Models.Auth;
 using Querier.Api.Models.Common;
-using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Email;
 using Querier.Api.Models.Enums;
 using Querier.Api.Models.Requests.User;
@@ -31,13 +30,12 @@ namespace Querier.Api.Services.User
         private readonly ILogger<UserRepository> _logger;
         private readonly IUserRepository _repo;
         private readonly IRoleService _roleService;
-        private readonly Models.Interfaces.IQUploadService _uploadService;
 
         private readonly UserManager<ApiUser> _userManager;
         private readonly ISettingService _settings;
 
         // private readonly IQPlugin _herdiaApp;
-        public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, ISettingService settings, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, Models.Interfaces.IQUploadService uploadService, IRoleService roleService/*, IQPlugin herdiaApp*/)
+        public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, ISettingService settings, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, IRoleService roleService)
         {
             _repo = repo;
             _logger = logger;
@@ -45,7 +43,6 @@ namespace Querier.Api.Services.User
             _emailSending = emailSending;
             _configuration = configuration;
             _contextFactory = contextFactory;
-            _uploadService = uploadService;
             _roleService = roleService;
             _settings = settings;
         }
@@ -118,20 +115,6 @@ namespace Querier.Api.Services.User
             return vm;
         }
 
-        public async Task<ServerSideResponse<UserResponse>> GetAll(ServerSideRequest datatableRequest)
-        {
-            var userList = await _repo.GetAll(datatableRequest);
-
-            return new ServerSideResponse<UserResponse>
-            {
-                draw = datatableRequest.draw,
-                recordsFiltered = userList.FilteredCount,
-                recordsTotal = userList.TotalCount,
-                data = userList.Users.Select(user => MapToVM(user))
-                .ToList()
-            };
-        }
-
         public async Task<List<UserResponse>> GetAll()
         {
             List<UserResponse> result = new List<UserResponse>();
@@ -156,83 +139,6 @@ namespace Querier.Api.Services.User
                 return string.Empty;
 
             return searchUser.PasswordHash;
-        }
-
-        public async Task<object> SendMailForForgotPassword(SendMailForgotPassword user_mail)
-        {
-            object response;
-            var user = await _userManager.FindByEmailAsync(user_mail.Email);
-            //check if the user exist or not
-            if (user == null)
-            {
-                response = new { success = false, message = "Email not find, try again" };
-                return response;
-            }
-
-            //create mail
-
-            //get the body of the mail from the uploaderManager
-            //Get the uploadID
-            List<QUploadDefinition> resultat;
-            //get the name of the template html for email confirmation with the good language:
-            string ResetPasswordTemplateName;
-            switch (user.LanguageCode)
-            {
-                case "fr-FR":
-                    ResetPasswordTemplateName = _configuration.GetSection("ApplicationSettings:TemplateFile:Email:Fr:ResetPasswordTemplateName").Get<string>();
-                    break;
-                case "en-GB":
-                    ResetPasswordTemplateName = _configuration.GetSection("ApplicationSettings:TemplateFile:Email:En:ResetPasswordTemplateName").Get<string>();
-                    break;
-                case "de-DE":
-                    ResetPasswordTemplateName = _configuration.GetSection("ApplicationSettings:TemplateFile:Email:De:ResetPasswordTemplateName").Get<string>();
-                    break;
-                default:
-                    ResetPasswordTemplateName = _configuration.GetSection("ApplicationSettings:TemplateFile:Email:En:ResetPasswordTemplateName").Get<string>();
-                    break;
-            }
-
-            using (var apidbContext = _contextFactory.CreateDbContext())
-            {
-                resultat = apidbContext.QUploadDefinitions.Where(t => t.Nature == QUploadNatureEnum.ApplicationEmail && t.FileName == ResetPasswordTemplateName).ToList();
-            }
-
-            //Get the content string of the body Email with a stream:
-            Stream fileStream = await _uploadService.GetUploadStream(resultat.First().Id);
-            byte[] byteArrayFile;
-            using (MemoryStream ms = new MemoryStream())
-            {
-                fileStream.CopyTo(ms);
-                byteArrayFile = ms.ToArray();
-            }
-            string bodyEmail = System.Text.Encoding.UTF8.GetString(byteArrayFile);
-            
-            string emailFrom = _configuration.GetSection("ApplicationSettings:SMTP:mailFrom").Get<string>();
-            var token = _userManager.GeneratePasswordResetTokenAsync(user);
-
-            //create ParametersEmail it will be use for fill the content of the email 
-            string tokenTimeValidity = _configuration.GetSection("ApplicationSettings:ResetPasswordTokenValidityLifeSpanMinutes").Get<string>();
-            Dictionary<string, string> keyValues = new Dictionary<string, string>
-            {
-                { "token", HttpUtility.UrlEncode(token.Result) },
-                { "tokenTimeValidityInMinutes", tokenTimeValidity }
-            };
-            ParametersEmail ParamsEmail = new ParametersEmail(_configuration, keyValues, user);
-
-            //send mail
-            SendMailParamObject mailObject = new SendMailParamObject() 
-            { 
-                EmailTo = user.Email, 
-                EmailFrom = emailFrom, 
-                bodyEmail = bodyEmail, 
-                SubjectEmail = "Reset Password", 
-                bodyHtmlEmail = true, 
-                CopyEmail = "",
-                ParameterEmailToFillContent = ParamsEmail 
-            };
-            response = null;//await _emailSending.SendEmailAsync(mailObject);
-
-            return response;
         }
 
         public async Task<object> ResetPassword(ResetPassword reset_password_infos)
@@ -381,7 +287,7 @@ namespace Querier.Api.Services.User
                     user.Email,
                     "Confirmation d'email",
                     "EmailConfirmation",
-                    user.LanguageCode ?? "fr",
+                    "fr",
                     parameters
                 );
             }
@@ -462,11 +368,7 @@ namespace Querier.Api.Services.User
                 LastName = user.LastName,
                 Email = user.Email,
                 IsEmailConfirmed = user.EmailConfirmed,
-                Phone = user.Phone,
-                LanguageCode = user.LanguageCode,
-                Img = user.Img,
                 UserName = user.UserName,
-                DateFormat = user.DateFormat,
                 Roles = user.UserRoles?.Select(ur => new RoleResponse { Name = ur.Role.Name }).ToList() ?? new List<RoleResponse>()
             };
         }

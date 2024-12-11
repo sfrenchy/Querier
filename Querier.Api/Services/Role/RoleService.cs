@@ -7,7 +7,6 @@ using Querier.Api.Models.Auth;
 using Querier.Api.Models.Common;
 using Querier.Api.Models.Requests.Role;
 using Querier.Api.Models.Responses.Role;
-using Querier.Api.Models.UI;
 using Microsoft.EntityFrameworkCore;
 using Querier.Api.Services.Repositories.Role;
 
@@ -16,17 +15,10 @@ namespace Querier.Api.Services.Role
     public interface IRoleService : IDisposable
     {
         Task<List<RoleResponse>> GetAll();
-        Task<List<CategoryActionsList>> GetCategories();
         Task<bool> Add(RoleRequest role);
         Task<bool> Edit(RoleRequest role);
         Task<bool> Delete(string id);
-        Task<bool> UpdateCategories(CategoryActionsList[] actions);
-        Task<bool> AddActionsMissing(ActionsMissing actions);
-        Task<GetAllRolesAndPagesAndRelationBetweenResponse> GetAllRolesAndPagesAndRelationBetween();
-        Task<bool> AddOrRemoveRoleViewOnPage(ModifyRoleViewOnPageRequest request);
-        Task<bool> InsertViewPageRole(InsertViewPageRoleRequest request);
         Task<List<RoleResponse>> GetRolesForUser(string idUser);
-        Task<List<GetAllPagesWithRolesResponse>> GetAllPagesWithRoles();
         ApiRole[] UseMapToModel(List<string> roleNames);
     }
 
@@ -68,141 +60,6 @@ namespace Querier.Api.Services.Role
             return (await _repoRole.GetAll()).Select(ug => new RoleResponse { Id = ug.Id, Name = ug.Name }).ToList();
         }
 
-        public async Task<List<CategoryActionsList>> GetCategories()
-        {
-            var categories = (await _repoRole.GetCategories()).Select(c => new CategoryActionsList
-            {
-                CategoryId = c.Id,
-                Name = c.Label,
-                Actions = c.QCategoryRoles.Select(v => new CategoryActions(v.ApiRoleId, v.View, v.Add, v.Edit)).ToList(),
-                Pages = c.QPages.Select(p => new PageActionsList
-                {
-                    PageId = p.Id,
-                    Name = p.Title,
-                    Actions = p.QPageRoles.Select(v => new PageCartActions(v.ApiRoleId, v.View, v.Add, v.Edit, v.Remove)).ToList(),
-                    Cards = p.QPageRows.SelectMany(r => r.QPageCards.Select(c => new CardActionsList
-                    {
-                        CardId = c.Id,
-                        Name = c.Title,
-                        Actions = c.QCardRoles.Select(v => new PageCartActions(v.ApiRoleId, v.View, v.Add, v.Edit, v.Remove)).ToList()
-                    })).ToList()
-                }).ToList()
-            }).ToList();
-
-            var groups = await _repoRole.GetAll();
-
-            foreach (var category in categories)
-            {
-                if (category.Actions.Count < groups.Count)
-                {
-                    category.Actions.AddRange(RemoveDataFromListActionsCategory(category.Actions, groups));
-                }
-                foreach (var page in category.Pages)
-                {
-                    if (page.Actions.Count < groups.Count)
-                    {
-                        page.Actions.AddRange(RemoveDataFromListActionsPageCard(page.Actions, groups));
-                    }
-                    foreach (var card in page.Cards)
-                    {
-                        if (card.Actions.Count < groups.Count)
-                        {
-                            card.Actions.AddRange(RemoveDataFromListActionsPageCard(page.Actions, groups));
-                        }
-                    }
-                }
-            }
-
-            return categories;
-        }
-
-        public async Task<bool> UpdateCategories(CategoryActionsList[] actionList)
-        {
-            var categoriesRolesActions = actionList.SelectMany(actions => actions.Actions
-                .Select(v => new QCategoryRole(v.RoleId, actions.CategoryId, v.View, v.Add, v.Edit))).ToList();
-
-            var pagesRolesActions = actionList.SelectMany(actions => actions.Pages
-                .SelectMany(p => p.Actions
-                .Select(v => new QPageRole(v.RoleId, p.PageId, v.View, v.Add, v.Edit, v.Remove)))).ToList();
-
-            var cardsRolesActions = actionList.SelectMany(actions => actions.Pages
-                .SelectMany(p => p.Cards
-                .SelectMany(c => c.Actions
-                .Select(v => new QCardRole(v.RoleId, c.CardId, v.View, v.Add, v.Edit, v.Remove))))).ToList();
-
-            return await _repoRole.UpdateCategoryRoleActionsList(categoriesRolesActions)
-            && await _repoRole.UpdatePageRoleActionsList(pagesRolesActions)
-            && await _repoRole.UpdateCardRoleActionsList(cardsRolesActions);
-        }
-
-        public async Task<bool> AddActionsMissing(ActionsMissing actions)
-        {
-            return await _repoRole.AddActionsMissing(actions);
-        }
-
-        public async Task<GetAllRolesAndPagesAndRelationBetweenResponse> GetAllRolesAndPagesAndRelationBetween()
-        {
-            GetAllRolesAndPagesAndRelationBetweenResponse response = new GetAllRolesAndPagesAndRelationBetweenResponse();
-            using (var apidbContext = _contextFactory.CreateDbContext())
-            {
-                response.Pages = await apidbContext.QPages.ToListAsync();
-                response.Roles = await _repoRole.GetAll();
-                response.Category = await apidbContext.QPageCategories.ToListAsync();
-                response.PagesRoles = new List<GetPagesRolesRelationsViewModel>();
-                List<QPageRole> PagesRoles = await apidbContext.QPageRoles.ToListAsync();
-                foreach (var PageRole in PagesRoles)
-                {
-                    GetPagesRolesRelationsViewModel elementToAdd = new GetPagesRolesRelationsViewModel
-                    {
-                        ApiRoleId = PageRole.ApiRoleId,
-                        HAPageId = PageRole.HAPageId,
-                        View = PageRole.View
-                    };
-                    response.PagesRoles.Add(elementToAdd);
-                }
-            }
-            return response;
-        }
-
-        public async Task<bool> AddOrRemoveRoleViewOnPage(ModifyRoleViewOnPageRequest request)
-        {
-            //action = true -> add view and false -> remove view
-            using (var apidbContext = _contextFactory.CreateDbContext())
-            {
-                QPageRole relationPageRole = apidbContext.QPageRoles.FirstOrDefault(r => r.ApiRoleId == request.roleId && r.HAPageId == request.pageId);
-                if (relationPageRole == null)
-                {
-                    //throw new System.NullReferenceException();
-                    return false;
-                }
-                else
-                {
-                    relationPageRole.View = request.action;
-                }
-                await apidbContext.SaveChangesAsync();
-            }
-            return true;
-        }
-
-        public async Task<bool> InsertViewPageRole(InsertViewPageRoleRequest request)
-        {
-            using (var apidbContext = _contextFactory.CreateDbContext())
-            {
-                QPageRole newInsert = new QPageRole
-                {
-                    ApiRoleId = request.roleId,
-                    HAPageId = request.pageId,
-                    View = true,
-                    Add = true,
-                    Edit = true,
-                    Remove = true
-                };
-                apidbContext.QPageRoles.Add(newInsert);
-                await apidbContext.SaveChangesAsync();
-            }
-            return true;
-        }
-
         public async Task<List<RoleResponse>> GetRolesForUser(string idUser)
         {
             var responses = new List<RoleResponse>();
@@ -220,27 +77,6 @@ namespace Querier.Api.Services.Role
                     responses.Add(ElementVM);
                 }
                 return responses;
-            }
-        }
-
-        public async Task<List<GetAllPagesWithRolesResponse>> GetAllPagesWithRoles()
-        {
-            List<GetAllPagesWithRolesResponse> response = new List<GetAllPagesWithRolesResponse>();
-            using (var apidbContext = _contextFactory.CreateDbContext())
-            {
-                var pages = await apidbContext.QPages.ToListAsync();
-                foreach (var page in pages)
-                {
-                    QPage pageFind = await apidbContext.QPages.FindAsync(page.Id);
-                    var pageVM = QPageVM.FromHAPage(page);
-                    GetAllPagesWithRolesResponse element = new GetAllPagesWithRolesResponse
-                    {
-                        IdPage = page.Id,
-                        Roles = pageVM.Roles
-                    };
-                    response.Add(element);
-                }
-                return response;
             }
         }
 

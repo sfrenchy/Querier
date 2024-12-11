@@ -1,5 +1,4 @@
 ﻿using Querier.Api.Models;
-using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Requests;
 using Querier.Api.Models.Responses;
 using Querier.Api.Services;
@@ -11,7 +10,6 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using Querier.Api.Models.Interfaces;
-using Querier.Api.Models.Notifications.MQMessages;
 using Querier.Api.Tools;
 
 namespace Querier.Api.Controllers
@@ -54,60 +52,11 @@ namespace Querier.Api.Controllers
             return new OkObjectResult(_entityCRUDService.GetAll(contextTypeName, entityTypeName));
         }
 
-        [HttpPost("Read")]
-        public IActionResult Read([FromBody] CRUDReadRequest model)
-        {
-            ServerSideResponse<dynamic> response;
-            var datas = _entityCRUDService.Read(model.ContextTypeName, model.EntityType, model.Filters, out Type entityType);
-
-            var dataTableFilterArgs = new object[] { datas, model.DatatableParams, null };
-            object result = typeof(ExtensionMethods)
-                .GetMethod(nameof(ExtensionMethods.DatatableFilter))
-                .MakeGenericMethod(datas.GetType().GetGenericArguments().Single())
-                .Invoke(null, dataTableFilterArgs);
-
-            var typedResult = (List<dynamic>)(typeof(ExtensionMethods)
-                .GetMethod(nameof(ExtensionMethods.CastListToDynamic))
-                .MakeGenericMethod(datas.GetType().GetGenericArguments().Single())
-                .Invoke(null, new object[] { result }));
-
-            response = new ServerSideResponse<dynamic>();
-
-            response.draw = model.DatatableParams.draw;
-            response.recordsTotal = datas.Count();
-            response.recordsFiltered = (int)dataTableFilterArgs[2];
-            response.data = typedResult;
-            response.sums = new Dictionary<string, object>();
-
-            return new OkObjectResult(response);
-        }
-
         [HttpPost("ReadFromSql")]
         public IActionResult ReadFromSql([FromBody] CRUDReadSqlQueryRequest request)
         {
-            ServerSideResponse<object> response;
             var datas = _entityCRUDService.ReadFromSql(request.ContextTypeName, request.SqlQuery, request.Filters);
-
-            var dataTableFilterArgs = new object[] { datas, request.DatatableParams, null };
-            object result = typeof(ExtensionMethods)
-                .GetMethod(nameof(ExtensionMethods.DatatableFilter))
-                .MakeGenericMethod(datas.GetType().GetGenericArguments().Single())
-                .Invoke(null, dataTableFilterArgs);
-
-            var typedResult = (List<dynamic>)(typeof(ExtensionMethods)
-                .GetMethod(nameof(ExtensionMethods.CastListToDynamic))
-                .MakeGenericMethod(datas.GetType().GetGenericArguments().Single())
-                .Invoke(null, new object[] { result }));
-
-            response = new ServerSideResponse<object>();
-
-            response.draw = request.DatatableParams.draw;
-            response.recordsTotal = datas.Count();
-            response.recordsFiltered = (int)dataTableFilterArgs[2];
-            response.data = typedResult;
-            response.sums = new Dictionary<string, object>();
-
-            return new OkObjectResult(response);
+            return new OkObjectResult(datas);
         }
 
 
@@ -146,19 +95,6 @@ namespace Querier.Api.Controllers
         public IActionResult GetSQLQueryEntityDefinition([FromBody] CRUDExecuteSQLQueryRequest request)
         {
             var res = _entityCRUDService.GetSQLQueryEntityDefinition(request);
-
-            if (res.QuerySuccessful == false)
-            {
-                ToastMessage sqlQueryStatusNotification = new ToastMessage();
-                sqlQueryStatusNotification.Type = ToastType.Danger;
-                sqlQueryStatusNotification.TitleCode = $"Sql query error";
-                sqlQueryStatusNotification.ContentCode = "The Sql query you entered is invalid";
-                sqlQueryStatusNotification.Recipient = "admin@querier.fr";
-                sqlQueryStatusNotification.Closable = false;
-                sqlQueryStatusNotification.Persistent = false;
-                //_toastMessageEmitterService.PublishToast(sqlQueryStatusNotification);
-            }
-            
             return new OkObjectResult(res);
         }
     }

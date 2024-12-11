@@ -13,7 +13,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Antlr4.StringTemplate;
 using Querier.Api.Models.Common;
-using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Enums;
 using Querier.Api.Models.QDBConnection;
 using Querier.Api.Models.Interfaces;
@@ -351,26 +350,6 @@ namespace Querier.Api.Services
                 {
                    DeletedDBConnectionId = toDeleteId 
                 };
-            }
-        }
-
-        public async Task<ServerSideResponse<QDBConnectionResponse>> ReadDBConnectionAsync(ServerSideRequest request)
-        {
-            using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
-            {
-                ServerSideResponse<QDBConnectionResponse> r = new ServerSideResponse<QDBConnectionResponse>();
-                r.data = apiDbContext.QDBConnections.Select(c => new QDBConnectionResponse() {
-                        ApiRoute = c.ApiRoute,
-                        ConnectionString = c.ConnectionString,
-                        ConnectionType = c.ConnectionType.ToString(),
-                        Id = c.Id,
-                        Name = c.Name,
-                    }).DatatableFilter(request, out int? countFiltered).ToList();
-                r.draw = request.draw;
-                r.recordsTotal = apiDbContext.QDBConnections.Count();
-                r.recordsFiltered = (int)countFiltered;
-                r.sums = new Dictionary<string, object>();
-                return r;
             }
         }
 

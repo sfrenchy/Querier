@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Querier.Api.Models.Auth;
 using Querier.Api.Models.Common;
 using Querier.Api.Models.Responses.Role;
-using Querier.Api.Models.UI;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -19,11 +18,6 @@ namespace Querier.Api.Services.Repositories.Role
         Task<bool> Add(ApiRole role);
         Task<bool> Edit(ApiRole role);
         Task<bool> Delete(string id);
-        Task<List<QPageCategory>> GetCategories();
-        Task<bool> UpdateCategoryRoleActionsList(List<QCategoryRole> actions);
-        Task<bool> UpdatePageRoleActionsList(List<QPageRole> actions);
-        Task<bool> UpdateCardRoleActionsList(List<QCardRole> actions);
-        Task<bool> AddActionsMissing(ActionsMissing actions);
     }
 
     public class RoleRepository : IRoleRepository
@@ -104,9 +98,6 @@ namespace Querier.Api.Services.Repositories.Role
                 }
 
                 var foundRole = await _roleManager.Roles
-                    .Include(r => r.QCategoryRoles)
-                    .Include(r => r.QPageRoles)
-                    .Include(r => r.QCardRoles)
                     .FirstOrDefaultAsync(r => r.Id == id);
                 if (foundRole == null)
                 {
@@ -121,155 +112,6 @@ namespace Querier.Api.Services.Repositories.Role
                     return false;
                 }
                 return deleted.Succeeded;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return false;
-            }
-        }
-
-        public async Task<List<QPageCategory>> GetCategories()
-        {
-            try
-            {
-                return _context.QPageCategories
-                    .Include(c => c.QCategoryRoles)
-                    .Include(c => c.QPages).ThenInclude(p => p.QPageRoles)
-                    .Include(c => c.QPages).ThenInclude(p => p.QPageRows).ThenInclude(r => r.QPageCards)
-                    .Include(c => c.QPages).ThenInclude(p => p.QPageRows).ThenInclude(r => r.QPageCards).ThenInclude(c => c.QCardRoles).ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return new List<QPageCategory>();
-            }
-        }
-
-        public async Task<bool> UpdateCategoryRoleActionsList(List<QCategoryRole> actions)
-        {
-            try
-            {
-                if (actions == null)
-                {
-                    _logger.LogError("The list of category's action is null");
-                    return false;
-                }
-                foreach (var action in actions)
-                {
-                    var foundAction = await _context.QCategoryRoles
-                        .FirstOrDefaultAsync(a => a.ApiRoleId == action.ApiRoleId && a.HAPageCategoryId == action.HAPageCategoryId);
-                    if (foundAction != null)
-                    {
-                        foundAction.View = action.View;
-                        foundAction.Edit = action.Edit;
-                        foundAction.Add = action.Add;
-                    }
-                    else
-                    {
-                        await _context.QCategoryRoles.AddAsync(action);
-                    }
-                }
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return false;
-            }
-        }
-
-        public async Task<bool> UpdatePageRoleActionsList(List<QPageRole> actions)
-        {
-            try
-            {
-                if (actions == null)
-                {
-                    _logger.LogError("The list of page's action is null");
-                    return false;
-                }
-                foreach (var action in actions)
-                {
-                    var foundAction = await _context.QPageRoles
-                        .FirstOrDefaultAsync(a => a.ApiRoleId == action.ApiRoleId && a.HAPageId == action.HAPageId);
-                    if (foundAction != null)
-                    {
-                        foundAction.View = action.View;
-                        foundAction.Edit = action.Edit;
-                        foundAction.Add = action.Add;
-                        foundAction.Remove = action.Remove;
-                    }
-                    else
-                    {
-                        await _context.QPageRoles.AddAsync(action);
-                    }
-                }
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return false;
-            }
-        }
-
-        public async Task<bool> UpdateCardRoleActionsList(List<QCardRole> actions)
-        {
-            try
-            {
-                if (actions == null)
-                {
-                    _logger.LogError("The list of card's action is null");
-                    return false;
-                }
-                foreach (var action in actions)
-                {
-                    var foundAction = await _context.QCardRoles
-                        .FirstOrDefaultAsync(a => a.ApiRoleId == action.ApiRoleId && a.HAPageCardId == action.HAPageCardId);
-                    if (foundAction != null)
-                    {
-                        foundAction.View = action.View;
-                        foundAction.Edit = action.Edit;
-                        foundAction.Add = action.Add;
-                        foundAction.Remove = action.Remove;
-                    }
-                    else
-                    {
-                        await _context.QCardRoles.AddAsync(action);
-                    }
-                }
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                return false;
-            }
-        }
-
-        public async Task<bool> AddActionsMissing(ActionsMissing actions)
-        {
-            try
-            {
-                switch (actions.Type)
-                {
-                    case "CategoryId":
-                        await _context.QCategoryRoles.AddAsync(new QCategoryRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit));
-                        break;
-                    case "PageId":
-                        await _context.QPageRoles.AddAsync(new QPageRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit, actions.Actions.Remove));
-                        break;
-                    case "CardId":
-                        await _context.QCardRoles.AddAsync(new QCardRole(actions.RoleId, int.Parse(actions.ElementId), actions.Actions.View, actions.Actions.Add, actions.Actions.Edit, actions.Actions.Remove));
-                        break;
-                    default:
-                        break;
-                }
-                await _context.SaveChangesAsync();
-                return true;
             }
             catch (Exception ex)
             {

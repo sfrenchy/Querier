@@ -3,7 +3,6 @@ using Querier.Api.Models.Auth;
 using Querier.Api.Models.Common;
 using Querier.Api.Services;
 using Querier.Api.Services.Role;
-using Querier.Api.Services.UI;
 using Querier.Api.Services.User;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -34,7 +33,6 @@ using Querier.Api.Models.QDBConnection;
 using Querier.Api.Services.Repositories.Role;
 using Querier.Api.Services.Repositories.User;
 using Querier.Api.Tools;
-using IQUploadService = Querier.Api.Services.IQUploadService;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
@@ -234,12 +232,6 @@ namespace Querier.Api
             services.AddSingleton(tokenValidationParameters);
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped<IEntityCRUDService, EntityCRUDService>();
-            services.AddScoped<Models.Interfaces.IQUploadService, IQUploadService>();
-            services.AddScoped<IUICategoryService, UICategoryService>();
-            services.AddScoped<IUIPageService, UIPageService>();
-            services.AddScoped<IUIRowService, UIRowService>();
-            services.AddScoped<IUICardService, UICardService>();
-            services.AddScoped<IExportGeneratorService, ExportGeneratorService>();
             services.AddScoped<IWizardService, WizardService>();
             services.AddScoped<IUserManagerService, UserManagerService>();
             services.AddScoped<IEmailSendingService, SMTPEmailSendingService>();
@@ -457,24 +449,6 @@ namespace Querier.Api
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllers();
             });
-            var pluginsStartupTypes = _configuration.GetSection("ApplicationSettings:PluginsStartupTypes").Get<List<string>>() ?? new List<string>();
-            List<Type> pluginTypes = new List<Type>();
-            if (pluginsStartupTypes != null)
-            {
-                foreach (string startupType in pluginsStartupTypes)
-                {
-                    Type type = Type.GetType(startupType, true);
-                    pluginTypes.Add(type);
-                }
-
-                foreach (var ha in from Type plugin in pluginTypes
-                                let ha = (IQPlugin)Activator.CreateInstance(plugin)
-                                select ha)
-                {
-                    ha.ConfigureApp(app, env);
-                    ha.CreateTemplateEmail().GetAwaiter().GetResult();
-                }
-            }
         }
     }
 }

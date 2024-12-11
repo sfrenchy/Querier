@@ -1,5 +1,4 @@
 using Querier.Api.Models;
-using Querier.Api.Models.Datatable;
 using Querier.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

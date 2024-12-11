@@ -2,7 +2,6 @@ using $nameSpace$;
 using $nameSpace$.ProcedureParameters;
 using $nameSpace$.ProcedureReportRequests;
 using $nameSpace$.ProcedureResultSets;
-using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Interfaces;
 using Querier.Api.Tools;
 using Microsoft.Extensions.Caching.Distributed;

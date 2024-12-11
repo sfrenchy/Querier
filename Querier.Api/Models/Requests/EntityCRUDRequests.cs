@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Querier.Api.Models.Common;
-using Querier.Api.Models.Datatable;
 
 namespace Querier.Api.Models.Requests
 {
@@ -15,11 +14,6 @@ namespace Querier.Api.Models.Requests
         /// The server side type of the entity
         /// </summary>
         public string? EntityType { get; set; }
-
-        /// <summary>
-        /// The datatable server side request parameters
-        /// </summary>
-        public ServerSideRequest? DatatableParams { get; set; }
 
         public List<DataFilter> Filters { get; set; }
     }
@@ -84,11 +78,6 @@ namespace Querier.Api.Models.Requests
         /// The SqlQuery
         /// </summary>
         public string? SqlQuery { get; set; }
-
-        /// <summary>
-        /// The datatable server side request parameters
-        /// </summary>
-        public ServerSideRequest? DatatableParams { get; set; }
 
         public List<DataFilter> Filters { get; set; }
     }
