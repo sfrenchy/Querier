@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
 using System;
+using Microsoft.EntityFrameworkCore;
 
 namespace $nameSpace$
 {

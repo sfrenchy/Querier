@@ -15,7 +15,7 @@ namespace $nameSpace$.Mvc
     $procedureList: {procedure|
     [Authorize]
     [ApiController]
-    [Route("api/$contextRoute$/[controller]")]
+    [Route("api/v1/$contextRoute$/[controller]")]
     public partial class $procedure.CSName$Controller : ControllerBase
     {
         private readonly ILogger<$procedure.CSName$Controller> _logger;
@@ -26,32 +26,20 @@ namespace $nameSpace$.Mvc
             _$procedure.CSName$Service = $procedure.CSName$Service;
         \}
 
-        [HttpPost("Datas")]
+        [HttpPost("Execute")]
         $if (procedure.HasOutput)$
         [ProducesResponseType(typeof(List<$procedure.CSName$Result>), 200)]
         $endif$
-        public async Task<IActionResult> DatasAsync($if (procedure.HasParameters)$[FromBody] $procedure.CSName$Params parameters$endif$)
+        public async Task<IActionResult> ExecuteAsync($if (procedure.HasParameters)$[FromBody] $procedure.CSName$Params parameters$endif$)
         {
-            _logger.LogInformation("$procedure.CSName$DatasAsync action called");
+            _logger.LogInformation("$procedure.CSName$ExecuteAsync action called");
             $if (procedure.HasParameters)$
-            _logger.LogDebug("$procedure.CSName$DatasAsync: ", JsonConvert.SerializeObject(parameters));
+            _logger.LogDebug("$procedure.CSName$ExecuteAsync: ", JsonConvert.SerializeObject(parameters));
             $endif$
             
-            $if (procedure.HasOutput)$var _ = $endif$await _$procedure.CSName$Service.DatasAsync($if (procedure.HasParameters)$parameters$endif$);
+            $if (procedure.HasOutput)$var _ = $endif$await _$procedure.CSName$Service.ExecuteAsync($if (procedure.HasParameters)$parameters$endif$);
             return new $if(procedure.HasOutput)$OkObjectResult(_)$else$OkResult()$endif$;
         \}
-
-        $if (procedure.HasOutput)$
-        [HttpPost("ReportDatas")]
-        [ProducesResponseType(typeof(ServerSideResponse<$procedure.CSName$Result>), 200)]
-        public async Task<IActionResult> ReportDatasAsync([FromBody] $procedure.CSName$ReportRequest datatableRequest)
-        {
-                _logger.LogInformation("$procedure.CSName$ReportDatasAsync action called");
-                _logger.LogDebug("$procedure.CSName$ReportDatasAsync: ", JsonConvert.SerializeObject(datatableRequest));
-                var _ = await _$procedure.CSName$Service.ReportDatasAsync(datatableRequest);
-                return new OkObjectResult(_);
-        \}
-        $endif$
     \}
     }$
 \}

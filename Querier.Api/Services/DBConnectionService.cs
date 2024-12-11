@@ -45,6 +45,14 @@ using Pomelo.EntityFrameworkCore.MySql.Diagnostics.Internal;
 using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
 using Querier.Api.Tools;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Builder;
 
 namespace Querier.Api.Services
 {
@@ -54,13 +62,29 @@ namespace Querier.Api.Services
         private readonly IDynamicContextList _dynamicContextList;
         private readonly ILogger<DBConnectionService> _logger;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ApplicationPartManager _partManager;
+        private readonly IApiDescriptionGroupCollectionProvider _apiDescriptionProvider;
+        private readonly ISchemaGenerator _schemaGenerator;
+        private readonly ISwaggerProvider _swaggerProvider;
 
-        public DBConnectionService(IDynamicContextList dynamicContextList, IDbContextFactory<ApiDbContext> apiDbContextFactory, IServiceProvider serviceProvider, ILogger<DBConnectionService> logger)
+        public DBConnectionService(
+            IDynamicContextList dynamicContextList,
+            IDbContextFactory<ApiDbContext> apiDbContextFactory,
+            IServiceProvider serviceProvider,
+            ILogger<DBConnectionService> logger,
+            ApplicationPartManager partManager,
+            IApiDescriptionGroupCollectionProvider apiDescriptionProvider,
+            ISchemaGenerator schemaGenerator,
+            ISwaggerProvider swaggerProvider)
         {
             _logger = logger;
             _apiDbContextFactory = apiDbContextFactory;
             _serviceProvider = serviceProvider;
             _dynamicContextList = dynamicContextList;
+            _partManager = partManager;
+            _apiDescriptionProvider = apiDescriptionProvider;
+            _schemaGenerator = schemaGenerator;
+            _swaggerProvider = swaggerProvider;
         }
 
         public async Task<AddDBConnectionResponse> AddConnectionAsync(AddDBConnectionRequest connection)
@@ -242,6 +266,13 @@ namespace Querier.Api.Services
                 }
                 File.WriteAllBytes(sourceZipPath, sourceStream.ToArray());
             }
+            string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
+            using(FileStream srcFileStream = new FileStream(srcPath, FileMode.Create)) 
+            {
+                using (FileStream zipFileStream = new FileStream(sourceZipPath, FileMode.Open)) {
+                    zipFileStream.CopyTo(srcFileStream);
+                }
+            }
             // Templating done, we are now compiling generated sources
             MemoryStream peStream = new MemoryStream();
             MemoryStream pdbStream = new MemoryStream();
@@ -277,7 +308,7 @@ namespace Querier.Api.Services
             
             string dllPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.dll");
             string pdbPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.pdb");
-            string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
+            
             using(FileStream dllFileStream = new FileStream(dllPath, FileMode.Create)) 
             {
                 peStream.CopyTo(dllFileStream);
@@ -286,12 +317,7 @@ namespace Querier.Api.Services
             {
                 pdbStream.CopyTo(pdbFileStream);
             }
-            using(FileStream srcFileStream = new FileStream(srcPath, FileMode.Create)) 
-            {
-                using (FileStream zipFileStream = new FileStream(sourceZipPath, FileMode.Open)) {
-                    zipFileStream.CopyTo(srcFileStream);
-                }
-            }
+            
 
             newConnection.Name = connection.Name;
             newConnection.ConnectionString = connection.ConnectionString;
@@ -304,6 +330,10 @@ namespace Querier.Api.Services
             }
             result.State = QDBConnectionState.Available;
             File.Delete(sourceZipPath);
+            await AssemblyLoader.LoadAssemblyFromQDBConnection(newConnection, _serviceProvider, _partManager, _logger);
+
+            AssemblyLoader.RegenerateSwagger(_swaggerProvider, _logger);
+
             return result;
         }
 

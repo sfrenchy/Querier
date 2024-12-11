@@ -148,7 +148,7 @@ namespace Querier.Api.Services
                         var service = _serviceProvider.GetService(dynamicContextProcedureResolver.ProcedureNameService[dynamicContextProcedureExpression.ServiceName]);
                         if (service is IDynamicContextProcedureWithParamsAndResult)
                         {
-                            datas = (await ((IDynamicContextProcedureWithParamsAndResult)service).DatasAsync(dynamicContextProcedureExpression.Parameters)).ToDataTable();
+                            datas = (await ((IDynamicContextProcedureWithParamsAndResult)service).ExecuteAsync(dynamicContextProcedureExpression.Parameters)).ToDataTable();
                         }
                         else
                         {
