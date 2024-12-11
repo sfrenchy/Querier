@@ -1,5 +1,4 @@
 ﻿using Querier.Api.Models;
-using Querier.Api.Models.Datatable;
 using Querier.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -82,30 +81,6 @@ namespace Querier.Api.Controllers
         public async Task<IActionResult> AddDBConnectionAsync([FromBody] AddDBConnectionRequest connection)
         {
             return Ok(await _dbConnectionService.AddConnectionAsync(connection));
-        }
-
-        /// <summary>
-        /// Retrieves database connections based on specified criteria
-        /// </summary>
-        /// <remarks>
-        /// Returns a list of database connections that match the provided search criteria.
-        /// 
-        /// Sample request:
-        ///     POST /api/v1/dbconnection/readdbconnection
-        ///     {
-        ///         "searchTerm": "production",
-        ///         "pageSize": 10,
-        ///         "pageNumber": 1
-        ///     }
-        /// </remarks>
-        /// <param name="request">The search and pagination parameters</param>
-        /// <returns>A list of matching database connections</returns>
-        /// <response code="200">Returns the list of database connections</response>
-        [HttpPost("ReadDBConnection")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> ReadDBConnectionAsync(ServerSideRequest request)
-        {
-            return Ok(await _dbConnectionService.ReadDBConnectionAsync(request));
         }
 
         /// <summary>

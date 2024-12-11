@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Querier.Api.Models.Datatable;
 
 namespace $nameSpace$.Mvc
 {

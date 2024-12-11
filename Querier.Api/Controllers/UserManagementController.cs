@@ -1,5 +1,4 @@
 ﻿using Querier.Api.Models;
-using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Requests.User;
 using Querier.Api.Services.User;
 using Microsoft.AspNetCore.Authorization;
@@ -171,33 +170,6 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves a paginated list of users
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     POST /api/v1/usermanagement/getusers
-        ///     {
-        ///         "pageSize": 10,
-        ///         "pageNumber": 1,
-        ///         "searchTerm": "john"
-        ///     }
-        /// </remarks>
-        /// <param name="datatableRequest">Pagination and search parameters</param>
-        /// <returns>List of users matching the criteria</returns>
-        [HttpPost]
-        [Route("GetUsers")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult> GetUsersAync([FromBody] ServerSideRequest datatableRequest)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest("Request is not valid");
-
-            var res = await _userService.GetAll(datatableRequest);
-            return Ok(res);
-        }
-
-        /// <summary>
         /// Retrieves all users without pagination
         /// </summary>
         /// <remarks>
@@ -213,28 +185,6 @@ namespace Querier.Api.Controllers
         {
             var users = await _userService.GetAllAsync();
             return Ok(users);
-        }
-
-        /// <summary>
-        /// Initiates the password reset process by sending an email
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     POST /api/v1/usermanagement/sendmailforforgotpassword
-        ///     {
-        ///         "email": "user@example.com"
-        ///     }
-        /// </remarks>
-        /// <param name="user_mail">The email address for password reset</param>
-        /// <returns>Result of the email sending operation</returns>
-        [HttpPost]
-        [AllowAnonymous]
-        [Route("SendMailForForgotPassword")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> SendMailForForgotPassword([FromBody] SendMailForgotPassword user_mail)
-        {
-            var response = await _userService.SendMailForForgotPassword(user_mail);
-            return Ok(response);
         }
 
         /// <summary>

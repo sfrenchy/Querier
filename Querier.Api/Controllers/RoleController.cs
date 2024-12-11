@@ -1,5 +1,4 @@
-﻿using Querier.Api.Models.Requests.Role;
-using Querier.Api.Models.Responses.Role;
+﻿using Querier.Api.Models.Responses.Role;
 using Querier.Api.Services.Role;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Querier.Api.Models.Requests.Role;
 
 namespace Querier.Api.Controllers
 {
@@ -131,129 +131,6 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves all action categories
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     GET /api/v1/role/categories
-        /// </remarks>
-        /// <returns>List of action categories</returns>
-        [HttpGet("Categories")]
-        [ProducesResponseType(typeof(List<CategoryActionsList>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> CategoriesAsync()
-        {
-            return Ok(await _svc.GetCategories());
-        }
-
-        /// <summary>
-        /// Updates role actions for specified categories
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     POST /api/v1/role/updateroleactions
-        ///     [{
-        ///         "categoryId": "1",
-        ///         "actions": ["read", "write"]
-        ///     }]
-        /// </remarks>
-        /// <param name="actions">The list of category actions to update</param>
-        /// <returns>Success indicator</returns>
-        [HttpPost("UpdateRoleActions")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateRoleActionsAsync([FromBody] CategoryActionsList[] actions)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest();
-
-            var updated = await _svc.UpdateCategories(actions);
-            if (updated)
-                return Ok(updated);
-            return BadRequest();
-        }
-
-        /// <summary>
-        /// Adds missing actions to roles
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     POST /api/v1/role/addactionsmissing
-        ///     {
-        ///         "roleId": "1",
-        ///         "actions": ["newAction1", "newAction2"]
-        ///     }
-        /// </remarks>
-        /// <param name="actions">The actions to add</param>
-        /// <returns>Success indicator</returns>
-        [HttpPost("AddActionsMissing")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> AddActionsMissing([FromBody] ActionsMissing actions)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest();
-
-            var updated = await _svc.AddActionsMissing(actions);
-            if (updated)
-                return Ok(updated);
-            return BadRequest();
-        }
-
-        /// <summary>
-        /// Retrieves all roles, pages, and their relationships
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     GET /api/v1/role/getallrolesandpagesandrelationbetween
-        /// </remarks>
-        /// <returns>Comprehensive role-page relationship data</returns>
-        [HttpGet("GetAllRolesAndPagesAndRelationBetween")]
-        [ProducesResponseType(typeof(GetAllRolesAndPagesAndRelationBetweenResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAllRolesAndPagesAndRelationBetween()
-        {
-            return new OkObjectResult(await _svc.GetAllRolesAndPagesAndRelationBetween());
-        }
-
-        /// <summary>
-        /// Modifies role access to a specific page
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     POST /api/v1/role/addorremoveroleviewonpage
-        ///     {
-        ///         "roleId": "1",
-        ///         "pageId": "2",
-        ///         "hasAccess": true
-        ///     }
-        /// </remarks>
-        /// <param name="request">The role-page access modification details</param>
-        /// <returns>Success indicator</returns>
-        [HttpPost("AddOrRemoveRoleViewOnPage")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> AddOrRemoveRoleViewOnPage([FromBody] ModifyRoleViewOnPageRequest request)
-        {
-            return new OkObjectResult(await _svc.AddOrRemoveRoleViewOnPage(request));
-        }
-
-        /// <summary>
-        /// Creates a new role-page view relationship
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     POST /api/v1/role/insertviewpagerole
-        ///     {
-        ///         "roleId": "1",
-        ///         "pageId": "2"
-        ///     }
-        /// </remarks>
-        /// <param name="request">The role-page relationship details</param>
-        /// <returns>Success indicator</returns>
-        [HttpPost("InsertViewPageRole")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> InsertViewPageRole([FromBody] InsertViewPageRoleRequest request)
-        {
-            return new OkObjectResult(await _svc.InsertViewPageRole(request));
-        }
-
-        /// <summary>
         /// Retrieves all roles assigned to a specific user
         /// </summary>
         /// <remarks>
@@ -283,21 +160,6 @@ namespace Querier.Api.Controllers
         {
             var userId = this.User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value;
             return Ok(await _svc.GetRolesForUser(userId));
-        }
-
-        /// <summary>
-        /// Retrieves all pages with their associated roles
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     GET /api/v1/role/getallpageswithroles
-        /// </remarks>
-        /// <returns>List of pages with their role assignments</returns>
-        [ProducesResponseType(typeof(List<GetAllPagesWithRolesResponse>), StatusCodes.Status200OK)]
-        [HttpGet("GetAllPagesWithRoles")]
-        public async Task<IActionResult> GetAllPagesWithRoles()
-        {
-            return Ok(await _svc.GetAllPagesWithRoles());
         }
     }
 }

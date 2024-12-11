@@ -7,7 +7,6 @@ using System.Web;
 using Querier.Api.Models;
 using Querier.Api.Models.Auth;
 using Querier.Api.Models.Common;
-using Querier.Api.Models.Datatable;
 using Querier.Api.Models.Email;
 using Querier.Api.Models.Enums;
 using Querier.Api.Models.Interfaces;
@@ -27,7 +26,6 @@ namespace Querier.Api.Services.Repositories.User
         Task<bool> Add(ApiUser user);
         Task<bool> Edit(ApiUser user);
         Task<bool> Delete(string id);
-        Task<ApiUserList> GetAll(ServerSideRequest datatableRequest);
         Task<List<ApiUser>> GetAll();
         Task<bool> AddRole(ApiUser user, ApiRole[] role);
         Task<bool> RemoveRoles(ApiUser user);
@@ -40,11 +38,10 @@ namespace Querier.Api.Services.Repositories.User
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private readonly IEmailSendingService _emailSending;
         private readonly ILogger<UserRepository> _logger;
-        private readonly Models.Interfaces.IQUploadService _uploadService;
         private readonly UserManager<ApiUser> _userManager;
         private readonly ISettingService _settings;
         private readonly IEmailTemplateService _emailTemplateService;
-        public UserRepository(ApiDbContext context, UserManager<ApiUser> userManager, IEmailTemplateService emailTemplateService, ISettingService settings, ILogger<UserRepository> logger, IConfiguration configuration, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory, Models.Interfaces.IQUploadService uploadService)
+        public UserRepository(ApiDbContext context, UserManager<ApiUser> userManager, IEmailTemplateService emailTemplateService, ISettingService settings, ILogger<UserRepository> logger, IConfiguration configuration, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory)
         {
             _context = context;
             _logger = logger;
@@ -52,7 +49,6 @@ namespace Querier.Api.Services.Repositories.User
             _configuration = configuration;
             _emailSending = emailSending;
             _contextFactory = contextFactory;
-            _uploadService = uploadService;
             _settings = settings;
             _emailTemplateService = emailTemplateService;
         }
@@ -150,7 +146,7 @@ namespace Querier.Api.Services.Repositories.User
                     user.Email,
                     "Confirmation de votre email",
                     "EmailConfirmation",
-                    user.LanguageCode ?? "en",
+                    "en",
                     new Dictionary<string, string> { 
                         { "Token", token }, 
                         { "TokenValidity", tokenValidity }, 
@@ -222,26 +218,6 @@ namespace Querier.Api.Services.Repositories.User
             {
                 _logger.LogError(ex, ex.Message, null);
                 return false;
-            }
-        }
-
-        public async Task<ApiUserList> GetAll(ServerSideRequest datatableRequest)
-        {
-            try
-            {
-                var data = _userManager.Users.ToList().DatatableFilter(datatableRequest, out int? countFiltered).ToList();
-                return new ApiUserList
-                {
-                    Users = data,
-                    TotalCount = _userManager.Users.Count(),
-                    FilteredCount = countFiltered.Value
-                };
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message, null);
-                return null;
             }
         }
 
