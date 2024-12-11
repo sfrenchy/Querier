@@ -69,6 +69,8 @@ namespace Querier.Api.Services
         /// <returns>An enumerable that hold the datas for entity of the context</returns>
         public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilter> filters);
 
+        public IEnumerable<object> GetAll(string contextTypeFullname, string entityTypeFullname);
+
         /// <summary>
         /// Update an entity in a specific context
         /// </summary>

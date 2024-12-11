@@ -48,6 +48,12 @@ namespace Querier.Api.Controllers
             return new OkObjectResult(_entityCRUDService.GetEntity(contextTypeName, entityName));
         }
 
+        [HttpGet("GetAll")]
+        public IActionResult GetAll(string contextTypeName, string entityTypeName)
+        {
+            return new OkObjectResult(_entityCRUDService.GetAll(contextTypeName, entityTypeName));
+        }
+
         [HttpPost("Read")]
         public IActionResult Read([FromBody] CRUDReadRequest model)
         {

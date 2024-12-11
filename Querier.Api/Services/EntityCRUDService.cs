@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Querier.Api.Tools;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using System.IO;
 
 namespace Querier.Api.Services
 {
@@ -31,14 +32,27 @@ namespace Querier.Api.Services
         public List<string> GetContexts()
         {
             var contexts = new List<string>();
-            var types = AppDomain.CurrentDomain.GetAssemblies()
-                       .SelectMany(assembly => assembly.GetTypes())
-                       .Where(t => t.IsAssignableTo(typeof(DbContext))/* &&
-                                    ServiceActivator.GetScope().ServiceProvider.GetService(t) != null*/).ToList();
+            var assembliesPath = Path.Combine("Assemblies");
+            
+            if (Directory.Exists(assembliesPath))
+            {
+                foreach (var file in Directory.GetFiles(assembliesPath, "*.dll"))
+                {
+                    try
+                    {
+                        var assembly = Assembly.LoadFrom(file);
+                        var types = assembly.GetTypes()
+                            .Where(t => t.IsAssignableTo(typeof(DbContext)));
+                        
+                        contexts.AddRange(types.Select(t => t.FullName));
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Error loading assembly {file}");
+                    }
+                }
+            }
 
-            
-            
-            contexts.AddRange(types.Select(t => t.FullName));
             return contexts;
         }
 
@@ -87,6 +101,22 @@ namespace Querier.Api.Services
             targetContext.SaveChanges();
 
             return newEntity;
+        }
+
+        public IEnumerable<object> GetAll(string contextTypeFullname, string entityTypeFullname)
+        {
+            Type reqType = Utils.GetType(entityTypeFullname);
+            if (reqType == null)
+                throw new Exception($"Entity \"{entityTypeFullname}\" is not handled in the \"{contextTypeFullname}\" context.");
+
+            DbContext targetContext = GetDbContextFromTypeName(contextTypeFullname);
+
+            PropertyInfo contextProperty = targetContext.GetType().GetProperties().Where(p => p.PropertyType.Name.Contains("DbSet")).FirstOrDefault(p => p.PropertyType.GetGenericArguments().Any(a => a == reqType));
+            if (contextProperty == null)
+                throw new Exception($"Entity \"{entityTypeFullname}\" is not handled by any DbSet in the \"{contextTypeFullname}\" context.");
+
+            var dbsetResult = contextProperty.GetValue(targetContext) as IEnumerable<object>;
+            return JsonConvert.DeserializeObject<List<ExpandoObject>>(JsonConvert.SerializeObject(dbsetResult));
         }
 
         public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilter> filters)
