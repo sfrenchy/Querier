@@ -9,6 +9,9 @@ import 'package:querier/pages/settings/menu/pages/bloc/menu_pages_bloc.dart';
 import 'package:querier/pages/settings/menu/pages/bloc/menu_pages_event.dart';
 import 'package:querier/pages/settings/menu/pages/bloc/menu_pages_state.dart';
 import 'package:querier/pages/settings/menu/pages/menu_page_form.dart';
+import 'package:querier/pages/settings/page_layout/bloc/page_layout_bloc.dart';
+import 'package:querier/pages/settings/page_layout/bloc/page_layout_event.dart';
+import 'package:querier/pages/settings/page_layout/page_layout_screen.dart';
 
 class MenuPagesScreen extends StatelessWidget {
   final MenuCategory category;
@@ -98,6 +101,24 @@ class MenuPagesScreen extends StatelessWidget {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            IconButton(
+                              icon: const Icon(Icons.grid_view),
+                              tooltip: l10n.pageLayout,
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BlocProvider(
+                                      create: (context) => PageLayoutBloc(
+                                        context.read<ApiClient>(),
+                                        page.id,
+                                      )..add(LoadPageLayout()),
+                                      child: PageLayoutScreen(pageId: page.id),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                             IconButton(
                               icon: const Icon(Icons.edit),
                               onPressed: () {

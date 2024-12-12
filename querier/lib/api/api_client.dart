@@ -9,6 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:querier/models/db_connection.dart';
 import 'package:querier/models/menu_category.dart';
 import 'package:querier/models/page.dart';
+import 'package:querier/models/dynamic_row.dart';
+import 'package:querier/models/dynamic_card.dart';
+import 'package:querier/pages/settings/page_layout/bloc/page_layout_bloc.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -465,5 +468,117 @@ class ApiClient {
   // Supprimer une page
   Future<void> deletePage(int id) async {
     await _dio.delete('/page/$id');
+  }
+
+  // Dynamic Rows
+  Future<List<DynamicRow>> getDynamicRows(int pageId) async {
+    try {
+      print('Fetching rows for page $pageId');
+      final response = await _dio.get('/DynamicRow/page/$pageId');
+      print('API Response: ${response.data}');
+
+      final List rawList = response.data as List;
+      print('Converting to List<DynamicRow>...');
+
+      return rawList.map((json) {
+        print('Processing row data: $json');
+        final Map<String, dynamic> rowData = Map<String, dynamic>.from(json);
+        print('Converted to Map: $rowData');
+        return DynamicRow.fromJson(rowData);
+      }).toList();
+    } catch (e, stackTrace) {
+      print('Error in getDynamicRows: $e');
+      print('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  Future<DynamicRow> createDynamicRow(
+    int pageId,
+    MainAxisAlignment alignment,
+    CrossAxisAlignment crossAlignment,
+    double spacing,
+  ) async {
+    final response = await _dio.post(
+      '/DynamicRow/page/$pageId',
+      data: {
+        'alignment': alignment.name,
+        'crossAlignment': crossAlignment.name,
+        'spacing': spacing,
+      },
+    );
+    return DynamicRow.fromJson(response.data);
+  }
+
+  Future<DynamicRow> updateDynamicRow(
+    int rowId,
+    MainAxisAlignment? alignment,
+    CrossAxisAlignment? crossAlignment,
+    double? spacing,
+  ) async {
+    final response = await _dio.put(
+      '/DynamicRow/$rowId',
+      data: {
+        if (alignment != null) 'alignment': alignment.name,
+        if (crossAlignment != null) 'crossAlignment': crossAlignment.name,
+        if (spacing != null) 'spacing': spacing,
+      },
+    );
+    return DynamicRow.fromJson(response.data);
+  }
+
+  Future<void> deleteDynamicRow(int rowId) async {
+    await _dio.delete('/DynamicRow/$rowId');
+  }
+
+  Future<void> reorderDynamicRows(int pageId, List<int> rowIds) async {
+    await _dio.post(
+      '/DynamicRow/page/$pageId/reorder',
+      data: rowIds,
+    );
+  }
+
+  // Dynamic Cards
+  Future<DynamicCard> createDynamicCard(
+    int rowId,
+    String cardType,
+  ) async {
+    final response = await _dio.post(
+      '/DynamicCard/row/$rowId',
+      data: {
+        'type': cardType,
+        'title': 'New $cardType', // Titre par défaut
+      },
+    );
+    return DynamicCard.fromJson(response.data);
+  }
+
+  Future<DynamicCard> updateDynamicCard(
+    int cardId,
+    Map<String, dynamic> updates,
+  ) async {
+    final response = await _dio.put(
+      '/DynamicCard/$cardId',
+      data: updates,
+    );
+    return DynamicCard.fromJson(response.data);
+  }
+
+  Future<void> deleteDynamicCard(int cardId) async {
+    await _dio.delete('/DynamicCard/$cardId');
+  }
+
+  Future<void> reorderDynamicCards(int rowId, List<int> cardIds) async {
+    await _dio.post(
+      '//DynamicCard/row/$rowId/reorder',
+      data: cardIds,
+    );
+  }
+
+  Future<void> updatePageLayout(int pageId, List<DynamicRow> rows) async {
+    await _dio.put(
+      '/api/v1/Page/$pageId/layout',
+      data: rows.map((row) => row.toJson()).toList(),
+    );
   }
 }

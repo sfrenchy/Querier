@@ -167,5 +167,12 @@
     "deletePageConfirmation": "Êtes-vous sûr de vouloir supprimer cette page ?",
     "route": "Route",
     "selectLanguage": "Sélectionner une langue",
-    "noMoreLanguagesAvailable": "Aucune autre langue disponible"
+    "noMoreLanguagesAvailable": "Aucune autre langue disponible",
+    "pageLayout": "Mise en page",
+    "components": "Composants",
+    "cards": "Cartes",
+    "newRow": "Nouvelle ligne",
+    "tableCard": "Carte tableau",
+    "chartCard": "Carte graphique",
+    "metricsCard": "Carte métriques"
 } 
