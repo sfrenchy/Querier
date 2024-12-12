@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     /// <summary>
     /// This interface describes all the methods for flushing the  redis cache in different ways.

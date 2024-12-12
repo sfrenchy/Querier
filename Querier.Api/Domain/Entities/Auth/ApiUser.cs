@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Querier.Api.Models.Auth
+namespace Querier.Api.Domain.Entities.Auth
 {
     public partial class ApiUser : IdentityUser
     {

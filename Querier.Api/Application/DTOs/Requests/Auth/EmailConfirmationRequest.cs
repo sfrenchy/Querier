@@ -1,7 +1,10 @@
-public class EmailConfirmationRequest
+namespace Querier.Api.Application.DTOs.Requests.Auth
 {
-    public string Token { get; set; }
-    public string Email { get; set; }
-    public string Password { get; set; }
-    public string ConfirmPassword { get; set; }
-} 
+    public class EmailConfirmationRequest
+    {
+        public string Token { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public string ConfirmPassword { get; set; }
+    }
+}

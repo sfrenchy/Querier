@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Querier.Api.Models.Auth;
-using Querier.Api.Models.Common;
-using Querier.Api.Models.Responses.Role;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Services.Repositories.User;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Infrastructure.Data.Context;
 
-namespace Querier.Api.Services.Repositories.Role
+namespace Querier.Api.Domain.Services.Repositories.Role
 {
     public interface IRoleRepository
     {

@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 
-namespace Querier.Api.Models.QDBConnection
+namespace Querier.Api.Domain.Entities.QDBConnection
 {
     public class ProcedureOutput
     {
-        public string Name { get; set;}
+        public string Name { get; set; }
 
-        public string CSName 
+        public string CSName
         {
             get
             {
@@ -20,7 +20,7 @@ namespace Querier.Api.Models.QDBConnection
 
         public string CSType
         {
-			get
+            get
             {
                 string sqlType = SQLType;
                 if (SQLType.Contains("("))

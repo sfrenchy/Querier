@@ -1,4 +1,4 @@
-namespace Querier.Api.Models.Responses.Settings
+namespace Querier.Api.Application.DTOs.Common.ApiConfigurationDto
 {
     public class ApiConfigurationDto
     {
@@ -29,4 +29,4 @@ namespace Querier.Api.Models.Responses.Settings
         public string RedisHost { get; set; }
         public int RedisPort { get; set; }
     }
-} 
+}

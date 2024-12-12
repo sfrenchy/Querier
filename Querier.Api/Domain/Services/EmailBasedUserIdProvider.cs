@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     public class EmailBasedUserIdProvider : IUserIdProvider
     {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Querier.Api.Models.Auth
+namespace Querier.Api.Domain.Entities.Auth
 {
     public class TokenRequest
     {

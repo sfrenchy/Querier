@@ -4,16 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
-using Querier.Api.Models;
-using Querier.Api.Models.Auth;
-using Querier.Api.Models.Common;
-using Querier.Api.Models.Enums;
-using Querier.Api.Models.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Tools;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Domain.Services;
+using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api.Services.Repositories.User
 {

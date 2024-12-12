@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Querier.Api.Models.Interfaces
+namespace Querier.Api.Application.Interfaces.Infrastructure
 {
     public interface IDynamicContextProceduresServicesResolver
     {

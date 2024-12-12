@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Querier.Api.Models.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Querier.Api.Application.Interfaces.Infrastructure;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     public class DynamicContextResolver : IDynamicContextResolver
     {
@@ -13,10 +13,10 @@ namespace Querier.Api.Services
             Type contextType = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic)
             .SelectMany(a => a.GetTypes()).First(t => typeof(DbContext).IsAssignableFrom(t) && t.Name.Contains(name));
-                        
+
             var constructor = contextType.GetConstructor(Type.EmptyTypes);
             DbContext dynamicContext = (DbContext)constructor.Invoke(null);
-            
+
             return dynamicContext;
         }
     }

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Querier.Api.Models.Common
+namespace Querier.Api.Domain.Common.ValueObjects
 {
     public enum PropertyOption
     {
@@ -57,7 +57,7 @@ namespace Querier.Api.Models.Common
                 }
                 return _availableItems;
             }
-            set 
+            set
             {
                 _availableItems = value;
             }

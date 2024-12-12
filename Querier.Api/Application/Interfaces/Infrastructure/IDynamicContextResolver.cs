@@ -1,7 +1,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 
-namespace Querier.Api.Models.Interfaces
+namespace Querier.Api.Application.Interfaces.Infrastructure
 {
     public interface IDynamicContextResolver
     {

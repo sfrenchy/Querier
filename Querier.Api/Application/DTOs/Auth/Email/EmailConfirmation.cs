@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-
-namespace Querier.Api.Models
+namespace Querier.Application.DTOs.Auth.Email
 {
     public class EmailConfirmation
     {

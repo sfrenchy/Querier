@@ -2,25 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Querier.Api.Models;
-using Querier.Api.Models.Auth;
-using Querier.Api.Models.Common;
-using Querier.Api.Models.Requests.Role;
-using Querier.Api.Models.Responses.Role;
 using Microsoft.EntityFrameworkCore;
-using Querier.Api.Services.Repositories.Role;
+using Querier.Api.Application.DTOs.Requests.Role;
+using Querier.Api.Application.DTOs.Responses.Role;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Domain.Services.Repositories.Role;
+using Querier.Api.Application.Interfaces.Services.Role;
+using Querier.Api.Infrastructure.Data.Context;
 
-namespace Querier.Api.Services.Role
+namespace Querier.Api.Domain.Services.Role
 {
-    public interface IRoleService : IDisposable
-    {
-        Task<List<RoleResponse>> GetAll();
-        Task<bool> Add(RoleRequest role);
-        Task<bool> Edit(RoleRequest role);
-        Task<bool> Delete(string id);
-        Task<List<RoleResponse>> GetRolesForUser(string idUser);
-        ApiRole[] UseMapToModel(List<string> roleNames);
-    }
 
 
     public class RoleService : IRoleService
@@ -32,7 +23,6 @@ namespace Querier.Api.Services.Role
         public RoleService(IRoleRepository repo, IDbContextFactory<ApiDbContext> contextFactory)
         {
             _repoRole = repo;
-
             _contextFactory = contextFactory;
         }
 

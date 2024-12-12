@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Querier.Api.Models
+namespace Querier.Api.Application.DTOs.Auth.Password
 {
     public class ResetPassword
     {

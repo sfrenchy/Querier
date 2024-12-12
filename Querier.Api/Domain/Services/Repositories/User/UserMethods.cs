@@ -6,9 +6,6 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Google.Apis.Auth;
-using Querier.Api.Models;
-using Querier.Api.Models.Auth;
-using Querier.Api.Models.Common;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +13,9 @@ using Microsoft.IdentityModel.Tokens;
 using Querier.Api.Tools;
 using static Google.Apis.Auth.JsonWebToken;
 using Microsoft.Extensions.DependencyInjection;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Infrastructure.DependencyInjection;
 
 namespace Querier.Api.Services.Repositories.User
 {
@@ -68,12 +68,6 @@ namespace Querier.Api.Services.Repositories.User
             };
         }
         //  //
-
-        public static async Task<Payload> VerifyGoogleToken(string idToken)
-        {
-            GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(idToken);
-            return payload;
-        }
 
         public static async Task<AuthResult> VerifyToken(TokenRequest tokenRequest, TokenValidationParameters tokenValidationParameters, UserManager<ApiUser> userManager, JwtConfig jwtConfig, ApiDbContext apiDbContext)
         {

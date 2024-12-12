@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Querier.Api.Models;
-using Querier.Api.Models.Common;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Domain.Common.Metadata;
+using Querier.Api.Infrastructure.Data.Context;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
 
     public class SettingService : ISettingService
@@ -57,13 +57,13 @@ namespace Querier.Api.Services
             try
             {
                 var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == name);
-                if (setting == null) return default(T);
+                if (setting == null) return default;
                 if (typeof(T) == typeof(bool)) return (T)(object)(setting.Value.ToLower() == "true");
                 return (T)Convert.ChangeType(setting.Value, typeof(T));
             }
             catch (Exception)
             {
-                return default(T);
+                return default;
             }
         }
 
@@ -77,18 +77,18 @@ namespace Querier.Api.Services
 
             _context.QSettings.Add(setting);
             await _context.SaveChangesAsync();
-            
+
             return setting;
         }
 
-        public async Task<string?> GetSettingValue(string name, string? defaultValue = null)
+        public async Task<string> GetSettingValue(string name, string defaultValue = null)
         {
             try
             {
                 var setting = await _context.QSettings
                     .AsNoTracking()
                     .FirstOrDefaultAsync(s => s.Name == name);
-                    
+
                 if (setting == null && defaultValue != null)
                 {
                     // Créer le paramètre avec la valeur par défaut
@@ -129,5 +129,5 @@ namespace Querier.Api.Services
                 await UpdateSettingIfExists(name, value);
             }
         }
-    } 
-} 
+    }
+}

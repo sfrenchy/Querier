@@ -1,14 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Querier.Api.Models.Common;
-using Querier.Api.Models.Enums;
+using Querier.Api.Domain.Common.Enums;
 
-namespace Querier.Api.Models.QDBConnection
+namespace Querier.Api.Domain.Entities.QDBConnection
 {
     public class QDBConnection
     {
         [Key]
-        public int Id { get;set; }
+        public int Id { get; set; }
 
         public QDBConnectionType ConnectionType { get; set; }
         public string Name { get; set; }
@@ -23,12 +22,12 @@ namespace Querier.Api.Models.QDBConnection
         public string Name { get; set; }
         public string ConnectionString { get; set; }
         public string ContextApiRoute { get; set; }
-        public bool GenerateProcedureControllersAndServices { get; set;} = true;
+        public bool GenerateProcedureControllersAndServices { get; set; } = true;
     }
 
     public class QDBConnectionResponse
     {
-        public int Id { get;set; }
+        public int Id { get; set; }
         public string ConnectionType { get; set; }
         public string Name { get; set; }
         public string ConnectionString { get; set; }

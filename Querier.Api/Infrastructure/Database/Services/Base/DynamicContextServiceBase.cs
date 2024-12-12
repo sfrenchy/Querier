@@ -5,9 +5,9 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
-using Querier.Api.Models.Attributes;
+using Querier.Api.Domain.Common.Attributes;
 
-namespace Querier.Api.Tools
+namespace Querier.Api.Infrastructure.Database.Services.Base
 {
     public abstract class DynamicContextServiceBase
     {
@@ -45,11 +45,11 @@ namespace Querier.Api.Tools
             //     return (T)Convert.ChangeType(Convert.ToDecimal(value), typeof(T));
             // }
 
-            if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(Nullable<>))) 
+            if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
             {
-                if (value == null) 
-                { 
-                    return default(T); 
+                if (value == null)
+                {
+                    return default;
                 }
 
                 t = Nullable.GetUnderlyingType(t);
@@ -63,7 +63,7 @@ namespace Querier.Api.Tools
     {
         public abstract List<string> GetSummableColumns();
 
-        public Dictionary<string, object> ComputeReportSums<T>(List<T>? source)
+        public Dictionary<string, object> ComputeReportSums<T>(List<T> source)
         {
             Dictionary<string, object> sums = new Dictionary<string, object>();
             Dictionary<string, object> sumResultsByCol = new Dictionary<string, object>();

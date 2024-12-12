@@ -1,15 +1,17 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Querier.Api.Models;
-using Querier.Api.Models.Auth;
-using Querier.Api.Models.Requests.User;
-using Querier.Api.Models.Responses.User;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Querier.Application.DTOs.Auth.Email;
+using Querier.Api.Application.DTOs.Auth.Password;
+using Querier.Api.Application.DTOs.Requests.Auth;
+using Querier.Api.Application.DTOs.Requests.User;
+using Querier.Api.Application.DTOs.Responses.User;
+using Querier.Api.Domain.Entities.Auth;
 
-namespace Querier.Api.Services.User
+namespace Querier.Api.Application.Interfaces.Services.User
 {
     public interface IUserService
     {

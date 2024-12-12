@@ -1,8 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
-using Querier.Api.Models.Auth;
 
-namespace Querier.Api.Models.Common
+namespace Querier.Api.Domain.Entities.Auth
 {
     public class QRefreshToken
     {

@@ -5,18 +5,18 @@ using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Querier.Api.Models.QDBConnection;
 using Swashbuckle.AspNetCore.Swagger;
 using System.Reflection;
 using System.Linq;
 using System.IO;
-using Querier.Api.Models.Interfaces;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Domain.Entities.QDBConnection;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     public static class AssemblyLoader
     {
@@ -40,7 +40,7 @@ namespace Querier.Api.Services
                     {
                         var assembly = Assembly.LoadFrom(file);
                         var dynamicInterfaceType = typeof(IDynamicContextProceduresServicesResolver);
-                        
+
                         if (assembly.GetTypes().Any(t => dynamicInterfaceType.IsAssignableFrom(t)))
                         {
                             var resolverTypes = assembly.GetTypes()
@@ -50,20 +50,20 @@ namespace Querier.Api.Services
                             if (resolverTypes.Count != 1)
                             {
                                 logger.LogWarning($"Assembly {fileName} contains {resolverTypes.Count} implementations of IDynamicContextProceduresServicesResolver. Skipping.");
-                                
+
                             }
 
                             var resolverType = resolverTypes.First();
                             var resolver = (IDynamicContextProceduresServicesResolver)Activator.CreateInstance(resolverType);
-                            
+
                             // Ajouter au DynamicContextList
                             var dynamicContextList = DynamicContextList.Instance;
-                            
+
                             resolver.ConfigureServices((IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)), connection.ConnectionString);
                             var dynamicContextListService = serviceProvider.GetRequiredService<IDynamicContextList>();
                             Console.WriteLine($"Adding DynamicContext {connection.Name}");
                             dynamicContextListService.DynamicContexts.Add(connection.Name, resolver);
-                            
+
                             foreach (KeyValuePair<Type, Type> service in resolver.ProceduresServices)
                             {
                                 Console.WriteLine($"Registering service {service.Key}");
@@ -74,7 +74,7 @@ namespace Querier.Api.Services
                             partManager.ApplicationParts.Add(new AssemblyPart(assembly));
                             var feature = new ControllerFeature();
                             partManager.PopulateFeature(feature);
-                            
+
                             // Log des contrôleurs trouvés
                             foreach (var controller in feature.Controllers)
                             {
@@ -91,7 +91,7 @@ namespace Querier.Api.Services
                                     }
                                 }
                             }
-                            
+
                             logger.LogInformation($"Successfully loaded assembly {fileName} for context {connection.Name}");
                         }
                     }
@@ -109,7 +109,7 @@ namespace Querier.Api.Services
             {
                 // Forcer un rechargement complet du document Swagger
                 var apiDescriptionGroups = swaggerProvider.GetType()
-                    .GetField("_apiDescriptionGroupCollectionProvider", 
+                    .GetField("_apiDescriptionGroupCollectionProvider",
                         BindingFlags.NonPublic | BindingFlags.Instance)?
                     .GetValue(swaggerProvider) as IApiDescriptionGroupCollectionProvider;
 
@@ -128,4 +128,4 @@ namespace Querier.Api.Services
             }
         }
     }
-} 
+}

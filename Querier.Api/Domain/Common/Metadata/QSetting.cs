@@ -2,9 +2,8 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Querier.Api.Models.Auth;
 
-namespace Querier.Api.Models.Common
+namespace Querier.Api.Domain.Common.Metadata
 {
     /// <summary>
     /// Represents an application setting in the system

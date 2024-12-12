@@ -2,33 +2,23 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Querier.Api.Models;
-using Querier.Api.Models.Auth;
-using Querier.Api.Models.Common;
-using Querier.Api.Models.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Querier.Api.Services.Repositories.User;
-using Querier.Api.Tools;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Application.Interfaces.Services.User;
+using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Infrastructure.DependencyInjection;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
-    public interface IUserManagerService : IDisposable
-    {
-        UserManager<ApiUser> Instance { get; }
-        Task<ApiUser> FindByEmailAsync(string email);
-        Task<bool> CheckPasswordAsync(ApiUser user, string password);
-        Task<IList<string>> GetRolesAsync(ApiUser user);
-        Task<IdentityResult> CreateAsync(ApiUser user, string password);
-        Task<IdentityResult> AddToRoleAsync(ApiUser user, string role);
-    }
 
     public class UserManagerService : IUserManagerService
     {
@@ -162,7 +152,7 @@ namespace Querier.Api.Services
             }
         }
 
-        
+
 
         public async Task<AuthResult> RefreshToken(TokenRequest tokenRequest)
         {

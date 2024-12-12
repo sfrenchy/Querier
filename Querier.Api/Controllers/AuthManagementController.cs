@@ -1,10 +1,10 @@
-﻿using Querier.Api.Models.Auth;
-using Querier.Api.Services;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
 {

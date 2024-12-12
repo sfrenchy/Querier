@@ -1,12 +1,12 @@
-﻿using Querier.Api.Models.Responses.Role;
-using Querier.Api.Services.Role;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Querier.Api.Models.Requests.Role;
+using Querier.Api.Application.DTOs.Requests.Role;
+using Querier.Api.Application.DTOs.Responses.Role;
+using Querier.Api.Application.Interfaces.Services.Role;
 
 namespace Querier.Api.Controllers
 {

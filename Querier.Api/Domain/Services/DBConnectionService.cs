@@ -12,12 +12,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Antlr4.StringTemplate;
-using Querier.Api.Models.Common;
-using Querier.Api.Models.Enums;
-using Querier.Api.Models.QDBConnection;
-using Querier.Api.Models.Interfaces;
-using Querier.Api.Models.Requests;
-using Querier.Api.Models.Responses;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
@@ -43,7 +37,6 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 using Pomelo.EntityFrameworkCore.MySql.Diagnostics.Internal;
 using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
-using Querier.Api.Tools;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -52,8 +45,16 @@ using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Builder;
+using Querier.Api.Application.DTOs.Requests.DBConnection;
+using Querier.Api.Application.DTOs.Responses.DBConnection;
+using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Domain.Common.Enums;
+using Querier.Api.Domain.Entities.QDBConnection;
+using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Infrastructure.Database.Generators;
+using Querier.Api.Infrastructure.Database.Parameters;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     public class DBConnectionService : IDBConnectionService
     {
@@ -163,7 +164,7 @@ namespace Querier.Api.Services
             var contextFile = "";
             if (connection.ConnectionType == QDBConnectionType.SqlServer)
                 contextFile = scaffoldedModelSources.ContextFile.Code.Replace(".UseSqlServer", ".UseLazyLoadingProxies().UseSqlServer");
-            else if (connection.ConnectionType == QDBConnectionType.MySQL)    
+            else if (connection.ConnectionType == QDBConnectionType.MySQL)
                 contextFile = scaffoldedModelSources.ContextFile.Code.Replace(".UseMySql", ".UseLazyLoadingProxies().UseMySql");
             else if (connection.ConnectionType == QDBConnectionType.PgSQL)
                 contextFile = scaffoldedModelSources.ContextFile.Code.Replace(".UseNpgsql", ".UseLazyLoadingProxies().UseNpgsql");
@@ -220,7 +221,7 @@ namespace Querier.Api.Services
                 string procedureContextContent = procedureContextTemplate.Render();
                 srcZipContent.Add("ProcedureContext\\ProcedureContext.cs", procedureContextContent);
                 sourceFiles.Add(procedureContextContent);
-                
+
                 var procedureServiceTemplate = new Template(File.ReadAllText(
                     Path.Combine(Directory.GetCurrentDirectory(), "Resources", "DBTemplating", "ProcedureService.st")
                 ), '$', '$');
@@ -248,7 +249,7 @@ namespace Querier.Api.Services
                 srcZipContent.Add("ProcedureController\\ProcedureController.cs", procedureControllerContent);
                 sourceFiles.Add(procedureControllerContent);
             }
-            
+
             using (var sourceStream = new MemoryStream())
             {
                 using (ZipArchive archive = new ZipArchive(sourceStream, ZipArchiveMode.Create))
@@ -260,15 +261,16 @@ namespace Querier.Api.Services
                         using (var streamWriter = new BinaryWriter(entryStream))
                         {
                             streamWriter.Write(Encoding.UTF8.GetBytes(item.Value), 0, Encoding.UTF8.GetBytes(item.Value).Length);
-                        }                    
+                        }
                     }
                 }
                 File.WriteAllBytes(sourceZipPath, sourceStream.ToArray());
             }
             string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
-            using(FileStream srcFileStream = new FileStream(srcPath, FileMode.Create)) 
+            using (FileStream srcFileStream = new FileStream(srcPath, FileMode.Create))
             {
-                using (FileStream zipFileStream = new FileStream(sourceZipPath, FileMode.Open)) {
+                using (FileStream zipFileStream = new FileStream(sourceZipPath, FileMode.Open))
+                {
                     zipFileStream.CopyTo(srcFileStream);
                 }
             }
@@ -301,22 +303,22 @@ namespace Querier.Api.Services
             // Store connection to database
             QDBConnection newConnection = new QDBConnection();
             newConnection.ApiRoute = connection.ContextApiRoute;
-            
+
             if (!Path.Exists("Assemblies"))
                 Directory.CreateDirectory("Assemblies");
-            
+
             string dllPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.dll");
             string pdbPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.pdb");
-            
-            using(FileStream dllFileStream = new FileStream(dllPath, FileMode.Create)) 
+
+            using (FileStream dllFileStream = new FileStream(dllPath, FileMode.Create))
             {
                 peStream.CopyTo(dllFileStream);
             }
-            using(FileStream pdbFileStream = new FileStream(pdbPath, FileMode.Create)) 
+            using (FileStream pdbFileStream = new FileStream(pdbPath, FileMode.Create))
             {
                 pdbStream.CopyTo(pdbFileStream);
             }
-            
+
 
             newConnection.Name = connection.Name;
             newConnection.ConnectionString = connection.ConnectionString;
@@ -348,7 +350,7 @@ namespace Querier.Api.Services
 
                 return new DeleteDBConnectionResponse()
                 {
-                   DeletedDBConnectionId = toDeleteId 
+                    DeletedDBConnectionId = toDeleteId
                 };
             }
         }
@@ -357,13 +359,14 @@ namespace Querier.Api.Services
         {
             using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
             {
-                return await apiDbContext.QDBConnections.Select(c => new QDBConnectionResponse() {
-                        ApiRoute = c.ApiRoute,
-                        ConnectionString = c.ConnectionString,
-                        ConnectionType = c.ConnectionType.ToString(),
-                        Id = c.Id,
-                        Name = c.Name
-                    }).ToListAsync();
+                return await apiDbContext.QDBConnections.Select(c => new QDBConnectionResponse()
+                {
+                    ApiRoute = c.ApiRoute,
+                    ConnectionString = c.ConnectionString,
+                    ConnectionType = c.ConnectionType.ToString(),
+                    Id = c.Id,
+                    Name = c.Name
+                }).ToListAsync();
             }
         }
 
@@ -404,10 +407,10 @@ namespace Querier.Api.Services
             refs.Add(MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location));
             refs.Add(MetadataReference.CreateFromFile(typeof(MemoryStream).Assembly.Location));
             refs.Add(MetadataReference.CreateFromFile(typeof(StreamReader).Assembly.Location));
-            
+
             // If we decided to use LazyLoading, we need to add one more assembly:
             refs.Add(MetadataReference.CreateFromFile(typeof(ProxiesExtensions).Assembly.Location));
-            
+
             return refs;
         }
 

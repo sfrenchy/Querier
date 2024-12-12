@@ -3,9 +3,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Querier.Api.Models.Auth;
+using Querier.Api.Domain.Common.Metadata;
+using Querier.Api.Domain.Entities.Auth;
 
-namespace Querier.Api.Models.Common
+namespace Querier.Api.Infrastructure.Data.Context
 {
     public partial class ApiDbContext : IdentityDbContext<ApiUser, ApiRole, string>
     {
@@ -17,7 +18,7 @@ namespace Querier.Api.Models.Common
         public IConfiguration _configuration { get; }
         public virtual DbSet<QRefreshToken> QRefreshTokens { get; set; }
         public virtual DbSet<QSetting> QSettings { get; set; }
-        public virtual DbSet<QDBConnection.QDBConnection> QDBConnections { get; set; }
+        public virtual DbSet<Domain.Entities.QDBConnection.QDBConnection> QDBConnections { get; set; }
         public DbSet<ApiRole> ApiRoles { get; set; }
         public DbSet<ApiUserRole> ApiUserRoles { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -27,10 +28,10 @@ namespace Querier.Api.Models.Common
             switch (SQLEngine)
             {
                 default:
-                    optionsBuilder.UseLazyLoadingProxies().UseSqlite(_configuration.GetConnectionString("ApiDBConnection"));    
+                    optionsBuilder.UseLazyLoadingProxies().UseSqlite(_configuration.GetConnectionString("ApiDBConnection"));
                     break;
                 case "MSSQL":
-                    optionsBuilder.UseLazyLoadingProxies().UseSqlServer(_configuration.GetConnectionString("ApiDBConnection"), x => x.MigrationsAssembly("HerdiaApp.Migration.SqlServer"));    
+                    optionsBuilder.UseLazyLoadingProxies().UseSqlServer(_configuration.GetConnectionString("ApiDBConnection"), x => x.MigrationsAssembly("HerdiaApp.Migration.SqlServer"));
                     break;
                 case "MySQL":
                     var serverVersion = new MariaDbServerVersion(new Version(10, 3, 9));
@@ -56,12 +57,12 @@ namespace Querier.Api.Models.Common
                 Value = "false",
                 Description = "Indicate if the application is configured",
                 Type = "boolean"
-            }); 
+            });
 
             modelBuilder.Entity<ApiUserRole>(entity =>
             {
                 entity.ToTable("AspNetUserRoles");
-                
+
                 entity.HasOne<ApiUser>()
                     .WithMany(u => u.UserRoles)
                     .HasForeignKey(ur => ur.UserId)
@@ -87,13 +88,13 @@ namespace Querier.Api.Models.Common
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            
 
-            modelBuilder.Entity<QDBConnection.QDBConnection>()
+
+            modelBuilder.Entity<Domain.Entities.QDBConnection.QDBConnection>()
                 .HasIndex(d => d.Name)
                 .IsUnique();
-            
-            modelBuilder.Entity<QDBConnection.QDBConnection>()
+
+            modelBuilder.Entity<Domain.Entities.QDBConnection.QDBConnection>()
                 .HasIndex(d => d.ApiRoute)
                 .IsUnique();
 
@@ -105,4 +106,3 @@ namespace Querier.Api.Models.Common
         }
     }
 }
- 

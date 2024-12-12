@@ -1,6 +1,4 @@
-﻿using Querier.Api.Models;
-using Querier.Api.Services;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
@@ -9,9 +7,10 @@ using Microsoft.Extensions.Logging;
 using System.Data.Common;
 using System.IO;
 using System.Threading.Tasks;
-using Querier.Api.Models.QDBConnection;
-using Querier.Api.Models.Requests;
 using Microsoft.AspNetCore.Http;
+using Querier.Api.Application.DTOs.Requests.DBConnection;
+using Querier.Api.Domain.Entities.QDBConnection;
+using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
 {

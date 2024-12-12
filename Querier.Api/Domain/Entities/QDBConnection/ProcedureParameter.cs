@@ -1,17 +1,16 @@
-
-namespace Querier.Api.Models.QDBConnection
+namespace Querier.Api.Domain.Entities.QDBConnection
 {
     public class ProcedureParameter
-	{
-		public string Name { get;set;}
-		public string SQLType { get;set; }
-		public int Length { get;set; }
-		public int Precision { get;set; }
-		public int Order { get;set; }
-		public bool IsOutput { get;set; }
-		public bool IsNullable { get; set; }
+    {
+        public string Name { get; set; }
+        public string SQLType { get; set; }
+        public int Length { get; set; }
+        public int Precision { get; set; }
+        public int Order { get; set; }
+        public bool IsOutput { get; set; }
+        public bool IsNullable { get; set; }
 
-		public string SqlParameterType
+        public string SqlParameterType
         {
             get
             {
@@ -19,20 +18,20 @@ namespace Querier.Api.Models.QDBConnection
             }
         }
 
-		public string CSType 
+        public string CSType
         {
-			get
+            get
             {
                 return SQLStringTools.SQLTypeToCSType(SQLType, IsNullable, Length);
             }
         }
 
-		public string CSName
+        public string CSName
         {
-			get
+            get
             {
-				return SQLStringTools.NormalizeCSString(Name);
+                return SQLStringTools.NormalizeCSString(Name);
             }
         }
-	}
+    }
 }

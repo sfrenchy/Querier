@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Querier.Api.Models.Responses.Role;
+using Querier.Api.Application.DTOs.Responses.Role;
 
-namespace Querier.Api.Models.Responses.User
+namespace Querier.Api.Application.DTOs.Responses.User
 {
     public class UserResponse
     {

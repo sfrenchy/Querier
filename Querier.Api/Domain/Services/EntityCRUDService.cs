@@ -6,17 +6,18 @@ using System.Data;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
-using Querier.Api.Models.Common;
-using Querier.Api.Models.Interfaces;
-using Querier.Api.Models.Requests;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Querier.Api.Tools;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.IO;
+using Querier.Api.Application.DTOs.Requests.Entity;
+using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Domain.Common.ValueObjects;
+using Querier.Api.Infrastructure.DependencyInjection;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     public class EntityCRUDService : IEntityCRUDService
     {
@@ -26,14 +27,14 @@ namespace Querier.Api.Services
         public EntityCRUDService(IDynamicContextList dynamicContextList, ILogger<EntityCRUDService> logger)
         {
             _logger = logger;
-            _dynamicContextList = dynamicContextList; 
+            _dynamicContextList = dynamicContextList;
         }
 
         public List<string> GetContexts()
         {
             var contexts = new List<string>();
             var assembliesPath = Path.Combine("Assemblies");
-            
+
             if (Directory.Exists(assembliesPath))
             {
                 foreach (var file in Directory.GetFiles(assembliesPath, "*.dll"))
@@ -43,7 +44,7 @@ namespace Querier.Api.Services
                         var assembly = Assembly.LoadFrom(file);
                         var types = assembly.GetTypes()
                             .Where(t => t.IsAssignableTo(typeof(DbContext)));
-                        
+
                         contexts.AddRange(types.Select(t => t.FullName));
                     }
                     catch (Exception ex)
@@ -138,7 +139,7 @@ namespace Querier.Api.Services
 
             entityType = contextProperty.PropertyType.GetGenericArguments()[0];
             var dbsetResult = contextProperty.GetValue(targetContext) as IEnumerable<object>;
-            var dt = (DataTable) JsonConvert.DeserializeObject(JsonConvert.SerializeObject(dbsetResult), typeof(DataTable));
+            var dt = (DataTable)JsonConvert.DeserializeObject(JsonConvert.SerializeObject(dbsetResult), typeof(DataTable));
             dt = dt.Filter(filters);
             return JsonConvert.DeserializeObject<List<ExpandoObject>>(JsonConvert.SerializeObject(dt));
         }
@@ -146,7 +147,7 @@ namespace Querier.Api.Services
         public DataTable GetDatatableFromSql(string contextTypeFullname, string SqlQuery, List<DataFilter> Filters)
         {
             DbContext apiDbContext = GetDbContextFromTypeName(contextTypeFullname);
-            DataTable dt = apiDbContext.Database.RawSqlQuery(SqlQuery); 
+            DataTable dt = apiDbContext.Database.RawSqlQuery(SqlQuery);
             return dt.Filter(Filters);
         }
 
@@ -208,8 +209,8 @@ namespace Querier.Api.Services
             object existingEntity = targetContext.Find(entityType, keyValue);
 
             if (existingEntity is null)
-                return this.Create(contextTypeFullname, entityFullname, entity);
-            return this.Update(contextTypeFullname, entityFullname, entity);
+                return Create(contextTypeFullname, entityFullname, entity);
+            return Update(contextTypeFullname, entityFullname, entity);
         }
 
         public void Delete(string contextTypeFullname, string entityFullname, object entityIdentifier)
@@ -266,7 +267,7 @@ namespace Querier.Api.Services
                 result.QuerySuccessful = false;
                 result.ErrorMessage = e.Message;
             }
-            
+
             //DataTable dt = apiDbContext.Database.RawSqlQuery(@"
             //SELECT *
             //  FROM MHEmployee AS mhe

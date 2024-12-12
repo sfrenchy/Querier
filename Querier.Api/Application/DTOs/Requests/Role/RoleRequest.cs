@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Querier.Api.Models.Requests.Role
+namespace Querier.Api.Application.DTOs.Requests.Role
 {
     public class RoleRequest
     {

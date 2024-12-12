@@ -1,4 +1,4 @@
-namespace Querier.Api.Models.Responses
+namespace Querier.Api.Application.DTOs.Responses.DBConnection
 {
     public class DeleteDBConnectionResponse
     {

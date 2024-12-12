@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using Querier.Api.Models.Common;
-using Querier.Api.Models.Requests;
 using System.Dynamic;
+using Querier.Api.Application.DTOs.Requests.Entity;
+using Querier.Api.Domain.Common.ValueObjects;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     public interface IEntityCRUDService
     {
@@ -13,7 +13,7 @@ namespace Querier.Api.Services
         /// Get the list of available EntityFrameworkCore contexts
         /// </summary>
         /// <returns>The list of full names of available contexts (ie: Querier.Api.Models.ApiDbContext)</returns>
-        public List<string?> GetContexts();
+        public List<string> GetContexts();
 
         /// <summary>
         /// Get the list of available entities definitions for a context

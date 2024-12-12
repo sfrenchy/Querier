@@ -1,7 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using Querier.Api.Models.Auth;
-using Querier.Api.Models.Common;
-using Querier.Api.Models.Requests;
 using System;
 using System.Threading.Tasks;
 using System.Threading;
@@ -10,8 +7,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Linq;
+using Querier.Api.Application.DTOs.Requests.Setup;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Domain.Common.Metadata;
+using Querier.Api.Infrastructure.Data.Context;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     public class WizardService : IWizardService, IDisposable
     {
@@ -46,15 +47,16 @@ namespace Querier.Api.Services
                 {
                     return (false, "Setup lock timeout");
                 }
-                
+
                 try
                 {
                     using var context = await _contextFactory.CreateDbContextAsync();
-                    
+
                     if (!await _roleManager.RoleExistsAsync("Admin"))
                     {
                         _logger.LogInformation("Creating Admin role...");
-                        var adminRole = new ApiRole { 
+                        var adminRole = new ApiRole
+                        {
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         };
@@ -126,10 +128,10 @@ namespace Querier.Api.Services
                     else
                     {
                         _logger.LogInformation("Creating new isConfigured setting");
-                        await context.QSettings.AddAsync(new QSetting 
-                        { 
-                            Name = "api:isConfigured", 
-                            Value = "true" 
+                        await context.QSettings.AddAsync(new QSetting
+                        {
+                            Name = "api:isConfigured",
+                            Value = "true"
                         });
                     }
 
@@ -173,4 +175,4 @@ namespace Querier.Api.Services
             Dispose(false);
         }
     }
-} 
+}

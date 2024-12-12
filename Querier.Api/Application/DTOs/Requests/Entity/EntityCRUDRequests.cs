@@ -1,19 +1,19 @@
 ﻿using System.Collections.Generic;
-using Querier.Api.Models.Common;
+using Querier.Api.Domain.Common.ValueObjects;
 
-namespace Querier.Api.Models.Requests
+namespace Querier.Api.Application.DTOs.Requests.Entity
 {
     public class CRUDReadRequest
     {
         /// <summary>
         /// The server side type of the context
         /// </summary>
-        public string? ContextTypeName { get; set; }
+        public string ContextTypeName { get; set; }
 
         /// <summary>
         /// The server side type of the entity
         /// </summary>
-        public string? EntityType { get; set; }
+        public string EntityType { get; set; }
 
         public List<DataFilter> Filters { get; set; }
     }
@@ -23,17 +23,17 @@ namespace Querier.Api.Models.Requests
         /// <summary>
         /// The server side type of the context
         /// </summary>
-        public string? ContextTypeName { get; set; }
+        public string ContextTypeName { get; set; }
 
         /// <summary>
         /// The server side type of the entity in context namespace and present in the according database context
         /// </summary>
-        public string? EntityType { get; set; }
+        public string EntityType { get; set; }
 
         /// <summary>
         /// The properties of the entity
         /// </summary>
-        public dynamic? Data { get; set; }
+        public dynamic Data { get; set; }
     }
 
     public class CRUDDeleteRequest
@@ -41,17 +41,17 @@ namespace Querier.Api.Models.Requests
         /// <summary>
         /// The server side type of the context
         /// </summary>
-        public string? ContextTypeName { get; set; }
+        public string ContextTypeName { get; set; }
 
         /// <summary>
         /// The server side type of the entity
         /// </summary>
-        public string? EntityType { get; set; }
+        public string EntityType { get; set; }
 
         /// <summary>
         /// The entity's key to delete
         /// </summary>
-        public object? Key { get; set; }
+        public object Key { get; set; }
     }
 
     public class CRUDExecuteSQLQueryRequest
@@ -59,7 +59,7 @@ namespace Querier.Api.Models.Requests
         /// <summary>
         /// The server side type of the context
         /// </summary>
-        public string? ContextTypeName { get; set; }
+        public string ContextTypeName { get; set; }
 
         /// <summary>
         /// The query to be executed
@@ -72,12 +72,12 @@ namespace Querier.Api.Models.Requests
         /// <summary>
         /// The server side type of the context
         /// </summary>
-        public string? ContextTypeName { get; set; }
+        public string ContextTypeName { get; set; }
 
         /// <summary>
         /// The SqlQuery
         /// </summary>
-        public string? SqlQuery { get; set; }
+        public string SqlQuery { get; set; }
 
         public List<DataFilter> Filters { get; set; }
     }
@@ -87,7 +87,7 @@ namespace Querier.Api.Models.Requests
     /// </summary>
     public class DataFilter
     {
-        public PropertyDefinition Column { get; set;}
+        public PropertyDefinition Column { get; set; }
         public string Operator { get; set; }
         public string Operand { get; set; }
     }

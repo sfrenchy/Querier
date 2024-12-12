@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Querier.Api.CustomTokenProviders
+namespace Querier.Api.Infrastructure.Security.TokenProviders
 {
     public class EmailConfirmationTokenProvider<TUser> : DataProtectorTokenProvider<TUser> where TUser : class
     {
@@ -15,5 +15,5 @@ namespace Querier.Api.CustomTokenProviders
         }
     }
     public class EmailConfirmationTokenProviderOptions : DataProtectionTokenProviderOptions
-    {}
+    { }
 }

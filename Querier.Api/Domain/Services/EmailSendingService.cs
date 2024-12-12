@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Antlr4.StringTemplate;
-using Querier.Api.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MailKit.Net.Smtp;
@@ -13,7 +12,7 @@ using System.Net;
 using System.Net.Mail;
 using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     public interface IEmailSendingService
     {
@@ -28,7 +27,7 @@ namespace Querier.Api.Services
         private readonly IEmailTemplateService _emailTemplateService;
 
         public SMTPEmailSendingService(
-            ILogger<SMTPEmailSendingService> logger, 
+            ILogger<SMTPEmailSendingService> logger,
             ISettingService settings,
             IEmailTemplateService emailTemplateService)
         {
@@ -76,9 +75,9 @@ namespace Querier.Api.Services
         }
 
         public async Task<bool> SendTemplatedEmailAsync(
-            string to, 
-            string subject, 
-            string templateName, 
+            string to,
+            string subject,
+            string templateName,
             string language,
             Dictionary<string, string> parameters)
         {

@@ -3,28 +3,30 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Querier.Api.Models;
-using Querier.Api.Models.Auth;
-using Querier.Api.Models.Common;
-using Querier.Api.Models.Enums;
-using Querier.Api.Models.Requests.User;
-using Querier.Api.Models.Responses.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Web;
 using Querier.Api.Services.Repositories.User;
-using Querier.Api.Services.Role;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using Querier.Api.Models.Responses.Role;
+using Querier.Application.DTOs.Auth.Email;
+using Querier.Api.Application.DTOs.Auth.Password;
+using Querier.Api.Application.DTOs.Requests.Auth;
+using Querier.Api.Application.DTOs.Requests.User;
+using Querier.Api.Application.DTOs.Responses.Role;
+using Querier.Api.Application.DTOs.Responses.User;
+using Querier.Api.Application.Interfaces.Services.User;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Application.Interfaces.Services.Role;
+using Querier.Api.Infrastructure.Data.Context;
 
-namespace Querier.Api.Services.User
+namespace Querier.Api.Domain.Services.User
 {
     public class UserService : IUserService
     {
         private readonly IConfiguration _configuration;
-        private readonly Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> _contextFactory;
+        private readonly IDbContextFactory<ApiDbContext> _contextFactory;
         private readonly IEmailSendingService _emailSending;
         private readonly ILogger<UserRepository> _logger;
         private readonly IUserRepository _repo;
@@ -34,7 +36,7 @@ namespace Querier.Api.Services.User
         private readonly ISettingService _settings;
 
         // private readonly IQPlugin _herdiaApp;
-        public UserService(Microsoft.EntityFrameworkCore.IDbContextFactory<ApiDbContext> contextFactory, ISettingService settings, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, IRoleService roleService)
+        public UserService(IDbContextFactory<ApiDbContext> contextFactory, ISettingService settings, IUserRepository repo, ILogger<UserRepository> logger, UserManager<ApiUser> userManager, IEmailSendingService emailSending, IConfiguration configuration, IRoleService roleService)
         {
             _repo = repo;
             _logger = logger;
@@ -59,7 +61,7 @@ namespace Querier.Api.Services.User
             {
                 return false;
             }
-            
+
             var roles = await _roleService.GetAll();
             var selectedRoles = roles.Where(r => user.Roles.Contains(r.Name))
                 .Select(r => new ApiRole { Id = r.Id, Name = r.Name })
@@ -85,9 +87,9 @@ namespace Querier.Api.Services.User
             var selectedRoles = roles.Where(r => user.Roles.Contains(r.Name))
                 .Select(r => new ApiRole { Id = r.Id, Name = r.Name })
                 .ToArray();
-            
+
             await _repo.RemoveRoles(foundUser);
-            
+
             return await _repo.AddRole(foundUser, selectedRoles);
         }
 
@@ -164,7 +166,7 @@ namespace Querier.Api.Services.User
             {
 
                 var errorsArray = resetPassResult.Errors.ToArray();
-                string[] ArrayErrorsStringResult = new String[errorsArray.Length];
+                string[] ArrayErrorsStringResult = new string[errorsArray.Length];
                 for (int i = 0; i < errorsArray.Length; i++)
                 {
                     ArrayErrorsStringResult[i] = errorsArray[i].Code;
@@ -283,7 +285,7 @@ namespace Querier.Api.Services.User
                     _logger.LogWarning("No user identifier found in token");
                     return null;
                 }
-                
+
                 var userByEmail = await _userManager.FindByEmailAsync(userEmail);
                 if (userByEmail == null)
                 {

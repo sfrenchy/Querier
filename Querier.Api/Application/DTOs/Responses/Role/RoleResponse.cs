@@ -1,4 +1,4 @@
-﻿namespace Querier.Api.Models.Responses.Role
+﻿namespace Querier.Api.Application.DTOs.Responses.Role
 {
     public class RoleResponse
     {

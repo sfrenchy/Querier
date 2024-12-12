@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Querier.Api.Models;
-using Querier.Api.Models.QDBConnection;
-using Querier.Api.Models.Requests;
-using Querier.Api.Models.Responses;
+using Querier.Api.Application.DTOs.Requests.DBConnection;
+using Querier.Api.Application.DTOs.Responses.DBConnection;
+using Querier.Api.Domain.Entities.QDBConnection;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
 
     public interface IDBConnectionService

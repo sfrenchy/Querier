@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 
-namespace Querier.Api.Models.Requests.User
+namespace Querier.Api.Application.DTOs.Requests.User
 {
     public class UserRequest
     {

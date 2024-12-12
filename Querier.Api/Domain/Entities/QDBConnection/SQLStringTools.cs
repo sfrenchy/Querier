@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace Querier.Api.Models.QDBConnection
+namespace Querier.Api.Domain.Entities.QDBConnection
 {
     public enum MSSQLNativeType
     {
@@ -43,15 +43,16 @@ namespace Querier.Api.Models.QDBConnection
 
     public static class SQLStringTools
     {
-        public static string ToPascalCase(string str){
+        public static string ToPascalCase(string str)
+        {
 
             // Replace all non-letter and non-digits with an underscore and lowercase the rest.
-            string sample = string.Join("", str?.Select(c => Char.IsLetterOrDigit(c) ? c.ToString().ToLower() : "_").ToArray());
+            string sample = string.Join("", str?.Select(c => char.IsLetterOrDigit(c) ? c.ToString().ToLower() : "_").ToArray());
 
             // Split the resulting string by underscore
             // Select first character, uppercase it and concatenate with the rest of the string
             var arr = sample?
-                .Split(new []{'_'}, StringSplitOptions.RemoveEmptyEntries)
+                .Split(new[] { '_' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(s => $"{s.Substring(0, 1).ToUpper()}{s.Substring(1)}");
 
             // Join the resulting collection
@@ -63,21 +64,21 @@ namespace Querier.Api.Models.QDBConnection
         public static string NormalizeCSString(string str)
         {
             string csName = str.Replace("@", "");
-            csName = csName.Replace("p_" ,"");
-            csName = csName.Replace("P_" ,"");
-			return SQLStringTools.ToPascalCase(csName);
+            csName = csName.Replace("p_", "");
+            csName = csName.Replace("P_", "");
+            return ToPascalCase(csName);
         }
 
         public static string NormalizeProcedureNameCSString(string str)
         {
             string csName = str.Replace("@", "");
-            return SQLStringTools.ToPascalCase(csName);
+            return ToPascalCase(csName);
         }
 
         public static string SQLTypeToCSSqlParameterType(string sqlType)
         {
             string csType = "";
-			if (! Enum.TryParse(sqlType, out MSSQLNativeType typeCode))
+            if (!Enum.TryParse(sqlType, out MSSQLNativeType typeCode))
             {
                 throw new Exception($"sql type {sqlType} inconnu");
             }
@@ -87,7 +88,7 @@ namespace Querier.Api.Models.QDBConnection
                 case MSSQLNativeType.binary:
                 case MSSQLNativeType.varbinary:
                     csType = "System.Data.SqlDbType.VarBinary";
-                        break;
+                    break;
                 case MSSQLNativeType.image:
                     csType = "System.Data.SqlDbType.Binary";
                     break;
@@ -127,43 +128,43 @@ namespace Querier.Api.Models.QDBConnection
                     break;
                 case MSSQLNativeType.smalldatetime:
                 case MSSQLNativeType.datetime:
-                    csType =  "System.Data.SqlDbType.DateTime";
+                    csType = "System.Data.SqlDbType.DateTime";
                     break;
                 case MSSQLNativeType.date:
-                    csType =  "System.Data.SqlDbType.Date";
+                    csType = "System.Data.SqlDbType.Date";
                     break;
                 case MSSQLNativeType.datetime2:
-                    csType =  "System.Data.SqlDbType.DateTime2";
+                    csType = "System.Data.SqlDbType.DateTime2";
                     break;
                 case MSSQLNativeType.datetimeoffset:
-                    csType =  "System.Data.SqlDbType.DateTimeOffset";
+                    csType = "System.Data.SqlDbType.DateTimeOffset";
                     break;
                 case MSSQLNativeType.@decimal:
                 case MSSQLNativeType.money:
                 case MSSQLNativeType.numeric:
                 case MSSQLNativeType.smallmoney:
-                    csType =  "System.Data.SqlDbType.Decimal";
+                    csType = "System.Data.SqlDbType.Decimal";
                     break;
                 case MSSQLNativeType.@float:
-                    csType =  "System.Data.SqlDbType.Float";
+                    csType = "System.Data.SqlDbType.Float";
                     break;
                 case MSSQLNativeType.@int:
-                    csType =  "System.Data.SqlDbType.Int";
+                    csType = "System.Data.SqlDbType.Int";
                     break;
                 case MSSQLNativeType.real:
-                    csType =  "System.Data.SqlDbType.Real";
+                    csType = "System.Data.SqlDbType.Real";
                     break;
                 case MSSQLNativeType.smallint:
-                    csType =  "System.Data.SqlDbType.SmallInt";
+                    csType = "System.Data.SqlDbType.SmallInt";
                     break;
                 case MSSQLNativeType.uniqueidentifier:
-                    csType =  "System.Data.SqlDbType.UniqueIdentifier";
+                    csType = "System.Data.SqlDbType.UniqueIdentifier";
                     break;
                 case MSSQLNativeType.sql_variant:
-                    csType =  "System.Data.SqlDbType.Variant";
+                    csType = "System.Data.SqlDbType.Variant";
                     break;
                 case MSSQLNativeType.time:
-                    csType =  "System.Data.SqlDbType.Time";
+                    csType = "System.Data.SqlDbType.Time";
                     break;
                 default:
                     throw new Exception("none equal type");
@@ -175,7 +176,7 @@ namespace Querier.Api.Models.QDBConnection
         public static string SQLTypeToCSType(string sqlType, bool IsNullable, int Length = 1)
         {
             string csType = "";
-			if (! Enum.TryParse(sqlType, out MSSQLNativeType typeCode))
+            if (!Enum.TryParse(sqlType, out MSSQLNativeType typeCode))
             {
                 throw new Exception($"sql type {sqlType} inconnu");
             }
@@ -203,8 +204,8 @@ namespace Querier.Api.Models.QDBConnection
                 case MSSQLNativeType.@char:
                     if (Length > 1)
                         csType = "string";
-                    else 
-                        csType = "char"; 
+                    else
+                        csType = "char";
                     break;
                 case MSSQLNativeType.bigint:
                     csType = "long";
@@ -216,37 +217,37 @@ namespace Querier.Api.Models.QDBConnection
                 case MSSQLNativeType.datetime:
                 case MSSQLNativeType.date:
                 case MSSQLNativeType.datetime2:
-                    csType =  "DateTime";
+                    csType = "DateTime";
                     break;
                 case MSSQLNativeType.datetimeoffset:
-                    csType =  "DateTimeOffset";
+                    csType = "DateTimeOffset";
                     break;
                 case MSSQLNativeType.@decimal:
                 case MSSQLNativeType.money:
                 case MSSQLNativeType.numeric:
                 case MSSQLNativeType.smallmoney:
-                    csType =  "decimal";
+                    csType = "decimal";
                     break;
                 case MSSQLNativeType.@float:
-                    csType =  "double";
+                    csType = "double";
                     break;
                 case MSSQLNativeType.@int:
-                    csType =  "int";
+                    csType = "int";
                     break;
                 case MSSQLNativeType.real:
-                    csType =  "Single";
+                    csType = "Single";
                     break;
                 case MSSQLNativeType.smallint:
-                    csType =  "short";
+                    csType = "short";
                     break;
                 case MSSQLNativeType.uniqueidentifier:
-                    csType =  "Guid";
+                    csType = "Guid";
                     break;
                 case MSSQLNativeType.sql_variant:
-                    csType =  "object";
+                    csType = "object";
                     break;
                 case MSSQLNativeType.time:
-                    csType =  "TimeSpan";
+                    csType = "TimeSpan";
                     break;
                 default:
                     throw new Exception("none equal type");

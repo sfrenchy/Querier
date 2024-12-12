@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 
-namespace Querier.Api.Models.Auth
+namespace Querier.Api.Domain.Entities.Auth
 {
     public class ApiRole : IdentityRole
     {

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Querier.Api.Models.Interfaces
+namespace Querier.Api.Application.Interfaces.Infrastructure
 {
     /// <summary>
     /// This interface would describe a DatasAsync method to retrieve 

@@ -1,9 +1,3 @@
-using Querier.Api.Models;
-using Querier.Api.Models.Auth;
-using Querier.Api.Models.Common;
-using Querier.Api.Services;
-using Querier.Api.Services.Role;
-using Querier.Api.Services.User;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,11 +20,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using Querier.Api.Models.Interfaces;
 using Newtonsoft.Json;
-using Querier.Api.CustomTokenProviders;
-using Querier.Api.Models.QDBConnection;
-using Querier.Api.Services.Repositories.Role;
 using Querier.Api.Services.Repositories.User;
 using Querier.Api.Tools;
 using Microsoft.EntityFrameworkCore.Internal;
@@ -38,6 +28,19 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Swagger;
+using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Application.Interfaces.Services.User;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Domain.Entities.QDBConnection;
+using Querier.Api.Domain.Services.Repositories.Role;
+using Querier.Api.Domain.Services.Role;
+using Querier.Api.Domain.Services.User;
+using Querier.Api.Domain.Services;
+using Querier.Api.Application.Interfaces.Services.Role;
+using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Infrastructure.DependencyInjection;
+using Querier.Api.Infrastructure.Security.TokenProviders;
+using Querier.Api.Infrastructure.Swagger.Helpers;
 
 namespace Querier.Api
 {

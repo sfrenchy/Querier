@@ -1,12 +1,12 @@
 using System.Threading.Tasks;
-using Querier.Api.Models.Common;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
+using Querier.Api.Domain.Common.Metadata;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     public interface ISettingService
     {
@@ -16,10 +16,10 @@ namespace Querier.Api.Services
         Task<bool> GetIsConfigured();
         Task<T> GetSettingValue<T>(string name);
         Task<QSetting> CreateSetting(string name, string value);
-        Task<string?> GetSettingValue(string name, string? defaultValue = null);
+        Task<string> GetSettingValue(string name, string defaultValue = null);
         Task<QSetting> UpdateSettingIfExists(string name, string value);
         Task UpdateSettings(Dictionary<string, string> settings);
     }
 
-    
-} 
+
+}

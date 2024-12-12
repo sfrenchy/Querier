@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Querier.Api.Tools
+namespace Querier.Api.Infrastructure.DependencyInjection
 {
     /// <summary>
     /// Add static service resolver to use when dependencies injection is not available
@@ -24,7 +24,7 @@ namespace Querier.Api.Tools
         /// </summary>
         /// <param name="serviceProvider"></param>
         /// <returns></returns>
-        public static IServiceScope? GetScope(IServiceProvider serviceProvider = null)
+        public static IServiceScope GetScope(IServiceProvider serviceProvider = null)
         {
             var provider = serviceProvider ?? _serviceProvider;
             return provider?

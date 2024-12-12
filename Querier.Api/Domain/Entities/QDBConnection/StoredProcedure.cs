@@ -6,11 +6,11 @@ using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace Querier.Api.Models.QDBConnection
+namespace Querier.Api.Domain.Entities.QDBConnection
 {
     public class StoredProcedure
     {
-        public string Name { get;set; }
+        public string Name { get; set; }
 
         public string CSName
         {
@@ -58,32 +58,37 @@ namespace Querier.Api.Models.QDBConnection
         public bool HasParameters { get { return Parameters != null && Parameters.Count > 0; } }
         public bool HasOutput { get { return OutputSet != null && OutputSet.Count > 0; } }
 
-        public string InlineParameters {
-            get {
+        public string InlineParameters
+        {
+            get
+            {
                 string result = "";
 
                 foreach (var parameter in Parameters)
                     result += $"{parameter.Name},";
-                
+
                 if (Parameters.Count > 0)
-                        result = result.Substring(0, result.Length - 1);
+                    result = result.Substring(0, result.Length - 1);
 
                 return result;
             }
         }
 
-        public string CSParameterSignature {
+        public string CSParameterSignature
+        {
             get
             {
                 string result = "OutputParameter<int> returnValue = null, CancellationToken cancellationToken = default";
-                if (HasParameters) {
+                if (HasParameters)
+                {
                     result = $"{CSName}Params paramObject, {result}";
                 }
                 return result;
             }
         }
 
-        public string CSReturnSignature {
+        public string CSReturnSignature
+        {
             get
             {
                 if (!HasOutput)

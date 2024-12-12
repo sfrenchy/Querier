@@ -1,17 +1,17 @@
 using System.Collections.Generic;
-using Querier.Api.Models.Interfaces;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Application.Interfaces.Infrastructure;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     public class DynamicContextList : IDynamicContextList
     {
         private static DynamicContextList _instance;
-        private readonly  Dictionary<string, IDynamicContextProceduresServicesResolver> _dynamicContexts;
+        private readonly Dictionary<string, IDynamicContextProceduresServicesResolver> _dynamicContexts;
 
         private DynamicContextList()
         {
-             _dynamicContexts =  new Dictionary<string, IDynamicContextProceduresServicesResolver>();
+            _dynamicContexts = new Dictionary<string, IDynamicContextProceduresServicesResolver>();
         }
 
         public static DynamicContextList Instance
@@ -24,7 +24,7 @@ namespace Querier.Api.Services
             }
         }
 
-        public  Dictionary<string, IDynamicContextProceduresServicesResolver> DynamicContexts
+        public Dictionary<string, IDynamicContextProceduresServicesResolver> DynamicContexts
         {
             get
             {

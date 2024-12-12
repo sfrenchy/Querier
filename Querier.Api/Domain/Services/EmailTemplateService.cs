@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Antlr4.StringTemplate;
 using System.Collections;
 
-namespace Querier.Api.Services
+namespace Querier.Api.Domain.Services
 {
     public interface IEmailTemplateService
     {
@@ -45,7 +45,7 @@ namespace Querier.Api.Services
                 {
                     template.Add(entry.Key.ToString(), entry.Value.ToString());
                 }
-                
+
                 var body = template.Render();
                 return body;
             }
@@ -56,4 +56,4 @@ namespace Querier.Api.Services
             }
         }
     }
-} 
+}

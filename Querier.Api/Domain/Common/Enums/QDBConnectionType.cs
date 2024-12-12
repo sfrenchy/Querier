@@ -1,4 +1,4 @@
-namespace Querier.Api.Models.Enums
+namespace Querier.Api.Domain.Common.Enums
 {
     public enum QDBConnectionType
     {

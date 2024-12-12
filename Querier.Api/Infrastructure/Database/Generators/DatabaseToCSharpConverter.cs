@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Data;
 using Microsoft.Data.SqlClient;
-using Querier.Api.Models.QDBConnection;
+using Querier.Api.Domain.Entities.QDBConnection;
 
-namespace Querier.Api.Tools
+namespace Querier.Api.Infrastructure.Database.Generators
 {
     public static class DatabaseToCSharpConverter
     {
@@ -60,8 +60,8 @@ namespace Querier.Api.Tools
                                         Length = Convert.ToInt32(procParamsReader["Length"]),
                                         Precision = Convert.ToInt32(procParamsReader["Precision"]),
                                         Order = Convert.ToInt32(procParamsReader["Order"]),
-                                        IsOutput = (Convert.ToInt32(procParamsReader["is_Output"]) == 1),
-                                        IsNullable = (Convert.ToInt32(procParamsReader["is_nullable"]) == 1)
+                                        IsOutput = Convert.ToInt32(procParamsReader["is_Output"]) == 1,
+                                        IsNullable = Convert.ToInt32(procParamsReader["is_nullable"]) == 1
                                     };
 
                                     procedure.Parameters.Add(parameter);
@@ -73,7 +73,7 @@ namespace Querier.Api.Tools
                             }
 
                             SqlCommand getProcedureOutput = new SqlCommand("sp_describe_first_result_set", connection);
-                            getProcedureOutput.CommandType = System.Data.CommandType.StoredProcedure;
+                            getProcedureOutput.CommandType = CommandType.StoredProcedure;
                             getProcedureOutput.Parameters.AddWithValue("@tsql", "dbo." + procedure.Name);
                             SqlDataAdapter da = new SqlDataAdapter(getProcedureOutput);
                             DataTable dt = new DataTable();
@@ -88,7 +88,7 @@ namespace Querier.Api.Tools
                                     {
                                         Name = (string)row["name"],
                                         Order = (int)row["column_ordinal"],
-                                        IsNullable = (Convert.ToInt32(row["is_nullable"]) == 1),
+                                        IsNullable = Convert.ToInt32(row["is_nullable"]) == 1,
                                         SQLType = (string)row["system_type_name"]
                                     };
 

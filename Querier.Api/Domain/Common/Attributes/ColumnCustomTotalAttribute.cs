@@ -1,6 +1,6 @@
 using System;
 
-namespace Querier.Api.Models.Attributes
+namespace Querier.Api.Domain.Common.Attributes
 {
     [AttributeUsage(AttributeTargets.Method)]
     public class ColumnCustomTotalAttribute : Attribute
@@ -15,5 +15,5 @@ namespace Querier.Api.Models.Attributes
         public string Procedure { get; set; }
     }
 
-    
+
 }

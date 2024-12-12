@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Querier.Api.Models.Enums;
+using Querier.Api.Domain.Common.Enums;
 
-namespace Querier.Api.Models.Responses
+namespace Querier.Api.Application.DTOs.Responses.DBConnection
 {
     public class AddDBConnectionResponse
     {

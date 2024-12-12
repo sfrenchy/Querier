@@ -1,6 +1,6 @@
 using System;
 
-namespace Querier.Api.Models.Attributes
+namespace Querier.Api.Domain.Common.Attributes
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class DynamicContextProcedureAttribute : Attribute

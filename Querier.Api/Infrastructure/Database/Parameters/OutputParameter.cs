@@ -1,6 +1,6 @@
 using System;
 
-namespace Querier.Api.Tools
+namespace Querier.Api.Infrastructure.Database.Parameters
 {
     public class OutputParameter<TValue>
     {
