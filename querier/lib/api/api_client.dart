@@ -7,6 +7,7 @@ import 'package:querier/models/role.dart';
 import 'package:querier/models/api_configuration.dart';
 import 'package:flutter/material.dart';
 import 'package:querier/models/db_connection.dart';
+import 'package:querier/models/menu_category.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -408,5 +409,29 @@ class ApiClient {
     return (response.data as List)
         .map((json) => DBConnection.fromJson(json))
         .toList();
+  }
+
+  Future<List<MenuCategory>> getMenuCategories() async {
+    final response = await get(ApiEndpoints.menuCategories);
+    return (response.data as List)
+        .map((json) => MenuCategory.fromJson(json))
+        .toList();
+  }
+
+  Future<MenuCategory> createMenuCategory(Map<String, dynamic> data) async {
+    final response = await post(ApiEndpoints.menuCategories, data: data);
+    return MenuCategory.fromJson(response.data);
+  }
+
+  Future<MenuCategory> updateMenuCategory(int id, MenuCategory category) async {
+    final response = await put(
+      '${ApiEndpoints.menuCategories}/$id',
+      data: category.toJson(),
+    );
+    return MenuCategory.fromJson(response.data);
+  }
+
+  Future<void> deleteMenuCategory(int id) async {
+    await delete('${ApiEndpoints.menuCategories}/$id');
   }
 }

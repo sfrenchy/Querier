@@ -66,4 +66,7 @@ class ApiEndpoints {
   static const String deleteDbConnection = 'dbconnection/deletedbconnection';
   static const String addDbConnection = 'dbconnection/adddbconnection';
   static const String updateDbConnection = 'dbconnection/{id}';
+
+  // Ajouter dans la classe ApiEndpoints
+  static const String menuCategories = '/menucategory';
 }

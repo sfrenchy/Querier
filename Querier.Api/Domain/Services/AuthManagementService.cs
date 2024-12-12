@@ -68,13 +68,6 @@ namespace Querier.Api.Domain.Services
         }
     }
 
-    public interface IAuthManagementService
-    {
-        public Task<SignUpResponse> SignUp(SignUpRequest user);
-        public Task<SignUpResponse> SignIn(SignInRequest user);
-        public Task<AuthResult> RefreshToken(TokenRequest tokenRequest);
-    }
-
     public class AuthManagementService : IAuthManagementService
     {
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;

@@ -29,6 +29,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Swagger;
 using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Application.Interfaces.Repositories.Menu;
+using Querier.Api.Application.Interfaces.Services.Menu;
 using Querier.Api.Application.Interfaces.Services.User;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Entities.QDBConnection;
@@ -38,9 +40,12 @@ using Querier.Api.Domain.Services.User;
 using Querier.Api.Domain.Services;
 using Querier.Api.Application.Interfaces.Services.Role;
 using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Infrastructure.Data.Repositories.Menu;
 using Querier.Api.Infrastructure.DependencyInjection;
 using Querier.Api.Infrastructure.Security.TokenProviders;
+using Querier.Api.Infrastructure.Services.Menu;
 using Querier.Api.Infrastructure.Swagger.Helpers;
+using Querier.Api.Infrastructure.Data.Repositories.Menu;
 
 namespace Querier.Api
 {
@@ -245,7 +250,8 @@ namespace Querier.Api
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IDBConnectionService, DBConnectionService>();
             services.AddScoped<IEmailTemplateService, EmailTemplateService>();
-            
+            services.AddScoped<IMenuCategoryRepository, MenuCategoryRepository>();
+            services.AddScoped<IMenuCategoryService, MenuCategoryService>();
             // services.AddEntityFrameworkSqlServer()
             //     .AddLogging()
             //     .AddEntityFrameworkDesignTimeServices()
