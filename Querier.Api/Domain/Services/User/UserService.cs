@@ -10,7 +10,7 @@ using System.Web;
 using Querier.Api.Services.Repositories.User;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using Querier.Application.DTOs.Auth.Email;
+using Querier.Api.Application.DTOs.Auth.Email;
 using Querier.Api.Application.DTOs.Auth.Password;
 using Querier.Api.Application.DTOs.Requests.Auth;
 using Querier.Api.Application.DTOs.Requests.User;

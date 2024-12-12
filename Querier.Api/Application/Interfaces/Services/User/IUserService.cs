@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Querier.Application.DTOs.Auth.Email;
+using Querier.Api.Application.DTOs.Auth.Email;
 using Querier.Api.Application.DTOs.Auth.Password;
 using Querier.Api.Application.DTOs.Requests.Auth;
 using Querier.Api.Application.DTOs.Requests.User;

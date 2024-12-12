@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
-using Querier.Application.DTOs.Auth.Email;
+using Querier.Api.Application.DTOs.Auth.Email;
 using Querier.Api.Application.DTOs.Auth.Password;
 using Querier.Api.Application.DTOs.Requests.Auth;
 using Querier.Api.Application.DTOs.Requests.User;
