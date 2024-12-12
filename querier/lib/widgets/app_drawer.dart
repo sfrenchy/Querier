@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/providers/auth_provider.dart';
 import 'package:querier/api/api_client.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:querier/blocs/menu_bloc.dart';
+import 'package:querier/pages/settings/roles/bloc/roles_bloc.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -11,17 +14,16 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final authProvider = context.watch<AuthProvider>();
-    print('Current user roles in AppDrawer: ${authProvider.userRoles}');
-    final isAdmin = authProvider.userRoles.contains('Admin');
-    print('isAdmin in AppDrawer: $isAdmin');
-    if (isAdmin) {
-      print('Showing Settings menu item because user is admin');
-    }
+    final userRoles = authProvider.userRoles ?? [];
+    final locale = Localizations.localeOf(context);
+    final canManageDatabase =
+        userRoles.contains('Admin') || userRoles.contains('Database Manager');
+    final canManageContent =
+        userRoles.contains('Admin') || userRoles.contains('Content Manager');
 
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
+    return BlocBuilder<MenuBloc, MenuState>(
+      builder: (context, state) {
+        final menuItems = <Widget>[
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
             width: double.infinity,
@@ -50,8 +52,29 @@ class AppDrawer extends StatelessWidget {
               Navigator.pushReplacementNamed(context, '/home');
             },
           ),
-          if (authProvider.userRoles.contains('Admin') ||
-              authProvider.userRoles.contains('DB Connection Manager')) ...[
+        ];
+
+        // Menus dynamiques depuis la BDD
+        if (state is MenuLoaded) {
+          menuItems.addAll(
+            state.categories
+                .where((category) =>
+                    category.IsVisible &&
+                    category.Roles.any((role) => userRoles.contains(role)))
+                .map((category) => ListTile(
+                      leading: Icon(category.getIconData()),
+                      title:
+                          Text(category.getLocalizedName(locale.languageCode)),
+                      onTap: () {
+                        Navigator.pushNamed(context, category.Route);
+                      },
+                    )),
+          );
+        }
+
+        // Menu Databases
+        if (canManageDatabase) {
+          menuItems.add(
             ListTile(
               leading: const Icon(Icons.storage),
               title: Text(l10n.databases),
@@ -59,8 +82,25 @@ class AppDrawer extends StatelessWidget {
                 Navigator.pushNamed(context, '/databases');
               },
             ),
-          ],
-          if (isAdmin) ...[
+          );
+        }
+
+        // Menu Contents
+        if (canManageContent) {
+          menuItems.add(
+            ListTile(
+              leading: const Icon(Icons.menu),
+              title: Text(l10n.contents),
+              onTap: () {
+                Navigator.pushNamed(context, '/menu/categories');
+              },
+            ),
+          );
+        }
+
+        // Menu Settings pour Admin
+        if (userRoles.contains('Admin')) {
+          menuItems.add(
             ExpansionTile(
               leading: const Icon(Icons.settings),
               title: Text(l10n.settings),
@@ -91,7 +131,11 @@ class AppDrawer extends StatelessWidget {
                 ),
               ],
             ),
-          ],
+          );
+        }
+
+        // Menu Logout
+        menuItems.add(
           ListTile(
             leading: const Icon(Icons.logout),
             title: Text(l10n.logout),
@@ -109,8 +153,15 @@ class AppDrawer extends StatelessWidget {
               }
             },
           ),
-        ],
-      ),
+        );
+
+        return Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: menuItems,
+          ),
+        );
+      },
     );
   }
 }

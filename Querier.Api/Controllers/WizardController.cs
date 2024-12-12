@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Querier.Api.Models.Requests;
-using Querier.Api.Services;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Application.DTOs.Requests.Setup;
+using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
 {

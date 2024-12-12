@@ -1,5 +1,3 @@
-using Querier.Api.Models;
-using Querier.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -9,15 +7,15 @@ using Microsoft.Extensions.Logging;
 using System.Data.Common;
 using System.IO;
 using System.Threading.Tasks;
-using Querier.Api.Models.Common;
-using Querier.Api.Models.Requests;
 using Microsoft.AspNetCore.Http;
-using Querier.Api.Models.Responses.Settings;
 using System;
 using Microsoft.AspNetCore.Identity;
-using Querier.Api.Models.Auth;
 using System.Security.Claims;
 using System.Collections.Generic;
+using Querier.Api.Application.DTOs.Common.ApiConfigurationDto;
+using Querier.Api.Domain.Common.Metadata;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
 {
@@ -170,7 +168,7 @@ namespace Querier.Api.Controllers
         /// <response code="500">If there was an error retrieving the configuration</response>
         [Authorize]
         [HttpGet("api-configuration")]
-        public async Task<ActionResult<ApiConfigurationResponse>> GetApiConfiguration()
+        public async Task<ActionResult<ApiConfigurationDto>> GetApiConfiguration()
         {
             try
             {
@@ -204,7 +202,7 @@ namespace Querier.Api.Controllers
                     return Forbid();
                 }
 
-                var config = new ApiConfigurationResponse
+                var config = new ApiConfigurationDto
                 {
                     Scheme = await _settingService.GetSettingValue("api:scheme", "https"),
                     Host = await _settingService.GetSettingValue("api:host", "localhost"),
@@ -277,7 +275,7 @@ namespace Querier.Api.Controllers
         /// <response code="500">If there was an error updating the configuration</response>
         [HttpPost("api-configuration")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateApiConfiguration([FromBody] ApiConfigurationResponse config)
+        public async Task<IActionResult> UpdateApiConfiguration([FromBody] ApiConfigurationDto config)
         {
             try
             {

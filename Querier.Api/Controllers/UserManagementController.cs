@@ -1,7 +1,4 @@
-﻿using Querier.Api.Models;
-using Querier.Api.Models.Requests.User;
-using Querier.Api.Services.User;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -9,11 +6,13 @@ using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using Microsoft.AspNetCore.Identity;
-using Querier.Api.Models.Auth;
-using Querier.Api.Models.Requests;
-using Querier.Api.Models.Responses.User;
-using Querier.Api.Models.Responses.Role;
 using System.Collections.Generic;
+using Querier.Api.Application.DTOs.Auth.Email;
+using Querier.Api.Application.DTOs.Auth.Password;
+using Querier.Api.Application.DTOs.Requests.Auth;
+using Querier.Api.Application.DTOs.Requests.User;
+using Querier.Api.Application.Interfaces.Services.User;
+using Querier.Api.Domain.Entities.Auth;
 
 namespace Querier.Api.Controllers
 {
@@ -207,28 +206,6 @@ namespace Querier.Api.Controllers
         public async Task<ActionResult> ResetPassword([FromBody] ResetPassword reset_password_infos)
         {
             var response = await _userService.ResetPassword(reset_password_infos);
-            return Ok(response);
-        }
-
-        /// <summary>
-        /// Validates a password against the system's password policy
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     POST /api/v1/usermanagement/checkpassword
-        ///     {
-        ///         "password": "TestPassword123!"
-        ///     }
-        /// </remarks>
-        /// <param name="Checkpassword">The password to validate</param>
-        /// <returns>Password validation result</returns>
-        [HttpPost]
-        [AllowAnonymous]
-        [Route("checkPassword")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> CheckPassword([FromBody] CheckPassword Checkpassword)
-        {
-            var response = await _userService.CheckPassword(Checkpassword);
             return Ok(response);
         }
 

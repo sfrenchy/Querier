@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using System.IO;
-using Querier.Api.Models.Common;
+using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api
 {

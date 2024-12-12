@@ -1,9 +1,3 @@
-using Querier.Api.Models;
-using Querier.Api.Models.Auth;
-using Querier.Api.Models.Common;
-using Querier.Api.Services;
-using Querier.Api.Services.Role;
-using Querier.Api.Services.User;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,11 +20,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using Querier.Api.Models.Interfaces;
 using Newtonsoft.Json;
-using Querier.Api.CustomTokenProviders;
-using Querier.Api.Models.QDBConnection;
-using Querier.Api.Services.Repositories.Role;
 using Querier.Api.Services.Repositories.User;
 using Querier.Api.Tools;
 using Microsoft.EntityFrameworkCore.Internal;
@@ -38,6 +28,24 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Swagger;
+using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Application.Interfaces.Repositories.Menu;
+using Querier.Api.Application.Interfaces.Services.Menu;
+using Querier.Api.Application.Interfaces.Services.User;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Domain.Entities.QDBConnection;
+using Querier.Api.Domain.Services.Repositories.Role;
+using Querier.Api.Domain.Services.Role;
+using Querier.Api.Domain.Services.User;
+using Querier.Api.Domain.Services;
+using Querier.Api.Application.Interfaces.Services.Role;
+using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Infrastructure.Data.Repositories.Menu;
+using Querier.Api.Infrastructure.DependencyInjection;
+using Querier.Api.Infrastructure.Security.TokenProviders;
+using Querier.Api.Infrastructure.Services.Menu;
+using Querier.Api.Infrastructure.Swagger.Helpers;
+using Querier.Api.Infrastructure.Data.Repositories.Menu;
 
 namespace Querier.Api
 {
@@ -125,19 +133,19 @@ namespace Querier.Api
                             .UseSqlite(_configuration.GetConnectionString("ApiDBConnection"))
                             .Options);
 
-                    services.AddSingleton<DbContextOptions<UserDbContext>>(provider =>
-                        new DbContextOptionsBuilder<UserDbContext>()
-                            .UseSqlite(_configuration.GetConnectionString("ApiDBConnection"))
-                            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
-                            .Options);
+                    // services.AddSingleton<DbContextOptions<UserDbContext>>(provider =>
+                    //     new DbContextOptionsBuilder<UserDbContext>()
+                    //         .UseSqlite(_configuration.GetConnectionString("ApiDBConnection"))
+                    //         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+                    //         .Options);
 
                     // Register DbContexts as scoped
                     services.AddDbContext<ApiDbContext>(options => 
                         options.UseSqlite(_configuration.GetConnectionString("ApiDBConnection")));
 
-                    services.AddDbContext<UserDbContext>(options => 
-                        options.UseSqlite(_configuration.GetConnectionString("ApiDBConnection"))
-                        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+                    // services.AddDbContext<UserDbContext>(options => 
+                    //     options.UseSqlite(_configuration.GetConnectionString("ApiDBConnection"))
+                    //     .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
                     // Register factory
                     services.AddDbContextFactory<ApiDbContext>();
@@ -146,18 +154,18 @@ namespace Querier.Api
                     services.AddDbContext<ApiDbContext>(options => 
                         options.UseSqlServer(_configuration.GetConnectionString("ApiDBConnection")));
                     services.AddDbContextFactory<ApiDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("ApiDBConnection")));
-                    services.AddDbContext<UserDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("ApiDBConnection")).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
+                    // services.AddDbContext<UserDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("ApiDBConnection")).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
                     break;
                 case "MySQL":
                     var serverVersion = new MariaDbServerVersion(new Version(10, 3, 9));
                     services.AddDbContext<ApiDbContext>(options => options.UseMySql(_configuration.GetConnectionString("ApiDBConnection"), serverVersion, x => x.MigrationsAssembly("HerdiaApp.Migration.MySQL")));
                     services.AddDbContextFactory<ApiDbContext>(options => options.UseMySql(_configuration.GetConnectionString("ApiDBConnection"), serverVersion));
-                    services.AddDbContext<UserDbContext>(options => options.UseMySql(_configuration.GetConnectionString("ApiDBConnection"), serverVersion).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
+                    // services.AddDbContext<UserDbContext>(options => options.UseMySql(_configuration.GetConnectionString("ApiDBConnection"), serverVersion).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
                     break;
                 case "PgSQL":
                     services.AddDbContext<ApiDbContext>(options => options.UseNpgsql(_configuration.GetConnectionString("ApiDBConnection"), x => x.MigrationsAssembly("HerdiaApp.Migration.PgSQL")));
                     services.AddDbContextFactory<ApiDbContext>(options => options.UseNpgsql(_configuration.GetConnectionString("ApiDBConnection")));
-                    services.AddDbContext<UserDbContext>(options => options.UseNpgsql(_configuration.GetConnectionString("ApiDBConnection")).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
+                    // services.AddDbContext<UserDbContext>(options => options.UseNpgsql(_configuration.GetConnectionString("ApiDBConnection")).UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
                     break;
             }
             
@@ -192,7 +200,7 @@ namespace Querier.Api
                 options.SignIn.RequireConfirmedEmail = true;
             })
                 .AddRoles<ApiRole>()
-                .AddEntityFrameworkStores<UserDbContext>()
+                .AddEntityFrameworkStores<ApiDbContext>()
                 .AddDefaultTokenProviders()
                 .AddTokenProvider<EmailConfirmationTokenProvider<ApiUser>>("emailconfirmation");
             services.AddScoped<ISettingService, SettingService>();
@@ -242,7 +250,8 @@ namespace Querier.Api
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IDBConnectionService, DBConnectionService>();
             services.AddScoped<IEmailTemplateService, EmailTemplateService>();
-            
+            services.AddScoped<IMenuCategoryRepository, MenuCategoryRepository>();
+            services.AddScoped<IMenuCategoryService, MenuCategoryService>();
             // services.AddEntityFrameworkSqlServer()
             //     .AddLogging()
             //     .AddEntityFrameworkDesignTimeServices()

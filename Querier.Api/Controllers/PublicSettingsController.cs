@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using Querier.Api.Services;
 using Microsoft.AspNetCore.Authorization;
+using Querier.Api.Domain.Services;
 
 [AllowAnonymous]  // Ajout de AllowAnonymous au niveau du contrôleur
 [Route("api/v1/settings")]

@@ -1,16 +1,14 @@
-﻿using Querier.Api.Models;
-using Querier.Api.Models.Requests;
-using Querier.Api.Models.Responses;
-using Querier.Api.Services;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using Querier.Api.Models.Interfaces;
 using Querier.Api.Tools;
+using Querier.Api.Application.DTOs.Requests.Entity;
+using Querier.Api.Application.DTOs.Responses.Entity;
+using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
 {
