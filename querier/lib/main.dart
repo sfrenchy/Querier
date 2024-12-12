@@ -44,15 +44,18 @@ class QuerierApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
+    return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (context) => AuthProvider(
-              ApiClient(Config.apiBaseUrl, navigatorKey.currentState!)),
-        ),
         Provider<ApiClient>(
           create: (context) =>
               ApiClient(Config.apiBaseUrl, navigatorKey.currentState!),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => AuthProvider(context.read<ApiClient>()),
+        ),
+        BlocProvider<MenuBloc>(
+          create: (context) =>
+              MenuBloc(context.read<ApiClient>())..add(LoadMenu()),
         ),
         BlocProvider<LoginBloc>(
           create: (context) => LoginBloc(context.read<ApiClient>(), context),
@@ -113,6 +116,7 @@ class QuerierApp extends StatelessWidget {
               '/menu/categories': (context) => BlocProvider(
                     create: (context) => MenuCategoriesBloc(
                       context.read<ApiClient>(),
+                      context,
                     ),
                     child: const MenuCategoriesScreen(),
                   ),

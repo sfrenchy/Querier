@@ -252,6 +252,8 @@ namespace Querier.Api
             services.AddScoped<IEmailTemplateService, EmailTemplateService>();
             services.AddScoped<IMenuCategoryRepository, MenuCategoryRepository>();
             services.AddScoped<IMenuCategoryService, MenuCategoryService>();
+            services.AddScoped<IPageRepository, PageRepository>();
+            services.AddScoped<IPageService, PageService>();
             // services.AddEntityFrameworkSqlServer()
             //     .AddLogging()
             //     .AddEntityFrameworkDesignTimeServices()

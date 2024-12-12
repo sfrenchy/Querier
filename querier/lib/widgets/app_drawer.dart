@@ -45,36 +45,33 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: Text(l10n.home),
-            onTap: () {
-              Navigator.pushReplacementNamed(context, '/home');
-            },
-          ),
-        ];
-
-        // Menus dynamiques depuis la BDD
-        if (state is MenuLoaded) {
-          menuItems.addAll(
-            state.categories
+          // Menus dynamiques depuis la BDD
+          if (state is MenuLoaded)
+            ...state.categories
                 .where((category) =>
-                    category.IsVisible &&
-                    category.Roles.any((role) => userRoles.contains(role)))
-                .map((category) => ListTile(
+                    category.isVisible &&
+                    category.roles.any((role) => userRoles.contains(role)))
+                .map((category) => ExpansionTile(
                       leading: Icon(category.getIconData()),
                       title:
                           Text(category.getLocalizedName(locale.languageCode)),
-                      onTap: () {
-                        Navigator.pushNamed(context, category.Route);
-                      },
-                    )),
-          );
-        }
-
-        // Menu Databases
-        if (canManageDatabase) {
-          menuItems.add(
+                      initiallyExpanded: false,
+                      children: category.pages
+                          .where((page) => page.isVisible)
+                          .map((page) => ListTile(
+                                leading: Icon(page.getIconData()),
+                                title: Text(
+                                    page.getLocalizedName(locale.languageCode)),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  Navigator.pushNamed(context, page.route);
+                                },
+                              ))
+                          .toList(),
+                    ))
+                .toList(),
+          // Menu Databases
+          if (canManageDatabase)
             ListTile(
               leading: const Icon(Icons.storage),
               title: Text(l10n.databases),
@@ -82,12 +79,8 @@ class AppDrawer extends StatelessWidget {
                 Navigator.pushNamed(context, '/databases');
               },
             ),
-          );
-        }
-
-        // Menu Contents
-        if (canManageContent) {
-          menuItems.add(
+          // Menu Contents
+          if (canManageContent)
             ListTile(
               leading: const Icon(Icons.menu),
               title: Text(l10n.contents),
@@ -95,12 +88,8 @@ class AppDrawer extends StatelessWidget {
                 Navigator.pushNamed(context, '/menu/categories');
               },
             ),
-          );
-        }
-
-        // Menu Settings pour Admin
-        if (userRoles.contains('Admin')) {
-          menuItems.add(
+          // Menu Settings pour Admin
+          if (userRoles.contains('Admin'))
             ExpansionTile(
               leading: const Icon(Icons.settings),
               title: Text(l10n.settings),
@@ -131,11 +120,7 @@ class AppDrawer extends StatelessWidget {
                 ),
               ],
             ),
-          );
-        }
-
-        // Menu Logout
-        menuItems.add(
+          // Menu Logout
           ListTile(
             leading: const Icon(Icons.logout),
             title: Text(l10n.logout),
@@ -153,7 +138,7 @@ class AppDrawer extends StatelessWidget {
               }
             },
           ),
-        );
+        ];
 
         return Drawer(
           child: ListView(

@@ -156,5 +156,15 @@
     "removeTranslation": "Remove Translation",
     "atLeastOneTranslation": "At least one translation is required",
     "contents": "Contents",
-    "atLeastOneRoleRequired": "At least one role is required"
+    "atLeastOneRoleRequired": "At least one role is required",
+    "actions": "Actions",
+    "pages": "Pages",
+    "edit": "Edit",
+    "deleteMenuCategory": "Delete menu category",
+    "addPage": "Add page",
+    "editPage": "Edit page",
+    "deletePageConfirmation": "Are you sure you want to delete this page?",
+    "route": "Route",
+    "selectLanguage": "Select a language",
+    "noMoreLanguagesAvailable": "No more languages available"
 } 

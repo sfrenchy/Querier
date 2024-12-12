@@ -8,6 +8,7 @@ import 'package:querier/models/api_configuration.dart';
 import 'package:flutter/material.dart';
 import 'package:querier/models/db_connection.dart';
 import 'package:querier/models/menu_category.dart';
+import 'package:querier/models/page.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -413,8 +414,8 @@ class ApiClient {
 
   Future<List<MenuCategory>> getMenuCategories() async {
     final response = await get(ApiEndpoints.menuCategories);
-    return (response.data as List)
-        .map((json) => MenuCategory.fromJson(json))
+    return (response.data as List<dynamic>)
+        .map((json) => MenuCategory.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 
@@ -433,5 +434,36 @@ class ApiClient {
 
   Future<void> deleteMenuCategory(int id) async {
     await delete('${ApiEndpoints.menuCategories}/$id');
+  }
+
+  // Récupérer toutes les pages d'une catégorie
+  Future<List<MenuPage>> getPages(int categoryId) async {
+    final response = await _dio.get('/page?categoryId=$categoryId');
+    List<MenuPage> pages = List<MenuPage>.from(
+        (response.data as List).map((json) => MenuPage.fromJson(json)));
+    return pages;
+  }
+
+  // Récupérer une page par son ID
+  Future<MenuPage> getPageById(int id) async {
+    final response = await _dio.get('/page/$id');
+    return MenuPage.fromJson(response.data);
+  }
+
+  // Créer une nouvelle page
+  Future<MenuPage> createPage(MenuPage page) async {
+    final response = await _dio.post('/page', data: page.toJson());
+    return MenuPage.fromJson(response.data);
+  }
+
+  // Mettre à jour une page
+  Future<MenuPage> updatePage(int id, MenuPage page) async {
+    final response = await _dio.put('/page/$id', data: page.toJson());
+    return MenuPage.fromJson(response.data);
+  }
+
+  // Supprimer une page
+  Future<void> deletePage(int id) async {
+    await _dio.delete('/page/$id');
   }
 }

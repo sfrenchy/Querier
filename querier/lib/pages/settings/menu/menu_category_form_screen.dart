@@ -6,6 +6,7 @@ import 'package:querier/api/api_client.dart';
 import 'package:querier/models/menu_category.dart';
 import 'package:querier/widgets/icon_selector.dart';
 import 'package:querier/pages/settings/roles/bloc/roles_bloc.dart';
+import 'package:querier/widgets/translation_manager.dart';
 
 class MenuCategoryFormScreen extends StatefulWidget {
   final MenuCategory? categoryToEdit;
@@ -18,7 +19,7 @@ class MenuCategoryFormScreen extends StatefulWidget {
 
 class _MenuCategoryFormScreenState extends State<MenuCategoryFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _translations = <String, TextEditingController>{};
+  Map<String, TextEditingController> _translations = {};
   final _iconController = TextEditingController();
   final _orderController = TextEditingController();
   final _routeController = TextEditingController();
@@ -32,15 +33,15 @@ class _MenuCategoryFormScreenState extends State<MenuCategoryFormScreen> {
     super.initState();
     context.read<RolesBloc>().add(LoadRoles());
     if (widget.categoryToEdit != null) {
-      _iconController.text = widget.categoryToEdit!.Icon;
-      _orderController.text = widget.categoryToEdit!.Order.toString();
-      _routeController.text = widget.categoryToEdit!.Route;
-      _isVisible = widget.categoryToEdit!.IsVisible;
+      _iconController.text = widget.categoryToEdit!.icon;
+      _orderController.text = widget.categoryToEdit!.order.toString();
+      _routeController.text = widget.categoryToEdit!.route;
+      _isVisible = widget.categoryToEdit!.isVisible;
       _selectedRoles.clear();
-      _selectedRoles.addAll(widget.categoryToEdit!.Roles);
+      _selectedRoles.addAll(widget.categoryToEdit!.roles);
 
       // Initialiser les traductions existantes
-      widget.categoryToEdit!.Names.forEach((lang, name) {
+      widget.categoryToEdit!.names.forEach((lang, name) {
         _translations[lang] = TextEditingController(text: name);
       });
     } else {
@@ -138,76 +139,12 @@ class _MenuCategoryFormScreenState extends State<MenuCategoryFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.translations,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    ..._translations.entries.map((entry) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 1,
-                                child: Text(entry.key.toUpperCase()),
-                              ),
-                              Expanded(
-                                flex: 4,
-                                child: TextFormField(
-                                  controller: entry.value,
-                                  decoration: InputDecoration(
-                                    labelText: l10n.translatedName,
-                                    border: const OutlineInputBorder(),
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return l10n.categoryNameRequired;
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              if (_translations.length > 1)
-                                IconButton(
-                                  icon: const Icon(Icons.delete),
-                                  onPressed: () {
-                                    setState(() {
-                                      _translations.remove(entry.key);
-                                    });
-                                  },
-                                ),
-                            ],
-                          ),
-                        )),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.add),
-                      label: Text(l10n.addTranslation),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text(l10n.addTranslation),
-                            content: DropdownButtonFormField<String>(
-                              items: ['fr', 'en']
-                                  .where((lang) =>
-                                      !_translations.containsKey(lang))
-                                  .map((lang) => DropdownMenuItem(
-                                        value: lang,
-                                        child: Text(lang.toUpperCase()),
-                                      ))
-                                  .toList(),
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setState(() {
-                                    _translations[value] =
-                                        TextEditingController();
-                                  });
-                                  Navigator.pop(context);
-                                }
-                              },
-                            ),
-                          ),
-                        );
+                    TranslationManager(
+                      translations: _translations,
+                      onTranslationsChanged: (newTranslations) {
+                        setState(() {
+                          _translations = newTranslations;
+                        });
                       },
                     ),
                   ],
@@ -233,14 +170,8 @@ class _MenuCategoryFormScreenState extends State<MenuCategoryFormScreen> {
                   ),
                 ),
                 IconSelector(
-                  initialIcon: _iconController.text.isNotEmpty
-                      ? _iconController.text
-                      : null,
-                  onIconSelected: (iconCode) {
-                    setState(() {
-                      _iconController.text = iconCode;
-                    });
-                  },
+                  icon: _iconController.text,
+                  onIconSelected: (icon) => _iconController.text = icon,
                 ),
               ],
             ),
