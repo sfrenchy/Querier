@@ -26,6 +26,8 @@ namespace Querier.Api.Infrastructure.Data.Context
         public virtual DbSet<MenuCategoryTranslation> MenuCategoryTranslations { get; set; }
         public virtual DbSet<Page> Pages { get; set; }
         public virtual DbSet<PageTranslation> PageTranslations { get; set; }
+        public virtual DbSet<DynamicCard> DynamicCards { get; set; }
+        public virtual DbSet<DynamicRow> DynamicRows { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -245,6 +247,32 @@ namespace Querier.Api.Infrastructure.Data.Context
                     Name = "Northwind - Home"
                 }
             );
+
+            modelBuilder.Entity<DynamicRow>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Order).IsRequired();
+                entity.Property(e => e.Spacing).HasDefaultValue(16.0);
+                
+                entity.HasOne(d => d.Page)
+                      .WithMany(p => p.Rows)
+                      .HasForeignKey(d => d.PageId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<DynamicCard>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Title).IsRequired();
+                entity.Property(e => e.Order).IsRequired();
+                entity.Property(e => e.Type).IsRequired();
+                entity.Property(e => e.Configuration).HasColumnType("json");
+                
+                entity.HasOne(d => d.Row)
+                      .WithMany(r => r.Cards)
+                      .HasForeignKey(d => d.DynamicRowId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

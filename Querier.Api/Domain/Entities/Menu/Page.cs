@@ -13,5 +13,12 @@ namespace Querier.Api.Domain.Entities.Menu
         public int MenuCategoryId { get; set; }
         public virtual MenuCategory MenuCategory { get; set; }
         public virtual ICollection<PageTranslation> Translations { get; set; }
+        public virtual ICollection<DynamicRow> Rows { get; set; }
+
+        public Page()
+        {
+            Translations = new HashSet<PageTranslation>();
+            Rows = new HashSet<DynamicRow>();
+        }
     }
 }
