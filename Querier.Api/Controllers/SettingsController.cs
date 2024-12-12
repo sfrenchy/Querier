@@ -170,7 +170,7 @@ namespace Querier.Api.Controllers
         /// <response code="500">If there was an error retrieving the configuration</response>
         [Authorize]
         [HttpGet("api-configuration")]
-        public async Task<ActionResult<ApiConfigurationResponse>> GetApiConfiguration()
+        public async Task<ActionResult<ApiConfigurationDto>> GetApiConfiguration()
         {
             try
             {
@@ -204,7 +204,7 @@ namespace Querier.Api.Controllers
                     return Forbid();
                 }
 
-                var config = new ApiConfigurationResponse
+                var config = new ApiConfigurationDto
                 {
                     Scheme = await _settingService.GetSettingValue("api:scheme", "https"),
                     Host = await _settingService.GetSettingValue("api:host", "localhost"),
@@ -277,7 +277,7 @@ namespace Querier.Api.Controllers
         /// <response code="500">If there was an error updating the configuration</response>
         [HttpPost("api-configuration")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateApiConfiguration([FromBody] ApiConfigurationResponse config)
+        public async Task<IActionResult> UpdateApiConfiguration([FromBody] ApiConfigurationDto config)
         {
             try
             {

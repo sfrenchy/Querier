@@ -211,28 +211,6 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Validates a password against the system's password policy
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     POST /api/v1/usermanagement/checkpassword
-        ///     {
-        ///         "password": "TestPassword123!"
-        ///     }
-        /// </remarks>
-        /// <param name="Checkpassword">The password to validate</param>
-        /// <returns>Password validation result</returns>
-        [HttpPost]
-        [AllowAnonymous]
-        [Route("checkPassword")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> CheckPassword([FromBody] CheckPassword Checkpassword)
-        {
-            var response = await _userService.CheckPassword(Checkpassword);
-            return Ok(response);
-        }
-
-        /// <summary>
         /// Confirms a user's email address
         /// </summary>
         /// <remarks>
