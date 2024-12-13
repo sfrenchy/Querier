@@ -1,6 +1,6 @@
 class DynamicCard {
   final int id;
-  final String title;
+  final Map<String, String> titles;
   final int order;
   final String type;
   final bool isResizable;
@@ -11,7 +11,7 @@ class DynamicCard {
 
   DynamicCard({
     required this.id,
-    required this.title,
+    required this.titles,
     required this.order,
     required this.type,
     this.isResizable = false,
@@ -21,12 +21,16 @@ class DynamicCard {
     this.configuration,
   });
 
+  String getLocalizedTitle(String languageCode) {
+    return titles[languageCode] ?? titles['en'] ?? '';
+  }
+
   factory DynamicCard.fromJson(Map<String, dynamic> json) {
     print('DynamicCard.fromJson input: $json');
     try {
       final card = DynamicCard(
         id: json['Id'] ?? 0,
-        title: json['Title'] ?? '',
+        titles: Map<String, String>.from(json['Titles'] ?? {}),
         order: json['Order'] ?? 0,
         type: json['Type'] ?? '',
         isResizable: json['IsResizable'] ?? false,
@@ -47,7 +51,7 @@ class DynamicCard {
   Map<String, dynamic> toJson() {
     return {
       'Id': id,
-      'Title': title,
+      'Titles': titles,
       'Order': order,
       'Type': type,
       'IsResizable': isResizable,
@@ -60,7 +64,7 @@ class DynamicCard {
 
   DynamicCard copyWith({
     int? id,
-    String? title,
+    Map<String, String>? titles,
     int? order,
     String? type,
     bool? isResizable,
@@ -71,7 +75,7 @@ class DynamicCard {
   }) {
     return DynamicCard(
       id: id ?? this.id,
-      title: title ?? this.title,
+      titles: titles ?? this.titles,
       order: order ?? this.order,
       type: type ?? this.type,
       isResizable: isResizable ?? this.isResizable,

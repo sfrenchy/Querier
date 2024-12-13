@@ -37,7 +37,6 @@ namespace Querier.Api.Infrastructure.Services.Menu
             
             var card = new DynamicCard
             {
-                Title = request.Title,
                 Order = order,
                 Type = request.Type,
                 IsResizable = request.IsResizable,
@@ -47,7 +46,13 @@ namespace Querier.Api.Infrastructure.Services.Menu
                 Configuration = request.Configuration != null 
                     ? JsonConvert.SerializeObject(request.Configuration)
                     : null,
-                DynamicRowId = rowId
+                DynamicRowId = rowId,
+                Translations = (request.Titles ?? new Dictionary<string, string>())
+                    .Select(x => new DynamicCardTranslation
+                    {
+                        LanguageCode = x.Key,
+                        Title = x.Value
+                    }).ToList()
             };
 
             var result = await _repository.CreateAsync(card);
@@ -59,7 +64,6 @@ namespace Querier.Api.Infrastructure.Services.Menu
             var existingCard = await _repository.GetByIdAsync(id);
             if (existingCard == null) return null;
 
-            existingCard.Title = request.Title;
             existingCard.Type = request.Type;
             existingCard.IsResizable = request.IsResizable;
             existingCard.IsCollapsible = request.IsCollapsible;
@@ -68,6 +72,17 @@ namespace Querier.Api.Infrastructure.Services.Menu
             existingCard.Configuration = request.Configuration != null 
                 ? JsonConvert.SerializeObject(request.Configuration)
                 : null;
+
+            existingCard.Translations.Clear();
+            foreach (var translation in request.Titles)
+            {
+                existingCard.Translations.Add(new DynamicCardTranslation
+                {
+                    LanguageCode = translation.Key,
+                    Title = translation.Value,
+                    DynamicCardId = id
+                });
+            }
 
             var result = await _repository.UpdateAsync(existingCard);
             return MapToResponse(result);
@@ -100,7 +115,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return new DynamicCardResponse
             {
                 Id = card.Id,
-                Title = card.Title,
+                Titles = card.Translations.ToDictionary(x => x.LanguageCode, x => x.Title),
                 Order = card.Order,
                 Type = card.Type.ToString(),
                 IsResizable = card.IsResizable,

@@ -165,7 +165,13 @@ class PageLayoutBloc extends Bloc<PageLayoutEvent, PageLayoutState> {
       print('Creating new card...'); // Debug log
       final newCard = await _apiClient.createDynamicCard(
         event.rowId,
-        event.cardType,
+        {
+          'type': event.cardType,
+          'titles': {
+            'en': 'New ${event.cardType}',
+            'fr': 'Nouveau ${event.cardType}',
+          },
+        },
       );
       print('Card created successfully'); // Debug log
 

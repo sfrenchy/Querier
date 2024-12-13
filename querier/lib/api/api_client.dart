@@ -541,14 +541,11 @@ class ApiClient {
   // Dynamic Cards
   Future<DynamicCard> createDynamicCard(
     int rowId,
-    String cardType,
+    Map<String, dynamic> cardData,
   ) async {
     final response = await _dio.post(
       '/DynamicCard/row/$rowId',
-      data: {
-        'type': cardType,
-        'title': 'New $cardType', // Titre par défaut
-      },
+      data: cardData,
     );
     return DynamicCard.fromJson(response.data);
   }

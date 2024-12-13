@@ -28,6 +28,7 @@ namespace Querier.Api.Infrastructure.Data.Context
         public virtual DbSet<PageTranslation> PageTranslations { get; set; }
         public virtual DbSet<DynamicCard> DynamicCards { get; set; }
         public virtual DbSet<DynamicRow> DynamicRows { get; set; }
+        public virtual DbSet<DynamicCardTranslation> DynamicCardTranslations { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -263,7 +264,6 @@ namespace Querier.Api.Infrastructure.Data.Context
             modelBuilder.Entity<DynamicCard>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Title).IsRequired();
                 entity.Property(e => e.Order).IsRequired();
                 entity.Property(e => e.Type).IsRequired();
                 entity.Property(e => e.Configuration).HasColumnType("json");
@@ -272,6 +272,23 @@ namespace Querier.Api.Infrastructure.Data.Context
                       .WithMany(r => r.Cards)
                       .HasForeignKey(d => d.DynamicRowId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<DynamicCardTranslation>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                
+                // Contrainte d'unicité sur la combinaison DynamicCardId et LanguageCode
+                entity.HasIndex(e => new { e.DynamicCardId, e.LanguageCode }).IsUnique();
+                
+                entity.Property(e => e.LanguageCode).HasMaxLength(5);
+                entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+
+                // Configuration de la relation
+                entity.HasOne(d => d.Card)
+                    .WithMany(p => p.Translations)
+                    .HasForeignKey(d => d.DynamicCardId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

@@ -49,7 +49,7 @@ class DynamicRowWidget extends StatelessWidget {
                         .map((card) => Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: DynamicCardWidget.fromModel(card),
+                              child: DynamicCardWidget.fromModel(card, context),
                             ))
                         .toList(),
               ),

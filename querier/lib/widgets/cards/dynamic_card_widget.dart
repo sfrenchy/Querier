@@ -20,43 +20,14 @@ class DynamicCardWidget extends StatelessWidget {
     required this.child,
   });
 
-  factory DynamicCardWidget.fromModel(DynamicCard model) {
+  factory DynamicCardWidget.fromModel(DynamicCard model, BuildContext context) {
     Widget cardContent;
 
     switch (model.type.toLowerCase()) {
-      /*case 'table':
-        cardContent = TableCard(
-          title: model.title,
-          configuration: model.configuration,
-          height: model.height,
-          width: model.width,
-          isResizable: model.isResizable,
-          isCollapsible: model.isCollapsible,
-        );
-        break;
-      case 'chart':
-        cardContent = ChartCard(
-          title: model.title,
-          configuration: model.configuration,
-          height: model.height,
-          width: model.width,
-          isResizable: model.isResizable,
-          isCollapsible: model.isCollapsible,
-        );
-        break;
-      case 'metrics':
-        cardContent = MetricsCard(
-          title: model.title,
-          configuration: model.configuration,
-          height: model.height,
-          width: model.width,
-          isResizable: model.isResizable,
-          isCollapsible: model.isCollapsible,
-        );
-        break;*/
       default:
         cardContent = PlaceholderCard(
-          title: model.title,
+          title: model
+              .getLocalizedTitle(Localizations.localeOf(context).languageCode),
           height: model.height,
           width: model.width,
           isResizable: model.isResizable,
@@ -65,7 +36,8 @@ class DynamicCardWidget extends StatelessWidget {
     }
 
     return DynamicCardWidget(
-      title: model.title,
+      title:
+          model.getLocalizedTitle(Localizations.localeOf(context).languageCode),
       height: model.height,
       width: model.width,
       isResizable: model.isResizable,
