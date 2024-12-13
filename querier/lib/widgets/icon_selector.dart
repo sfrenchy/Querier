@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class IconSelector extends StatelessWidget {
-  final String? initialIcon;
+  final String icon;
   final ValueChanged<String> onIconSelected;
 
   const IconSelector({
     super.key,
-    this.initialIcon,
+    required this.icon,
     required this.onIconSelected,
   });
 
@@ -77,9 +77,7 @@ class IconSelector extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return IconButton(
-      icon: initialIcon != null
-          ? Icon(getIconData(initialIcon!))
-          : const Icon(Icons.add_circle_outline),
+      icon: Icon(getIconData(icon)),
       onPressed: () {
         showDialog(
           context: context,

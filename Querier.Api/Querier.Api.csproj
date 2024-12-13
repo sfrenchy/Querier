@@ -100,7 +100,6 @@
     <Folder Include="wwwroot\uploadManager\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Models\QDBConnection\QDBConnection.cs" />
     <Content Include="Resources\DBTemplating\*.*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

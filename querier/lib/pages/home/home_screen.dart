@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/api/api_client.dart';
+import 'package:querier/blocs/menu_bloc.dart';
 import 'package:querier/widgets/app_drawer.dart';
+import 'package:querier/widgets/menu_drawer.dart';
 import 'package:querier/widgets/user_avatar.dart';
 import 'bloc/home_bloc.dart';
 
@@ -13,6 +15,8 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    context.read<MenuBloc>().add(LoadMenu());
 
     return BlocProvider(
       create: (context) =>

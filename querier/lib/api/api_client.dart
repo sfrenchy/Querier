@@ -8,6 +8,10 @@ import 'package:querier/models/api_configuration.dart';
 import 'package:flutter/material.dart';
 import 'package:querier/models/db_connection.dart';
 import 'package:querier/models/menu_category.dart';
+import 'package:querier/models/page.dart';
+import 'package:querier/models/dynamic_row.dart';
+import 'package:querier/models/dynamic_card.dart';
+import 'package:querier/pages/settings/page_layout/bloc/page_layout_bloc.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -413,8 +417,8 @@ class ApiClient {
 
   Future<List<MenuCategory>> getMenuCategories() async {
     final response = await get(ApiEndpoints.menuCategories);
-    return (response.data as List)
-        .map((json) => MenuCategory.fromJson(json))
+    return (response.data as List<dynamic>)
+        .map((json) => MenuCategory.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 
@@ -433,5 +437,145 @@ class ApiClient {
 
   Future<void> deleteMenuCategory(int id) async {
     await delete('${ApiEndpoints.menuCategories}/$id');
+  }
+
+  // Récupérer toutes les pages d'une catégorie
+  Future<List<MenuPage>> getPages(int categoryId) async {
+    final response = await _dio.get('/page?categoryId=$categoryId');
+    List<MenuPage> pages = List<MenuPage>.from(
+        (response.data as List).map((json) => MenuPage.fromJson(json)));
+    return pages;
+  }
+
+  // Récupérer une page par son ID
+  Future<MenuPage> getPageById(int id) async {
+    final response = await _dio.get('/page/$id');
+    return MenuPage.fromJson(response.data);
+  }
+
+  // Créer une nouvelle page
+  Future<MenuPage> createPage(MenuPage page) async {
+    final response = await _dio.post('/page', data: page.toJson());
+    return MenuPage.fromJson(response.data);
+  }
+
+  // Mettre à jour une page
+  Future<MenuPage> updatePage(int id, MenuPage page) async {
+    final response = await _dio.put('/page/$id', data: page.toJson());
+    return MenuPage.fromJson(response.data);
+  }
+
+  // Supprimer une page
+  Future<void> deletePage(int id) async {
+    await _dio.delete('/page/$id');
+  }
+
+  // Dynamic Rows
+  Future<List<DynamicRow>> getDynamicRows(int pageId) async {
+    try {
+      print('Fetching rows for page $pageId');
+      final response = await _dio.get('/DynamicRow/page/$pageId');
+      print('API Response: ${response.data}');
+
+      final List rawList = response.data as List;
+      print('Converting to List<DynamicRow>...');
+
+      return rawList.map((json) {
+        print('Processing row data: $json');
+        final Map<String, dynamic> rowData = Map<String, dynamic>.from(json);
+        print('Converted to Map: $rowData');
+        return DynamicRow.fromJson(rowData);
+      }).toList();
+    } catch (e, stackTrace) {
+      print('Error in getDynamicRows: $e');
+      print('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  Future<DynamicRow> createDynamicRow(
+    int pageId,
+    MainAxisAlignment alignment,
+    CrossAxisAlignment crossAlignment,
+    double spacing,
+  ) async {
+    final response = await _dio.post(
+      '/DynamicRow/page/$pageId',
+      data: {
+        'alignment': alignment.name,
+        'crossAlignment': crossAlignment.name,
+        'spacing': spacing,
+      },
+    );
+    return DynamicRow.fromJson(response.data);
+  }
+
+  Future<DynamicRow> updateDynamicRow(
+    int rowId,
+    MainAxisAlignment? alignment,
+    CrossAxisAlignment? crossAlignment,
+    double? spacing,
+  ) async {
+    final response = await _dio.put(
+      '/DynamicRow/$rowId',
+      data: {
+        if (alignment != null) 'alignment': alignment.name,
+        if (crossAlignment != null) 'crossAlignment': crossAlignment.name,
+        if (spacing != null) 'spacing': spacing,
+      },
+    );
+    return DynamicRow.fromJson(response.data);
+  }
+
+  Future<void> deleteDynamicRow(int rowId) async {
+    await _dio.delete('/DynamicRow/$rowId');
+  }
+
+  Future<void> reorderDynamicRows(int pageId, List<int> rowIds) async {
+    await _dio.post(
+      '/DynamicRow/page/$pageId/reorder',
+      data: rowIds,
+    );
+  }
+
+  // Dynamic Cards
+  Future<DynamicCard> createDynamicCard(
+    int rowId,
+    Map<String, dynamic> cardData,
+  ) async {
+    final response = await _dio.post(
+      '/DynamicCard/row/$rowId',
+      data: cardData,
+    );
+    return DynamicCard.fromJson(response.data);
+  }
+
+  Future<DynamicCard> updateDynamicCard(
+    int cardId,
+    Map<String, dynamic> updates,
+  ) async {
+    final response = await _dio.put(
+      '/DynamicCard/$cardId',
+      data: updates,
+    );
+    return DynamicCard.fromJson(response.data);
+  }
+
+  Future<void> deleteDynamicCard(int cardId) async {
+    await _dio.delete('/DynamicCard/$cardId');
+  }
+
+  Future<void> reorderDynamicCards(int rowId, List<int> cardIds) async {
+    await _dio.post(
+      '//DynamicCard/row/$rowId/reorder',
+      data: cardIds,
+    );
+  }
+
+  Future<void> updatePageLayout(int pageId, List<DynamicRow> rows) async {
+    await _dio.put(
+      '/api/v1/Page/$pageId/layout',
+      data: rows.map((row) => row.toJson()).toList(),
+    );
   }
 }

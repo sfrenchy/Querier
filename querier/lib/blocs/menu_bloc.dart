@@ -14,11 +14,30 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
   }
 
   Future<void> _onLoadMenu(LoadMenu event, Emitter<MenuState> emit) async {
+    print('Loading menu...'); // Debug
     emit(MenuLoading());
     try {
       final categories = await _apiClient.getMenuCategories();
-      emit(MenuLoaded(categories));
+      print('Got ${categories.length} categories from API'); // Debug
+      final List<MenuCategory> categoriesWithPages = [];
+      for (var category in categories) {
+        final pages = await _apiClient.getPages(category.Id);
+        categoriesWithPages.add(MenuCategory(
+          Id: category.Id,
+          names: category.names,
+          icon: category.icon,
+          order: category.order,
+          isVisible: category.isVisible,
+          roles: category.roles,
+          route: category.route,
+          pages: pages,
+        ));
+      }
+      print(
+          'Categories with pages: ${categoriesWithPages.map((c) => '${c.names} (${c.pages.length} pages)')}');
+      emit(MenuLoaded(categoriesWithPages));
     } catch (e) {
+      print('Error loading menu: $e');
       emit(MenuError(e.toString()));
     }
   }

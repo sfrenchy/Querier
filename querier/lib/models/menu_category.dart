@@ -1,52 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:querier/models/page.dart';
 
 class MenuCategory {
   final int Id;
-  final Map<String, String> Names;
-  final String Icon;
-  final int Order;
-  bool IsVisible;
-  final List<String> Roles;
-  final String Route;
+  final Map<String, String> names;
+  final String icon;
+  final int order;
+  final bool isVisible;
+  final List<String> roles;
+  final String route;
+  final List<MenuPage> pages;
 
   MenuCategory({
     required this.Id,
-    required this.Names,
-    required this.Icon,
-    required this.Order,
-    required this.IsVisible,
-    required this.Roles,
-    required this.Route,
+    required this.names,
+    required this.icon,
+    required this.order,
+    required this.isVisible,
+    required this.roles,
+    required this.route,
+    required this.pages,
   });
 
   String getLocalizedName(String languageCode) {
-    return Names[languageCode] ?? Names['en'] ?? '';
+    return names[languageCode] ?? names['en'] ?? '';
   }
 
   factory MenuCategory.fromJson(Map<String, dynamic> json) {
+    print('MenuCategory.fromJson: ${json['Pages']}'); // Debug
     return MenuCategory(
-      Id: json['Id'] ?? json['id'] ?? 0,
-      Names: Map<String, String>.from(json['Names'] ?? json['names']),
-      Icon: json['Icon'] ?? json['icon'],
-      Order: json['Order'] ?? json['order'],
-      IsVisible: json['IsVisible'] ?? json['isVisible'],
-      Roles: List<String>.from(json['Roles'] ?? json['roles']),
-      Route: json['Route'] ?? json['route'],
+      Id: json['Id'],
+      names: Map<String, String>.from(json['Names']),
+      icon: json['Icon'],
+      order: json['Order'],
+      isVisible: json['IsVisible'],
+      roles: List<String>.from(json['Roles']),
+      route: json['Route'],
+      pages:
+          (json['Pages'] as List?)?.map((p) => MenuPage.fromJson(p)).toList() ??
+              [],
     );
   }
 
   Map<String, dynamic> toJson() => {
         'Id': Id,
-        'Names': Names,
-        'Icon': Icon,
-        'Order': Order,
-        'IsVisible': IsVisible,
-        'Roles': Roles,
-        'Route': Route,
+        'Names': names,
+        'Icon': icon,
+        'Order': order,
+        'IsVisible': isVisible,
+        'Roles': roles,
+        'Route': route,
+        'Pages': pages.map((p) => p.toJson()).toList(),
       };
 
   IconData getIconData() {
-    switch (Icon) {
+    switch (icon) {
       case 'home':
         return Icons.home;
       case 'settings':
@@ -58,5 +66,20 @@ class MenuCategory {
       default:
         return Icons.error;
     }
+  }
+
+  MenuCategory copyWith({
+    bool? isVisible,
+  }) {
+    return MenuCategory(
+      Id: Id,
+      names: names,
+      icon: icon,
+      order: order,
+      isVisible: isVisible ?? this.isVisible,
+      roles: roles,
+      route: route,
+      pages: pages,
+    );
   }
 }

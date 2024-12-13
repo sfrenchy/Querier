@@ -32,6 +32,7 @@ import 'package:querier/pages/databases/database_details_screen.dart';
 import 'package:querier/pages/settings/menu/menu_categories_screen.dart';
 import 'package:querier/pages/settings/menu/menu_category_form_screen.dart';
 import 'package:querier/blocs/menu_bloc.dart';
+import 'package:querier/pages/dynamic_page/dynamic_page_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -44,15 +45,18 @@ class QuerierApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
+    return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (context) => AuthProvider(
-              ApiClient(Config.apiBaseUrl, navigatorKey.currentState!)),
-        ),
         Provider<ApiClient>(
           create: (context) =>
               ApiClient(Config.apiBaseUrl, navigatorKey.currentState!),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => AuthProvider(context.read<ApiClient>()),
+        ),
+        BlocProvider<MenuBloc>(
+          create: (context) =>
+              MenuBloc(context.read<ApiClient>())..add(LoadMenu()),
         ),
         BlocProvider<LoginBloc>(
           create: (context) => LoginBloc(context.read<ApiClient>(), context),
@@ -113,6 +117,7 @@ class QuerierApp extends StatelessWidget {
               '/menu/categories': (context) => BlocProvider(
                     create: (context) => MenuCategoriesBloc(
                       context.read<ApiClient>(),
+                      context,
                     ),
                     child: const MenuCategoriesScreen(),
                   ),
@@ -127,6 +132,11 @@ class QuerierApp extends StatelessWidget {
                   ],
                   child: MenuCategoryFormScreen(categoryToEdit: category),
                 );
+              },
+              '/dynamic-page': (context) {
+                final pageId =
+                    ModalRoute.of(context)?.settings.arguments as int;
+                return DynamicPageScreen(pageId: pageId);
               },
             },
             localizationsDelegates: const [

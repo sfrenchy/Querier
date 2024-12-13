@@ -4,6 +4,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/models/menu_category.dart';
 import 'bloc/menu_categories_bloc.dart';
+import 'pages/menu_pages_screen.dart';
 
 class MenuCategoriesScreen extends StatefulWidget {
   const MenuCategoriesScreen({super.key});
@@ -99,17 +100,24 @@ class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
                                     fontWeight: FontWeight.bold)),
                           ),
                         ),
+                        DataColumn(
+                          label: Expanded(
+                            child: Text(l10n.actions,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                        ),
                       ],
                       rows: state.categories.map((category) {
                         return DataRow(
                           cells: [
                             DataCell(Text(category
                                 .getLocalizedName(locale.languageCode))),
-                            DataCell(Icon(Icons.home)),
-                            DataCell(Text(category.Order.toString())),
+                            DataCell(Icon(category.getIconData())),
+                            DataCell(Text(category.order.toString())),
                             DataCell(
                               Switch(
-                                value: category.IsVisible,
+                                value: category.isVisible,
                                 onChanged: (value) {
                                   context.read<MenuCategoriesBloc>().add(
                                         UpdateMenuCategoryVisibility(
@@ -118,7 +126,49 @@ class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
                                 },
                               ),
                             ),
-                            DataCell(Text(category.Roles.join(', '))),
+                            DataCell(Text(category.roles.join(', '))),
+                            DataCell(
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.menu_book),
+                                    tooltip: l10n.pages,
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => MenuPagesScreen(
+                                              category: category),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    tooltip: l10n.edit,
+                                    onPressed: () async {
+                                      final result = await Navigator.pushNamed(
+                                        context,
+                                        '/menu/form',
+                                        arguments: category,
+                                      );
+                                      if (result == true && mounted) {
+                                        context
+                                            .read<MenuCategoriesBloc>()
+                                            .add(LoadMenuCategories());
+                                      }
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    tooltip: l10n.delete,
+                                    onPressed: () =>
+                                        _showDeleteDialog(context, category),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                           onSelectChanged: (_) async {
                             final result = await Navigator.pushNamed(
@@ -144,6 +194,38 @@ class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
           return const SizedBox();
         },
       ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, MenuCategory category) {
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(l10n.delete),
+          content: Text(
+            '${l10n.deleteMenuCategory}: ${category.getLocalizedName(locale.languageCode)}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () {
+                context
+                    .read<MenuCategoriesBloc>()
+                    .add(DeleteMenuCategory(category.Id));
+                Navigator.of(context).pop();
+              },
+              child: Text(l10n.delete),
+            ),
+          ],
+        );
+      },
     );
   }
 }

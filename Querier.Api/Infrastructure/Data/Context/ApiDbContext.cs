@@ -24,6 +24,11 @@ namespace Querier.Api.Infrastructure.Data.Context
         public DbSet<ApiUserRole> ApiUserRoles { get; set; }
         public virtual DbSet<MenuCategory> MenuCategories { get; set; }
         public virtual DbSet<MenuCategoryTranslation> MenuCategoryTranslations { get; set; }
+        public virtual DbSet<Page> Pages { get; set; }
+        public virtual DbSet<PageTranslation> PageTranslations { get; set; }
+        public virtual DbSet<DynamicCard> DynamicCards { get; set; }
+        public virtual DbSet<DynamicRow> DynamicRows { get; set; }
+        public virtual DbSet<DynamicCardTranslation> DynamicCardTranslations { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -178,6 +183,113 @@ namespace Querier.Api.Infrastructure.Data.Context
                     Name = "Accueil"
                 }
             );
+
+            modelBuilder.Entity<Page>(entity =>
+            {
+                entity.ToTable("Pages");
+                
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Icon).HasMaxLength(100);
+                entity.Property(e => e.Route).HasMaxLength(100);
+                entity.Property(e => e.Roles).HasMaxLength(1000);
+                
+                entity.HasOne(e => e.MenuCategory)
+                      .WithMany(e => e.Pages)
+                      .HasForeignKey(e => e.MenuCategoryId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.HasIndex(e => e.Order);
+            });
+
+            modelBuilder.Entity<PageTranslation>(entity =>
+            {
+                entity.ToTable("PageTranslations");
+                
+                entity.HasKey(e => e.Id);
+                
+                entity.HasIndex(e => new { e.PageId, e.LanguageCode }).IsUnique();
+                
+                entity.Property(e => e.LanguageCode).HasMaxLength(5);
+                entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+
+                entity.HasOne(d => d.Page)
+                      .WithMany(p => p.Translations)
+                      .HasForeignKey(d => d.PageId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Ajout du seed pour la page Northwind
+            modelBuilder.Entity<Page>().HasData(
+                new Page
+                {
+                    Id = 1,
+                    Icon = "dashboard",
+                    Order = 1,
+                    IsVisible = true,
+                    Roles = "Admin,User",
+                    Route = "/northwind/home",
+                    MenuCategoryId = 1
+                }
+            );
+
+            modelBuilder.Entity<PageTranslation>().HasData(
+                new PageTranslation
+                {
+                    Id = 1,
+                    PageId = 1,
+                    LanguageCode = "fr",
+                    Name = "Northwind - Accueil"
+                },
+                new PageTranslation
+                {
+                    Id = 2,
+                    PageId = 1,
+                    LanguageCode = "en",
+                    Name = "Northwind - Home"
+                }
+            );
+
+            modelBuilder.Entity<DynamicRow>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Order).IsRequired();
+                entity.Property(e => e.Spacing).HasDefaultValue(16.0);
+                
+                entity.HasOne(d => d.Page)
+                      .WithMany(p => p.Rows)
+                      .HasForeignKey(d => d.PageId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<DynamicCard>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Order).IsRequired();
+                entity.Property(e => e.Type).IsRequired();
+                entity.Property(e => e.Configuration).HasColumnType("json");
+                
+                entity.HasOne(d => d.Row)
+                      .WithMany(r => r.Cards)
+                      .HasForeignKey(d => d.DynamicRowId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<DynamicCardTranslation>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                
+                // Contrainte d'unicité sur la combinaison DynamicCardId et LanguageCode
+                entity.HasIndex(e => new { e.DynamicCardId, e.LanguageCode }).IsUnique();
+                
+                entity.Property(e => e.LanguageCode).HasMaxLength(5);
+                entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+
+                // Configuration de la relation
+                entity.HasOne(d => d.Card)
+                    .WithMany(p => p.Translations)
+                    .HasForeignKey(d => d.DynamicCardId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

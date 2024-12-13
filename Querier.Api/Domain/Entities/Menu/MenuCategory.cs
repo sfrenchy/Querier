@@ -17,5 +17,6 @@ namespace Querier.Api.Domain.Entities.Menu
         public string Route { get; set; }
 
         public virtual ICollection<MenuCategoryTranslation> Translations { get; set; }
+        public virtual ICollection<Page> Pages { get; set; }
     }
 } 
