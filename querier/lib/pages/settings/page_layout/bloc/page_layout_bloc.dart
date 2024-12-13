@@ -19,6 +19,7 @@ class PageLayoutBloc extends Bloc<PageLayoutEvent, PageLayoutState> {
     on<AddCard>(_onAddCard);
     on<DeleteCard>(_onDeleteCard);
     on<ReorderCards>(_onReorderCards);
+    on<UpdateCardConfiguration>(_onUpdateCardConfiguration);
   }
 
   Future<void> _onLoadPageLayout(
@@ -231,6 +232,35 @@ class PageLayoutBloc extends Bloc<PageLayoutEvent, PageLayoutState> {
       }).toList() as List<DynamicRow>;
 
       emit(currentState.copyWith(rows: updatedRows, isDirty: true));
+    } catch (e) {
+      emit(PageLayoutError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateCardConfiguration(
+    UpdateCardConfiguration event,
+    Emitter<PageLayoutState> emit,
+  ) async {
+    if (state is! PageLayoutLoaded) return;
+    final currentState = state as PageLayoutLoaded;
+
+    try {
+      await _apiClient.updateDynamicCard(
+        event.cardId,
+        {
+          'titles': event.titles,
+          'type': event.type,
+          'isResizable': event.isResizable,
+          'isCollapsible': event.isCollapsible,
+          'height': event.height,
+          'width': event.width,
+          'order': event.order,
+          'useAvailableWidth': event.useAvailableWidth,
+          'configuration': event.configuration,
+        },
+      );
+
+      add(LoadPageLayout());
     } catch (e) {
       emit(PageLayoutError(e.toString()));
     }

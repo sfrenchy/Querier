@@ -11,13 +11,14 @@ namespace Querier.Api.Domain.Entities.Menu
 
         public int Id { get; set; }
         public int Order { get; set; }
-        public CardType Type { get; set; }
+        public string Type { get; set; }
         public bool IsResizable { get; set; }
         public bool IsCollapsible { get; set; }
         public double? Height { get; set; }
         public double? Width { get; set; }
         public string Configuration { get; set; }
         public int DynamicRowId { get; set; }
+        public bool UseAvailableWidth { get; set; }
         
         public virtual DynamicRow Row { get; set; }
         public virtual ICollection<DynamicCardTranslation> Translations { get; set; }
@@ -30,14 +31,5 @@ namespace Querier.Api.Domain.Entities.Menu
         public string LanguageCode { get; set; }
         public string Title { get; set; }
         public virtual DynamicCard Card { get; set; }
-    }
-
-    public enum CardType
-    {
-        Table,
-        Chart,
-        Metrics,
-        Form,
-        Custom
     }
 } 

@@ -93,7 +93,10 @@ class PageLayoutScreen extends StatelessWidget {
                                 },
                               ),
                             ),
-                            DynamicRowWidget(row: row),
+                            DynamicRowWidget(
+                              row: row,
+                              isEditable: true,
+                            ),
                           ],
                         ),
                       );

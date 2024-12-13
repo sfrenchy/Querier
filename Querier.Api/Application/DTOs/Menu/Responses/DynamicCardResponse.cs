@@ -13,5 +13,6 @@ namespace Querier.Api.Application.DTOs.Menu.Responses
         public double? Height { get; set; }
         public double? Width { get; set; }
         public object Configuration { get; set; }
+        public bool UseAvailableWidth { get; set; }
     }
 } 

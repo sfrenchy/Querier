@@ -64,14 +64,13 @@ namespace Querier.Api.Infrastructure.Services.Menu
             var existingCard = await _repository.GetByIdAsync(id);
             if (existingCard == null) return null;
 
+            existingCard.UseAvailableWidth = request.UseAvailableWidth;
             existingCard.Type = request.Type;
             existingCard.IsResizable = request.IsResizable;
             existingCard.IsCollapsible = request.IsCollapsible;
             existingCard.Height = request.Height;
             existingCard.Width = request.Width;
-            existingCard.Configuration = request.Configuration != null 
-                ? JsonConvert.SerializeObject(request.Configuration)
-                : null;
+            existingCard.Order = request.Order;
 
             existingCard.Translations.Clear();
             foreach (var translation in request.Titles)
@@ -83,6 +82,10 @@ namespace Querier.Api.Infrastructure.Services.Menu
                     DynamicCardId = id
                 });
             }
+
+            existingCard.Configuration = request.Configuration != null 
+                ? JsonConvert.SerializeObject(request.Configuration)
+                : null;
 
             var result = await _repository.UpdateAsync(existingCard);
             return MapToResponse(result);
@@ -124,7 +127,8 @@ namespace Querier.Api.Infrastructure.Services.Menu
                 Width = card.Width,
                 Configuration = card.Configuration != null 
                     ? JsonConvert.DeserializeObject(card.Configuration)
-                    : null
+                    : null,
+                UseAvailableWidth = card.UseAvailableWidth,
             };
         }
     }

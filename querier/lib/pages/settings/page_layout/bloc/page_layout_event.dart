@@ -63,3 +63,29 @@ class ReorderCards extends PageLayoutEvent {
 
   ReorderCards(this.rowId, this.cardIds);
 }
+
+class UpdateCardConfiguration extends PageLayoutEvent {
+  final int cardId;
+  final Map<String, String> titles;
+  final bool isResizable;
+  final bool isCollapsible;
+  final double? height;
+  final double? width;
+  final String type;
+  final int order;
+  final bool useAvailableWidth;
+  final Map<String, dynamic> configuration;
+
+  UpdateCardConfiguration({
+    required this.cardId,
+    required this.titles,
+    required this.isResizable,
+    required this.isCollapsible,
+    required this.height,
+    required this.width,
+    required this.type,
+    required this.order,
+    required this.useAvailableWidth,
+    required this.configuration,
+  });
+}

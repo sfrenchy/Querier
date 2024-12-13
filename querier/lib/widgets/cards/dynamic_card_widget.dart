@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:querier/models/dynamic_card.dart';
+import 'package:querier/pages/settings/page_layout/bloc/page_layout_bloc.dart';
 import 'package:querier/widgets/cards/placeholder_card.dart';
 
 class DynamicCardWidget extends StatelessWidget {
@@ -9,6 +10,7 @@ class DynamicCardWidget extends StatelessWidget {
   final bool isResizable;
   final bool isCollapsible;
   final Widget child;
+  final bool isEditable;
 
   const DynamicCardWidget({
     super.key,
@@ -18,20 +20,31 @@ class DynamicCardWidget extends StatelessWidget {
     this.isResizable = false,
     this.isCollapsible = true,
     required this.child,
+    this.isEditable = false,
   });
 
-  factory DynamicCardWidget.fromModel(DynamicCard model, BuildContext context) {
+  factory DynamicCardWidget.fromModel(
+    DynamicCard model,
+    BuildContext context, {
+    bool isEditable = false,
+    required PageLayoutBloc pageLayoutBloc,
+  }) {
     Widget cardContent;
 
-    switch (model.type.toLowerCase()) {
+    switch (model.type) {
       default:
         cardContent = PlaceholderCard(
           title: model
               .getLocalizedTitle(Localizations.localeOf(context).languageCode),
+          cardId: model.id,
           height: model.height,
           width: model.width,
           isResizable: model.isResizable,
           isCollapsible: model.isCollapsible,
+          placeholderText:
+              model.configuration?['placeholderText'] ?? 'Placeholder Card',
+          isEditable: isEditable,
+          pageLayoutBloc: pageLayoutBloc,
         );
     }
 
@@ -39,9 +52,10 @@ class DynamicCardWidget extends StatelessWidget {
       title:
           model.getLocalizedTitle(Localizations.localeOf(context).languageCode),
       height: model.height,
-      width: model.width,
+      width: model.useAvailableWidth ? double.infinity : model.width,
       isResizable: model.isResizable,
       isCollapsible: model.isCollapsible,
+      isEditable: isEditable,
       child: cardContent,
     );
   }

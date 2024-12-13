@@ -174,5 +174,13 @@
     "newRow": "Nouvelle ligne",
     "tableCard": "Carte tableau",
     "chartCard": "Carte graphique",
-    "metricsCard": "Carte métriques"
+    "metricsCard": "Carte métriques",
+    "cardTitle": "Titre",
+    "cardIsResizable": "Redimensionnable",
+    "cardIsCollapsible": "Réductible",
+    "cardHeight": "Hauteur",
+    "cardWidth": "Largeur",
+    "configureCard": "Configurer la carte",
+    "dimensions": "Dimensions",
+    "useAvailableWidth": "Utiliser la largeur disponible"
 } 

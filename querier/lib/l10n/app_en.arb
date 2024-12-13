@@ -173,5 +173,13 @@
     "newRow": "New Row",
     "tableCard": "Table Card",
     "chartCard": "Chart Card",
-    "metricsCard": "Metrics Card"
+    "metricsCard": "Metrics Card",
+    "cardTitle": "Title",
+    "cardIsResizable": "Resizable",
+    "cardIsCollapsible": "Collapsible",
+    "cardHeight": "Height",
+    "cardWidth": "Width",
+    "configureCard": "Configure Card",
+    "dimensions": "Dimensions",
+    "useAvailableWidth": "Use available width"
 } 
