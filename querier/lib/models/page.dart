@@ -39,9 +39,8 @@ class MenuPage {
   }
 
   factory MenuPage.fromJson(Map<String, dynamic> json) {
-    print('MenuPage.fromJson: $json'); // Debug
     return MenuPage(
-      id: json['Id'],
+      id: json['Id'] ?? 0,
       names: Map<String, String>.from(json['Names'] ?? {}),
       icon: json['Icon'] ?? '',
       order: json['Order'] ?? 0,

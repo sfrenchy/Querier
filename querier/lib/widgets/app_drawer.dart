@@ -64,7 +64,11 @@ class AppDrawer extends StatelessWidget {
                                     page.getLocalizedName(locale.languageCode)),
                                 onTap: () {
                                   Navigator.pop(context);
-                                  Navigator.pushNamed(context, page.route);
+                                  Navigator.pushReplacementNamed(
+                                    context,
+                                    '/dynamic-page',
+                                    arguments: page.id,
+                                  );
                                 },
                               ))
                           .toList(),
