@@ -181,5 +181,12 @@
     "cardWidth": "Width",
     "configureCard": "Configure Card",
     "dimensions": "Dimensions",
-    "useAvailableWidth": "Use available width"
+    "useAvailableWidth": "Use available width",
+    "useAvailableHeight": "Use available height",
+    "noPagesYet": "No pages yet",
+    "confirmDelete": "Confirm deletion",
+    "confirmDeletePageMessage": "Are you sure you want to delete this page?",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "order": "Order"
 } 

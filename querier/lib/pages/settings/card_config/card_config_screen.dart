@@ -27,6 +27,7 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
   late double? _height;
   late double? _width;
   late bool _useAvailableWidth;
+  late bool _useAvailableHeight;
   late Map<String, dynamic> _specificConfig;
 
   @override
@@ -38,6 +39,7 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
     _height = widget.card.height;
     _width = widget.card.width;
     _useAvailableWidth = widget.card.useAvailableWidth;
+    _useAvailableHeight = widget.card.useAvailableHeight;
     _specificConfig = widget.card.configuration ?? {};
   }
 
@@ -68,7 +70,11 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
               height: _height,
               width: _width,
               useAvailableWidth: _useAvailableWidth,
-              onTitlesChanged: (value) => setState(() => _titles = value),
+              useAvailableHeight: _useAvailableHeight,
+              onTitlesChanged: (value) {
+                print('CardConfigScreen received new titles: $value');
+                setState(() => _titles = value);
+              },
               onResizableChanged: (value) =>
                   setState(() => _isResizable = value),
               onCollapsibleChanged: (value) =>
@@ -77,6 +83,8 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
               onWidthChanged: (value) => setState(() => _width = value),
               onUseAvailableWidthChanged: (value) =>
                   setState(() => _useAvailableWidth = value),
+              onUseAvailableHeightChanged: (value) =>
+                  setState(() => _useAvailableHeight = value),
             ),
             const SizedBox(height: 32),
             // Configuration spécifique selon le type de carte
@@ -109,6 +117,7 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
   }
 
   void _saveConfiguration() {
+    print('Current titles before saving: $_titles');
     context.read<PageLayoutBloc>().add(
           UpdateCardConfiguration(
             cardId: widget.card.id,
@@ -117,12 +126,16 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
             isCollapsible: _isCollapsible,
             height: _height,
             width: _width,
-            type: 'Placeholder',
+            type: widget.cardType,
             order: widget.card.order,
             useAvailableWidth: _useAvailableWidth,
+            useAvailableHeight: _useAvailableHeight,
             configuration: _specificConfig,
           ),
         );
+
+    // Pour debug
+    print('Saving configuration with titles: $_titles');
 
     Navigator.pop(context);
   }

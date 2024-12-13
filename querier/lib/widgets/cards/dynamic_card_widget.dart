@@ -11,6 +11,7 @@ class DynamicCardWidget extends StatelessWidget {
   final bool isCollapsible;
   final Widget child;
   final bool isEditable;
+  final VoidCallback? onConfigurePressed;
 
   const DynamicCardWidget({
     super.key,
@@ -21,6 +22,7 @@ class DynamicCardWidget extends StatelessWidget {
     this.isCollapsible = true,
     required this.child,
     this.isEditable = false,
+    this.onConfigurePressed,
   });
 
   factory DynamicCardWidget.fromModel(

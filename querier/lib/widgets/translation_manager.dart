@@ -3,7 +3,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TranslationManager extends StatefulWidget {
   final Map<String, TextEditingController> translations;
-  final Function(Map<String, TextEditingController>) onTranslationsChanged;
+  final Function(Map<String, String>) onTranslationsChanged;
 
   const TranslationManager({
     super.key,
@@ -17,23 +17,48 @@ class TranslationManager extends StatefulWidget {
 
 class _TranslationManagerState extends State<TranslationManager> {
   @override
+  void initState() {
+    super.initState();
+    _addListeners();
+  }
+
+  void _addListeners() {
+    widget.translations.forEach((key, controller) {
+      controller.addListener(() {
+        final currentValues = Map<String, String>.from(
+            widget.translations.map((k, c) => MapEntry(k, c.text)));
+        widget.onTranslationsChanged(currentValues);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.translations.values.forEach((controller) {
+      controller.dispose();
+    });
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.translations),
-        const SizedBox(height: 8),
         ...widget.translations.entries.map(
           (entry) => Card(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 children: [
-                  Text('${entry.key.toUpperCase()}: '),
+                  SizedBox(
+                    width: 50,
+                    child: Text(entry.key.toUpperCase()),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: TextField(
+                    child: TextFormField(
                       controller: entry.value,
                       decoration: InputDecoration(
                         labelText: l10n.translatedName,
@@ -45,7 +70,10 @@ class _TranslationManagerState extends State<TranslationManager> {
                     onPressed: () {
                       setState(() {
                         widget.translations.remove(entry.key);
-                        widget.onTranslationsChanged(widget.translations);
+                        widget.onTranslationsChanged(
+                          widget.translations.map((key, controller) =>
+                              MapEntry(key, controller.text)),
+                        );
                       });
                     },
                   ),
@@ -54,48 +82,49 @@ class _TranslationManagerState extends State<TranslationManager> {
             ),
           ),
         ),
+        const SizedBox(height: 8),
         ElevatedButton.icon(
           icon: const Icon(Icons.add),
           label: Text(l10n.addTranslation),
-          onPressed: () {
-            final availableLanguages = ['fr', 'en']
-                .where((lang) => !widget.translations.containsKey(lang))
-                .toList();
-
-            if (availableLanguages.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.noMoreLanguagesAvailable)),
-              );
-              return;
-            }
-
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text(l10n.addTranslation),
-                content: DropdownButtonFormField<String>(
-                  hint: Text(l10n.selectLanguage),
-                  items: availableLanguages
-                      .map((lang) => DropdownMenuItem(
-                            value: lang,
-                            child: Text(lang.toUpperCase()),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        widget.translations[value] = TextEditingController();
-                        widget.onTranslationsChanged(widget.translations);
-                      });
-                      Navigator.pop(context);
-                    }
-                  },
-                ),
-              ),
-            );
-          },
+          onPressed: () => _showAddLanguageDialog(context),
         ),
       ],
+    );
+  }
+
+  void _showAddLanguageDialog(BuildContext context) {
+    final availableLanguages = {'en': 'English', 'fr': 'Français'};
+    final existingLanguages = widget.translations.keys.toSet();
+    final newLanguages = availableLanguages.entries
+        .where((e) => !existingLanguages.contains(e.key));
+
+    if (newLanguages.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.selectLanguage),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: newLanguages
+              .map(
+                (lang) => ListTile(
+                  title: Text(lang.value),
+                  onTap: () {
+                    setState(() {
+                      widget.translations[lang.key] = TextEditingController();
+                      widget.onTranslationsChanged(
+                        widget.translations.map((key, controller) =>
+                            MapEntry(key, controller.text)),
+                      );
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+              )
+              .toList(),
+        ),
+      ),
     );
   }
 }

@@ -182,5 +182,10 @@
     "cardWidth": "Largeur",
     "configureCard": "Configurer la carte",
     "dimensions": "Dimensions",
-    "useAvailableWidth": "Utiliser la largeur disponible"
+    "useAvailableWidth": "Utiliser la largeur disponible",
+    "useAvailableHeight": "Utiliser la hauteur disponible",
+    "noPagesYet": "Aucune page pour le moment",
+    "confirmDelete": "Confirmer la suppression",
+    "confirmDeletePageMessage": "Êtes-vous sûr de vouloir supprimer cette page ?",
+    "order": "Ordre"
 } 

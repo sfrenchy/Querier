@@ -11,6 +11,7 @@ class DynamicCard {
   final double? width;
   final Map<String, dynamic>? configuration;
   final bool useAvailableWidth;
+  final bool useAvailableHeight;
 
   DynamicCard({
     required this.id,
@@ -23,6 +24,7 @@ class DynamicCard {
     this.width,
     this.configuration,
     this.useAvailableWidth = false,
+    this.useAvailableHeight = false,
   });
 
   String getLocalizedTitle(String languageCode) {
@@ -46,6 +48,7 @@ class DynamicCard {
         width: json['Width']?.toDouble(),
         configuration: json['Configuration'] as Map<String, dynamic>?,
         useAvailableWidth: json['UseAvailableWidth'] ?? false,
+        useAvailableHeight: json['UseAvailableHeight'] ?? false,
       );
       print('DynamicCard created successfully: $card');
       return card;
@@ -68,6 +71,7 @@ class DynamicCard {
       'Width': width,
       'Configuration': configuration,
       'UseAvailableWidth': useAvailableWidth,
+      'UseAvailableHeight': useAvailableHeight,
     };
   }
 
@@ -82,6 +86,7 @@ class DynamicCard {
     double? width,
     Map<String, dynamic>? configuration,
     bool? useAvailableWidth,
+    bool? useAvailableHeight,
   }) {
     return DynamicCard(
       id: id ?? this.id,
@@ -94,6 +99,7 @@ class DynamicCard {
       width: width ?? this.width,
       configuration: configuration ?? this.configuration,
       useAvailableWidth: useAvailableWidth ?? this.useAvailableWidth,
+      useAvailableHeight: useAvailableHeight ?? this.useAvailableHeight,
     );
   }
 }

@@ -43,40 +43,51 @@ class DynamicRowWidget extends StatelessWidget {
               : null,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              return Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: row.alignment,
-                crossAxisAlignment: row.crossAlignment,
-                children: row.cards.isEmpty
-                    ? [
-                        Expanded(
-                          child: Center(
-                            child: Text('Drop a card here'),
+              return IntrinsicHeight(
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: row.alignment,
+                  crossAxisAlignment: row.crossAlignment,
+                  children: row.cards.isEmpty
+                      ? [
+                          Expanded(
+                            child: Center(
+                              child: Text('Drop a card here'),
+                            ),
                           ),
-                        ),
-                      ]
-                    : row.cards.map((card) {
-                        final cardWidget = DynamicCardWidget.fromModel(
-                          card,
-                          context,
-                          isEditable: isEditable,
-                          pageLayoutBloc: context.read<PageLayoutBloc>(),
-                        );
+                        ]
+                      : row.cards.map((card) {
+                          final cardWidget = DynamicCardWidget.fromModel(
+                            card,
+                            context,
+                            isEditable: isEditable,
+                            pageLayoutBloc: context.read<PageLayoutBloc>(),
+                          );
 
-                        return card.useAvailableWidth
-                            ? Expanded(
-                                child: Padding(
+                          Widget wrappedCard = card.useAvailableWidth
+                              ? Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0),
+                                    child: cardWidget,
+                                  ),
+                                )
+                              : Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8.0),
                                   child: cardWidget,
-                                ),
-                              )
-                            : Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: cardWidget,
-                              );
-                      }).toList(),
+                                );
+
+                          if (card.useAvailableHeight) {
+                            wrappedCard = Expanded(
+                              child: wrappedCard,
+                              flex: 1,
+                            );
+                          }
+
+                          return wrappedCard;
+                        }).toList(),
+                ),
               );
             },
           ),

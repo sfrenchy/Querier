@@ -19,6 +19,7 @@ namespace Querier.Api.Domain.Entities.Menu
         public string Configuration { get; set; }
         public int DynamicRowId { get; set; }
         public bool UseAvailableWidth { get; set; }
+        public bool UseAvailableHeight { get; set; }
         
         public virtual DynamicRow Row { get; set; }
         public virtual ICollection<DynamicCardTranslation> Translations { get; set; }

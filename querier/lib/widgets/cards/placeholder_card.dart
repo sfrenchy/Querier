@@ -33,43 +33,46 @@ class PlaceholderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return SizedBox(
+      width: width ?? 300,
+      height: height ?? 200,
       child: Container(
-        height: height,
-        width: width,
-        padding: const EdgeInsets.all(16.0),
+        constraints: const BoxConstraints(
+          minWidth: 200,
+          minHeight: 100,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleLarge,
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
                 if (isEditable)
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.settings),
-                        onPressed: () {
-                          _showConfigDialog(context);
-                        },
-                      ),
-                      if (isCollapsible)
-                        IconButton(
-                          icon: const Icon(Icons.more_vert),
-                          onPressed: () {
-                            // Menu pour éditer/supprimer la carte
-                          },
-                        ),
-                    ],
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () => _showConfigDialog(context),
+                    tooltip: 'Configure',
                   ),
               ],
             ),
-            Flexible(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Container(
+                height: 1,
+                color: Colors.white,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 8.0),
+              ),
+            ),
+            Expanded(
               child: Center(
                 child: Text(placeholderText),
               ),

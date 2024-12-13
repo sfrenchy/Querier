@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/models/menu_category.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/menu_pages_bloc.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/menu_pages_event.dart';
 import 'bloc/menu_categories_bloc.dart';
 import 'pages/menu_pages_screen.dart';
 
@@ -135,13 +137,7 @@ class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
                                     icon: const Icon(Icons.menu_book),
                                     tooltip: l10n.pages,
                                     onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => MenuPagesScreen(
-                                              category: category),
-                                        ),
-                                      );
+                                      _showPages(context, category);
                                     },
                                   ),
                                   IconButton(
@@ -226,6 +222,20 @@ class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
           ],
         );
       },
+    );
+  }
+
+  void _showPages(BuildContext context, MenuCategory category) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider(
+          create: (context) => MenuPagesBloc(
+            context.read<ApiClient>(),
+          )..add(LoadPages(category.Id)),
+          child: MenuPagesScreen(category: category),
+        ),
+      ),
     );
   }
 }
