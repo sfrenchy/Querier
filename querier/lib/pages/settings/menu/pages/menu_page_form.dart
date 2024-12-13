@@ -99,16 +99,18 @@ class _MenuPageFormState extends State<MenuPageForm> {
                 onTranslationsChanged: (newTranslations) {
                   setState(() {
                     for (var entry in newTranslations.entries) {
-                      if (!_translations.containsKey(entry.key)) {
-                        _translations[entry.key] = entry.value;
+                      if (_translations.containsKey(entry.key)) {
+                        _translations[entry.key]!.text = entry.value;
+                      } else {
+                        _translations[entry.key] =
+                            TextEditingController(text: entry.value);
                       }
                     }
+
                     _translations.removeWhere(
                         (key, _) => !newTranslations.containsKey(key));
 
-                    _names = _translations.map(
-                      (key, controller) => MapEntry(key, controller.text),
-                    );
+                    _names = Map<String, String>.from(newTranslations);
                   });
                 },
               ),

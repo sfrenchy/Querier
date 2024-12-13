@@ -74,6 +74,7 @@ class UpdateCardConfiguration extends PageLayoutEvent {
   final String type;
   final int order;
   final bool useAvailableWidth;
+  final bool useAvailableHeight;
   final Map<String, dynamic> configuration;
 
   UpdateCardConfiguration({
@@ -86,6 +87,7 @@ class UpdateCardConfiguration extends PageLayoutEvent {
     required this.type,
     required this.order,
     required this.useAvailableWidth,
+    required this.useAvailableHeight,
     required this.configuration,
   });
 }

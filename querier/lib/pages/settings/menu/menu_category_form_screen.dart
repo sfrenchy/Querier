@@ -40,13 +40,14 @@ class _MenuCategoryFormScreenState extends State<MenuCategoryFormScreen> {
       _selectedRoles.clear();
       _selectedRoles.addAll(widget.categoryToEdit!.roles);
 
-      // Initialiser les traductions existantes
-      widget.categoryToEdit!.names.forEach((lang, name) {
-        _translations[lang] = TextEditingController(text: name);
-      });
+      _translations = widget.categoryToEdit!.names.map(
+        (key, value) => MapEntry(key, TextEditingController(text: value)),
+      );
     } else {
-      // Ajouter au moins une traduction par défaut (anglais)
-      _translations['en'] = TextEditingController();
+      _translations = {
+        'en': TextEditingController(),
+        'fr': TextEditingController(),
+      };
     }
   }
 
@@ -75,12 +76,8 @@ class _MenuCategoryFormScreenState extends State<MenuCategoryFormScreen> {
     });
 
     try {
-      final names = <String, String>{};
-      for (var entry in _translations.entries) {
-        if (entry.value.text.isNotEmpty) {
-          names[entry.key] = entry.value.text;
-        }
-      }
+      final names = _translations
+          .map((key, controller) => MapEntry(key, controller.text));
 
       final data = {
         'id': widget.categoryToEdit?.Id ?? 0,
@@ -141,9 +138,12 @@ class _MenuCategoryFormScreenState extends State<MenuCategoryFormScreen> {
                   children: [
                     TranslationManager(
                       translations: _translations,
-                      onTranslationsChanged: (newTranslations) {
+                      onTranslationsChanged: (newValues) {
                         setState(() {
-                          _translations = newTranslations;
+                          _translations = newValues.map(
+                            (key, value) => MapEntry(
+                                key, TextEditingController(text: value)),
+                          );
                         });
                       },
                     ),
