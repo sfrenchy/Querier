@@ -9,7 +9,7 @@ using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Infrastructure.Services.Menu
 {
-    public class DynamicPageService : IPageService
+    public class DynamicPageService : IDynamicPageService
     {
         private readonly IDynamicPageRepository _repository;
 
@@ -39,8 +39,8 @@ namespace Querier.Api.Infrastructure.Services.Menu
                 IsVisible = request.IsVisible,
                 Roles = string.Join(",", request.Roles),
                 Route = request.Route,
-                MenuCategoryId = request.MenuCategoryId,
-                Translations = request.Names.Select(x => new DynamicPageTranslation
+                DynamicMenuCategoryId = request.DynamicMenuCategoryId,
+                DynamicPageTranslations = request.Names.Select(x => new DynamicPageTranslation
                 {
                     LanguageCode = x.Key,
                     Name = x.Value
@@ -62,12 +62,12 @@ namespace Querier.Api.Infrastructure.Services.Menu
             existingPage.IsVisible = request.IsVisible;
             existingPage.Roles = string.Join(",", request.Roles);
             existingPage.Route = request.Route;
-            existingPage.MenuCategoryId = request.MenuCategoryId;
+            existingPage.DynamicMenuCategoryId = request.DynamicMenuCategoryId;
 
-            existingPage.Translations.Clear();
+            existingPage.DynamicPageTranslations.Clear();
             foreach (var translation in request.Names)
             {
-                existingPage.Translations.Add(new DynamicPageTranslation
+                existingPage.DynamicPageTranslations.Add(new DynamicPageTranslation
                 {
                     LanguageCode = translation.Key,
                     Name = translation.Value,
@@ -89,13 +89,13 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return new PageResponse
             {
                 Id = page.Id,
-                Names = page.Translations.ToDictionary(x => x.LanguageCode, x => x.Name),
+                Names = page.DynamicPageTranslations.ToDictionary(x => x.LanguageCode, x => x.Name),
                 Icon = page.Icon,
                 Order = page.Order,
                 IsVisible = page.IsVisible,
                 Roles = page.Roles.Split(',').ToList(),
                 Route = page.Route,
-                MenuCategoryId = page.MenuCategoryId
+                DynamicMenuCategoryId = page.DynamicMenuCategoryId
             };
         }
     }

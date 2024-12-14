@@ -6,10 +6,10 @@ namespace Querier.Api.Application.Interfaces.Repositories.Menu
 {
     public interface IDynamicMenuCategoryRepository
     {
-        Task<List<MenuCategory>> GetAllAsync();
-        Task<MenuCategory> GetByIdAsync(int id);
-        Task<MenuCategory> CreateAsync(MenuCategory category);
-        Task<MenuCategory> UpdateAsync(MenuCategory category);
+        Task<List<DynamicMenuCategory>> GetAllAsync();
+        Task<DynamicMenuCategory> GetByIdAsync(int id);
+        Task<DynamicMenuCategory> CreateAsync(DynamicMenuCategory category);
+        Task<DynamicMenuCategory> UpdateAsync(DynamicMenuCategory category);
         Task<bool> DeleteAsync(int id);
     }
 } 

@@ -21,19 +21,19 @@ namespace Querier.Api.Infrastructure.Services.Menu
             _logger = logger;
         }
 
-        public async Task<List<MenuCategoryResponse>> GetAllAsync()
+        public async Task<List<DynamicMenuCategoryResponse>> GetAllAsync()
         {
             var categories = await _repository.GetAllAsync();
             return categories.Select(MapToResponse).ToList();
         }
 
-        public async Task<MenuCategoryResponse> GetByIdAsync(int id)
+        public async Task<DynamicMenuCategoryResponse> GetByIdAsync(int id)
         {
             var category = await _repository.GetByIdAsync(id);
             return category != null ? MapToResponse(category) : null;
         }
 
-        public async Task<MenuCategoryResponse> CreateAsync(CreateMenuCategoryRequest request)
+        public async Task<DynamicMenuCategoryResponse> CreateAsync(CreateDynamicMenuCategoryRequest request)
         {
             var category = new DynamicMenuCategory
             {
@@ -53,7 +53,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return MapToResponse(result);
         }
 
-        public async Task<MenuCategoryResponse> UpdateAsync(int id, CreateMenuCategoryRequest request)
+        public async Task<DynamicMenuCategoryResponse> UpdateAsync(int id, CreateDynamicMenuCategoryRequest request)
         {
             var category = await _repository.GetByIdAsync(id);
             if (category == null) return null;
@@ -84,9 +84,9 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return await _repository.DeleteAsync(id);
         }
 
-        private static MenuCategoryResponse MapToResponse(DynamicMenuCategory category)
+        private static DynamicMenuCategoryResponse MapToResponse(DynamicMenuCategory category)
         {
-            return new MenuCategoryResponse
+            return new DynamicMenuCategoryResponse
             {
                 Id = category.Id,
                 Names = category.Translations.ToDictionary(x => x.LanguageCode, x => x.Name),

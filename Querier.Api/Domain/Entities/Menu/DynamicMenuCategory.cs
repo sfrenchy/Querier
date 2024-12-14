@@ -6,7 +6,7 @@ namespace Querier.Api.Domain.Entities.Menu
     {
         public DynamicMenuCategory()
         {
-            Translations = new HashSet<MenuCategoryTranslation>();
+            Translations = new HashSet<DynamicMenuCategoryTranslation>();
         }
 
         public int Id { get; set; }
@@ -16,7 +16,7 @@ namespace Querier.Api.Domain.Entities.Menu
         public string Roles { get; set; }
         public string Route { get; set; }
 
-        public virtual ICollection<MenuCategoryTranslation> Translations { get; set; }
+        public virtual ICollection<DynamicMenuCategoryTranslation> Translations { get; set; }
         public virtual ICollection<DynamicPage> Pages { get; set; }
     }
 } 

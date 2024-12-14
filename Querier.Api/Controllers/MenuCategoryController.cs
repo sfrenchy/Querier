@@ -31,12 +31,12 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public class MenuCategoryController : ControllerBase
+    public class DynamicMenuCategoryController : ControllerBase
     {
-        private readonly IMenuCategoryService _service;
-        private readonly ILogger<MenuCategoryController> _logger;
+        private readonly IDynamicMenuCategoryService _service;
+        private readonly ILogger<DynamicMenuCategoryController> _logger;
 
-        public MenuCategoryController(IMenuCategoryService service, ILogger<MenuCategoryController> logger)
+        public DynamicMenuCategoryController(IDynamicMenuCategoryService service, ILogger<DynamicMenuCategoryController> logger)
         {
             _service = service;
             _logger = logger;
@@ -48,7 +48,7 @@ namespace Querier.Api.Controllers
         /// <returns>List of menu categories with their translations</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<MenuCategoryResponse>>> GetAll()
+        public async Task<ActionResult<List<DynamicMenuCategoryResponse>>> GetAll()
         {
             return Ok(await _service.GetAllAsync());
         }
@@ -61,7 +61,7 @@ namespace Querier.Api.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<MenuCategoryResponse>> GetById(int id)
+        public async Task<ActionResult<DynamicMenuCategoryResponse>> GetById(int id)
         {
             var category = await _service.GetByIdAsync(id);
             if (category == null)
@@ -79,7 +79,7 @@ namespace Querier.Api.Controllers
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<MenuCategoryResponse>> Create([FromBody] CreateMenuCategoryRequest request)
+        public async Task<ActionResult<DynamicMenuCategoryResponse>> Create([FromBody] CreateDynamicMenuCategoryRequest request)
         {
             var category = await _service.CreateAsync(request);
             return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
@@ -95,7 +95,7 @@ namespace Querier.Api.Controllers
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<MenuCategoryResponse>> Update(int id, [FromBody] CreateMenuCategoryRequest request)
+        public async Task<ActionResult<DynamicMenuCategoryResponse>> Update(int id, [FromBody] CreateDynamicMenuCategoryRequest request)
         {
             var category = await _service.UpdateAsync(id, request);
             if (category == null)

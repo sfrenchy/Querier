@@ -7,10 +7,10 @@ namespace Querier.Api.Application.Interfaces.Services.Menu
 {
     public interface IDynamicMenuCategoryService
     {
-        Task<List<MenuCategoryResponse>> GetAllAsync();
-        Task<MenuCategoryResponse> GetByIdAsync(int id);
-        Task<MenuCategoryResponse> CreateAsync(CreateMenuCategoryRequest request);
-        Task<MenuCategoryResponse> UpdateAsync(int id, CreateMenuCategoryRequest request);
+        Task<List<DynamicMenuCategoryResponse>> GetAllAsync();
+        Task<DynamicMenuCategoryResponse> GetByIdAsync(int id);
+        Task<DynamicMenuCategoryResponse> CreateAsync(CreateDynamicMenuCategoryRequest request);
+        Task<DynamicMenuCategoryResponse> UpdateAsync(int id, CreateDynamicMenuCategoryRequest request);
         Task<bool> DeleteAsync(int id);
     }
 } 

@@ -11,7 +11,7 @@ namespace Querier.Api.Domain.Entities.Menu
         public CrossAxisAlignment CrossAlignment { get; set; }
         public double Spacing { get; set; }
 
-        public virtual Page Page { get; set; }
+        public virtual DynamicPage Page { get; set; }
         public virtual ICollection<DynamicCard> Cards { get; set; }
     }
 

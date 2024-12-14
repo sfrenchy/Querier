@@ -18,38 +18,38 @@ namespace Querier.Api.Infrastructure.Data.Repositories.Menu
 
         public async Task<List<DynamicMenuCategory>> GetAllAsync()
         {
-            return await _context.MenuCategories
+            return await _context.DynamicMenuCategories
                 .Include(x => x.Translations)
                 .ToListAsync();
         }
 
         public async Task<DynamicMenuCategory> GetByIdAsync(int id)
         {
-            return await _context.MenuCategories
+            return await _context.DynamicMenuCategories
                 .Include(x => x.Translations)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task<DynamicMenuCategory> CreateAsync(DynamicMenuCategory category)
         {
-            await _context.MenuCategories.AddAsync(category);
+            await _context.DynamicMenuCategories.AddAsync(category);
             await _context.SaveChangesAsync();
             return category;
         }
 
         public async Task<DynamicMenuCategory> UpdateAsync(DynamicMenuCategory category)
         {
-            _context.MenuCategories.Update(category);
+            _context.DynamicMenuCategories.Update(category);
             await _context.SaveChangesAsync();
             return category;
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var category = await _context.MenuCategories.FindAsync(id);
+            var category = await _context.DynamicMenuCategories.FindAsync(id);
             if (category == null) return false;
 
-            _context.MenuCategories.Remove(category);
+            _context.DynamicMenuCategories.Remove(category);
             await _context.SaveChangesAsync();
             return true;
         }
