@@ -7,37 +7,37 @@ using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api.Infrastructure.Data.Repositories.Menu
 {
-    public class MenuCategoryRepository : IMenuCategoryRepository
+    public class DynamicMenuCategoryRepository : IDynamicMenuCategoryRepository
     {
         private readonly ApiDbContext _context;
 
-        public MenuCategoryRepository(ApiDbContext context)
+        public DynamicMenuCategoryRepository(ApiDbContext context)
         {
             _context = context;
         }
 
-        public async Task<List<MenuCategory>> GetAllAsync()
+        public async Task<List<DynamicMenuCategory>> GetAllAsync()
         {
             return await _context.MenuCategories
                 .Include(x => x.Translations)
                 .ToListAsync();
         }
 
-        public async Task<MenuCategory> GetByIdAsync(int id)
+        public async Task<DynamicMenuCategory> GetByIdAsync(int id)
         {
             return await _context.MenuCategories
                 .Include(x => x.Translations)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<MenuCategory> CreateAsync(MenuCategory category)
+        public async Task<DynamicMenuCategory> CreateAsync(DynamicMenuCategory category)
         {
             await _context.MenuCategories.AddAsync(category);
             await _context.SaveChangesAsync();
             return category;
         }
 
-        public async Task<MenuCategory> UpdateAsync(MenuCategory category)
+        public async Task<DynamicMenuCategory> UpdateAsync(DynamicMenuCategory category)
         {
             _context.MenuCategories.Update(category);
             await _context.SaveChangesAsync();

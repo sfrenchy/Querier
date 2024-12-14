@@ -5,7 +5,7 @@ using Querier.Api.Application.DTOs.Menu.Responses;
 
 namespace Querier.Api.Application.Interfaces.Services.Menu
 {
-    public interface IMenuCategoryService
+    public interface IDynamicMenuCategoryService
     {
         Task<List<MenuCategoryResponse>> GetAllAsync();
         Task<MenuCategoryResponse> GetByIdAsync(int id);

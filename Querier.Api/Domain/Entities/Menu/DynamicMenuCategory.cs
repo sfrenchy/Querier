@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 namespace Querier.Api.Domain.Entities.Menu
 {
-    public class MenuCategory
+    public class DynamicMenuCategory
     {
-        public MenuCategory()
+        public DynamicMenuCategory()
         {
             Translations = new HashSet<MenuCategoryTranslation>();
         }
@@ -17,6 +17,6 @@ namespace Querier.Api.Domain.Entities.Menu
         public string Route { get; set; }
 
         public virtual ICollection<MenuCategoryTranslation> Translations { get; set; }
-        public virtual ICollection<Page> Pages { get; set; }
+        public virtual ICollection<DynamicPage> Pages { get; set; }
     }
 } 

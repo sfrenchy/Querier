@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 
-namespace Querier.Api.Application.DTOs.Menu.Requests
+namespace Querier.Api.Application.DTOs.Menu.Responses
 {
-    public class CreateMenuCategoryRequest
+    public class DynamicMenuCategoryResponse
     {
+        public int Id { get; set; }
         public Dictionary<string, string> Names { get; set; }
         public string Icon { get; set; }
         public int Order { get; set; }

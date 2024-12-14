@@ -10,12 +10,12 @@ using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Infrastructure.Services.Menu
 {
-    public class MenuCategoryService : IMenuCategoryService
+    public class DynamicMenuCategoryService : IDynamicMenuCategoryService
     {
-        private readonly IMenuCategoryRepository _repository;
-        private readonly ILogger<MenuCategoryService> _logger;
+        private readonly IDynamicMenuCategoryRepository _repository;
+        private readonly ILogger<DynamicMenuCategoryService> _logger;
 
-        public MenuCategoryService(IMenuCategoryRepository repository, ILogger<MenuCategoryService> logger)
+        public DynamicMenuCategoryService(IDynamicMenuCategoryRepository repository, ILogger<DynamicMenuCategoryService> logger)
         {
             _repository = repository;
             _logger = logger;
@@ -35,14 +35,14 @@ namespace Querier.Api.Infrastructure.Services.Menu
 
         public async Task<MenuCategoryResponse> CreateAsync(CreateMenuCategoryRequest request)
         {
-            var category = new MenuCategory
+            var category = new DynamicMenuCategory
             {
                 Icon = request.Icon,
                 Order = request.Order,
                 IsVisible = request.IsVisible,
                 Roles = string.Join(",", request.Roles),
                 Route = request.Route,
-                Translations = request.Names.Select(x => new MenuCategoryTranslation
+                Translations = request.Names.Select(x => new DynamicMenuCategoryTranslation
                 {
                     LanguageCode = x.Key,
                     Name = x.Value
@@ -68,7 +68,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
             category.Translations.Clear();
             foreach (var translation in request.Names)
             {
-                category.Translations.Add(new MenuCategoryTranslation
+                category.Translations.Add(new DynamicMenuCategoryTranslation
                 {
                     LanguageCode = translation.Key,
                     Name = translation.Value
@@ -84,7 +84,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return await _repository.DeleteAsync(id);
         }
 
-        private static MenuCategoryResponse MapToResponse(MenuCategory category)
+        private static MenuCategoryResponse MapToResponse(DynamicMenuCategory category)
         {
             return new MenuCategoryResponse
             {

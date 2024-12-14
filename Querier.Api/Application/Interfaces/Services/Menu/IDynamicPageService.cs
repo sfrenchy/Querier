@@ -5,7 +5,7 @@ using Querier.Api.Application.DTOs.Responses.Page;
 
 namespace Querier.Api.Application.Interfaces.Services.Menu
 {
-    public interface IPageService
+    public interface IDynamicPageService
     {
         Task<PageResponse> GetByIdAsync(int id);
         Task<IEnumerable<PageResponse>> GetAllAsync();

@@ -7,33 +7,33 @@ using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Infrastructure.Data.Repositories.Menu
 {
-    public class PageRepository : IPageRepository
+    public class DynamicPageRepository : IDynamicPageRepository
     {
         private readonly ApiDbContext _context;
 
-        public PageRepository(ApiDbContext context)
+        public DynamicPageRepository(ApiDbContext context)
         {
             _context = context;
         }
 
-        public async Task<Page> GetByIdAsync(int id)
+        public async Task<DynamicPage> GetByIdAsync(int id)
         {
-            return await _context.Pages.FindAsync(id);
+            return await _context.DynamicPages.FindAsync(id);
         }
 
-        public async Task<IEnumerable<Page>> GetAllAsync()
+        public async Task<IEnumerable<DynamicPage>> GetAllAsync()
         {
-            return await _context.Pages.ToListAsync();
+            return await _context.DynamicPages.ToListAsync();
         }
 
-        public async Task<Page> CreateAsync(Page page)
+        public async Task<DynamicPage> CreateAsync(DynamicPage page)
         {
-            _context.Pages.Add(page);
+            _context.DynamicPages.Add(page);
             await _context.SaveChangesAsync();
             return page;
         }
 
-        public async Task<Page> UpdateAsync(int id, Page page)
+        public async Task<DynamicPage> UpdateAsync(int id, DynamicPage page)
         {
             var existingPage = await GetByIdAsync(id);
             if (existingPage == null) return null;
@@ -48,7 +48,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories.Menu
             var page = await GetByIdAsync(id);
             if (page == null) return false;
 
-            _context.Pages.Remove(page);
+            _context.DynamicPages.Remove(page);
             await _context.SaveChangesAsync();
             return true;
         }

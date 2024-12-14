@@ -9,11 +9,11 @@ using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Infrastructure.Services.Menu
 {
-    public class PageService : IPageService
+    public class DynamicPageService : IPageService
     {
-        private readonly IPageRepository _repository;
+        private readonly IDynamicPageRepository _repository;
 
-        public PageService(IPageRepository repository)
+        public DynamicPageService(IDynamicPageRepository repository)
         {
             _repository = repository;
         }
@@ -32,7 +32,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
 
         public async Task<PageResponse> CreateAsync(CreatePageRequest request)
         {
-            var page = new Page
+            var page = new DynamicPage
             {
                 Icon = request.Icon,
                 Order = request.Order,
@@ -40,7 +40,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
                 Roles = string.Join(",", request.Roles),
                 Route = request.Route,
                 MenuCategoryId = request.MenuCategoryId,
-                Translations = request.Names.Select(x => new PageTranslation
+                Translations = request.Names.Select(x => new DynamicPageTranslation
                 {
                     LanguageCode = x.Key,
                     Name = x.Value
@@ -67,11 +67,11 @@ namespace Querier.Api.Infrastructure.Services.Menu
             existingPage.Translations.Clear();
             foreach (var translation in request.Names)
             {
-                existingPage.Translations.Add(new PageTranslation
+                existingPage.Translations.Add(new DynamicPageTranslation
                 {
                     LanguageCode = translation.Key,
                     Name = translation.Value,
-                    PageId = id
+                    DynamicPageId = id
                 });
             }
 
@@ -84,7 +84,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return await _repository.DeleteAsync(id);
         }
 
-        private PageResponse MapToResponse(Page page)
+        private PageResponse MapToResponse(DynamicPage page)
         {
             return new PageResponse
             {
