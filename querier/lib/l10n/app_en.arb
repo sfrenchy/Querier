@@ -189,5 +189,6 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "order": "Order",
-    "colors": "Colors"
+    "colors": "Colors",
+    "dropCardHere": "Drop a card here"
 } 

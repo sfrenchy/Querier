@@ -188,5 +188,6 @@
     "confirmDelete": "Confirmer la suppression",
     "confirmDeletePageMessage": "Êtes-vous sûr de vouloir supprimer cette page ?",
     "order": "Ordre",
-    "colors": "Couleurs"
+    "colors": "Couleurs",
+    "dropCardHere": "Déposez une carte ici"
 } 
