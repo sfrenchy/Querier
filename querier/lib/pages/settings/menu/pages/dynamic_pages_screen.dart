@@ -9,6 +9,7 @@ import 'package:querier/pages/settings/menu/pages/bloc/dynamic_pages_bloc.dart';
 import 'package:querier/pages/settings/menu/pages/bloc/dynamic_pages_event.dart';
 import 'package:querier/pages/settings/menu/pages/bloc/dynamic_pages_state.dart';
 import 'package:querier/pages/settings/menu/pages/dynamic_page_form.dart';
+import 'package:querier/pages/settings/menu/pages/dynamic_page_layout_screen.dart';
 import 'package:querier/widgets/icon_selector.dart';
 
 class DynamicPagesScreen extends StatelessWidget {
@@ -100,9 +101,18 @@ class DynamicPagesScreen extends StatelessWidget {
                           },
                         ),
                         IconButton(
-                            icon: const Icon(Icons.dashboard),
-                            tooltip: l10n.pageLayout,
-                            onPressed: () => {}),
+                          icon: const Icon(Icons.dashboard),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DynamicPageLayoutScreen(
+                                  pageId: page.id,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                         IconButton(
                           icon: const Icon(Icons.edit),
                           onPressed: () => _showPageForm(context, page: page),
