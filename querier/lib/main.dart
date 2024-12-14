@@ -32,7 +32,6 @@ import 'package:querier/pages/databases/database_details_screen.dart';
 import 'package:querier/pages/settings/menu/menu_categories_screen.dart';
 import 'package:querier/pages/settings/menu/menu_category_form_screen.dart';
 import 'package:querier/blocs/menu_bloc.dart';
-import 'package:querier/pages/dynamic_page/dynamic_page_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -132,11 +131,6 @@ class QuerierApp extends StatelessWidget {
                   ],
                   child: MenuCategoryFormScreen(categoryToEdit: category),
                 );
-              },
-              '/dynamic-page': (context) {
-                final pageId =
-                    ModalRoute.of(context)?.settings.arguments as int;
-                return DynamicPageScreen(pageId: pageId);
               },
             },
             localizationsDelegates: const [

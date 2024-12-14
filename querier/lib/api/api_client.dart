@@ -11,7 +11,6 @@ import 'package:querier/models/menu_category.dart';
 import 'package:querier/models/page.dart';
 import 'package:querier/models/dynamic_row.dart';
 import 'package:querier/models/dynamic_card.dart';
-import 'package:querier/pages/settings/page_layout/bloc/page_layout_bloc.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -441,128 +440,177 @@ class ApiClient {
 
   // Récupérer toutes les pages d'une catégorie
   Future<List<MenuPage>> getPages(int categoryId) async {
-    final response = await _dio.get('/page?categoryId=$categoryId');
-    List<MenuPage> pages = List<MenuPage>.from(
-        (response.data as List).map((json) => MenuPage.fromJson(json)));
-    return pages;
+    final response = await _dio.get(
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+          ApiEndpoints.pagesByCategory,
+          {'categoryId': categoryId.toString()},
+        ),
+      ),
+    );
+    return List<MenuPage>.from(
+      (response.data as List).map((json) => MenuPage.fromJson(json)),
+    );
   }
 
   // Récupérer une page par son ID
   Future<MenuPage> getPageById(int id) async {
-    final response = await _dio.get('/page/$id');
+    final response = await _dio.get(
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+            ApiEndpoints.pageById, {'id': id.toString()}),
+      ),
+    );
     return MenuPage.fromJson(response.data);
   }
 
   // Créer une nouvelle page
   Future<MenuPage> createPage(MenuPage page) async {
-    final response = await _dio.post('/page', data: page.toJson());
+    final response = await _dio.post(
+      ApiEndpoints.buildUrl(baseUrl, ApiEndpoints.pages),
+      data: page.toJson(),
+    );
     return MenuPage.fromJson(response.data);
   }
 
   // Mettre à jour une page
   Future<MenuPage> updatePage(int id, MenuPage page) async {
-    final response = await _dio.put('/page/$id', data: page.toJson());
+    final response = await _dio.put(
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+            ApiEndpoints.pageById, {'id': id.toString()}),
+      ),
+      data: page.toJson(),
+    );
     return MenuPage.fromJson(response.data);
   }
 
   // Supprimer une page
   Future<void> deletePage(int id) async {
-    await _dio.delete('/page/$id');
+    await _dio.delete(
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+            ApiEndpoints.pageById, {'id': id.toString()}),
+      ),
+    );
   }
 
   // Dynamic Rows
   Future<List<DynamicRow>> getDynamicRows(int pageId) async {
-    try {
-      print('Fetching rows for page $pageId');
-      final response = await _dio.get('/DynamicRow/page/$pageId');
-      print('API Response: ${response.data}');
-
-      final List rawList = response.data as List;
-      print('Converting to List<DynamicRow>...');
-
-      return rawList.map((json) {
-        print('Processing row data: $json');
-        final Map<String, dynamic> rowData = Map<String, dynamic>.from(json);
-        print('Converted to Map: $rowData');
-        return DynamicRow.fromJson(rowData);
-      }).toList();
-    } catch (e, stackTrace) {
-      print('Error in getDynamicRows: $e');
-      print('Stack trace: $stackTrace');
-      rethrow;
-    }
+    final response = await _dio.get(
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+          ApiEndpoints.dynamicRowsByPage,
+          {'pageId': pageId.toString()},
+        ),
+      ),
+    );
+    return (response.data as List)
+        .map((json) => DynamicRow.fromJson(json))
+        .toList();
   }
 
   Future<DynamicRow> createDynamicRow(
-    int pageId,
-    MainAxisAlignment alignment,
-    CrossAxisAlignment crossAlignment,
-    double spacing,
-  ) async {
+      int pageId, Map<String, dynamic> rowData) async {
     final response = await _dio.post(
-      '/DynamicRow/page/$pageId',
-      data: {
-        'alignment': alignment.name,
-        'crossAlignment': crossAlignment.name,
-        'spacing': spacing,
-      },
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+          ApiEndpoints.dynamicRowsByPage,
+          {'pageId': pageId.toString()},
+        ),
+      ),
+      data: rowData,
     );
     return DynamicRow.fromJson(response.data);
   }
 
   Future<DynamicRow> updateDynamicRow(
-    int rowId,
-    MainAxisAlignment? alignment,
-    CrossAxisAlignment? crossAlignment,
-    double? spacing,
-  ) async {
+      int rowId, Map<String, dynamic> updates) async {
     final response = await _dio.put(
-      '/DynamicRow/$rowId',
-      data: {
-        if (alignment != null) 'alignment': alignment.name,
-        if (crossAlignment != null) 'crossAlignment': crossAlignment.name,
-        if (spacing != null) 'spacing': spacing,
-      },
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+          ApiEndpoints.dynamicRows,
+          {'id': rowId.toString()},
+        ),
+      ),
+      data: updates,
     );
     return DynamicRow.fromJson(response.data);
   }
 
   Future<void> deleteDynamicRow(int rowId) async {
-    await _dio.delete('/DynamicRow/$rowId');
+    await _dio.delete(
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+          ApiEndpoints.dynamicRows,
+          {'id': rowId.toString()},
+        ),
+      ),
+    );
   }
 
   Future<void> reorderDynamicRows(int pageId, List<int> rowIds) async {
     await _dio.post(
-      '/DynamicRow/page/$pageId/reorder',
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+          ApiEndpoints.dynamicRowReorder,
+          {'pageId': pageId.toString()},
+        ),
+      ),
       data: rowIds,
     );
   }
 
   // Dynamic Cards
   Future<DynamicCard> createDynamicCard(
-    int rowId,
-    Map<String, dynamic> cardData,
-  ) async {
+      int rowId, Map<String, dynamic> cardData) async {
     final response = await _dio.post(
-      '/DynamicCard/row/$rowId',
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+          ApiEndpoints.dynamicCardsByRow,
+          {'rowId': rowId.toString()},
+        ),
+      ),
       data: cardData,
     );
     return DynamicCard.fromJson(response.data);
   }
 
   Future<DynamicCard> updateDynamicCard(
-    int cardId,
-    Map<String, dynamic> updates,
-  ) async {
+      int cardId, Map<String, dynamic> updates) async {
     final response = await _dio.put(
-      '/DynamicCard/$cardId',
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+          ApiEndpoints.dynamicCards,
+          {'id': cardId.toString()},
+        ),
+      ),
       data: updates,
     );
     return DynamicCard.fromJson(response.data);
   }
 
   Future<void> deleteDynamicCard(int cardId) async {
-    await _dio.delete('/DynamicCard/$cardId');
+    await _dio.delete(
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+          ApiEndpoints.dynamicCards,
+          {'id': cardId.toString()},
+        ),
+      ),
+    );
   }
 
   Future<void> reorderDynamicCards(int rowId, List<int> cardIds) async {
@@ -574,7 +622,13 @@ class ApiClient {
 
   Future<void> updatePageLayout(int pageId, List<DynamicRow> rows) async {
     await _dio.put(
-      '/api/v1/Page/$pageId/layout',
+      ApiEndpoints.buildUrl(
+        baseUrl,
+        ApiEndpoints.replaceUrlParams(
+          ApiEndpoints.pageLayout,
+          {'id': pageId.toString()},
+        ),
+      ),
       data: rows.map((row) => row.toJson()).toList(),
     );
   }

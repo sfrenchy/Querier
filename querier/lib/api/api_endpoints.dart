@@ -1,36 +1,69 @@
 class ApiEndpoints {
-  // Auth endpoints
+  // Auth Management Controller
   static const String signIn = '/authmanagement/signin';
   static const String signOut = '/authmanagement/signout';
   static const String refreshToken = '/authmanagement/refreshtoken';
 
-  // Settings endpoints
+  // Settings Controller
   static const String getSettings = '/settings';
   static const String updateSettings = '/settings';
   static const String isConfigured = '/settings/configured';
   static const String configure = '/settings/configure';
+  static const String apiConfiguration = 'settings/api-configuration';
+  static const String updateApiConfiguration = 'settings/api-configuration';
 
-  // Wizard endpoints
-  static const String setup = '/wizard/setup';
-
-  // User endpoints
+  // User Management Controller
   static const String users = '/usermanagement/getall';
   static const String addUser = '/usermanagement/add';
   static const String updateUser = '/usermanagement/update';
   static const String currentUser = '/usermanagement/me';
   static const String userById = '/users/{id}';
   static const String deleteUser = '/usermanagement/delete/{id}';
+  static const String userProfile = '/usermanagement/view/{id}';
+  static const String resendConfirmationEmail =
+      '/usermanagement/resend-confirmation';
 
-  // Role endpoints
+  // Role Controller
   static const String roles = '/role/getall';
   static const String roleById = '/role/{id}';
   static const String addRole = '/role/addrole';
   static const String updateRole = '/role/updaterole';
   static const String deleteRole = '/role/deleterole/{id}';
 
-  // Helper method pour construire les URLs complètes
+  // DB Connection Controller
+  static const String dbConnections = 'dbconnection';
+  static const String deleteDbConnection = 'dbconnection/deletedbconnection';
+  static const String addDbConnection = 'dbconnection/adddbconnection';
+  static const String updateDbConnection = 'dbconnection/{id}';
+
+  // Menu Category Controller
+  static const String menuCategories = '/dynamicmenucategory';
+
+  // DynamicPage Controller
+  static const String pages = 'dynamicpage';
+  static const String pageById = 'dynamicpage/{id}';
+  static const String pagesByCategory = 'dynamicpage?categoryId={categoryId}';
+  static const String pageLayout = 'dynamicpage/{id}/layout';
+
+  // Dynamic Row Controller
+  static const String dynamicRows = 'dynamicrow';
+  static const String dynamicRowsByPage = 'dynamicrow/page/{pageId}';
+  static const String dynamicRowReorder = 'dynamicrow/page/{pageId}/reorder';
+
+  // Dynamic Card Controller
+  static const String dynamicCards = 'dynamiccard';
+  static const String dynamicCardsByRow = 'dynamiccard/row/{rowId}';
+  static const String dynamicCardReorder = 'dynamiccard/row/{rowId}/reorder';
+
+  // Query Analytics Controller
+  static const String recentQueries = '/queries/recent';
+  static const String queryStats = '/queries/stats';
+  static const String activity = '/queries/activity';
+
+  // Wizard endpoints
+  static const String setup = '/wizard/setup';
+  // Helper Methods
   static String buildUrl(String baseUrl, String endpoint) {
-    // Enlever les slashes en trop
     final cleanBaseUrl = baseUrl.endsWith('/')
         ? baseUrl.substring(0, baseUrl.length - 1)
         : baseUrl;
@@ -40,7 +73,6 @@ class ApiEndpoints {
     return '$cleanBaseUrl/$cleanEndpoint';
   }
 
-  // Helper pour les URLs avec paramètres
   static String replaceUrlParams(String endpoint, Map<String, String> params) {
     String result = endpoint;
     params.forEach((key, value) {
@@ -48,25 +80,4 @@ class ApiEndpoints {
     });
     return result;
   }
-
-  // User endpoints
-  static const String userProfile = '/usermanagement/view/{id}';
-  static const String recentQueries = '/queries/recent';
-  static const String queryStats = '/queries/stats';
-  static const String activity = '/queries/activity';
-  static const String resendConfirmationEmail =
-      '/usermanagement/resend-confirmation';
-
-  // Settings endpoints
-  static const String apiConfiguration = 'settings/api-configuration';
-  static const String updateApiConfiguration = 'settings/api-configuration';
-
-  // Database connections endpoints
-  static const String dbConnections = 'dbconnection';
-  static const String deleteDbConnection = 'dbconnection/deletedbconnection';
-  static const String addDbConnection = 'dbconnection/adddbconnection';
-  static const String updateDbConnection = 'dbconnection/{id}';
-
-  // Ajouter dans la classe ApiEndpoints
-  static const String menuCategories = '/menucategory';
 }
