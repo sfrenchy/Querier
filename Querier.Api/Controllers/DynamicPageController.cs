@@ -9,11 +9,11 @@ namespace Querier.Api.Controllers
 {
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class PageController : ControllerBase
+    public class DynamicPageController : ControllerBase
     {
         private readonly IDynamicPageService _pageService;
 
-        public PageController(IDynamicPageService pageService)
+        public DynamicPageController(IDynamicPageService pageService)
         {
             _pageService = pageService;
         }
