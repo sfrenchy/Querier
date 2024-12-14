@@ -5,16 +5,16 @@ import 'package:querier/api/api_client.dart';
 import 'package:querier/blocs/menu_bloc.dart';
 import 'package:querier/models/menu_category.dart';
 import 'package:querier/models/page.dart';
-import 'package:querier/pages/settings/menu/pages/bloc/menu_pages_bloc.dart';
-import 'package:querier/pages/settings/menu/pages/bloc/menu_pages_event.dart';
-import 'package:querier/pages/settings/menu/pages/bloc/menu_pages_state.dart';
-import 'package:querier/pages/settings/menu/pages/menu_page_form.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/dynamic_pages_bloc.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/dynamic_pages_event.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/dynamic_pages_state.dart';
+import 'package:querier/pages/settings/menu/pages/dynamic_page_form.dart';
 import 'package:querier/widgets/icon_selector.dart';
 
-class MenuPagesScreen extends StatelessWidget {
+class DynamicPagesScreen extends StatelessWidget {
   final MenuCategory category;
 
-  const MenuPagesScreen({super.key, required this.category});
+  const DynamicPagesScreen({super.key, required this.category});
 
   Future<void> _confirmDelete(BuildContext context, MenuPage page) async {
     final l10n = AppLocalizations.of(context)!;
@@ -37,7 +37,7 @@ class MenuPagesScreen extends StatelessWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      context.read<MenuPagesBloc>().add(DeletePage(page.id));
+      context.read<DynamicPagesBloc>().add(DeletePage(page.id));
       context.read<MenuBloc>().add(LoadMenu());
     }
   }
@@ -56,17 +56,17 @@ class MenuPagesScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocBuilder<MenuPagesBloc, MenuPagesState>(
+      body: BlocBuilder<DynamicPagesBloc, DynamicPagesState>(
         builder: (context, state) {
-          if (state is MenuPagesLoading) {
+          if (state is DynamicPagesLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (state is MenuPagesError) {
+          if (state is DynamicPagesError) {
             return Center(child: Text(state.message));
           }
 
-          if (state is MenuPagesLoaded) {
+          if (state is DynamicPagesLoaded) {
             if (state.pages.isEmpty) {
               return Center(child: Text(l10n.noPagesYet));
             }
@@ -94,7 +94,7 @@ class MenuPagesScreen extends StatelessWidget {
                         Switch(
                           value: page.isVisible,
                           onChanged: (value) {
-                            context.read<MenuPagesBloc>().add(
+                            context.read<DynamicPagesBloc>().add(
                                   UpdatePageVisibility(page, value),
                                 );
                           },
@@ -134,7 +134,7 @@ class MenuPagesScreen extends StatelessWidget {
           menuCategoryId: category.Id,
           page: page,
           onSaved: () {
-            context.read<MenuPagesBloc>().add(LoadPages(category.Id));
+            context.read<DynamicPagesBloc>().add(LoadPages(category.Id));
             context.read<MenuBloc>().add(LoadMenu());
           },
         ),

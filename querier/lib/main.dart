@@ -15,7 +15,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/blocs/language_bloc.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/config.dart';
-import 'package:querier/pages/settings/menu/bloc/menu_categories_bloc.dart';
+import 'package:querier/pages/settings/menu/bloc/dynamic_menu_categories_bloc.dart';
 import 'package:querier/pages/settings/roles/bloc/roles_bloc.dart';
 import 'package:querier/pages/settings/users/bloc/users_bloc.dart';
 import 'package:querier/pages/settings/users/setting_users_screen.dart';
@@ -29,8 +29,8 @@ import 'package:querier/pages/profile/profile_screen.dart';
 import 'package:querier/pages/databases/databases_screen.dart';
 import 'package:querier/pages/databases/database_form_screen.dart';
 import 'package:querier/pages/databases/database_details_screen.dart';
-import 'package:querier/pages/settings/menu/menu_categories_screen.dart';
-import 'package:querier/pages/settings/menu/menu_category_form_screen.dart';
+import 'package:querier/pages/settings/menu/dynamic_menu_categories_screen.dart';
+import 'package:querier/pages/settings/menu/dynamic_menu_category_form_screen.dart';
 import 'package:querier/blocs/menu_bloc.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -114,11 +114,11 @@ class QuerierApp extends StatelessWidget {
                 return DatabaseDetailsScreen(connection: connection);
               },
               '/menu/categories': (context) => BlocProvider(
-                    create: (context) => MenuCategoriesBloc(
+                    create: (context) => DynamicMenuCategoriesBloc(
                       context.read<ApiClient>(),
                       context,
                     ),
-                    child: const MenuCategoriesScreen(),
+                    child: const DynamicMenuCategoriesScreen(),
                   ),
               '/menu/form': (context) {
                 final category =

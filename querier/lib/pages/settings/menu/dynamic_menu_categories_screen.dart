@@ -3,23 +3,25 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/models/menu_category.dart';
-import 'package:querier/pages/settings/menu/pages/bloc/menu_pages_bloc.dart';
-import 'package:querier/pages/settings/menu/pages/bloc/menu_pages_event.dart';
-import 'bloc/menu_categories_bloc.dart';
-import 'pages/menu_pages_screen.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/dynamic_pages_bloc.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/dynamic_pages_event.dart';
+import 'bloc/dynamic_menu_categories_bloc.dart';
+import 'pages/dynamic_pages_screen.dart';
 
-class MenuCategoriesScreen extends StatefulWidget {
-  const MenuCategoriesScreen({super.key});
+class DynamicMenuCategoriesScreen extends StatefulWidget {
+  const DynamicMenuCategoriesScreen({super.key});
 
   @override
-  State<MenuCategoriesScreen> createState() => _MenuCategoriesScreenState();
+  State<DynamicMenuCategoriesScreen> createState() =>
+      _DynamicMenuCategoriesScreenState();
 }
 
-class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
+class _DynamicMenuCategoriesScreenState
+    extends State<DynamicMenuCategoriesScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<MenuCategoriesBloc>().add(LoadMenuCategories());
+    context.read<DynamicMenuCategoriesBloc>().add(LoadDynamicMenuCategories());
   }
 
   @override
@@ -37,23 +39,25 @@ class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
             onPressed: () async {
               final result = await Navigator.pushNamed(context, '/menu/form');
               if (result == true && mounted) {
-                context.read<MenuCategoriesBloc>().add(LoadMenuCategories());
+                context
+                    .read<DynamicMenuCategoriesBloc>()
+                    .add(LoadDynamicMenuCategories());
               }
             },
           ),
         ],
       ),
-      body: BlocBuilder<MenuCategoriesBloc, MenuCategoriesState>(
+      body: BlocBuilder<DynamicMenuCategoriesBloc, DynamicMenuCategoriesState>(
         builder: (context, state) {
-          if (state is MenuCategoriesLoading) {
+          if (state is DynamicMenuCategoriesLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (state is MenuCategoriesError) {
+          if (state is DynamicMenuCategoriesError) {
             return Center(child: Text(state.message));
           }
 
-          if (state is MenuCategoriesLoaded) {
+          if (state is DynamicMenuCategoriesLoaded) {
             return Padding(
               padding: const EdgeInsets.all(16.0),
               child: Card(
@@ -121,8 +125,8 @@ class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
                               Switch(
                                 value: category.isVisible,
                                 onChanged: (value) {
-                                  context.read<MenuCategoriesBloc>().add(
-                                        UpdateMenuCategoryVisibility(
+                                  context.read<DynamicMenuCategoriesBloc>().add(
+                                        UpdateDynamicMenuCategoryVisibility(
                                             category, value),
                                       );
                                 },
@@ -151,8 +155,8 @@ class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
                                       );
                                       if (result == true && mounted) {
                                         context
-                                            .read<MenuCategoriesBloc>()
-                                            .add(LoadMenuCategories());
+                                            .read<DynamicMenuCategoriesBloc>()
+                                            .add(LoadDynamicMenuCategories());
                                       }
                                     },
                                   ),
@@ -174,8 +178,8 @@ class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
                             );
                             if (result == true && mounted) {
                               context
-                                  .read<MenuCategoriesBloc>()
-                                  .add(LoadMenuCategories());
+                                  .read<DynamicMenuCategoriesBloc>()
+                                  .add(LoadDynamicMenuCategories());
                             }
                           },
                         );
@@ -213,8 +217,8 @@ class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
             TextButton(
               onPressed: () {
                 context
-                    .read<MenuCategoriesBloc>()
-                    .add(DeleteMenuCategory(category.Id));
+                    .read<DynamicMenuCategoriesBloc>()
+                    .add(DeleteDynamicMenuCategory(category.Id));
                 Navigator.of(context).pop();
               },
               child: Text(l10n.delete),
@@ -230,10 +234,10 @@ class _MenuCategoriesScreenState extends State<MenuCategoriesScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => BlocProvider(
-          create: (context) => MenuPagesBloc(
+          create: (context) => DynamicPagesBloc(
             context.read<ApiClient>(),
           )..add(LoadPages(category.Id)),
-          child: MenuPagesScreen(category: category),
+          child: DynamicPagesScreen(category: category),
         ),
       ),
     );
