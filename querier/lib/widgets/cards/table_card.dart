@@ -5,6 +5,7 @@ import 'package:querier/pages/settings/page_layout/bloc/page_layout_bloc.dart';
 import 'package:querier/widgets/cards/base_card.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:querier/pages/settings/card_config/card_config_screen.dart';
+import 'package:querier/widgets/cards/base_card_layout.dart';
 import 'dart:math' as math;
 import 'package:vtable/vtable.dart';
 
@@ -124,60 +125,66 @@ class TableCard extends StatelessWidget {
           ),
         );
       },
-      child: Container(
-        width: 800,
-        height: 200,
-        child: VTable<PersonData>(
-          items: data,
-          startsSorted: true,
-          includeCopyToClipboardAction: true,
-          columns: [
-            VTableColumn(
-              label: 'ID',
-              width: 50,
-              grow: 1,
-              transformFunction: (row) => row.id.toString(),
-              compareFunction: (a, b) => a.id.compareTo(b.id),
-            ),
-            VTableColumn(
-              label: 'Name',
-              width: 100,
-              grow: 2,
-              transformFunction: (row) => row.name,
-              compareFunction: (a, b) => a.name.compareTo(b.name),
-            ),
-            VTableColumn(
-              label: 'Age',
-              width: 50,
-              grow: 1,
-              transformFunction: (row) => row.age.toString(),
-              compareFunction: (a, b) => a.age.compareTo(b.age),
-              alignment: Alignment.centerRight,
-            ),
-            VTableColumn(
-              label: 'City',
-              width: 100,
-              grow: 2,
-              transformFunction: (row) => row.city,
-              compareFunction: (a, b) => a.city.compareTo(b.city),
-            ),
-            VTableColumn(
-              label: 'Role',
-              width: 100,
-              grow: 2,
-              transformFunction: (row) => row.role,
-              compareFunction: (a, b) => a.role.compareTo(b.role),
-            ),
-            VTableColumn(
-              label: 'Status',
-              width: 80,
-              grow: 1,
-              transformFunction: (row) => row.status,
-              compareFunction: (a, b) => a.status.compareTo(b.status),
-              styleFunction: (row) =>
-                  row.status == 'Inactive' ? inactiveStyle : null,
-            ),
-          ],
+      child: BaseCardLayout(
+        useAvailableWidth: useAvailableWidth,
+        useAvailableHeight: useAvailableHeight,
+        width: width,
+        height: height,
+        child: SizedBox(
+          height: 300,
+          width: 800,
+          child: VTable<PersonData>(
+            items: data,
+            startsSorted: true,
+            includeCopyToClipboardAction: false,
+            columns: [
+              VTableColumn(
+                label: 'ID',
+                width: 50,
+                grow: 1,
+                transformFunction: (row) => row.id.toString(),
+                compareFunction: (a, b) => a.id.compareTo(b.id),
+              ),
+              VTableColumn(
+                label: 'Name',
+                width: 100,
+                grow: 2,
+                transformFunction: (row) => row.name,
+                compareFunction: (a, b) => a.name.compareTo(b.name),
+              ),
+              VTableColumn(
+                label: 'Age',
+                width: 50,
+                grow: 1,
+                transformFunction: (row) => row.age.toString(),
+                compareFunction: (a, b) => a.age.compareTo(b.age),
+                alignment: Alignment.centerRight,
+              ),
+              VTableColumn(
+                label: 'City',
+                width: 100,
+                grow: 2,
+                transformFunction: (row) => row.city,
+                compareFunction: (a, b) => a.city.compareTo(b.city),
+              ),
+              VTableColumn(
+                label: 'Role',
+                width: 100,
+                grow: 2,
+                transformFunction: (row) => row.role,
+                compareFunction: (a, b) => a.role.compareTo(b.role),
+              ),
+              VTableColumn(
+                label: 'Status',
+                width: 80,
+                grow: 1,
+                transformFunction: (row) => row.status,
+                compareFunction: (a, b) => a.status.compareTo(b.status),
+                styleFunction: (row) =>
+                    row.status == 'Inactive' ? inactiveStyle : null,
+              ),
+            ],
+          ),
         ),
       ),
     );

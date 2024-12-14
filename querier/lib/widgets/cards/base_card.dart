@@ -48,41 +48,43 @@ class BaseCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                if (isEditable)
-                  IconButton(
-                    icon: const Icon(Icons.settings),
-                    onPressed: onConfigurePressed,
-                    tooltip: 'Configure',
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-              ],
+                  if (isEditable)
+                    IconButton(
+                      icon: const Icon(Icons.settings),
+                      onPressed: onConfigurePressed,
+                      tooltip: 'Configure',
+                    ),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Container(
-              height: 1,
-              color: Colors.white,
-              margin: const EdgeInsets.only(bottom: 8.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Container(
+                height: 1,
+                color: Colors.white,
+                margin: const EdgeInsets.only(bottom: 8.0),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: child,
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: child,
+            ),
+          ],
+        ),
       ),
     );
   }

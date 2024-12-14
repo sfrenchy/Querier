@@ -7,6 +7,7 @@ import 'package:querier/widgets/cards/base_card.dart';
 import 'package:querier/widgets/cards/common_card_config_form.dart';
 import 'package:querier/pages/settings/card_config/card_config_screen.dart';
 import 'package:querier/models/dynamic_card.dart';
+import 'package:querier/widgets/cards/base_card_layout.dart';
 
 class PlaceholderCard extends StatelessWidget {
   final String title;
@@ -43,10 +44,6 @@ class PlaceholderCard extends StatelessWidget {
       cardId: cardId,
       isEditable: isEditable,
       pageLayoutBloc: pageLayoutBloc,
-      height: height,
-      width: width,
-      useAvailableWidth: useAvailableWidth,
-      useAvailableHeight: useAvailableHeight,
       onConfigurePressed: () {
         print("Opening config for PlaceholderCard");
         showDialog(
@@ -72,8 +69,14 @@ class PlaceholderCard extends StatelessWidget {
           ),
         );
       },
-      child: Center(
-        child: Text(placeholderText),
+      child: BaseCardLayout(
+        useAvailableWidth: useAvailableWidth,
+        useAvailableHeight: useAvailableHeight,
+        width: width,
+        height: height,
+        child: Center(
+          child: Text(placeholderText),
+        ),
       ),
     );
   }
