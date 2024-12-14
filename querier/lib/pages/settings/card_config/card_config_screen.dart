@@ -29,6 +29,8 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
   late bool _useAvailableWidth;
   late bool _useAvailableHeight;
   late Map<String, dynamic> _specificConfig;
+  late Color _backgroundColor;
+  late Color _textColor;
 
   @override
   void initState() {
@@ -41,6 +43,8 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
     _useAvailableWidth = widget.card.useAvailableWidth;
     _useAvailableHeight = widget.card.useAvailableHeight;
     _specificConfig = widget.card.configuration ?? {};
+    _backgroundColor = Color(widget.card.backgroundColor ?? 0xFFFFFFFF);
+    _textColor = Color(widget.card.textColor ?? 0xFF000000);
   }
 
   @override
@@ -85,6 +89,11 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
                   setState(() => _useAvailableWidth = value),
               onUseAvailableHeightChanged: (value) =>
                   setState(() => _useAvailableHeight = value),
+              backgroundColor: _backgroundColor,
+              textColor: _textColor,
+              onBackgroundColorChanged: (color) =>
+                  setState(() => _backgroundColor = color),
+              onTextColorChanged: (color) => setState(() => _textColor = color),
             ),
             const SizedBox(height: 32),
             // Configuration spécifique selon le type de carte
@@ -117,7 +126,7 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
   }
 
   void _saveConfiguration() {
-    print('Current titles before saving: $_titles');
+    print('Saving configuration...'); // Debug
     context.read<PageLayoutBloc>().add(
           UpdateCardConfiguration(
             cardId: widget.card.id,
@@ -131,11 +140,10 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
             useAvailableWidth: _useAvailableWidth,
             useAvailableHeight: _useAvailableHeight,
             configuration: _specificConfig,
+            backgroundColor: _backgroundColor?.value,
+            textColor: _textColor?.value,
           ),
         );
-
-    // Pour debug
-    print('Saving configuration with titles: $_titles');
 
     Navigator.pop(context);
   }

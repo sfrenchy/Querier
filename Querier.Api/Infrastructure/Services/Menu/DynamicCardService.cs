@@ -47,12 +47,10 @@ namespace Querier.Api.Infrastructure.Services.Menu
                     ? JsonConvert.SerializeObject(request.Configuration)
                     : null,
                 DynamicRowId = rowId,
-                Translations = (request.Titles ?? new Dictionary<string, string>())
-                    .Select(x => new DynamicCardTranslation
-                    {
-                        LanguageCode = x.Key,
-                        Title = x.Value
-                    }).ToList()
+                UseAvailableWidth = true,
+                UseAvailableHeight = true,
+                BackgroundColor = request.BackgroundColor ?? 0xFF000000,
+                TextColor = request.TextColor ?? 0xFFFFFFFF,
             };
 
             var result = await _repository.CreateAsync(card);
@@ -65,12 +63,15 @@ namespace Querier.Api.Infrastructure.Services.Menu
             if (existingCard == null) return null;
 
             existingCard.UseAvailableWidth = request.UseAvailableWidth;
+            existingCard.UseAvailableHeight = request.UseAvailableHeight;
             existingCard.Type = request.Type;
             existingCard.IsResizable = request.IsResizable;
             existingCard.IsCollapsible = request.IsCollapsible;
             existingCard.Height = request.Height;
             existingCard.Width = request.Width;
             existingCard.Order = request.Order;
+            existingCard.BackgroundColor = request.BackgroundColor;
+            existingCard.TextColor = request.TextColor;
 
             existingCard.Translations.Clear();
             foreach (var translation in request.Titles)
@@ -129,6 +130,9 @@ namespace Querier.Api.Infrastructure.Services.Menu
                     ? JsonConvert.DeserializeObject(card.Configuration)
                     : null,
                 UseAvailableWidth = card.UseAvailableWidth,
+                UseAvailableHeight = card.UseAvailableHeight,
+                TextColor = card.TextColor,
+                BackgroundColor = card.BackgroundColor,
             };
         }
     }

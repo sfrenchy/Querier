@@ -245,23 +245,28 @@ class PageLayoutBloc extends Bloc<PageLayoutEvent, PageLayoutState> {
     final currentState = state as PageLayoutLoaded;
 
     try {
-      await _apiClient.updateDynamicCard(
-        event.cardId,
-        {
-          'titles': event.titles,
-          'type': event.type,
-          'isResizable': event.isResizable,
-          'isCollapsible': event.isCollapsible,
-          'height': event.height,
-          'width': event.width,
-          'order': event.order,
-          'useAvailableWidth': event.useAvailableWidth,
-          'configuration': event.configuration,
-        },
-      );
+      print('Updating card configuration...'); // Debug
+      final request = {
+        'id': event.cardId,
+        'titles': event.titles,
+        'type': event.type.toLowerCase(),
+        'isResizable': event.isResizable,
+        'isCollapsible': event.isCollapsible,
+        'height': event.useAvailableHeight ? null : event.height,
+        'width': event.useAvailableWidth ? null : event.width,
+        'order': event.order,
+        'useAvailableWidth': event.useAvailableWidth,
+        'useAvailableHeight': event.useAvailableHeight,
+        'configuration': event.configuration,
+        'backgroundColor': event.backgroundColor,
+        'textColor': event.textColor,
+      };
+      print('Request: $request'); // Debug
 
+      await _apiClient.updateDynamicCard(event.cardId, request);
       add(LoadPageLayout());
     } catch (e) {
+      print('Error updating card: $e'); // Debug
       emit(PageLayoutError(e.toString()));
     }
   }

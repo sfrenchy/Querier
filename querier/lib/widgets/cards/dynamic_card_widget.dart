@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:querier/models/card_type.dart';
 import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/pages/settings/page_layout/bloc/page_layout_bloc.dart';
 import 'package:querier/widgets/cards/placeholder_card.dart';
+import 'package:querier/widgets/cards/table_card.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DynamicCardWidget extends StatelessWidget {
   final String title;
@@ -25,28 +29,48 @@ class DynamicCardWidget extends StatelessWidget {
     this.onConfigurePressed,
   });
 
-  factory DynamicCardWidget.fromModel(
-    DynamicCard model,
-    BuildContext context, {
-    bool isEditable = false,
-    required PageLayoutBloc pageLayoutBloc,
+  factory DynamicCardWidget.fromModel({
+    required DynamicCard model,
+    required bool isEditable,
+    required BuildContext context,
   }) {
+    final pageLayoutBloc = context.read<PageLayoutBloc>();
     Widget cardContent;
+    final cardWidth = model.useAvailableWidth ? double.infinity : model.width;
 
     switch (model.type) {
+      case CardType.Table:
+        print('Card type: ${model.type}'); // Debug
+        cardContent = TableCard(
+          title: model
+              .getLocalizedTitle(Localizations.localeOf(context).languageCode),
+          cardId: model.id,
+          height: model.height,
+          width: cardWidth,
+          isResizable: model.isResizable,
+          isCollapsible: model.isCollapsible,
+          isEditable: isEditable,
+          pageLayoutBloc: pageLayoutBloc,
+          useAvailableWidth: model.useAvailableWidth,
+          useAvailableHeight: model.useAvailableHeight,
+        );
+        break;
       default:
+        print('Default case - Card type: ${model.type}'); // Debug
         cardContent = PlaceholderCard(
           title: model
               .getLocalizedTitle(Localizations.localeOf(context).languageCode),
           cardId: model.id,
           height: model.height,
-          width: model.width,
+          width: cardWidth,
           isResizable: model.isResizable,
           isCollapsible: model.isCollapsible,
           placeholderText:
               model.configuration?['placeholderText'] ?? 'Placeholder Card',
           isEditable: isEditable,
           pageLayoutBloc: pageLayoutBloc,
+          useAvailableWidth: model.useAvailableWidth,
+          useAvailableHeight: model.useAvailableHeight,
         );
     }
 
@@ -54,7 +78,7 @@ class DynamicCardWidget extends StatelessWidget {
       title:
           model.getLocalizedTitle(Localizations.localeOf(context).languageCode),
       height: model.height,
-      width: model.useAvailableWidth ? double.infinity : model.width,
+      width: cardWidth,
       isResizable: model.isResizable,
       isCollapsible: model.isCollapsible,
       isEditable: isEditable,
@@ -64,16 +88,13 @@ class DynamicCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Container(
-        height: height,
-        width: width,
-        constraints: const BoxConstraints(
-          minWidth: 200,
-          minHeight: 100,
-        ),
-        child: child,
+    return Container(
+      constraints: BoxConstraints(
+        minWidth: width != null ? width! : 200.0,
+        minHeight: 100,
+        maxWidth: width ?? double.infinity,
       ),
+      child: child,
     );
   }
 }

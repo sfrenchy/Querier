@@ -16,28 +16,28 @@ class TranslationManager extends StatefulWidget {
 }
 
 class _TranslationManagerState extends State<TranslationManager> {
+  late Map<String, TextEditingController> _controllers;
+
   @override
   void initState() {
     super.initState();
-    _addListeners();
-  }
-
-  void _addListeners() {
-    widget.translations.forEach((key, controller) {
-      controller.addListener(() {
-        final currentValues = Map<String, String>.from(
-            widget.translations.map((k, c) => MapEntry(k, c.text)));
-        widget.onTranslationsChanged(currentValues);
-      });
-    });
+    _controllers = widget.translations;
   }
 
   @override
   void dispose() {
-    widget.translations.values.forEach((controller) {
-      controller.dispose();
-    });
+    // Ne pas disposer les contrôleurs ici car ils sont gérés par le parent
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(TranslationManager oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Ne pas recréer les contrôleurs, mais mettre à jour la référence
+    if (widget.translations != oldWidget.translations) {
+      _controllers = widget.translations;
+    }
   }
 
   @override
@@ -46,85 +46,22 @@ class _TranslationManagerState extends State<TranslationManager> {
 
     return Column(
       children: [
-        ...widget.translations.entries.map(
-          (entry) => Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 50,
-                    child: Text(entry.key.toUpperCase()),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: entry.value,
-                      decoration: InputDecoration(
-                        labelText: l10n.translatedName,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      setState(() {
-                        widget.translations.remove(entry.key);
-                        widget.onTranslationsChanged(
-                          widget.translations.map((key, controller) =>
-                              MapEntry(key, controller.text)),
-                        );
-                      });
-                    },
-                  ),
-                ],
+        ..._controllers.entries.map(
+          (entry) => Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: TextFormField(
+              controller: entry.value,
+              decoration: InputDecoration(
+                labelText: '${l10n.translatedName} (${entry.key})',
               ),
+              onChanged: (value) {
+                // Pas besoin d'appeler onTranslationsChanged ici car le contrôleur
+                // met déjà à jour le texte
+              },
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.add),
-          label: Text(l10n.addTranslation),
-          onPressed: () => _showAddLanguageDialog(context),
-        ),
       ],
-    );
-  }
-
-  void _showAddLanguageDialog(BuildContext context) {
-    final availableLanguages = {'en': 'English', 'fr': 'Français'};
-    final existingLanguages = widget.translations.keys.toSet();
-    final newLanguages = availableLanguages.entries
-        .where((e) => !existingLanguages.contains(e.key));
-
-    if (newLanguages.isEmpty) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.selectLanguage),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: newLanguages
-              .map(
-                (lang) => ListTile(
-                  title: Text(lang.value),
-                  onTap: () {
-                    setState(() {
-                      widget.translations[lang.key] = TextEditingController();
-                      widget.onTranslationsChanged(
-                        widget.translations.map((key, controller) =>
-                            MapEntry(key, controller.text)),
-                      );
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
-              )
-              .toList(),
-        ),
-      ),
     );
   }
 }

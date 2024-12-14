@@ -187,5 +187,6 @@
     "noPagesYet": "Aucune page pour le moment",
     "confirmDelete": "Confirmer la suppression",
     "confirmDeletePageMessage": "Êtes-vous sûr de vouloir supprimer cette page ?",
-    "order": "Ordre"
+    "order": "Ordre",
+    "colors": "Couleurs"
 } 

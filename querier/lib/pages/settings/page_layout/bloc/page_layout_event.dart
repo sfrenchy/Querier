@@ -76,6 +76,8 @@ class UpdateCardConfiguration extends PageLayoutEvent {
   final bool useAvailableWidth;
   final bool useAvailableHeight;
   final Map<String, dynamic> configuration;
+  final int? backgroundColor;
+  final int? textColor;
 
   UpdateCardConfiguration({
     required this.cardId,
@@ -89,5 +91,7 @@ class UpdateCardConfiguration extends PageLayoutEvent {
     required this.useAvailableWidth,
     required this.useAvailableHeight,
     required this.configuration,
+    this.backgroundColor,
+    this.textColor,
   });
 }

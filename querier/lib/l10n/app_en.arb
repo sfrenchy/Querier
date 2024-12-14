@@ -188,5 +188,6 @@
     "confirmDeletePageMessage": "Are you sure you want to delete this page?",
     "cancel": "Cancel",
     "delete": "Delete",
-    "order": "Order"
+    "order": "Order",
+    "colors": "Colors"
 } 

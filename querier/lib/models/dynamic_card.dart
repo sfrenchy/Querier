@@ -12,6 +12,8 @@ class DynamicCard {
   final Map<String, dynamic>? configuration;
   final bool useAvailableWidth;
   final bool useAvailableHeight;
+  final int? backgroundColor;
+  final int? textColor;
 
   DynamicCard({
     required this.id,
@@ -23,8 +25,10 @@ class DynamicCard {
     this.height,
     this.width,
     this.configuration,
-    this.useAvailableWidth = false,
-    this.useAvailableHeight = false,
+    this.useAvailableWidth = true,
+    this.useAvailableHeight = true,
+    this.backgroundColor = 0xFF000000,
+    this.textColor = 0xFFFFFFFF,
   });
 
   String getLocalizedTitle(String languageCode) {
@@ -32,31 +36,26 @@ class DynamicCard {
   }
 
   factory DynamicCard.fromJson(Map<String, dynamic> json) {
-    print('DynamicCard.fromJson input: $json');
-    try {
-      final card = DynamicCard(
-        id: json['Id'] ?? 0,
-        titles: Map<String, String>.from(json['Titles'] ?? {}),
-        order: json['Order'] ?? 0,
-        type: CardType.values.firstWhere(
-          (e) => e.toString().split('.').last == json['Type'],
-          orElse: () => CardType.Custom,
-        ),
-        isResizable: json['IsResizable'] ?? false,
-        isCollapsible: json['IsCollapsible'] ?? false,
-        height: json['Height']?.toDouble(),
-        width: json['Width']?.toDouble(),
-        configuration: json['Configuration'] as Map<String, dynamic>?,
-        useAvailableWidth: json['UseAvailableWidth'] ?? false,
-        useAvailableHeight: json['UseAvailableHeight'] ?? false,
-      );
-      print('DynamicCard created successfully: $card');
-      return card;
-    } catch (e, stackTrace) {
-      print('Error in DynamicCard.fromJson: $e');
-      print('Stack trace: $stackTrace');
-      rethrow;
-    }
+    return DynamicCard(
+      id: json['Id'] ?? 0,
+      titles: Map<String, String>.from(json['Titles'] ?? {}),
+      order: json['Order'] ?? 0,
+      type: CardType.values.firstWhere(
+        (e) =>
+            e.toString().toLowerCase() ==
+            'cardtype.${json['Type']?.toLowerCase()}',
+        orElse: () => CardType.Placeholder,
+      ),
+      isResizable: json['IsResizable'] ?? false,
+      isCollapsible: json['IsCollapsible'] ?? true,
+      height: json['Height'],
+      width: json['Width'],
+      configuration: json['Configuration'],
+      useAvailableWidth: json['UseAvailableWidth'] ?? true,
+      useAvailableHeight: json['UseAvailableHeight'] ?? true,
+      backgroundColor: json['BackgroundColor'] ?? 0xFF000000,
+      textColor: json['TextColor'] ?? 0xFFFFFFFF,
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -72,6 +71,8 @@ class DynamicCard {
       'Configuration': configuration,
       'UseAvailableWidth': useAvailableWidth,
       'UseAvailableHeight': useAvailableHeight,
+      'BackgroundColor': backgroundColor,
+      'TextColor': textColor,
     };
   }
 
@@ -87,6 +88,8 @@ class DynamicCard {
     Map<String, dynamic>? configuration,
     bool? useAvailableWidth,
     bool? useAvailableHeight,
+    int? backgroundColor,
+    int? textColor,
   }) {
     return DynamicCard(
       id: id ?? this.id,
@@ -100,6 +103,8 @@ class DynamicCard {
       configuration: configuration ?? this.configuration,
       useAvailableWidth: useAvailableWidth ?? this.useAvailableWidth,
       useAvailableHeight: useAvailableHeight ?? this.useAvailableHeight,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      textColor: textColor ?? this.textColor,
     );
   }
 }
