@@ -81,6 +81,11 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                           ReorderRows(widget.pageId, rowIds),
                         );
                   },
+                  onAcceptCard: (cardData) {
+                    context.read<DynamicPageLayoutBloc>().add(
+                      AddCardToRow(row.id, cardData),
+                    );
+                  },
                 );
               }).toList(),
               // Zone de drop à la fin
@@ -268,14 +273,15 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                                       color: Theme.of(context).hoverColor,
                                     ),
                                     child: Row(
+                                      mainAxisSize: MainAxisSize.min,
                                       mainAxisAlignment: _isExpanded
                                           ? MainAxisAlignment.start
                                           : MainAxisAlignment.center,
                                       children: [
-                                        const Icon(Icons.table_rows),
+                                        const Icon(Icons.table_rows, size: 20),
                                         if (_isExpanded) ...[
                                           const SizedBox(width: 8),
-                                          Flexible(
+                                          Expanded(
                                             child: Text(
                                               l10n.newRow,
                                               overflow: TextOverflow.ellipsis,

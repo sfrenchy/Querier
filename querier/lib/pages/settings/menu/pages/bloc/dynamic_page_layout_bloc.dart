@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/models/cards/placeholder_card.dart';
+import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/models/dynamic_row.dart';
 import 'package:querier/models/layout.dart';
 import 'dynamic_page_layout_event.dart';
@@ -19,7 +20,7 @@ class DynamicPageLayoutBloc
     on<DeleteRow>(_onDeleteRow);
     on<UpdateRowProperties>(_onUpdateRowProperties);
     on<SaveLayout>(_onSaveLayout);
-    on<AddCard>(_onAddCard);
+    on<AddCardToRow>(_onAddCard);
   }
 
   Future<void> _onLoadPageLayout(
@@ -107,8 +108,15 @@ class DynamicPageLayoutBloc
     if (_currentLayout != null) {
       try {
         emit(DynamicPageLayoutSaving());
-        await _apiClient.updateLayout(event.pageId, _currentLayout!);
-        emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
+        
+        final updatedRows = _currentLayout!.rows.map((row) {
+          return row.copyWith(pageId: _currentLayout!.pageId);
+        }).toList();
+        
+        final layoutToSave = _currentLayout!.copyWith(rows: updatedRows);
+        
+        await _apiClient.updateLayout(event.pageId, layoutToSave);
+        emit(DynamicPageLayoutLoaded(layoutToSave.rows));
       } catch (e) {
         emit(DynamicPageLayoutError(e.toString()));
       }
@@ -116,29 +124,31 @@ class DynamicPageLayoutBloc
   }
 
   Future<void> _onAddCard(
-      AddCard event, Emitter<DynamicPageLayoutState> emit) async {
-    print('Adding card to row ${event.rowId}');
+      AddCardToRow event, Emitter<DynamicPageLayoutState> emit) async {
     if (_currentLayout != null) {
-      final updatedRows = List<DynamicRow>.from(_currentLayout!.rows);
-      final rowIndex = updatedRows.indexWhere((r) => r.id == event.rowId);
-      print('Found row at index $rowIndex');
+      try {
+        final updatedRows = List<DynamicRow>.from(_currentLayout!.rows);
+        final rowIndex = updatedRows.indexWhere((r) => r.id == event.rowId);
 
-      if (rowIndex != -1) {
-        final row = updatedRows[rowIndex];
-        print('Current cards in row: ${row.cards.length}');
-        final newCard = PlaceholderCard(
-          id: -(DateTime.now().millisecondsSinceEpoch),
-          titles: {'en': 'New Card', 'fr': 'Nouvelle Carte'},
-          order: row.cards.length + 1,
-        );
+        if (rowIndex != -1) {
+          final row = updatedRows[rowIndex];
+          final tempId = -(row.cards.length + 1);
+          final newCard = PlaceholderCard(
+            id: tempId,
+            titles: const {'en': 'New Card', 'fr': 'Nouvelle Carte'},
+            order: row.cards.length + 1,
+          );
 
-        updatedRows[rowIndex] = row.copyWith(
-          cards: [...row.cards, newCard],
-        );
-        print('Updated cards in row: ${updatedRows[rowIndex].cards.length}');
-
-        _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-        emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
+          updatedRows[rowIndex] = row.copyWith(
+            pageId: _currentLayout!.pageId,
+            cards: [...row.cards, newCard],
+          );
+          
+          _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
+          emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
+        }
+      } catch (e) {
+        emit(DynamicPageLayoutError('Failed to add card: $e'));
       }
     }
   }
