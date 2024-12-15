@@ -86,4 +86,6 @@ class ApiEndpoints {
     });
     return result;
   }
+
+  static const String entityCRUD = '/EntityCRUD/GetContexts';
 }

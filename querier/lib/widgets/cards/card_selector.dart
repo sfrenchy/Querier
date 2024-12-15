@@ -5,6 +5,7 @@ import 'package:querier/widgets/cards/placeholder_card_config.dart';
 import 'package:querier/widgets/cards/placeholder_card_widget.dart';
 import 'package:querier/models/cards/table_card.dart';
 import 'package:querier/widgets/cards/table_card_widget.dart';
+import 'package:querier/widgets/cards/table_card_config.dart';
 
 class CardSelector extends StatelessWidget {
   final DynamicCard card;
@@ -54,7 +55,10 @@ class CardSelector extends StatelessWidget {
             headerTextColor: card.headerTextColor,
             configuration: card.configuration,
           );
-          return null;
+          return TableCardConfig(
+            card: tableCard,
+            onConfigurationChanged: onConfigurationChanged!,
+          );
         }
         return null;
       default:

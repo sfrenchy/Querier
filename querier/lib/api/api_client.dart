@@ -664,4 +664,9 @@ class ApiClient {
       ),
     );
   }
+
+  Future<List<String>> getEntityContexts() async {
+    final response = await _dio.get(ApiEndpoints.entityCRUD);
+    return List<String>.from(response.data);
+  }
 }

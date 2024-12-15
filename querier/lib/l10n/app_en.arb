@@ -218,5 +218,7 @@
     "gridWidth": "Grid Width",
     "gridWidthHint": "1 = very narrow, 12 = full width",
     "headerBackgroundColor": "Header Background Color",
-    "headerTextColor": "Header Text Color"
+    "headerTextColor": "Header Text Color",
+    "dataContext": "Data Context",
+    "selectDataContext": "Select a data context"
 } 

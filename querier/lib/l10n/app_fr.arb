@@ -217,5 +217,7 @@
     "gridWidth": "Largeur de grille",
     "gridWidthHint": "1 = très étroit, 12 = pleine largeur",
     "headerBackgroundColor": "Couleur de fond de l'en-tête",
-    "headerTextColor": "Couleur du texte de l'en-tête"
+    "headerTextColor": "Couleur du texte de l'en-tête",
+    "dataContext": "Contexte de données",
+    "selectDataContext": "Sélectionner un contexte de données"
 } 
