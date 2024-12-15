@@ -212,5 +212,6 @@
     "cancel": "Annuler",
     "delete": "Supprimer",
     "backgroundColor": "Couleur de fond",
-    "textColor": "Couleur du texte"
+    "textColor": "Couleur du texte",
+    "cardLabel": "Libellé"
 } 

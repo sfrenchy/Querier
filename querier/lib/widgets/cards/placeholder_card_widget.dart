@@ -16,7 +16,7 @@ class PlaceholderCardWidget extends BaseCardWidget {
     final placeholderCard = card as PlaceholderCard;
     return Center(
       child: Text(
-        placeholderCard.getLocalizedTitle(
+        placeholderCard.getLocalizedLabel(
           Localizations.localeOf(context).languageCode,
         ),
         style: TextStyle(

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:querier/models/cards/placeholder_card.dart';
 import 'package:querier/models/dynamic_card.dart';
+import 'package:querier/widgets/cards/placeholder_card_config.dart';
 import 'package:querier/widgets/translation_manager.dart';
 import 'package:querier/widgets/color_picker_button.dart';
+import 'package:querier/widgets/cards/card_selector.dart';
 
 class CardConfigScreen extends StatefulWidget {
   final DynamicCard card;
@@ -26,9 +29,10 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
   bool useAvailableHeight = true;
   double? width;
   double? height;
+  late Map<String, dynamic> configuration;
   
   // Ajout des états d'expansion
-  final List<bool> _isExpanded = [false, false, false];  // Title, Colors, Dimensions
+  final List<bool> _isExpanded = [false, false, false, false];  // Title, Colors, Dimensions, Specific
 
   @override
   void initState() {
@@ -44,6 +48,7 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
     useAvailableHeight = widget.card.useAvailableHeight;
     width = widget.card.width;
     height = widget.card.height;
+    configuration = Map.from(widget.card.configuration);
   }
 
   void _save() {
@@ -55,6 +60,7 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
       useAvailableHeight: useAvailableHeight,
       width: width,
       height: height,
+      configuration: configuration,
     );
     widget.onSave(updatedCard);
   }
@@ -62,6 +68,17 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    final specificConfig = CardSelector(
+      card: widget.card,
+      onEdit: () {},
+      onDelete: () {},
+      onConfigurationChanged: (newConfig) {
+        setState(() {
+          configuration.addAll(newConfig);
+        });
+      },
+    ).buildConfigurationWidget();
 
     return Scaffold(
       appBar: AppBar(
@@ -193,6 +210,19 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
                 ),
               ),
               isExpanded: _isExpanded[2],
+            ),
+            ExpansionPanel(
+              canTapOnHeader: true,
+              headerBuilder: (context, isExpanded) => 
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(widget.card.type),
+                ),
+              body: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: specificConfig,
+              ),
+              isExpanded: _isExpanded[3],
             ),
           ],
         ),

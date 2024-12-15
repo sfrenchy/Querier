@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/models/cards/placeholder_card.dart';
+import 'package:querier/widgets/cards/placeholder_card_config.dart';
 import 'package:querier/widgets/cards/placeholder_card_widget.dart';
 
 class CardSelector extends StatelessWidget {
@@ -8,6 +9,7 @@ class CardSelector extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final Widget? dragHandle;
+  final ValueChanged<Map<String, dynamic>>? onConfigurationChanged;
 
   const CardSelector({
     Key? key,
@@ -15,7 +17,35 @@ class CardSelector extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     this.dragHandle,
+    this.onConfigurationChanged,
   }) : super(key: key);
+
+  Widget? buildConfigurationWidget() {
+    switch (card.type) {
+      case 'Placeholder':
+        if (onConfigurationChanged != null) {
+          final placeholderCard = PlaceholderCard(
+            id: card.id,
+            titles: card.titles,
+            order: card.order,
+            height: card.height,
+            width: card.width,
+            useAvailableWidth: card.useAvailableWidth,
+            useAvailableHeight: card.useAvailableHeight,
+            backgroundColor: card.backgroundColor,
+            textColor: card.textColor,
+            configuration: card.configuration,
+          );
+          return PlaceholderCardConfig(
+            card: placeholderCard,
+            onConfigurationChanged: onConfigurationChanged!,
+          );
+        }
+        return null;
+      default:
+        return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,15 @@
 import 'package:querier/models/dynamic_card.dart';
 
 class PlaceholderCard extends DynamicCard {
+  static const defaultLabel = <String, String>{
+    'en': 'Placeholder',
+    'fr': 'Espace réservé'
+  };
+
+  Map<String, String> get label => 
+    (configuration['label'] as Map<String, dynamic>?)?.cast<String, String>() ?? 
+    defaultLabel;
+
   const PlaceholderCard({
     required super.id,
     required super.titles,
@@ -11,9 +20,21 @@ class PlaceholderCard extends DynamicCard {
     super.useAvailableHeight,
     super.backgroundColor,
     super.textColor,
-    super.configuration,
-  }) : super(type: 'Placeholder');
+    Map<String, dynamic>? configuration,
+  }) : super(
+    type: 'Placeholder',
+    configuration: configuration ?? const {'label': <String, String>{
+      'en': 'Placeholder',
+      'fr': 'Espace réservé'
+    }},
+  );
+
+  String getLocalizedLabel(String languageCode) {
+    return label[languageCode] ?? label['en'] ?? '';
+  }
 
   @override
-  Map<String, dynamic> get specificConfiguration => {};
+  Map<String, dynamic> get specificConfiguration => {
+    'label': label,
+  };
 }
