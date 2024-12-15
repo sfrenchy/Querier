@@ -39,14 +39,11 @@ namespace Querier.Api.Infrastructure.Services.Menu
             {
                 Order = order,
                 Type = request.Type,
-                Height = request.Height,
-                Width = request.Width,
                 Configuration = request.Configuration != null 
                     ? JsonConvert.SerializeObject(request.Configuration)
                     : null,
                 DynamicRowId = rowId,
-                UseAvailableWidth = true,
-                UseAvailableHeight = true,
+                GridWidth = 12,
                 BackgroundColor = request.BackgroundColor ?? 0xFF000000,
                 TextColor = request.TextColor ?? 0xFFFFFFFF,
             };
@@ -60,11 +57,9 @@ namespace Querier.Api.Infrastructure.Services.Menu
             var existingCard = await _repository.GetByIdAsync(id);
             if (existingCard == null) return null;
 
-            existingCard.UseAvailableWidth = request.UseAvailableWidth;
-            existingCard.UseAvailableHeight = request.UseAvailableHeight;
+            
             existingCard.Type = request.Type;
-            existingCard.Height = request.Height;
-            existingCard.Width = request.Width;
+            existingCard.GridWidth = request.GridWidth;
             existingCard.Order = request.Order;
             existingCard.BackgroundColor = request.BackgroundColor;
             existingCard.TextColor = request.TextColor;
@@ -118,13 +113,10 @@ namespace Querier.Api.Infrastructure.Services.Menu
                 Titles = card.Translations.ToDictionary(x => x.LanguageCode, x => x.Title),
                 Order = card.Order,
                 Type = card.Type.ToString(),
-                Height = card.Height,
-                Width = card.Width,
+                GridWidth = card.GridWidth,
                 Configuration = card.Configuration != null 
                     ? JsonConvert.DeserializeObject(card.Configuration)
                     : null,
-                UseAvailableWidth = card.UseAvailableWidth,
-                UseAvailableHeight = card.UseAvailableHeight,
                 TextColor = card.TextColor,
                 BackgroundColor = card.BackgroundColor,
             };

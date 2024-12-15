@@ -7,8 +7,7 @@ namespace Querier.Api.Domain.Entities.Menu
         public DynamicCard()
         {
             Translations = new HashSet<DynamicCardTranslation>();
-            UseAvailableWidth = true;
-            UseAvailableHeight = true;
+            GridWidth = 12;
             BackgroundColor = 0xFF000000; // Noir
             TextColor = 0xFFFFFFFF; // Blanc
         }
@@ -16,12 +15,9 @@ namespace Querier.Api.Domain.Entities.Menu
         public int Id { get; set; }
         public int Order { get; set; }
         public string Type { get; set; }
-        public double? Height { get; set; }
-        public double? Width { get; set; }
+        public int GridWidth { get; set; }
         public string Configuration { get; set; }
         public int DynamicRowId { get; set; }
-        public bool UseAvailableWidth { get; set; }
-        public bool UseAvailableHeight { get; set; }
         public uint? BackgroundColor { get; set; }
         public uint? TextColor { get; set; }
         

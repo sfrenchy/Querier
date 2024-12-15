@@ -43,13 +43,10 @@ namespace Querier.Api.Infrastructure.Services.Menu
                     Titles = card.Translations.ToDictionary(t => t.LanguageCode, t => t.Title),
                     Order = card.Order,
                     Type = card.Type,
-                    Height = card.Height,
-                    Width = card.Width,
+                    GridWidth = card.GridWidth,
                     Configuration = card.Configuration != null 
                         ? JsonConvert.DeserializeObject(card.Configuration)
                         : null,
-                    UseAvailableWidth = card.UseAvailableWidth,
-                    UseAvailableHeight = card.UseAvailableHeight,
                     BackgroundColor = card.BackgroundColor,
                     TextColor = card.TextColor,
                 }).ToList();
@@ -129,13 +126,10 @@ namespace Querier.Api.Infrastructure.Services.Menu
                         DynamicRowId = savedRow.Id,
                         Order = cardResponse.Order,
                         Type = cardResponse.Type,
-                        Height = cardResponse.Height,
-                        Width = cardResponse.Width,
+                        GridWidth = cardResponse.GridWidth,
                         Configuration = cardResponse.Configuration != null 
                             ? JsonConvert.SerializeObject(cardResponse.Configuration)
                             : null,
-                        UseAvailableWidth = cardResponse.UseAvailableWidth,
-                        UseAvailableHeight = cardResponse.UseAvailableHeight,
                         BackgroundColor = cardResponse.BackgroundColor,
                         TextColor = cardResponse.TextColor
                     };

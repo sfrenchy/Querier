@@ -10,6 +10,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/pages/settings/menu/pages/bloc/dynamic_page_layout_event.dart';
 import 'package:querier/pages/settings/menu/pages/bloc/dynamic_page_layout_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:responsive_grid/responsive_grid.dart';
 
 class DraggableRow extends StatelessWidget {
   final DynamicRow row;
@@ -58,39 +59,6 @@ class DraggableRow extends StatelessWidget {
     }
   }
 
-  Widget _buildCard(BuildContext context, DynamicCard card) {
-    return Draggable<int>(
-      data: card.id,
-      feedback: Material(
-        elevation: 4,
-        child: SizedBox(
-          width: 300,
-          child: CardSelector(
-            card: card,
-            onEdit: () => _showCardConfig(context, card),
-            onDelete: () => _confirmDeleteCard(context, card),
-            dragHandle: MouseRegion(
-              cursor: SystemMouseCursors.grab,
-              child: const Icon(Icons.drag_handle),
-            ),
-          ),
-        ),
-      ),
-      child: SizedBox(
-        width: 300,
-        child: CardSelector(
-          card: card,
-          onEdit: () => _showCardConfig(context, card),
-          onDelete: () => _confirmDeleteCard(context, card),
-          dragHandle: MouseRegion(
-            cursor: SystemMouseCursors.grab,
-            child: const Icon(Icons.drag_handle),
-          ),
-        ),
-      ),
-    );
-  }
-
   void _showCardConfig(BuildContext context, DynamicCard card) {
     final bloc = context.read<DynamicPageLayoutBloc>();
     
@@ -113,74 +81,27 @@ class DraggableRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Draggable<DynamicRow>(
-      data: row,
-      feedback: Material(
-        elevation: 4,
-        child: Container(
-          width: 500,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text('Row ${row.order}'),
-        ),
-      ),
-      child: DragTarget<String>(
-        onWillAccept: (data) => data == 'placeholder',
-        onAccept: (data) => onAcceptCard(data),
-        builder: (context, candidateData, rejectedData) {
-          return Container(
-            margin: const EdgeInsets.all(8.0),
+    return ResponsiveGridRow(
+      children: row.cards.map((card) => 
+        ResponsiveGridCol(
+          xs: 12,    // Pleine largeur sur très petit écran
+          sm: 6,     // Demi largeur sur petit écran
+          md: card.useAvailableWidth ? 12 : 6,  // Adaptatif selon useAvailableWidth
+          lg: card.useAvailableWidth ? 12 : 4,  // Adaptatif selon useAvailableWidth
+          child: Padding(
             padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: candidateData.isNotEmpty 
-                  ? Theme.of(context).primaryColor 
-                  : Colors.grey.shade300,
-                width: candidateData.isNotEmpty ? 2 : 1,
+            child: CardSelector(
+              card: card,
+              onEdit: () => _showCardConfig(context, card),
+              onDelete: () => _confirmDeleteCard(context, card),
+              dragHandle: MouseRegion(
+                cursor: SystemMouseCursors.grab,
+                child: const Icon(Icons.drag_handle),
               ),
-              borderRadius: BorderRadius.circular(8),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    MouseRegion(
-                      cursor: SystemMouseCursors.grab,
-                      child: const Icon(Icons.drag_handle),
-                    ),
-                    const Spacer(),
-                    Text('Row ${row.order}'),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: onEdit,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: onDelete,
-                    ),
-                  ],
-                ),
-                Container(
-                  constraints: const BoxConstraints(minHeight: 100),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: row.cards.asMap().entries.map((entry) => 
-                        _buildCard(context, entry.value)
-                      ).toList(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+          ),
+        ),
+      ).toList(),
     );
   }
 }
