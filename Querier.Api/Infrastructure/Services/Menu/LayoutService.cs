@@ -43,8 +43,6 @@ namespace Querier.Api.Infrastructure.Services.Menu
                     Titles = card.Translations.ToDictionary(t => t.LanguageCode, t => t.Title),
                     Order = card.Order,
                     Type = card.Type,
-                    IsResizable = card.IsResizable,
-                    IsCollapsible = card.IsCollapsible,
                     Height = card.Height,
                     Width = card.Width,
                     Configuration = card.Configuration != null 
@@ -131,8 +129,6 @@ namespace Querier.Api.Infrastructure.Services.Menu
                         DynamicRowId = savedRow.Id,
                         Order = cardResponse.Order,
                         Type = cardResponse.Type,
-                        IsResizable = cardResponse.IsResizable,
-                        IsCollapsible = cardResponse.IsCollapsible,
                         Height = cardResponse.Height,
                         Width = cardResponse.Width,
                         Configuration = cardResponse.Configuration != null 

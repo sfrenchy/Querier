@@ -16,8 +16,6 @@ namespace Querier.Api.Domain.Entities.Menu
         public int Id { get; set; }
         public int Order { get; set; }
         public string Type { get; set; }
-        public bool IsResizable { get; set; }
-        public bool IsCollapsible { get; set; }
         public double? Height { get; set; }
         public double? Width { get; set; }
         public string Configuration { get; set; }

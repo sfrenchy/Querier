@@ -39,8 +39,6 @@ namespace Querier.Api.Infrastructure.Services.Menu
             {
                 Order = order,
                 Type = request.Type,
-                IsResizable = request.IsResizable,
-                IsCollapsible = request.IsCollapsible,
                 Height = request.Height,
                 Width = request.Width,
                 Configuration = request.Configuration != null 
@@ -65,8 +63,6 @@ namespace Querier.Api.Infrastructure.Services.Menu
             existingCard.UseAvailableWidth = request.UseAvailableWidth;
             existingCard.UseAvailableHeight = request.UseAvailableHeight;
             existingCard.Type = request.Type;
-            existingCard.IsResizable = request.IsResizable;
-            existingCard.IsCollapsible = request.IsCollapsible;
             existingCard.Height = request.Height;
             existingCard.Width = request.Width;
             existingCard.Order = request.Order;
@@ -122,8 +118,6 @@ namespace Querier.Api.Infrastructure.Services.Menu
                 Titles = card.Translations.ToDictionary(x => x.LanguageCode, x => x.Title),
                 Order = card.Order,
                 Type = card.Type.ToString(),
-                IsResizable = card.IsResizable,
-                IsCollapsible = card.IsCollapsible,
                 Height = card.Height,
                 Width = card.Width,
                 Configuration = card.Configuration != null 
