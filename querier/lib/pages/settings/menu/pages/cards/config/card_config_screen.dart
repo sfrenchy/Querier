@@ -26,6 +26,9 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
   bool useAvailableHeight = true;
   double? width;
   double? height;
+  
+  // Ajout des états d'expansion
+  final List<bool> _isExpanded = [false, false, false];  // Title, Colors, Dimensions
 
   @override
   void initState() {
@@ -74,9 +77,15 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
         padding: const EdgeInsets.all(16.0),
         child: ExpansionPanelList(
           expandedHeaderPadding: EdgeInsets.zero,
+          expansionCallback: (index, isExpanded) {
+            setState(() {
+              _isExpanded[index] = isExpanded;
+            });
+          },
           children: [
             // Titre
             ExpansionPanel(
+              canTapOnHeader: true,
               headerBuilder: (context, isExpanded) => 
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -91,10 +100,11 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
                   },
                 ),
               ),
-              isExpanded: true,
+              isExpanded: _isExpanded[0],
             ),
             // Couleurs
             ExpansionPanel(
+              canTapOnHeader: true,
               headerBuilder: (context, isExpanded) => 
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -125,10 +135,11 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
                   ],
                 ),
               ),
-              isExpanded: true,
+              isExpanded: _isExpanded[1],
             ),
             // Dimensions
             ExpansionPanel(
+              canTapOnHeader: true,
               headerBuilder: (context, isExpanded) => 
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -181,7 +192,7 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
                   ],
                 ),
               ),
-              isExpanded: true,
+              isExpanded: _isExpanded[2],
             ),
           ],
         ),
