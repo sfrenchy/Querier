@@ -5,12 +5,11 @@ import 'package:querier/widgets/cards/base_card_widget.dart';
 class PlaceholderCardWidget extends BaseCardWidget {
   const PlaceholderCardWidget({
     super.key,
-    required PlaceholderCard card,
-    super.isEditing,
+    required super.card,
     super.onEdit,
     super.onDelete,
-    super.onResize,
-  }) : super(card: card);
+    super.dragHandle,
+  });
 
   @override
   Widget buildCardContent(BuildContext context) {

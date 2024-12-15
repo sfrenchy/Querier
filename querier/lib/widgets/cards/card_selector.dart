@@ -7,12 +7,14 @@ class CardSelector extends StatelessWidget {
   final DynamicCard card;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final Widget? dragHandle;
 
   const CardSelector({
     Key? key,
     required this.card,
     required this.onEdit,
     required this.onDelete,
+    this.dragHandle,
   }) : super(key: key);
 
   @override
@@ -35,6 +37,7 @@ class CardSelector extends StatelessWidget {
           card: placeholderCard,
           onEdit: onEdit,
           onDelete: onDelete,
+          dragHandle: dragHandle,
         );
       default:
         return Card(

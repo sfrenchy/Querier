@@ -8,6 +8,7 @@ abstract class BaseCardWidget extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final ValueChanged<Size>? onResize;
+  final Widget? dragHandle;
 
   const BaseCardWidget({
     super.key,
@@ -16,6 +17,7 @@ abstract class BaseCardWidget extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.onResize,
+    this.dragHandle,
   });
 
   Widget buildCardContent(BuildContext context);
@@ -39,6 +41,7 @@ abstract class BaseCardWidget extends StatelessWidget {
                   '',
               onEdit: onEdit,
               onDelete: onDelete,
+              dragHandle: dragHandle,
             ),
             Flexible(
               child: Container(

@@ -27,14 +27,15 @@ class AddRow extends DynamicPageLayoutEvent {
   List<Object> get props => [pageId];
 }
 
-class ReorderRows extends DynamicPageLayoutEvent {
-  final int pageId;
-  final List<int> rowIds;
+class ReorderCardsInRow extends DynamicPageLayoutEvent {
+  final int rowId;
+  final int oldIndex;
+  final int newIndex;
 
-  const ReorderRows(this.pageId, this.rowIds);
+  const ReorderCardsInRow(this.rowId, this.oldIndex, this.newIndex);
 
   @override
-  List<Object> get props => [pageId, rowIds];
+  List<Object> get props => [rowId, oldIndex, newIndex];
 }
 
 class UpdateRowProperties extends DynamicPageLayoutEvent {
@@ -106,4 +107,14 @@ class ReloadPageLayout extends DynamicPageLayoutEvent {
 
   @override
   List<Object> get props => [pageId];
+}
+
+class ReorderRows extends DynamicPageLayoutEvent {
+  final int pageId;
+  final List<int> rowIds;
+
+  const ReorderRows(this.pageId, this.rowIds);
+
+  @override
+  List<Object> get props => [pageId, rowIds];
 }

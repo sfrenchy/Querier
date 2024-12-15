@@ -60,16 +60,34 @@ class DynamicPageLayoutBloc
   Future<void> _onReorderRows(
       ReorderRows event, Emitter<DynamicPageLayoutState> emit) async {
     if (_currentLayout != null) {
-      final updatedRows = List<DynamicRow>.from(_currentLayout!.rows);
-      for (var i = 0; i < event.rowIds.length; i++) {
-        final rowIndex = updatedRows.indexWhere((r) => r.id == event.rowIds[i]);
-        if (rowIndex != -1) {
-          updatedRows[rowIndex] = updatedRows[rowIndex].copyWith(order: i + 1);
+      try {
+        print('_onReorderRows: Starting reorder');
+        print('Before reorder: ${_currentLayout!.rows.map((r) => r.id).toList()}');
+        
+        // Créer une nouvelle liste de rows dans le bon ordre
+        final newRows = List<DynamicRow>.from(_currentLayout!.rows);
+        final orderedIds = event.rowIds;
+        
+        // Réorganiser les rows selon les IDs
+        newRows.sort((a, b) => 
+          orderedIds.indexOf(a.id).compareTo(orderedIds.indexOf(b.id))
+        );
+        
+        // Mettre à jour l'ordre
+        for (var i = 0; i < newRows.length; i++) {
+          newRows[i] = newRows[i].copyWith(order: i + 1);
         }
-      }
 
-      _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-      emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
+        print('After reorder: ${newRows.map((r) => r.id).toList()}');
+        
+        _currentLayout = _currentLayout!.copyWith(rows: newRows);
+        emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
+        
+        print('State emitted with new order');
+      } catch (e) {
+        print('Error in _onReorderRows: $e');
+        emit(DynamicPageLayoutError('Failed to reorder rows: $e'));
+      }
     }
   }
 

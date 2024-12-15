@@ -51,23 +51,40 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     if (state is DynamicPageLayoutLoaded) {
-      return DragTarget<String>(
-        onWillAccept: (data) => data == 'row',
-        onAccept: (data) {
-          if (data == 'row') {
-            context.read<DynamicPageLayoutBloc>().add(AddRow(widget.pageId));
-          }
-        },
-        builder: (context, candidateData, rejectedData) {
-          return ListView(
-            children: [
-              // Liste des rows existantes d'abord
-              ...state.rows.map((row) {
+      return ListView(
+        children: [
+          ...state.rows.asMap().entries.map((entry) {
+            return DragTarget<DynamicRow>(
+              onWillAccept: (data) {
+                print('onWillAccept: data=${data?.id}, targetRow=${entry.value.id}');
+                return data != null;
+              },
+              onAccept: (data) {
+                print('onAccept: sourceRow=${data.id}, targetRow=${entry.value.id}');
+                final rows = state.rows;
+                final oldIndex = rows.indexOf(data);
+                final newIndex = rows.indexOf(entry.value);
+                print('Indices: oldIndex=$oldIndex, newIndex=$newIndex');
+                
+                if (oldIndex != newIndex) {
+                  final rowIds = rows.map((r) => r.id).toList();
+                  print('Before reorder: rowIds=$rowIds');
+                  final id = rowIds.removeAt(oldIndex);
+                  rowIds.insert(newIndex, id);
+                  print('After reorder: rowIds=$rowIds');
+                  
+                  context.read<DynamicPageLayoutBloc>().add(
+                    ReorderRows(widget.pageId, rowIds),
+                  );
+                }
+              },
+              builder: (context, candidateData, rejectedData) {
+                print('DragTarget builder: candidateData=$candidateData');
                 return DraggableRow(
-                  key: ValueKey(row.id),
-                  row: row,
-                  onEdit: () => _showRowProperties(context, row),
-                  onDelete: () => _confirmDeleteRow(context, row),
+                  key: ValueKey(entry.value.id),
+                  row: entry.value,
+                  onEdit: () => _showRowProperties(context, entry.value),
+                  onDelete: () => _confirmDeleteRow(context, entry.value),
                   onReorder: (oldIndex, newIndex) {
                     final rows = state.rows;
                     if (oldIndex < newIndex) {
@@ -83,14 +100,29 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                   },
                   onAcceptCard: (cardData) {
                     context.read<DynamicPageLayoutBloc>().add(
-                      AddCardToRow(row.id, cardData),
+                      AddCardToRow(entry.value.id, cardData),
+                    );
+                  },
+                  onReorderCards: (rowId, oldIndex, newIndex) {
+                    context.read<DynamicPageLayoutBloc>().add(
+                      ReorderCardsInRow(rowId, oldIndex, newIndex),
                     );
                   },
                 );
-              }).toList(),
-              // Zone de drop à la fin
+              },
+            );
+          }).toList(),
+          // Zone de drop pour nouvelle row
+          DragTarget<String>(
+            onWillAccept: (data) => data == 'row',
+            onAccept: (data) {
+              if (data == 'row') {
+                context.read<DynamicPageLayoutBloc>().add(AddRow(widget.pageId));
+              }
+            },
+            builder: (context, candidateData, rejectedData) {
               if (candidateData.isNotEmpty)
-                Container(
+                return Container(
                   height: 80,
                   margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -110,10 +142,11 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                       ),
                     ),
                   ),
-                ),
-            ],
-          );
-        },
+                );
+              return const SizedBox(height: 80);
+            },
+          ),
+        ],
       );
     }
     return Center(child: Text(l10n.dropRowHere));

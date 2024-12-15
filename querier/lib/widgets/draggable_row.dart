@@ -15,6 +15,7 @@ class DraggableRow extends StatelessWidget {
   final VoidCallback onDelete;
   final Function(int oldIndex, int newIndex) onReorder;
   final Function(String cardData) onAcceptCard;
+  final Function(int rowId, int oldIndex, int newIndex) onReorderCards;
 
   const DraggableRow({
     Key? key,
@@ -23,6 +24,7 @@ class DraggableRow extends StatelessWidget {
     required this.onDelete,
     required this.onReorder,
     required this.onAcceptCard,
+    required this.onReorderCards,
   }) : super(key: key);
 
   Future<void> _confirmDeleteCard(BuildContext context, DynamicCard card) async {
@@ -54,9 +56,13 @@ class DraggableRow extends StatelessWidget {
     }
   }
 
-  Widget _buildCard(BuildContext context, DynamicCard card) {
-    return Draggable<int>(
-      data: card.id,
+  Widget _buildCard(BuildContext context, DynamicCard card, int index) {
+    return Draggable<Map<String, dynamic>>(
+      data: {
+        'cardId': card.id,
+        'rowId': row.id,
+        'sourceIndex': index,
+      },
       feedback: Material(
         elevation: 4,
         child: SizedBox(
@@ -65,72 +71,109 @@ class DraggableRow extends StatelessWidget {
             card: card,
             onEdit: () {},
             onDelete: () => _confirmDeleteCard(context, card),
+            dragHandle: MouseRegion(
+              cursor: SystemMouseCursors.grab,
+              child: const Icon(Icons.drag_handle),
+            ),
           ),
         ),
       ),
-      childWhenDragging: Container(
-        width: 300,
-        height: 200,
-      ),
-      child: SizedBox(
-        width: 300,
-        child: CardSelector(
-          card: card,
-          onEdit: () {},
-          onDelete: () => _confirmDeleteCard(context, card),
-        ),
+      child: DragTarget<Map<String, dynamic>>(
+        onWillAccept: (data) => data != null && data['rowId'] == row.id,
+        onAccept: (data) {
+          final sourceIndex = data['sourceIndex'] as int;
+          if (sourceIndex != index) {
+            onReorderCards(row.id, sourceIndex, index);
+          }
+        },
+        builder: (context, candidateData, rejectedData) {
+          return SizedBox(
+            width: 300,
+            child: CardSelector(
+              card: card,
+              onEdit: () {},
+              onDelete: () => _confirmDeleteCard(context, card),
+              dragHandle: MouseRegion(
+                cursor: SystemMouseCursors.grab,
+                child: const Icon(Icons.drag_handle),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return DragTarget<String>(
-      onWillAccept: (data) => data == 'placeholder',
-      onAccept: (data) => onAcceptCard(data),
-      builder: (context, candidateData, rejectedData) {
-        return Container(
-          margin: const EdgeInsets.all(8.0),
-          padding: const EdgeInsets.all(8.0),
+    return Draggable<DynamicRow>(
+      data: row,
+      feedback: Material(
+        elevation: 4,
+        child: Container(
+          width: 500,
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            border: Border.all(
-              color: candidateData.isNotEmpty 
-                ? Theme.of(context).primaryColor 
-                : Colors.grey.shade300,
-              width: candidateData.isNotEmpty ? 2 : 1,
-            ),
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: onEdit,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: onDelete,
-                  ),
-                  const Spacer(),
-                  Text('Row ${row.order}'),
-                ],
+          child: Text('Row ${row.order}'),
+        ),
+      ),
+      child: DragTarget<String>(
+        onWillAccept: (data) => data == 'placeholder',
+        onAccept: (data) => onAcceptCard(data),
+        builder: (context, candidateData, rejectedData) {
+          return Container(
+            margin: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: candidateData.isNotEmpty 
+                  ? Theme.of(context).primaryColor 
+                  : Colors.grey.shade300,
+                width: candidateData.isNotEmpty ? 2 : 1,
               ),
-              Container(
-                constraints: const BoxConstraints(minHeight: 100),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: row.cards.map((card) => _buildCard(context, card)).toList(),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    MouseRegion(
+                      cursor: SystemMouseCursors.grab,
+                      child: const Icon(Icons.drag_handle),
+                    ),
+                    const Spacer(),
+                    Text('Row ${row.order}'),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: onEdit,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: onDelete,
+                    ),
+                  ],
+                ),
+                Container(
+                  constraints: const BoxConstraints(minHeight: 100),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: row.cards.asMap().entries.map((entry) => 
+                        _buildCard(context, entry.value, entry.key)
+                      ).toList(),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
