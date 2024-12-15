@@ -5,33 +5,53 @@ class CardHeader extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final Widget? dragHandle;
+  final Color? textColor;
+  final Color? backgroundColor;
 
   const CardHeader({
-    super.key,
+    Key? key,
     required this.title,
     this.onEdit,
     this.onDelete,
     this.dragHandle,
-  });
+    this.textColor,
+    this.backgroundColor,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(title),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(4.0),
+        ),
+      ),
+      child: Row(
         children: [
+          if (dragHandle != null) dragHandle!,
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+          ),
           if (onEdit != null)
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: onEdit,
+              color: textColor,
             ),
-          if (dragHandle != null)
-            dragHandle!,
           if (onDelete != null)
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: onDelete,
+              color: textColor,
             ),
         ],
       ),

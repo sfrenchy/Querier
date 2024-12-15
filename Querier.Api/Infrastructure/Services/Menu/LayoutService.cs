@@ -49,6 +49,8 @@ namespace Querier.Api.Infrastructure.Services.Menu
                         : null,
                     BackgroundColor = card.BackgroundColor,
                     TextColor = card.TextColor,
+                    HeaderBackgroundColor = card.HeaderBackgroundColor,
+                    HeaderTextColor = card.HeaderTextColor
                 }).ToList();
 
                 rowResponses.Add(new DynamicRowResponse
@@ -131,7 +133,9 @@ namespace Querier.Api.Infrastructure.Services.Menu
                             ? JsonConvert.SerializeObject(cardResponse.Configuration)
                             : null,
                         BackgroundColor = cardResponse.BackgroundColor,
-                        TextColor = cardResponse.TextColor
+                        TextColor = cardResponse.TextColor,
+                        HeaderBackgroundColor = cardResponse.HeaderBackgroundColor,
+                        HeaderTextColor = cardResponse.HeaderTextColor
                     };
 
                     foreach (var title in cardResponse.Titles)

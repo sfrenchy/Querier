@@ -20,6 +20,9 @@ namespace Querier.Api.Domain.Entities.Menu
         public int DynamicRowId { get; set; }
         public uint? BackgroundColor { get; set; }
         public uint? TextColor { get; set; }
+        public uint? HeaderBackgroundColor { get; set; }
+        public uint? HeaderTextColor { get; set; }
+
         
         public virtual DynamicRow Row { get; set; }
         public virtual ICollection<DynamicCardTranslation> Translations { get; set; }

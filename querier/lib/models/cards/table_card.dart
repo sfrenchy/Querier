@@ -42,6 +42,8 @@ class TableCard extends DynamicCard {
     super.gridWidth,
     super.backgroundColor,
     super.textColor,
+    super.headerBackgroundColor,
+    super.headerTextColor,
     Map<String, dynamic>? configuration,
   }) : super(
     type: 'Table',

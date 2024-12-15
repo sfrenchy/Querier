@@ -119,6 +119,8 @@ namespace Querier.Api.Infrastructure.Services.Menu
                     : null,
                 TextColor = card.TextColor,
                 BackgroundColor = card.BackgroundColor,
+                HeaderBackgroundColor = card.HeaderBackgroundColor,
+                HeaderTextColor = card.HeaderTextColor
             };
         }
     }

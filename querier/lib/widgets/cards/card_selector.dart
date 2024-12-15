@@ -50,9 +50,10 @@ class CardSelector extends StatelessWidget {
             gridWidth: card.gridWidth,
             backgroundColor: card.backgroundColor,
             textColor: card.textColor,
+            headerBackgroundColor: card.headerBackgroundColor,
+            headerTextColor: card.headerTextColor,
             configuration: card.configuration,
           );
-          // TODO: Ajouter TableCardConfig quand il sera créé
           return null;
         }
         return null;
@@ -88,6 +89,8 @@ class CardSelector extends StatelessWidget {
           gridWidth: card.gridWidth,
           backgroundColor: card.backgroundColor,
           textColor: card.textColor,
+          headerBackgroundColor: card.headerBackgroundColor,
+          headerTextColor: card.headerTextColor,
           configuration: card.configuration,
         );
         return TableCardWidget(

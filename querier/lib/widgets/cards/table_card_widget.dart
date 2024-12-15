@@ -3,17 +3,69 @@ import 'package:querier/models/cards/table_card.dart';
 import 'package:querier/widgets/cards/base_card_widget.dart';
 
 class TableCardWidget extends BaseCardWidget {
-  const TableCardWidget({
+  TableCardWidget({
     super.key,
     required TableCard super.card,
     super.onEdit,
     super.onDelete,
     super.dragHandle,
-  });
+  }) {
+    print('TableCardWidget constructor: card = ${card.toJson()}'); // Debug
+    print('TableCardWidget constructor: headerBackgroundColor = ${card.headerBackgroundColor}'); // Debug
+  }
+
+  @override
+  Widget? buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              // Action de filtrage
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.sort),
+            onPressed: () {
+              // Action de tri
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget? buildFooter(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text('1-10 of 15'),
+          IconButton(
+            icon: const Icon(Icons.chevron_left),
+            onPressed: () {
+              // Page précédente
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right),
+            onPressed: () {
+              // Page suivante
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget buildCardContent(BuildContext context) {
     final tableCard = card as TableCard;
+    print('TableCardWidget.buildCardContent: headerBackgroundColor = ${tableCard.headerBackgroundColor}'); // Debug
     
     return LayoutBuilder(
       builder: (context, constraints) {

@@ -12,5 +12,7 @@ namespace Querier.Api.Application.DTOs.Menu.Requests
         public object Configuration { get; set; }
         public uint? BackgroundColor { get; set; }
         public uint? TextColor { get; set; }
+        public uint? HeaderBackgroundColor { get; set; }
+        public uint? HeaderTextColor { get; set; }
     }
 } 

@@ -25,6 +25,8 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
   late Map<String, String> titles;
   Color? backgroundColor;
   Color? textColor;
+  Color? headerBackgroundColor;
+  Color? headerTextColor;
   int? gridWidth;
   late Map<String, dynamic> configuration;
   
@@ -43,6 +45,12 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
       : null;
     gridWidth = widget.card.gridWidth;
     configuration = Map.from(widget.card.configuration);
+    headerBackgroundColor = widget.card.headerBackgroundColor != null 
+      ? Color(widget.card.headerBackgroundColor!) 
+      : null;
+    headerTextColor = widget.card.headerTextColor != null 
+      ? Color(widget.card.headerTextColor!) 
+      : null;
   }
 
   void _save() {
@@ -50,6 +58,8 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
       titles: titles,
       backgroundColor: backgroundColor?.value,
       textColor: textColor?.value,
+      headerTextColor: headerTextColor?.value,
+      headerBackgroundColor: headerBackgroundColor?.value,
       gridWidth: gridWidth,
       configuration: configuration,
     );
@@ -137,6 +147,24 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
                         color: textColor,
                         onColorChanged: (color) {
                           setState(() => textColor = color);
+                        },
+                      ),
+                    ),
+                    ListTile(
+                      title: Text(l10n.headerBackgroundColor),
+                      trailing: ColorPickerButton(
+                        color: headerBackgroundColor,
+                        onColorChanged: (color) {
+                          setState(() => headerBackgroundColor = color);
+                        },
+                      ),
+                    ),
+                    ListTile(
+                      title: Text(l10n.headerTextColor),
+                      trailing: ColorPickerButton(
+                        color: headerTextColor,
+                        onColorChanged: (color) {
+                          setState(() => headerTextColor = color);
                         },
                       ),
                     ),

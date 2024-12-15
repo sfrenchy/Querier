@@ -216,5 +216,7 @@
     "textColor": "Text Color",
     "cardLabel": "Label",
     "gridWidth": "Grid Width",
-    "gridWidthHint": "1 = very narrow, 12 = full width"
+    "gridWidthHint": "1 = very narrow, 12 = full width",
+    "headerBackgroundColor": "Header Background Color",
+    "headerTextColor": "Header Text Color"
 } 
