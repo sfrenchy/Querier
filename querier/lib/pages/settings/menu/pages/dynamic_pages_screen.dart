@@ -72,60 +72,149 @@ class DynamicPagesScreen extends StatelessWidget {
               return Center(child: Text(l10n.noPagesYet));
             }
 
-            return ListView.builder(
-              padding: const EdgeInsets.all(8.0),
-              itemCount: state.pages.length,
-              itemBuilder: (context, index) {
-                final page = state.pages[index];
-                return Card(
-                  child: ListTile(
-                    leading: Icon(
-                      IconSelector(
-                        icon: page.icon,
-                        onIconSelected: (_) {},
-                      ).getIconData(page.icon),
-                    ),
-                    title: Text(page.getLocalizedName(
-                      Localizations.localeOf(context).languageCode,
-                    )),
-                    subtitle: Text('${l10n.order}: ${page.order}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Card(
+                child: Table(
+                  columnWidths: const {
+                    0: FixedColumnWidth(50),  // Checkbox
+                    1: FlexColumnWidth(3),    // Name
+                    2: FlexColumnWidth(1),    // Icon
+                    3: FlexColumnWidth(1),    // Order
+                    4: FlexColumnWidth(1),    // Visibility
+                    5: FlexColumnWidth(2),    // Roles
+                    6: FlexColumnWidth(2),    // Actions
+                  },
+                  children: [
+                    TableRow(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Theme.of(context).dividerColor,
+                          ),
+                        ),
+                      ),
                       children: [
-                        Switch(
-                          value: page.isVisible,
-                          onChanged: (value) {
-                            context.read<DynamicPagesBloc>().add(
-                                  UpdatePageVisibility(page, value),
-                                );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.dashboard),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => DynamicPageLayoutScreen(
-                                  pageId: page.id,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _showPageForm(context, page: page),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () => _confirmDelete(context, page),
-                        ),
+                        const TableCell(child: SizedBox(width: 50)),
+                        TableCell(child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(l10n.name, style: Theme.of(context).textTheme.titleSmall),
+                        )),
+                        TableCell(child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(l10n.icon, style: Theme.of(context).textTheme.titleSmall),
+                          ),
+                        )),
+                        TableCell(child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(l10n.order, style: Theme.of(context).textTheme.titleSmall),
+                          ),
+                        )),
+                        TableCell(child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(l10n.visibility, style: Theme.of(context).textTheme.titleSmall),
+                          ),
+                        )),
+                        TableCell(child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(l10n.roles, style: Theme.of(context).textTheme.titleSmall),
+                          ),
+                        )),
+                        TableCell(child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(l10n.actions, style: Theme.of(context).textTheme.titleSmall),
+                          ),
+                        )),
                       ],
                     ),
-                  ),
-                );
-              },
+                    ...state.pages.map((page) => TableRow(
+                      children: [
+                        TableCell(child: Center(
+                          child: Checkbox(
+                            value: false,
+                            onChanged: (value) {},
+                          ),
+                        )),
+                        TableCell(child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(page.getLocalizedName(
+                            Localizations.localeOf(context).languageCode,
+                          )),
+                        )),
+                        TableCell(child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Icon(IconSelector(
+                              icon: page.icon,
+                              onIconSelected: (_) {},
+                            ).getIconData(page.icon)),
+                          ),
+                        )),
+                        TableCell(child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(page.order.toString()),
+                          ),
+                        )),
+                        TableCell(child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Switch(
+                              value: page.isVisible,
+                              onChanged: (value) {
+                                context.read<DynamicPagesBloc>().add(
+                                  UpdatePageVisibility(page, value),
+                                );
+                              },
+                            ),
+                          ),
+                        )),
+                        TableCell(child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(page.roles.join(', ')),
+                          ),
+                        )),
+                        TableCell(child: Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.dashboard),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DynamicPageLayoutScreen(
+                                        pageId: page.id,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () => _showPageForm(context, page: page),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () => _confirmDelete(context, page),
+                              ),
+                            ],
+                          ),
+                        )),
+                      ],
+                    )),
+                  ],
+                ),
+              ),
             );
           }
 
