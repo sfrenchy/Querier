@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:querier/models/cards/table_card.dart';
 import 'package:querier/widgets/cards/base_card_widget.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TableCardWidget extends BaseCardWidget {
   TableCardWidget({
@@ -65,8 +66,30 @@ class TableCardWidget extends BaseCardWidget {
   @override
   Widget buildCardContent(BuildContext context) {
     final tableCard = card as TableCard;
-    print('TableCardWidget.buildCardContent: headerBackgroundColor = ${tableCard.headerBackgroundColor}'); // Debug
+    final l10n = AppLocalizations.of(context)!;
     
+    // Vérifier si la configuration est complète
+    if (tableCard.configuration['context'] == null || 
+        tableCard.configuration['entity'] == null ||
+        tableCard.configuration['columns'] == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.settings, size: 48, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              l10n.configureDataAccess,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Afficher la table si la configuration est complète
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(

@@ -90,22 +90,27 @@ class _TableCardConfigState extends State<TableCardConfig> {
       final existingColumns = widget.card.configuration['columns'] as List?;
 
       _selectedColumns = entity.properties.map((prop) {
-        // Chercher la configuration existante de la colonne
-        final existingColumn = existingColumns?.firstWhere(
-          (c) => c['key'] == prop.name,
-          orElse: () => null,
-        );
+        Map<String, dynamic>? existingColumn;
+        if (existingColumns != null) {
+          try {
+            existingColumn = existingColumns.firstWhere(
+              (c) => c['key'] == prop.name,
+            ) as Map<String, dynamic>;
+          } catch (_) {
+            existingColumn = null;
+          }
+        }
 
         return {
           'name': prop.name,
-          'key': prop.name,  // Important pour la correspondance avec la config existante
+          'key': prop.name,
           'type': prop.type,
-          'translations': existingColumn?['label'] ??  // Utiliser 'label' au lieu de 'translations'
+          'translations': existingColumn?['label'] ?? 
               {'en': prop.name, 'fr': prop.name},
           'alignment': existingColumn?['alignment'] ?? _getDefaultAlignment(prop.type),
           'visible': existingColumn?['visible'] ?? true,
           'decimals': existingColumn?['decimals'] ?? 
-              _isNumericType(prop.type) ? 0 : null,
+              (_isNumericType(prop.type) ? 0 : null),
         };
       }).toList();
     }

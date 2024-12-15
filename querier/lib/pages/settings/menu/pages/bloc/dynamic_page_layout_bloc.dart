@@ -19,6 +19,7 @@ class DynamicPageLayoutBloc
     on<AddCardToRow>(_onAddCard);
     on<UpdateCard>(_onUpdateCard);
     on<SaveLayout>(_onSaveLayout);
+    on<DeleteRow>(_onDeleteRow);
   }
 
   Future<void> _onUpdateCard(UpdateCard event, Emitter<DynamicPageLayoutState> emit) async {
@@ -131,6 +132,17 @@ class DynamicPageLayoutBloc
           : r
       ).toList();
 
+      emit(DynamicPageLayoutLoaded(updatedRows, isDirty: true));
+    }
+  }
+
+  Future<void> _onDeleteRow(DeleteRow event, Emitter<DynamicPageLayoutState> emit) async {
+    if (state is DynamicPageLayoutLoaded) {
+      final currentState = state as DynamicPageLayoutLoaded;
+      final updatedRows = currentState.rows
+          .where((row) => row.id != event.rowId)
+          .toList();
+      
       emit(DynamicPageLayoutLoaded(updatedRows, isDirty: true));
     }
   }

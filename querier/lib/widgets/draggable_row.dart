@@ -19,6 +19,7 @@ class DraggableRow extends StatelessWidget {
   final Function(int oldIndex, int newIndex) onReorder;
   final Function(String cardData) onAcceptCard;
   final Function(int rowId, int oldIndex, int newIndex) onReorderCards;
+  final Widget? dragHandle;
 
   const DraggableRow({
     Key? key,
@@ -28,6 +29,7 @@ class DraggableRow extends StatelessWidget {
     required this.onReorder,
     required this.onAcceptCard,
     required this.onReorderCards,
+    this.dragHandle,
   }) : super(key: key);
 
   Future<void> _confirmDeleteCard(BuildContext context, DynamicCard card) async {
@@ -81,98 +83,103 @@ class DraggableRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calculer l'espace disponible
-    int usedWidth = row.cards.fold(0, (sum, card) => sum + card.gridWidth);
-    int availableWidth = 12 - usedWidth;
-
-    return Draggable<DynamicRow>(
-      data: row,
-      feedback: Material(
-        elevation: 4,
-        child: Container(
-          width: 500,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text('Row ${row.order}'),
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 1,
         ),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.grey.shade300,
-            width: 1,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Colonne des boutons à gauche
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: onDelete,
+                tooltip: AppLocalizations.of(context)!.deleteRow,
+              ),
+              MouseRegion(
+                cursor: SystemMouseCursors.grab,
+                child: dragHandle ?? const Icon(Icons.drag_indicator),
+              ),
+            ],
           ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ResponsiveGridRow(
-          children: [
-            // Afficher les cartes existantes
-            ...row.cards.map((card) => 
-              ResponsiveGridCol(
-                xs: 12,
-                sm: 6,
-                md: card.gridWidth,
-                lg: card.gridWidth,
-                child: CardSelector(
-                  card: card,
-                  onEdit: () => _showCardConfig(context, card),
-                  onDelete: () => _confirmDeleteCard(context, card),
-                  dragHandle: MouseRegion(
-                    cursor: SystemMouseCursors.grab,
-                    child: const Icon(Icons.drag_handle),
+          const SizedBox(width: 8),  // Espacement
+          // Contenu existant
+          Expanded(
+            child: ResponsiveGridRow(
+              children: [
+                // Afficher les cartes existantes
+                ...row.cards.map((card) => 
+                  ResponsiveGridCol(
+                    xs: 12,
+                    sm: 6,
+                    md: card.gridWidth,
+                    lg: card.gridWidth,
+                    child: CardSelector(
+                      card: card,
+                      onEdit: () => _showCardConfig(context, card),
+                      onDelete: () => _confirmDeleteCard(context, card),
+                      dragHandle: MouseRegion(
+                        cursor: SystemMouseCursors.grab,
+                        child: const Icon(Icons.drag_handle),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                // Zone de drop si espace disponible
+                if (row.cards.length < 12)
+                  ResponsiveGridCol(
+                    xs: 12,
+                    sm: 6,
+                    md: 12 - row.cards.length,
+                    lg: 12 - row.cards.length,
+                    child: DragTarget<String>(
+                      onWillAccept: (data) {
+                        print('DraggableRow onWillAccept: data=$data');
+                        return data == 'placeholder' || data == 'Table';
+                      },
+                      onAccept: (cardData) {
+                        print('DraggableRow onAcceptCard: cardData=$cardData');
+                        context.read<DynamicPageLayoutBloc>().add(
+                          AddCardToRow(
+                            row.id, 
+                            cardData,
+                            gridWidth: 12 - row.cards.length,
+                          ),
+                        );
+                      },
+                      builder: (context, candidateData, rejectedData) {
+                        return Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: candidateData.isNotEmpty 
+                                ? Theme.of(context).primaryColor 
+                                : Colors.grey.shade300,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Text(
+                              AppLocalizations.of(context)!.dropCardsHere,
+                              style: TextStyle(color: Colors.grey.shade600),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
             ),
-            // Zone de drop si espace disponible
-            if (availableWidth > 0)
-              ResponsiveGridCol(
-                xs: 12,
-                sm: 6,
-                md: availableWidth,
-                lg: availableWidth,
-                child: DragTarget<String>(
-                  onWillAccept: (data) {
-                    print('DraggableRow onWillAccept: data=$data');
-                    return data == 'placeholder' || data == 'Table';
-                  },
-                  onAccept: (cardData) {
-                    print('DraggableRow onAcceptCard: cardData=$cardData');
-                    context.read<DynamicPageLayoutBloc>().add(
-                      AddCardToRow(
-                        row.id, 
-                        cardData,
-                        gridWidth: availableWidth,
-                      ),
-                    );
-                  },
-                  builder: (context, candidateData, rejectedData) {
-                    return Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: candidateData.isNotEmpty 
-                            ? Theme.of(context).primaryColor 
-                            : Colors.grey.shade300,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: Text(
-                          AppLocalizations.of(context)!.dropCardsHere,
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

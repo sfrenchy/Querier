@@ -225,5 +225,6 @@
     "columns": "Colonnes",
     "columnAlignment": "Alignement",
     "columnVisibility": "Visible",
-    "decimals": "Décimales"
+    "decimals": "Décimales",
+    "configureDataAccess": "Veuillez configurer l'accès aux données"
 } 
