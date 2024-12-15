@@ -104,20 +104,42 @@ namespace Querier.Api.Domain.Services
             return newEntity;
         }
 
-        public IEnumerable<object> GetAll(string contextTypeFullname, string entityTypeFullname)
+        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, PaginationParameters pagination)
         {
             Type reqType = Utils.GetType(entityTypeFullname);
             if (reqType == null)
                 throw new Exception($"Entity \"{entityTypeFullname}\" is not handled in the \"{contextTypeFullname}\" context.");
 
             DbContext targetContext = GetDbContextFromTypeName(contextTypeFullname);
+            targetContext.ChangeTracker.LazyLoadingEnabled = false;  // Désactiver le lazy loading
 
-            PropertyInfo contextProperty = targetContext.GetType().GetProperties().Where(p => p.PropertyType.Name.Contains("DbSet")).FirstOrDefault(p => p.PropertyType.GetGenericArguments().Any(a => a == reqType));
-            if (contextProperty == null)
+            var dbSet = targetContext.GetType()
+                .GetProperties()
+                .Where(p => p.PropertyType.Name.Contains("DbSet"))
+                .FirstOrDefault(p => p.PropertyType.GetGenericArguments().Any(a => a == reqType))
+                ?.GetValue(targetContext);
+
+            if (dbSet == null)
                 throw new Exception($"Entity \"{entityTypeFullname}\" is not handled by any DbSet in the \"{contextTypeFullname}\" context.");
 
-            var dbsetResult = contextProperty.GetValue(targetContext) as IEnumerable<object>;
-            return JsonConvert.DeserializeObject<List<ExpandoObject>>(JsonConvert.SerializeObject(dbsetResult));
+            var query = ((IEnumerable<object>)dbSet);
+            var totalCount = query.Count();
+            var data = query
+                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .Select(e => e.GetType()
+                    .GetProperties()
+                    .Where(p => p.PropertyType.Namespace == "System" || p.PropertyType.IsValueType)
+                    .ToDictionary(
+                        p => p.Name,
+                        p => p.GetValue(e)
+                    ));
+
+            return new PagedResult<object>
+            {
+                Data = data,
+                TotalCount = totalCount
+            };
         }
 
         public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilter> filters)

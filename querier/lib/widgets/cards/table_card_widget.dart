@@ -1,140 +1,89 @@
 import 'package:flutter/material.dart';
 import 'package:querier/models/cards/table_card.dart';
-import 'package:querier/widgets/cards/base_card_widget.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
+import 'package:querier/api/api_client.dart';
 
-class TableCardWidget extends BaseCardWidget {
-  TableCardWidget({
-    super.key,
-    required TableCard super.card,
-    super.onEdit,
-    super.onDelete,
-    super.dragHandle,
-  }) {
-    print('TableCardWidget constructor: card = ${card.toJson()}'); // Debug
-    print('TableCardWidget constructor: headerBackgroundColor = ${card.headerBackgroundColor}'); // Debug
-  }
+class TableCardWidget extends StatefulWidget {
+  final TableCard card;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final Widget? dragHandle;
 
-  @override
-  Widget? buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              // Action de filtrage
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.sort),
-            onPressed: () {
-              // Action de tri
-            },
-          ),
-        ],
-      ),
-    );
-  }
+  const TableCardWidget({
+    super.key, 
+    required this.card,
+    this.onEdit,
+    this.onDelete,
+    this.dragHandle,
+  });
 
   @override
-  Widget? buildFooter(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text('1-10 of 15'),
-          IconButton(
-            icon: const Icon(Icons.chevron_left),
-            onPressed: () {
-              // Page précédente
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.chevron_right),
-            onPressed: () {
-              // Page suivante
-            },
-          ),
-        ],
-      ),
-    );
-  }
+  State<TableCardWidget> createState() => _TableCardWidgetState();
+}
+
+class _TableCardWidgetState extends State<TableCardWidget> {
+  List<Map<String, dynamic>> _data = [];
+  bool _isLoading = false;
 
   @override
-  Widget buildCardContent(BuildContext context) {
-    final tableCard = card as TableCard;
-    final l10n = AppLocalizations.of(context)!;
-    
-    // Vérifier si la configuration est complète
-    if (tableCard.configuration['context'] == null || 
-        tableCard.configuration['entity'] == null ||
-        tableCard.configuration['columns'] == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.settings, size: 48, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text(
-              l10n.configureDataAccess,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      );
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    if (widget.card.configuration['context'] == null || 
+        widget.card.configuration['entity'] == null) {
+      return;
     }
 
-    // Afficher la table si la configuration est complète
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: constraints.maxWidth,
-              ),
-              child: Theme(
-                data: Theme.of(context).copyWith(
-                  dataTableTheme: DataTableThemeData(
-                    columnSpacing: 24.0,
-                    horizontalMargin: 24.0,
-                    headingTextStyle: Theme.of(context).textTheme.titleSmall,
-                    dataRowMinHeight: 48.0,
-                    dataRowMaxHeight: 48.0,
-                    dividerThickness: 1.0,
-                  ),
-                ),
-                child: DataTable(
-                  columns: tableCard.columns.map((col) => 
-                    DataColumn(
-                      label: Text(
-                        col['label'][Localizations.localeOf(context).languageCode] ?? 
-                        col['label']['en'] ?? 
-                        col['key'],
-                      ),
-                    ),
-                  ).toList(),
-                  rows: tableCard.data.map((row) => 
-                    DataRow(
-                      cells: tableCard.columns.map((col) => 
-                        DataCell(
-                          Text(row[col['key']]?.toString() ?? ''),
-                        ),
-                      ).toList(),
-                    ),
-                  ).toList(),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+    setState(() => _isLoading = true);
+
+    try {
+      final apiClient = context.read<ApiClient>();
+      final (data, _) = await apiClient.getEntityData(
+        widget.card.configuration['context'],
+        widget.card.configuration['entity'],
+      );
+      setState(() {
+        _data = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_data.isEmpty) {
+      return const Center(child: Text('No data available'));
+    }
+
+    // Créer les colonnes à partir des clés de la première ligne
+    final columns = _data.first.keys.map((key) => 
+      DataColumn(label: Text(key))
+    ).toList();
+
+    // Créer les lignes à partir des données
+    final rows = _data.map((row) => 
+      DataRow(
+        cells: row.values.map((value) => 
+          DataCell(Text(value?.toString() ?? ''))
+        ).toList(),
+      )
+    ).toList();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columns: columns,
+        rows: rows,
+      ),
     );
   }
 } 

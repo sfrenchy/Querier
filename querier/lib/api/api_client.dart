@@ -682,4 +682,36 @@ class ApiClient {
         .map((json) => EntitySchema.fromJson(json))
         .toList();
   }
+
+  Future<(List<Map<String, dynamic>>, int)> getEntityData(
+    String contextTypeName, 
+    String entityTypeName, 
+    {int pageNumber = 1, int pageSize = 10}
+  ) async {
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.replaceUrlParams(
+          ApiEndpoints.entityCRUDGetAll,
+          {'contextTypeName': contextTypeName, 'entityTypeName': entityTypeName},
+        ),
+        queryParameters: {
+          'pageNumber': pageNumber,
+          'pageSize': pageSize,
+        },
+      );
+
+      print('API Response: ${response.data}'); // Debug
+
+      final List<Map<String, dynamic>> data = (response.data['Data'] as List)
+          .map((item) => Map<String, dynamic>.from(item as Map<String, dynamic>))
+          .toList();
+      
+      final totalCount = response.data['TotalCount'] as int? ?? 0;
+
+      return (data, totalCount);
+    } catch (e) {
+      print('API Error: $e'); // Debug
+      rethrow;
+    }
+  }
 }
