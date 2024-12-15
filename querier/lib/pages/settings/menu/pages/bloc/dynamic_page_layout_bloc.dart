@@ -36,7 +36,7 @@ class DynamicPageLayoutBloc
     if (_currentLayout != null && state is DynamicPageLayoutLoaded) {
       final currentState = state as DynamicPageLayoutLoaded;
       final newRow = DynamicRow(
-        id: DateTime.now().millisecondsSinceEpoch,
+        id: -(_currentLayout!.rows.length + 1),
         pageId: event.pageId,
         order: currentState.rows.length + 1,
         alignment: MainAxisAlignment.start,
