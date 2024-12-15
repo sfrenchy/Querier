@@ -291,13 +291,22 @@ class _TableCardConfigState extends State<TableCardConfig> {
               onChanged: (value) {
                 setState(() => _selectedEntity = value);
                 if (value != null) {
+                  final entity = _entities.firstWhere((e) => e.name == value);
                   final newConfig = Map<String, dynamic>.from(widget.card.configuration);
                   newConfig['entity'] = value;
-                  newConfig['entitySchema'] = _entities
-                      .firstWhere((e) => e.name == value)
-                      .toJson();
+                  newConfig['entitySchema'] = entity.toJson();
+                  
+                  // Initialiser les colonnes par défaut
+                  newConfig['columns'] = entity.properties.map((prop) => {
+                    'key': prop.name,
+                    'label': {'en': prop.name, 'fr': prop.name},
+                    'alignment': _getDefaultAlignment(prop.type),
+                    'visible': true,
+                    'decimals': _isNumericType(prop.type) ? 0 : null,
+                  }).toList();
+                  
                   widget.onConfigurationChanged(newConfig);
-                  _initializeColumns();
+                  _initializeColumns();  // Mettre à jour l'interface
                 }
               },
             ),

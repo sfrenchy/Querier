@@ -83,6 +83,9 @@ class DraggableRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Calculer la somme des gridWidth
+    final totalGridWidth = row.cards.fold<int>(0, (sum, card) => sum + card.gridWidth);
+
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -133,13 +136,13 @@ class DraggableRow extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Zone de drop si espace disponible
-                if (row.cards.length < 12)
+                // Zone de drop uniquement si l'espace est disponible
+                if (totalGridWidth < 12)
                   ResponsiveGridCol(
                     xs: 12,
                     sm: 6,
-                    md: 12 - row.cards.length,
-                    lg: 12 - row.cards.length,
+                    md: 12 - totalGridWidth,
+                    lg: 12 - totalGridWidth,
                     child: DragTarget<String>(
                       onWillAccept: (data) {
                         print('DraggableRow onWillAccept: data=$data');
@@ -151,7 +154,7 @@ class DraggableRow extends StatelessWidget {
                           AddCardToRow(
                             row.id, 
                             cardData,
-                            gridWidth: 12 - row.cards.length,
+                            gridWidth: 12 - totalGridWidth,
                           ),
                         );
                       },
