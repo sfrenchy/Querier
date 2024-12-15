@@ -51,28 +51,64 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     if (state is DynamicPageLayoutLoaded) {
-      return ListView(
-        children: state.rows.map((row) {
-          return DraggableRow(
-            key: ValueKey(row.id),
-            row: row,
-            onEdit: () => _showRowProperties(context, row),
-            onDelete: () => _confirmDeleteRow(context, row),
-            onReorder: (oldIndex, newIndex) {
-              final rows = state.rows;
-              if (oldIndex < newIndex) {
-                newIndex -= 1;
-              }
-              final item = rows.removeAt(oldIndex);
-              rows.insert(newIndex, item);
+      return DragTarget<String>(
+        onWillAccept: (data) => data == 'row',
+        onAccept: (data) {
+          if (data == 'row') {
+            context.read<DynamicPageLayoutBloc>().add(AddRow(widget.pageId));
+          }
+        },
+        builder: (context, candidateData, rejectedData) {
+          return ListView(
+            children: [
+              // Liste des rows existantes d'abord
+              ...state.rows.map((row) {
+                return DraggableRow(
+                  key: ValueKey(row.id),
+                  row: row,
+                  onEdit: () => _showRowProperties(context, row),
+                  onDelete: () => _confirmDeleteRow(context, row),
+                  onReorder: (oldIndex, newIndex) {
+                    final rows = state.rows;
+                    if (oldIndex < newIndex) {
+                      newIndex -= 1;
+                    }
+                    final item = rows.removeAt(oldIndex);
+                    rows.insert(newIndex, item);
 
-              final rowIds = rows.map((r) => r.id).toList();
-              context.read<DynamicPageLayoutBloc>().add(
-                    ReorderRows(widget.pageId, rowIds),
-                  );
-            },
+                    final rowIds = rows.map((r) => r.id).toList();
+                    context.read<DynamicPageLayoutBloc>().add(
+                          ReorderRows(widget.pageId, rowIds),
+                        );
+                  },
+                );
+              }).toList(),
+              // Zone de drop à la fin
+              if (candidateData.isNotEmpty)
+                Container(
+                  height: 80,
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).primaryColor,
+                      width: 2,
+                      style: BorderStyle.solid,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(
+                      l10n.dropRowHere,
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           );
-        }).toList(),
+        },
       );
     }
     return Center(child: Text(l10n.dropRowHere));
@@ -141,6 +177,20 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
           return Scaffold(
             appBar: AppBar(
               title: Text(l10n.pageLayout),
+              actions: [
+                BlocBuilder<DynamicPageLayoutBloc, DynamicPageLayoutState>(
+                  builder: (context, state) {
+                    return IconButton(
+                      icon: const Icon(Icons.save),
+                      onPressed: state is DynamicPageLayoutSaving
+                          ? null
+                          : () => context.read<DynamicPageLayoutBloc>().add(
+                                SaveLayout(widget.pageId),
+                              ),
+                    );
+                  },
+                ),
+              ],
             ),
             body: Row(
               children: [

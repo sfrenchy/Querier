@@ -62,3 +62,12 @@ class DeleteRow extends DynamicPageLayoutEvent {
   @override
   List<Object> get props => [rowId];
 }
+
+class SaveLayout extends DynamicPageLayoutEvent {
+  final int pageId;
+
+  const SaveLayout(this.pageId);
+
+  @override
+  List<Object> get props => [pageId];
+}

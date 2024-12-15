@@ -28,67 +28,76 @@ class DraggableRow extends StatelessWidget {
         onReorder(oldIndex, newIndex);
       },
       builder: (context, candidateData, rejectedData) {
-        return Card(
-          child: Column(
-            children: [
-              ListTile(
-                leading: Draggable<DynamicRow>(
-                  data: row,
-                  feedback: Material(
-                    elevation: 4,
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.drag_indicator),
-                          const SizedBox(width: 16),
-                          Text(l10n.row(row.order)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.grab,
-                    child: const Icon(Icons.drag_indicator),
-                  ),
-                ),
-                title: Text(l10n.row(row.order)),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: onEdit,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: onDelete,
-                    ),
-                  ],
-                ),
-              ),
-              // Zone pour les cards
-              Container(
-                padding: const EdgeInsets.all(8),
+        return Container(
+          decoration: BoxDecoration(
+            border: candidateData.isNotEmpty
+                ? Border.all(
+                    color: Theme.of(context).primaryColor,
+                    width: 2,
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Draggable<DynamicRow>(
+            data: row,
+            feedback: Material(
+              elevation: 4,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.8,
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(4),
+                  color: Theme.of(context).cardColor.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
-                  mainAxisAlignment: row.alignment,
-                  crossAxisAlignment: row.crossAlignment,
                   children: [
-                    // Ici viendront les cards
-                    Text(l10n.dropCardsHere),
+                    const Icon(Icons.drag_indicator),
+                    const SizedBox(width: 16),
+                    Text(l10n.row(row.order)),
                   ],
                 ),
               ),
-            ],
+            ),
+            child: Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: MouseRegion(
+                      cursor: SystemMouseCursors.grab,
+                      child: const Icon(Icons.drag_indicator),
+                    ),
+                    title: Text(l10n.row(row.order)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: onEdit,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: onDelete,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: row.alignment,
+                      crossAxisAlignment: row.crossAlignment,
+                      children: [
+                        Text(l10n.dropCardsHere),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },

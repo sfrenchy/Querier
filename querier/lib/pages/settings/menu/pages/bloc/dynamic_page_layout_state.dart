@@ -29,3 +29,5 @@ class DynamicPageLayoutError extends DynamicPageLayoutState {
   @override
   List<Object> get props => [message];
 }
+
+class DynamicPageLayoutSaving extends DynamicPageLayoutState {}
