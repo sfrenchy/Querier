@@ -9,6 +9,7 @@ import 'package:querier/widgets/cards/card_header.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/pages/settings/menu/pages/bloc/dynamic_page_layout_event.dart';
 import 'package:querier/pages/settings/menu/pages/bloc/dynamic_page_layout_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DraggableRow extends StatelessWidget {
   final DynamicRow row;
@@ -91,17 +92,20 @@ class DraggableRow extends StatelessWidget {
   }
 
   void _showCardConfig(BuildContext context, DynamicCard card) {
+    final bloc = context.read<DynamicPageLayoutBloc>();
+    
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CardConfigScreen(
-          card: card,
-          onSave: (updatedCard) {
-            context.read<DynamicPageLayoutBloc>().add(
-              UpdateCard(row.id, updatedCard),
-            );
-            Navigator.pop(context);
-          },
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: CardConfigScreen(
+            card: card,
+            onSave: (updatedCard) {
+              bloc.add(UpdateCard(row.id, updatedCard));
+              Navigator.pop(context);
+            },
+          ),
         ),
       ),
     );
