@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:querier/models/dynamic_row.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/dynamic_page_layout_event.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/dynamic_page_layout_bloc.dart';
 
 class DraggableRow extends StatelessWidget {
   final DynamicRow row;
@@ -20,87 +23,81 @@ class DraggableRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return DragTarget<DynamicRow>(
-      onWillAccept: (data) => data != null && data.id != row.id,
-      onAccept: (data) {
-        final oldIndex = data.order - 1;
-        final newIndex = row.order - 1;
-        onReorder(oldIndex, newIndex);
-      },
-      builder: (context, candidateData, rejectedData) {
-        return Container(
-          decoration: BoxDecoration(
-            border: candidateData.isNotEmpty
-                ? Border.all(
-                    color: Theme.of(context).primaryColor,
-                    width: 2,
-                  )
-                : null,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Draggable<DynamicRow>(
-            data: row,
-            feedback: Material(
-              elevation: 4,
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.8,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.drag_indicator),
-                    const SizedBox(width: 16),
-                    Text(l10n.row(row.order)),
-                  ],
-                ),
-              ),
+    return Card(
+      child: Column(
+        children: [
+          ListTile(
+            leading: MouseRegion(
+              cursor: SystemMouseCursors.grab,
+              child: const Icon(Icons.drag_indicator),
             ),
-            child: Card(
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: MouseRegion(
-                      cursor: SystemMouseCursors.grab,
-                      child: const Icon(Icons.drag_indicator),
-                    ),
-                    title: Text(l10n.row(row.order)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: onEdit,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: onDelete,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: row.alignment,
-                      crossAxisAlignment: row.crossAlignment,
-                      children: [
-                        Text(l10n.dropCardsHere),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            title: Text(l10n.row(row.order)),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: onEdit,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: onDelete,
+                ),
+              ],
             ),
           ),
-        );
-      },
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: DragTarget<Object>(
+              onWillAccept: (data) => data is String && data == 'placeholder',
+              onAccept: (data) {
+                if (data is String && data == 'placeholder') {
+                  context
+                      .read<DynamicPageLayoutBloc>()
+                      .add(AddCard(row.id, data));
+                }
+              },
+              builder: (context, candidateData, rejectedData) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: candidateData.isNotEmpty
+                          ? Theme.of(context).primaryColor
+                          : Colors.grey.shade300,
+                      width: candidateData.isNotEmpty ? 2 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    color: candidateData.isNotEmpty
+                        ? Theme.of(context).primaryColor.withOpacity(0.1)
+                        : null,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: row.alignment,
+                    crossAxisAlignment: row.crossAlignment,
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            candidateData.isNotEmpty
+                                ? l10n.dropCardHere
+                                : l10n.dropCardsHere,
+                            style: TextStyle(
+                              color: candidateData.isNotEmpty
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

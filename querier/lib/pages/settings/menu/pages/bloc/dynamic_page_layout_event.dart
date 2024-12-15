@@ -71,3 +71,13 @@ class SaveLayout extends DynamicPageLayoutEvent {
   @override
   List<Object> get props => [pageId];
 }
+
+class AddCard extends DynamicPageLayoutEvent {
+  final int rowId;
+  final String cardType;
+
+  const AddCard(this.rowId, this.cardType);
+
+  @override
+  List<Object> get props => [rowId, cardType];
+}

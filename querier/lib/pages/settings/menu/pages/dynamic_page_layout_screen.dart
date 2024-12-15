@@ -291,34 +291,40 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                                 Draggable<String>(
                                   data: 'placeholder',
                                   feedback: Material(
+                                    elevation: 4,
                                     child: Container(
                                       padding: const EdgeInsets.all(16.0),
-                                      child: const Text('Placeholder Card'),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).cardColor,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(l10n.placeholderCard),
                                     ),
                                   ),
                                   childWhenDragging: Container(),
                                   child: Container(
                                     height: 48,
+                                    constraints:
+                                        const BoxConstraints(minWidth: 48),
                                     margin: const EdgeInsets.symmetric(
                                         horizontal: 4.0),
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: _isExpanded ? 8.0 : 8.0,
-                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 4.0),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(4),
                                       color: Theme.of(context).hoverColor,
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: _isExpanded
-                                          ? MainAxisAlignment.start
-                                          : MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        const Icon(Icons.widgets),
+                                        const Icon(Icons.widgets, size: 20),
                                         if (_isExpanded) ...[
                                           const SizedBox(width: 8),
-                                          Flexible(
+                                          Expanded(
                                             child: Text(
-                                              'Placeholder Card',
+                                              l10n.placeholderCard,
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
