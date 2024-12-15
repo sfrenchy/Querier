@@ -25,6 +25,35 @@ class DraggableRow extends StatelessWidget {
     required this.onAcceptCard,
   }) : super(key: key);
 
+  Future<void> _confirmDeleteCard(BuildContext context, DynamicCard card) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteCard),
+        content: Text(l10n.deleteCardConfirmation),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      if (context.mounted) {
+        context.read<DynamicPageLayoutBloc>().add(
+          DeleteCard(row.id, card.id),
+        );
+      }
+    }
+  }
+
   Widget _buildCard(BuildContext context, DynamicCard card) {
     return Draggable<int>(
       data: card.id,
@@ -35,11 +64,7 @@ class DraggableRow extends StatelessWidget {
           child: CardSelector(
             card: card,
             onEdit: () {},
-            onDelete: () {
-              context.read<DynamicPageLayoutBloc>().add(
-                DeleteCard(row.id, card.id),
-              );
-            },
+            onDelete: () => _confirmDeleteCard(context, card),
           ),
         ),
       ),
@@ -52,11 +77,7 @@ class DraggableRow extends StatelessWidget {
         child: CardSelector(
           card: card,
           onEdit: () {},
-          onDelete: () {
-            context.read<DynamicPageLayoutBloc>().add(
-              DeleteCard(row.id, card.id),
-            );
-          },
+          onDelete: () => _confirmDeleteCard(context, card),
         ),
       ),
     );

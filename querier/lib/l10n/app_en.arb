@@ -207,5 +207,9 @@
             }
         }
     },
-    "placeholderCard": "Placeholder Card"
+    "placeholderCard": "Placeholder Card",
+    "deleteCard": "Delete Card",
+    "deleteCardConfirmation": "Are you sure you want to delete this card?",
+    "cancel": "Cancel",
+    "delete": "Delete"
 } 

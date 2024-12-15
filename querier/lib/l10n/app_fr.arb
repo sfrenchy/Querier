@@ -206,5 +206,9 @@
             }
         }
     },
-    "placeholderCard": "Carte de base"
+    "placeholderCard": "Carte de base",
+    "deleteCard": "Supprimer la carte",
+    "deleteCardConfirmation": "Êtes-vous sûr de vouloir supprimer cette carte ?",
+    "cancel": "Annuler",
+    "delete": "Supprimer"
 } 
