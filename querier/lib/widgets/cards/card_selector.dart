@@ -3,6 +3,8 @@ import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/models/cards/placeholder_card.dart';
 import 'package:querier/widgets/cards/placeholder_card_config.dart';
 import 'package:querier/widgets/cards/placeholder_card_widget.dart';
+import 'package:querier/models/cards/table_card.dart';
+import 'package:querier/widgets/cards/table_card_widget.dart';
 
 class CardSelector extends StatelessWidget {
   final DynamicCard card;
@@ -39,6 +41,21 @@ class CardSelector extends StatelessWidget {
           );
         }
         return null;
+      case 'Table':
+        if (onConfigurationChanged != null) {
+          final tableCard = TableCard(
+            id: card.id,
+            titles: card.titles,
+            order: card.order,
+            gridWidth: card.gridWidth,
+            backgroundColor: card.backgroundColor,
+            textColor: card.textColor,
+            configuration: card.configuration,
+          );
+          // TODO: Ajouter TableCardConfig quand il sera créé
+          return null;
+        }
+        return null;
       default:
         return null;
     }
@@ -59,6 +76,22 @@ class CardSelector extends StatelessWidget {
         );
         return PlaceholderCardWidget(
           card: placeholderCard,
+          onEdit: onEdit,
+          onDelete: onDelete,
+          dragHandle: dragHandle,
+        );
+      case 'Table':
+        final tableCard = TableCard(
+          id: card.id,
+          titles: card.titles,
+          order: card.order,
+          gridWidth: card.gridWidth,
+          backgroundColor: card.backgroundColor,
+          textColor: card.textColor,
+          configuration: card.configuration,
+        );
+        return TableCardWidget(
+          card: tableCard,
           onEdit: onEdit,
           onDelete: onDelete,
           dragHandle: dragHandle,

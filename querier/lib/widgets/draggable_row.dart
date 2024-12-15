@@ -136,13 +136,17 @@ class DraggableRow extends StatelessWidget {
                 md: availableWidth,
                 lg: availableWidth,
                 child: DragTarget<String>(
-                  onWillAccept: (data) => data == 'placeholder',
-                  onAccept: (data) {
+                  onWillAccept: (data) {
+                    print('DraggableRow onWillAccept: data=$data');
+                    return data == 'placeholder' || data == 'Table';
+                  },
+                  onAccept: (cardData) {
+                    print('DraggableRow onAcceptCard: cardData=$cardData');
                     context.read<DynamicPageLayoutBloc>().add(
                       AddCardToRow(
                         row.id, 
-                        data,
-                        gridWidth: availableWidth,  // Passer la largeur disponible
+                        cardData,
+                        gridWidth: availableWidth,
                       ),
                     );
                   },

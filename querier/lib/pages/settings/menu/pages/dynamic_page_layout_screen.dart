@@ -280,92 +280,24 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                                     const Divider(height: 1),
                                   const SizedBox(height: 8),
                                   // Row draggable
-                                  Draggable<String>(
-                                    data: 'row',
-                                    feedback: Material(
-                                      child: Container(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: Text(l10n.newRow),
-                                      ),
-                                    ),
-                                    childWhenDragging: Container(),
-                                    child: Container(
-                                      height: 48,
-                                      margin: const EdgeInsets.symmetric(
-                                          horizontal: 4.0),
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: _isExpanded ? 8.0 : 8.0,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(4),
-                                        color: Theme.of(context).hoverColor,
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment: _isExpanded
-                                            ? MainAxisAlignment.start
-                                            : MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(Icons.table_rows, size: 20),
-                                          if (_isExpanded) ...[
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                l10n.newRow,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
+                                  _buildDraggableComponent(
+                                    'row',
+                                    Icons.table_rows,
+                                    l10n.newRow,
                                   ),
                                   const SizedBox(height: 8),
                                   // PlaceholderCard draggable
-                                  Draggable<String>(
-                                    data: 'placeholder',
-                                    feedback: Material(
-                                      elevation: 4,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(16.0),
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(context).cardColor,
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Text(l10n.placeholderCard),
-                                      ),
-                                    ),
-                                    childWhenDragging: Container(),
-                                    child: Container(
-                                      height: 48,
-                                      constraints:
-                                          const BoxConstraints(minWidth: 48),
-                                      margin: const EdgeInsets.symmetric(
-                                          horizontal: 4.0),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 4.0),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(4),
-                                        color: Theme.of(context).hoverColor,
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(Icons.widgets, size: 20),
-                                          if (_isExpanded) ...[
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                l10n.placeholderCard,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
+                                  _buildDraggableComponent(
+                                    'placeholder',
+                                    Icons.widgets,
+                                    l10n.placeholderCard,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // TableCard draggable
+                                  _buildDraggableComponent(
+                                    'Table',
+                                    Icons.table_chart,
+                                    l10n.tableCard,
                                   ),
                                 ],
                               ),
@@ -459,6 +391,50 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
           }
           return const Center(child: CircularProgressIndicator());
         },
+      ),
+    );
+  }
+
+  Widget _buildDraggableComponent(String type, IconData icon, String label) {
+    print('Building draggable component: type=$type');
+    return Draggable<String>(
+      data: type,
+      feedback: Material(
+        elevation: 4,
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(label),
+        ),
+      ),
+      childWhenDragging: Container(),
+      child: Container(
+        height: 48,
+        margin: const EdgeInsets.symmetric(horizontal: 4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(4),
+          color: Theme.of(context).hoverColor,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: _isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20),
+            if (_isExpanded) ...[
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

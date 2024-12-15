@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/models/cards/placeholder_card.dart';
+import 'package:querier/models/cards/table_card.dart';
 import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/models/dynamic_row.dart';
 import 'package:querier/models/layout.dart';
@@ -93,16 +94,36 @@ class DynamicPageLayoutBloc
   }
 
   Future<void> _onAddCard(AddCardToRow event, Emitter<DynamicPageLayoutState> emit) async {
+    print('_onAddCard: rowId=${event.rowId}, cardType=${event.cardType}');
     if (state is DynamicPageLayoutLoaded) {
       final currentState = state as DynamicPageLayoutLoaded;
       final row = currentState.rows.firstWhere((r) => r.id == event.rowId);
       
-      final newCard = PlaceholderCard(
-        id: -(row.cards.length + 1),
-        titles: const {'en': 'New Card', 'fr': 'Nouvelle Carte'},
-        order: row.cards.length + 1,
-        gridWidth: event.gridWidth,
-      );
+      DynamicCard newCard;
+      print('Creating card of type: ${event.cardType}');
+      switch (event.cardType) {
+        case 'placeholder':
+          print('Creating PlaceholderCard');
+          newCard = PlaceholderCard(
+            id: -(row.cards.length + 1),
+            titles: const {'en': 'New Card', 'fr': 'Nouvelle Carte'},
+            order: row.cards.length + 1,
+            gridWidth: event.gridWidth,
+          );
+          break;
+        case 'Table':
+          print('Creating TableCard');
+          newCard = TableCard(
+            id: -(row.cards.length + 1),
+            titles: const {'en': 'New Table', 'fr': 'Nouveau Tableau'},
+            order: row.cards.length + 1,
+            gridWidth: event.gridWidth,
+          );
+          break;
+        default:
+          print('Unknown card type: ${event.cardType}');
+          throw Exception('Unknown card type: ${event.cardType}');
+      }
 
       final updatedRows = currentState.rows.map((r) => 
         r.id == event.rowId 
