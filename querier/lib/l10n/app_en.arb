@@ -214,5 +214,7 @@
     "delete": "Delete",
     "backgroundColor": "Background Color",
     "textColor": "Text Color",
-    "cardLabel": "Label"
+    "cardLabel": "Label",
+    "gridWidth": "Grid Width",
+    "gridWidthHint": "1 = very narrow, 12 = full width"
 } 

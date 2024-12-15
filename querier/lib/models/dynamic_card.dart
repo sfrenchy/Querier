@@ -1,6 +1,9 @@
 import 'package:querier/models/cards/base_card.dart';
 
 class DynamicCard extends BaseCard {
+  final int gridWidth;
+  final int? backgroundColor;
+  final int? textColor;
   final Map<String, dynamic> configuration;
 
   const DynamicCard({
@@ -8,12 +11,9 @@ class DynamicCard extends BaseCard {
     required super.titles,
     required super.order,
     required super.type,
-    super.height,
-    super.width,
-    super.useAvailableWidth,
-    super.useAvailableHeight,
-    super.backgroundColor,
-    super.textColor,
+    this.gridWidth = 12,
+    this.backgroundColor,
+    this.textColor,
     this.configuration = const {},
   });
 
@@ -26,10 +26,7 @@ class DynamicCard extends BaseCard {
       titles: Map<String, String>.from(json['Titles']),
       order: json['Order'],
       type: json['Type'],
-      height: json['Height'],
-      width: json['Width'],
-      useAvailableWidth: json['UseAvailableWidth'] ?? true,
-      useAvailableHeight: json['UseAvailableHeight'] ?? true,
+      gridWidth: json['GridWidth'] ?? 12,
       backgroundColor: json['BackgroundColor'],
       textColor: json['TextColor'],
       configuration: Map<String, dynamic>.from(json['Configuration'] ?? {}),
@@ -41,10 +38,7 @@ class DynamicCard extends BaseCard {
     Map<String, String>? titles,
     int? order,
     String? type,
-    double? height,
-    double? width,
-    bool? useAvailableWidth,
-    bool? useAvailableHeight,
+    int? gridWidth,
     int? backgroundColor,
     int? textColor,
     Map<String, dynamic>? configuration,
@@ -54,10 +48,7 @@ class DynamicCard extends BaseCard {
       titles: titles ?? this.titles,
       order: order ?? this.order,
       type: type ?? this.type,
-      height: height ?? this.height,
-      width: width ?? this.width,
-      useAvailableWidth: useAvailableWidth ?? this.useAvailableWidth,
-      useAvailableHeight: useAvailableHeight ?? this.useAvailableHeight,
+      gridWidth: gridWidth ?? this.gridWidth,
       backgroundColor: backgroundColor ?? this.backgroundColor,
       textColor: textColor ?? this.textColor,
       configuration: configuration ?? this.configuration,

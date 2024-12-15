@@ -213,5 +213,7 @@
     "delete": "Supprimer",
     "backgroundColor": "Couleur de fond",
     "textColor": "Couleur du texte",
-    "cardLabel": "Libellé"
+    "cardLabel": "Libellé",
+    "gridWidth": "Largeur de grille",
+    "gridWidthHint": "1 = très étroit, 12 = pleine largeur"
 } 

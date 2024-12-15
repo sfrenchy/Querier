@@ -99,8 +99,9 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                         );
                   },
                   onAcceptCard: (cardData) {
+                    final availableWidth = 12 - entry.value.cards.length;
                     context.read<DynamicPageLayoutBloc>().add(
-                      AddCardToRow(entry.value.id, cardData),
+                      AddCardToRow(entry.value.id, cardData, gridWidth: availableWidth),
                     );
                   },
                   onReorderCards: (rowId, oldIndex, newIndex) {
@@ -121,29 +122,27 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
               }
             },
             builder: (context, candidateData, rejectedData) {
-              if (candidateData.isNotEmpty)
-                return Container(
-                  height: 80,
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: Border.all(
+              return Container(
+                height: 80,
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: candidateData.isNotEmpty 
+                      ? Theme.of(context).primaryColor 
+                      : Colors.grey.shade300,
+                    width: candidateData.isNotEmpty ? 2 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: Text(
+                    l10n.dropRowHere,
+                    style: TextStyle(
                       color: Theme.of(context).primaryColor,
-                      width: 2,
-                      style: BorderStyle.solid,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                    child: Text(
-                      l10n.dropRowHere,
-                      style: TextStyle(
-                        color: Theme.of(context).primaryColor,
-                        fontSize: 16,
-                      ),
                     ),
                   ),
-                );
-              return const SizedBox(height: 80);
+                ),
+              );
             },
           ),
         ],
@@ -203,202 +202,262 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
     return BlocProvider(
       create: (context) => DynamicPageLayoutBloc(context.read<ApiClient>())
         ..add(LoadPageLayout(widget.pageId)),
-      child: BlocConsumer<DynamicPageLayoutBloc, DynamicPageLayoutState>(
-        listener: (context, state) {
-          if (state is DynamicPageLayoutError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-          }
-        },
+      child: BlocBuilder<DynamicPageLayoutBloc, DynamicPageLayoutState>(
         builder: (context, state) {
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(l10n.pageLayout),
-              actions: [
-                if (state is DynamicPageLayoutLoaded && state.isDirty)
+          if (state is DynamicPageLayoutLoaded) {
+            return Scaffold(
+              appBar: AppBar(
+                title: Text(l10n.pageLayout),
+                actions: [
+                  if (state is DynamicPageLayoutLoaded && state.isDirty)
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () => context.read<DynamicPageLayoutBloc>()
+                        .add(ReloadPageLayout(widget.pageId)),
+                    ),
                   IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () => context.read<DynamicPageLayoutBloc>()
-                      .add(ReloadPageLayout(widget.pageId)),
+                    icon: const Icon(Icons.save),
+                    onPressed: state is DynamicPageLayoutSaving
+                        ? null
+                        : () => context.read<DynamicPageLayoutBloc>().add(
+                              SaveLayout(widget.pageId),
+                            ),
                   ),
-                IconButton(
-                  icon: const Icon(Icons.save),
-                  onPressed: state is DynamicPageLayoutSaving
-                      ? null
-                      : () => context.read<DynamicPageLayoutBloc>().add(
-                            SaveLayout(widget.pageId),
-                          ),
-                ),
-              ],
-            ),
-            body: Row(
-              children: [
-                // Menu latéral repliable
-                MouseRegion(
-                  onEnter: (_) {
-                    setState(() {
-                      _isExpanded = true;
-                    });
-                  },
-                  onExit: (_) {
-                    _startCollapseTimer();
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: _isExpanded ? 250 : 70,
-                    child: Card(
-                      margin: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          // Bouton Pin
-                          IconButton(
-                            icon: Icon(
-                              _isPinned
-                                  ? Icons.push_pin
-                                  : Icons.push_pin_outlined,
-                              color: _isPinned ? Colors.blue : null,
+                ],
+              ),
+              body: Row(
+                children: [
+                  // Menu latéral repliable
+                  MouseRegion(
+                    onEnter: (_) {
+                      setState(() {
+                        _isExpanded = true;
+                      });
+                    },
+                    onExit: (_) {
+                      _startCollapseTimer();
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: _isExpanded ? 250 : 70,
+                      child: Card(
+                        margin: const EdgeInsets.all(8.0),
+                        child: Column(
+                          children: [
+                            // Bouton Pin
+                            IconButton(
+                              icon: Icon(
+                                _isPinned
+                                    ? Icons.push_pin
+                                    : Icons.push_pin_outlined,
+                                color: _isPinned ? Colors.blue : null,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPinned = !_isPinned;
+                                  if (_isPinned) {
+                                    _isExpanded = true;
+                                    _collapseTimer?.cancel();
+                                  } else {
+                                    _startCollapseTimer();
+                                  }
+                                });
+                              },
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _isPinned = !_isPinned;
-                                if (_isPinned) {
-                                  _isExpanded = true;
-                                  _collapseTimer?.cancel();
-                                } else {
-                                  _startCollapseTimer();
-                                }
-                              });
-                            },
-                          ),
-                          Expanded(
-                            child: ListView(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              children: [
-                                // Section Composants
-                                if (_isExpanded)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16.0),
-                                    child: Text(l10n.components),
-                                  )
-                                else
-                                  const Divider(height: 1),
-                                const SizedBox(height: 8),
-                                // Row draggable
-                                Draggable<String>(
-                                  data: 'row',
-                                  feedback: Material(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Text(l10n.newRow),
-                                    ),
-                                  ),
-                                  childWhenDragging: Container(),
-                                  child: Container(
-                                    height: 48,
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 4.0),
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: _isExpanded ? 8.0 : 8.0,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(4),
-                                      color: Theme.of(context).hoverColor,
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: _isExpanded
-                                          ? MainAxisAlignment.start
-                                          : MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(Icons.table_rows, size: 20),
-                                        if (_isExpanded) ...[
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              l10n.newRow,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                // PlaceholderCard draggable
-                                Draggable<String>(
-                                  data: 'placeholder',
-                                  feedback: Material(
-                                    elevation: 4,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16.0),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).cardColor,
-                                        borderRadius: BorderRadius.circular(8),
+                            Expanded(
+                              child: ListView(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8.0),
+                                children: [
+                                  // Section Composants
+                                  if (_isExpanded)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16.0),
+                                      child: Text(l10n.components),
+                                    )
+                                  else
+                                    const Divider(height: 1),
+                                  const SizedBox(height: 8),
+                                  // Row draggable
+                                  Draggable<String>(
+                                    data: 'row',
+                                    feedback: Material(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Text(l10n.newRow),
                                       ),
-                                      child: Text(l10n.placeholderCard),
+                                    ),
+                                    childWhenDragging: Container(),
+                                    child: Container(
+                                      height: 48,
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 4.0),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: _isExpanded ? 8.0 : 8.0,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(4),
+                                        color: Theme.of(context).hoverColor,
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: _isExpanded
+                                            ? MainAxisAlignment.start
+                                            : MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(Icons.table_rows, size: 20),
+                                          if (_isExpanded) ...[
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                l10n.newRow,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                  childWhenDragging: Container(),
-                                  child: Container(
-                                    height: 48,
-                                    constraints:
-                                        const BoxConstraints(minWidth: 48),
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 4.0),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4.0),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(4),
-                                      color: Theme.of(context).hoverColor,
+                                  const SizedBox(height: 8),
+                                  // PlaceholderCard draggable
+                                  Draggable<String>(
+                                    data: 'placeholder',
+                                    feedback: Material(
+                                      elevation: 4,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16.0),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).cardColor,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(l10n.placeholderCard),
+                                      ),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(Icons.widgets, size: 20),
-                                        if (_isExpanded) ...[
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              l10n.placeholderCard,
-                                              overflow: TextOverflow.ellipsis,
+                                    childWhenDragging: Container(),
+                                    child: Container(
+                                      height: 48,
+                                      constraints:
+                                          const BoxConstraints(minWidth: 48),
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 4.0),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 4.0),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(4),
+                                        color: Theme.of(context).hoverColor,
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(Icons.widgets, size: 20),
+                                          if (_isExpanded) ...[
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                l10n.placeholderCard,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
-                                          ),
+                                          ],
                                         ],
-                                      ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Zone de contenu principal
+                  Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: ListView(
+                        children: [
+                          ...state.rows.map((row) => DraggableRow(
+                            key: ValueKey(row.id),
+                            row: row,
+                            onEdit: () => _showRowProperties(context, row),
+                            onDelete: () => _confirmDeleteRow(context, row),
+                            onReorder: (oldIndex, newIndex) {
+                              final rows = state.rows;
+                              if (oldIndex < newIndex) {
+                                newIndex -= 1;
+                              }
+                              final item = rows.removeAt(oldIndex);
+                              rows.insert(newIndex, item);
+
+                              final rowIds = rows.map((r) => r.id).toList();
+                              context.read<DynamicPageLayoutBloc>().add(
+                                    ReorderRows(widget.pageId, rowIds),
+                                  );
+                            },
+                            onAcceptCard: (cardData) {
+                              final availableWidth = 12 - row.cards.length;
+                              context.read<DynamicPageLayoutBloc>().add(
+                                AddCardToRow(row.id, cardData, gridWidth: availableWidth),
+                              );
+                            },
+                            onReorderCards: (rowId, oldIndex, newIndex) {
+                              context.read<DynamicPageLayoutBloc>().add(
+                                ReorderCardsInRow(rowId, oldIndex, newIndex),
+                              );
+                            },
+                          )),
+                          // Zone de drop pour nouvelle row
+                          DragTarget<String>(
+                            onWillAccept: (data) => data == 'row',
+                            onAccept: (data) {
+                              context.read<DynamicPageLayoutBloc>()
+                                .add(AddRow(widget.pageId));
+                            },
+                            builder: (context, candidateData, rejectedData) {
+                              return Container(
+                                height: 80,
+                                margin: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: candidateData.isNotEmpty 
+                                      ? Theme.of(context).primaryColor 
+                                      : Colors.grey.shade300,
+                                    width: candidateData.isNotEmpty ? 2 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    l10n.dropRowHere,
+                                    style: TextStyle(
+                                      color: Theme.of(context).primaryColor,
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
                         ],
                       ),
                     ),
                   ),
-                ),
-                // Zone de contenu principal
-                Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey.shade300,
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: _buildMainContent(context, state),
-                  ),
-                ),
-              ],
-            ),
-          );
+                ],
+              ),
+            );
+          }
+          return const Center(child: CircularProgressIndicator());
         },
       ),
     );

@@ -81,27 +81,95 @@ class DraggableRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ResponsiveGridRow(
-      children: row.cards.map((card) => 
-        ResponsiveGridCol(
-          xs: 12,    // Pleine largeur sur très petit écran
-          sm: 6,     // Demi largeur sur petit écran
-          md: card.useAvailableWidth ? 12 : 6,  // Adaptatif selon useAvailableWidth
-          lg: card.useAvailableWidth ? 12 : 4,  // Adaptatif selon useAvailableWidth
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CardSelector(
-              card: card,
-              onEdit: () => _showCardConfig(context, card),
-              onDelete: () => _confirmDeleteCard(context, card),
-              dragHandle: MouseRegion(
-                cursor: SystemMouseCursors.grab,
-                child: const Icon(Icons.drag_handle),
+    // Calculer l'espace disponible
+    int usedWidth = row.cards.fold(0, (sum, card) => sum + card.gridWidth);
+    int availableWidth = 12 - usedWidth;
+
+    return Draggable<DynamicRow>(
+      data: row,
+      feedback: Material(
+        elevation: 4,
+        child: Container(
+          width: 500,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text('Row ${row.order}'),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.grey.shade300,
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: ResponsiveGridRow(
+          children: [
+            // Afficher les cartes existantes
+            ...row.cards.map((card) => 
+              ResponsiveGridCol(
+                xs: 12,
+                sm: 6,
+                md: card.gridWidth,
+                lg: card.gridWidth,
+                child: CardSelector(
+                  card: card,
+                  onEdit: () => _showCardConfig(context, card),
+                  onDelete: () => _confirmDeleteCard(context, card),
+                  dragHandle: MouseRegion(
+                    cursor: SystemMouseCursors.grab,
+                    child: const Icon(Icons.drag_handle),
+                  ),
+                ),
               ),
             ),
-          ),
+            // Zone de drop si espace disponible
+            if (availableWidth > 0)
+              ResponsiveGridCol(
+                xs: 12,
+                sm: 6,
+                md: availableWidth,
+                lg: availableWidth,
+                child: DragTarget<String>(
+                  onWillAccept: (data) => data == 'placeholder',
+                  onAccept: (data) {
+                    context.read<DynamicPageLayoutBloc>().add(
+                      AddCardToRow(
+                        row.id, 
+                        data,
+                        gridWidth: availableWidth,  // Passer la largeur disponible
+                      ),
+                    );
+                  },
+                  builder: (context, candidateData, rejectedData) {
+                    return Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: candidateData.isNotEmpty 
+                            ? Theme.of(context).primaryColor 
+                            : Colors.grey.shade300,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          AppLocalizations.of(context)!.dropCardsHere,
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
         ),
-      ).toList(),
+      ),
     );
   }
 }

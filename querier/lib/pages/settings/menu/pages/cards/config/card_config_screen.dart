@@ -25,10 +25,7 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
   late Map<String, String> titles;
   Color? backgroundColor;
   Color? textColor;
-  bool useAvailableWidth = true;
-  bool useAvailableHeight = true;
-  double? width;
-  double? height;
+  int? gridWidth;
   late Map<String, dynamic> configuration;
   
   // Ajout des états d'expansion
@@ -44,10 +41,7 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
     textColor = widget.card.textColor != null 
       ? Color(widget.card.textColor!) 
       : null;
-    useAvailableWidth = widget.card.useAvailableWidth;
-    useAvailableHeight = widget.card.useAvailableHeight;
-    width = widget.card.width;
-    height = widget.card.height;
+    gridWidth = widget.card.gridWidth;
     configuration = Map.from(widget.card.configuration);
   }
 
@@ -56,10 +50,7 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
       titles: titles,
       backgroundColor: backgroundColor?.value,
       textColor: textColor?.value,
-      useAvailableWidth: useAvailableWidth,
-      useAvailableHeight: useAvailableHeight,
-      width: width,
-      height: height,
+      gridWidth: gridWidth,
       configuration: configuration,
     );
     widget.onSave(updatedCard);
@@ -165,47 +156,30 @@ class _CardConfigScreenState extends State<CardConfigScreen> {
               body: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SwitchListTile(
-                      title: Text(l10n.useAvailableWidth),
-                      value: useAvailableWidth,
-                      onChanged: (value) {
-                        setState(() => useAvailableWidth = value);
-                      },
-                    ),
-                    if (!useAvailableWidth)
-                      TextFormField(
-                        decoration: InputDecoration(
-                          labelText: l10n.cardWidth,
+                    Row(
+                      children: [
+                        Text('${l10n.gridWidth}: ${gridWidth ?? 12}'),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Slider(
+                            value: (gridWidth ?? 12).toDouble(),
+                            min: 1,
+                            max: 12,
+                            divisions: 11,
+                            label: '${gridWidth ?? 12}',
+                            onChanged: (value) {
+                              setState(() => gridWidth = value.round());
+                            },
+                          ),
                         ),
-                        initialValue: width?.toString(),
-                        keyboardType: TextInputType.number,
-                        onChanged: (value) {
-                          setState(() {
-                            width = double.tryParse(value);
-                          });
-                        },
-                      ),
-                    SwitchListTile(
-                      title: Text(l10n.useAvailableHeight),
-                      value: useAvailableHeight,
-                      onChanged: (value) {
-                        setState(() => useAvailableHeight = value);
-                      },
+                      ],
                     ),
-                    if (!useAvailableHeight)
-                      TextFormField(
-                        decoration: InputDecoration(
-                          labelText: l10n.cardHeight,
-                        ),
-                        initialValue: height?.toString(),
-                        keyboardType: TextInputType.number,
-                        onChanged: (value) {
-                          setState(() {
-                            height = double.tryParse(value);
-                          });
-                        },
-                      ),
+                    Text(
+                      l10n.gridWidthHint,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ),

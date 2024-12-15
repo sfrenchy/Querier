@@ -11,38 +11,74 @@ import 'dynamic_page_layout_state.dart';
 class DynamicPageLayoutBloc
     extends Bloc<DynamicPageLayoutEvent, DynamicPageLayoutState> {
   final ApiClient _apiClient;
-  Layout? _currentLayout;
 
   DynamicPageLayoutBloc(this._apiClient) : super(DynamicPageLayoutInitial()) {
     on<LoadPageLayout>(_onLoadPageLayout);
     on<AddRow>(_onAddRow);
-    on<ReorderRows>(_onReorderRows);
-    on<DeleteRow>(_onDeleteRow);
-    on<UpdateRowProperties>(_onUpdateRowProperties);
-    on<SaveLayout>(_onSaveLayout);
     on<AddCardToRow>(_onAddCard);
-    on<DeleteCard>(_onDeleteCard);
-    on<ReloadPageLayout>(_onReloadPageLayout);
     on<UpdateCard>(_onUpdateCard);
+    on<SaveLayout>(_onSaveLayout);
   }
 
-  Future<void> _onLoadPageLayout(
-      LoadPageLayout event, Emitter<DynamicPageLayoutState> emit) async {
+  Future<void> _onUpdateCard(UpdateCard event, Emitter<DynamicPageLayoutState> emit) async {
+    if (state is DynamicPageLayoutLoaded) {
+      final currentState = state as DynamicPageLayoutLoaded;
+      final updatedRows = currentState.rows.map((row) {
+        if (row.id == event.rowId) {
+          final updatedCards = row.cards.map((card) {
+            if (card.id == event.card.id) {
+              return event.card;
+            }
+            return card;
+          }).toList();
+          return row.copyWith(cards: updatedCards);
+        }
+        return row;
+      }).toList();
+
+      emit(DynamicPageLayoutLoaded(updatedRows, isDirty: true));
+    }
+  }
+
+  Future<void> _onSaveLayout(SaveLayout event, Emitter<DynamicPageLayoutState> emit) async {
+    if (state is DynamicPageLayoutLoaded) {
+      try {
+        final currentState = state as DynamicPageLayoutLoaded;
+        emit(DynamicPageLayoutSaving());
+        
+        final layout = Layout(
+          pageId: event.pageId,
+          rows: currentState.rows,
+          icon: 'dashboard',
+          names: const {'en': 'Page Layout', 'fr': 'Mise en page'},
+          isVisible: true,
+          roles: const ['User'],
+          route: '/layout',
+        );
+        
+        await _apiClient.updateLayout(event.pageId, layout);
+        emit(DynamicPageLayoutLoaded(currentState.rows, isDirty: false));
+      } catch (e) {
+        emit(DynamicPageLayoutError(e.toString()));
+      }
+    }
+  }
+
+  Future<void> _onLoadPageLayout(LoadPageLayout event, Emitter<DynamicPageLayoutState> emit) async {
     emit(DynamicPageLayoutLoading());
     try {
-      _currentLayout = await _apiClient.getLayout(event.pageId);
-      emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
+      final layout = await _apiClient.getLayout(event.pageId);
+      emit(DynamicPageLayoutLoaded(layout.rows));
     } catch (e) {
       emit(DynamicPageLayoutError(e.toString()));
     }
   }
 
-  Future<void> _onAddRow(
-      AddRow event, Emitter<DynamicPageLayoutState> emit) async {
-    if (_currentLayout != null && state is DynamicPageLayoutLoaded) {
+  Future<void> _onAddRow(AddRow event, Emitter<DynamicPageLayoutState> emit) async {
+    if (state is DynamicPageLayoutLoaded) {
       final currentState = state as DynamicPageLayoutLoaded;
       final newRow = DynamicRow(
-        id: -(_currentLayout!.rows.length + 1),
+        id: -(currentState.rows.length + 1),
         pageId: event.pageId,
         order: currentState.rows.length + 1,
         alignment: MainAxisAlignment.start,
@@ -51,184 +87,30 @@ class DynamicPageLayoutBloc
         cards: const [],
       );
 
-      _currentLayout = _currentLayout!.copyWith(
-        rows: [..._currentLayout!.rows, newRow],
+      final updatedRows = [...currentState.rows, newRow];
+      emit(DynamicPageLayoutLoaded(updatedRows, isDirty: true));
+    }
+  }
+
+  Future<void> _onAddCard(AddCardToRow event, Emitter<DynamicPageLayoutState> emit) async {
+    if (state is DynamicPageLayoutLoaded) {
+      final currentState = state as DynamicPageLayoutLoaded;
+      final row = currentState.rows.firstWhere((r) => r.id == event.rowId);
+      
+      final newCard = PlaceholderCard(
+        id: -(row.cards.length + 1),
+        titles: const {'en': 'New Card', 'fr': 'Nouvelle Carte'},
+        order: row.cards.length + 1,
+        gridWidth: event.gridWidth,
       );
-      emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
-    }
-  }
 
-  Future<void> _onReorderRows(
-      ReorderRows event, Emitter<DynamicPageLayoutState> emit) async {
-    if (_currentLayout != null) {
-      try {
-        print('_onReorderRows: Starting reorder');
-        print('Before reorder: ${_currentLayout!.rows.map((r) => r.id).toList()}');
-        
-        // Créer une nouvelle liste de rows dans le bon ordre
-        final newRows = List<DynamicRow>.from(_currentLayout!.rows);
-        final orderedIds = event.rowIds;
-        
-        // Réorganiser les rows selon les IDs
-        newRows.sort((a, b) => 
-          orderedIds.indexOf(a.id).compareTo(orderedIds.indexOf(b.id))
-        );
-        
-        // Mettre à jour l'ordre
-        for (var i = 0; i < newRows.length; i++) {
-          newRows[i] = newRows[i].copyWith(order: i + 1);
-        }
+      final updatedRows = currentState.rows.map((r) => 
+        r.id == event.rowId 
+          ? r.copyWith(cards: [...r.cards, newCard])
+          : r
+      ).toList();
 
-        print('After reorder: ${newRows.map((r) => r.id).toList()}');
-        
-        _currentLayout = _currentLayout!.copyWith(rows: newRows);
-        emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
-        
-        print('State emitted with new order');
-      } catch (e) {
-        print('Error in _onReorderRows: $e');
-        emit(DynamicPageLayoutError('Failed to reorder rows: $e'));
-      }
-    }
-  }
-
-  Future<void> _onDeleteRow(
-      DeleteRow event, Emitter<DynamicPageLayoutState> emit) async {
-    if (_currentLayout != null) {
-      final updatedRows =
-          _currentLayout!.rows.where((r) => r.id != event.rowId).toList();
-      for (var i = 0; i < updatedRows.length; i++) {
-        updatedRows[i] = updatedRows[i].copyWith(order: i + 1);
-      }
-
-      _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-      emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
-    }
-  }
-
-  Future<void> _onUpdateRowProperties(
-      UpdateRowProperties event, Emitter<DynamicPageLayoutState> emit) async {
-    if (_currentLayout != null) {
-      final updatedRows = List<DynamicRow>.from(_currentLayout!.rows);
-      final rowIndex = updatedRows.indexWhere((r) => r.id == event.rowId);
-      if (rowIndex != -1) {
-        updatedRows[rowIndex] = updatedRows[rowIndex].copyWith(
-          alignment: event.alignment,
-          crossAlignment: event.crossAlignment,
-          spacing: event.spacing,
-        );
-      }
-
-      _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-      emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
-    }
-  }
-
-  Future<void> _onSaveLayout(
-      SaveLayout event, Emitter<DynamicPageLayoutState> emit) async {
-    if (_currentLayout != null) {
-      try {
-        emit(DynamicPageLayoutSaving());
-        
-        final updatedRows = _currentLayout!.rows.map((row) {
-          return row.copyWith(pageId: _currentLayout!.pageId);
-        }).toList();
-        
-        final layoutToSave = _currentLayout!.copyWith(rows: updatedRows);
-        
-        await _apiClient.updateLayout(event.pageId, layoutToSave);
-        emit(DynamicPageLayoutLoaded(layoutToSave.rows, isDirty: false));
-      } catch (e) {
-        emit(DynamicPageLayoutError(e.toString()));
-      }
-    }
-  }
-
-  Future<void> _onAddCard(
-      AddCardToRow event, Emitter<DynamicPageLayoutState> emit) async {
-    if (_currentLayout != null) {
-      try {
-        final updatedRows = List<DynamicRow>.from(_currentLayout!.rows);
-        final rowIndex = updatedRows.indexWhere((r) => r.id == event.rowId);
-
-        if (rowIndex != -1) {
-          final row = updatedRows[rowIndex];
-          final tempId = -(row.cards.length + 1);
-          final newCard = PlaceholderCard(
-            id: tempId,
-            titles: const {'en': 'New Card', 'fr': 'Nouvelle Carte'},
-            order: row.cards.length + 1,
-          );
-
-          updatedRows[rowIndex] = row.copyWith(
-            pageId: _currentLayout!.pageId,
-            cards: [...row.cards, newCard],
-          );
-          
-          _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-          emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
-        }
-      } catch (e) {
-        emit(DynamicPageLayoutError('Failed to add card: $e'));
-      }
-    }
-  }
-
-  Future<void> _onDeleteCard(
-      DeleteCard event, Emitter<DynamicPageLayoutState> emit) async {
-    if (_currentLayout != null) {
-      try {
-        final updatedRows = List<DynamicRow>.from(_currentLayout!.rows);
-        final rowIndex = updatedRows.indexWhere((r) => r.id == event.rowId);
-
-        if (rowIndex != -1) {
-          final row = updatedRows[rowIndex];
-          final updatedCards = row.cards.where((c) => c.id != event.cardId).toList();
-          updatedRows[rowIndex] = row.copyWith(cards: updatedCards);
-          
-          _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-          emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
-        }
-      } catch (e) {
-        emit(DynamicPageLayoutError('Failed to delete card: $e'));
-      }
-    }
-  }
-
-  Future<void> _onReloadPageLayout(
-      ReloadPageLayout event, Emitter<DynamicPageLayoutState> emit) async {
-    emit(DynamicPageLayoutLoading());
-    try {
-      _currentLayout = await _apiClient.getLayout(event.pageId);
-      emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
-    } catch (e) {
-      emit(DynamicPageLayoutError(e.toString()));
-    }
-  }
-
-  Future<void> _onUpdateCard(
-      UpdateCard event, Emitter<DynamicPageLayoutState> emit) async {
-    if (_currentLayout != null) {
-      try {
-        final updatedRows = List<DynamicRow>.from(_currentLayout!.rows);
-        final rowIndex = updatedRows.indexWhere((r) => r.id == event.rowId);
-
-        if (rowIndex != -1) {
-          final row = updatedRows[rowIndex];
-          final cardIndex = row.cards.indexWhere((c) => c.id == event.card.id);
-          
-          if (cardIndex != -1) {
-            final updatedCards = List<DynamicCard>.from(row.cards);
-            updatedCards[cardIndex] = event.card;
-            updatedRows[rowIndex] = row.copyWith(cards: updatedCards);
-            
-            _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-            emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
-          }
-        }
-      } catch (e) {
-        emit(DynamicPageLayoutError('Failed to update card: $e'));
-      }
+      emit(DynamicPageLayoutLoaded(updatedRows, isDirty: true));
     }
   }
 }

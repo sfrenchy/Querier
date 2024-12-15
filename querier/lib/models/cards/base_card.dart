@@ -3,10 +3,7 @@ abstract class BaseCard {
   final Map<String, String> titles;
   final int order;
   final String type;
-  final double? height;
-  final double? width;
-  final bool useAvailableWidth;
-  final bool useAvailableHeight;
+  final int gridWidth;
   final int? backgroundColor;
   final int? textColor;
 
@@ -15,10 +12,7 @@ abstract class BaseCard {
     required this.titles,
     required this.order,
     required this.type,
-    this.height,
-    this.width,
-    this.useAvailableWidth = true,
-    this.useAvailableHeight = true,
+    this.gridWidth = 12,
     this.backgroundColor,
     this.textColor,
   });
@@ -30,10 +24,7 @@ abstract class BaseCard {
         'Titles': titles,
         'Order': order,
         'Type': type,
-        'Height': height,
-        'Width': width,
-        'UseAvailableWidth': useAvailableWidth,
-        'UseAvailableHeight': useAvailableHeight,
+        'GridWidth': gridWidth,
         'BackgroundColor': backgroundColor,
         'TextColor': textColor,
         'Configuration': specificConfiguration,
