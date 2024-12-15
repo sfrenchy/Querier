@@ -220,5 +220,11 @@
     "headerBackgroundColor": "Header Background Color",
     "headerTextColor": "Header Text Color",
     "dataContext": "Data Context",
-    "selectDataContext": "Select a data context"
+    "selectDataContext": "Select a data context",
+    "entity": "Entity",
+    "selectEntity": "Select an entity",
+    "columns": "Columns",
+    "columnAlignment": "Alignment",
+    "columnVisibility": "Visible",
+    "decimals": "Decimals"
 } 

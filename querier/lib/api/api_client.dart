@@ -12,6 +12,7 @@ import 'package:querier/models/page.dart';
 import 'package:querier/models/dynamic_row.dart';
 import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/models/layout.dart';
+import 'package:querier/models/entity_schema.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -668,5 +669,17 @@ class ApiClient {
   Future<List<String>> getEntityContexts() async {
     final response = await _dio.get(ApiEndpoints.entityCRUD);
     return List<String>.from(response.data);
+  }
+
+  Future<List<EntitySchema>> getEntities(String contextTypeName) async {
+    final response = await _dio.get(
+      ApiEndpoints.replaceUrlParams(
+        ApiEndpoints.entityCRUDEntities,
+        {'contextTypeName': contextTypeName},
+      ),
+    );
+    return (response.data as List)
+        .map((json) => EntitySchema.fromJson(json))
+        .toList();
   }
 }
