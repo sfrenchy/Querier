@@ -38,4 +38,8 @@ abstract class BaseCard {
         'TextColor': textColor,
         'Configuration': specificConfiguration,
       };
+
+  String getLocalizedTitle(String languageCode) {
+    return titles[languageCode] ?? titles['en'] ?? '';
+  }
 }
