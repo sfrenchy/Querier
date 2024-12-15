@@ -1,6 +1,8 @@
 import 'package:querier/models/cards/base_card.dart';
 
 class DynamicCard extends BaseCard {
+  final Map<String, dynamic> configuration;
+
   const DynamicCard({
     required super.id,
     required super.titles,
@@ -12,10 +14,11 @@ class DynamicCard extends BaseCard {
     super.useAvailableHeight,
     super.backgroundColor,
     super.textColor,
+    this.configuration = const {},
   });
 
   @override
-  Map<String, dynamic> get specificConfiguration => {};
+  Map<String, dynamic> get specificConfiguration => configuration;
 
   factory DynamicCard.fromJson(Map<String, dynamic> json) {
     return DynamicCard(
@@ -29,6 +32,7 @@ class DynamicCard extends BaseCard {
       useAvailableHeight: json['UseAvailableHeight'] ?? true,
       backgroundColor: json['BackgroundColor'],
       textColor: json['TextColor'],
+      configuration: Map<String, dynamic>.from(json['Configuration'] ?? {}),
     );
   }
 }

@@ -11,6 +11,7 @@ class PlaceholderCard extends DynamicCard {
     super.useAvailableHeight,
     super.backgroundColor,
     super.textColor,
+    super.configuration,
   }) : super(type: 'Placeholder');
 
   @override

@@ -35,7 +35,11 @@ class DraggableRow extends StatelessWidget {
           child: CardSelector(
             card: card,
             onEdit: () {},
-            onDelete: () {},
+            onDelete: () {
+              context.read<DynamicPageLayoutBloc>().add(
+                DeleteCard(row.id, card.id),
+              );
+            },
           ),
         ),
       ),
@@ -48,7 +52,11 @@ class DraggableRow extends StatelessWidget {
         child: CardSelector(
           card: card,
           onEdit: () {},
-          onDelete: () {},
+          onDelete: () {
+            context.read<DynamicPageLayoutBloc>().add(
+              DeleteCard(row.id, card.id),
+            );
+          },
         ),
       ),
     );

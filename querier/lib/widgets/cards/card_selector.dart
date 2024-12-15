@@ -17,25 +17,29 @@ class CardSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Sélectionner le widget approprié en fonction du type de carte
-    switch (card.runtimeType) {
-      case PlaceholderCard:
+    switch (card.type) {
+      case 'Placeholder':
+        final placeholderCard = PlaceholderCard(
+          id: card.id,
+          titles: card.titles,
+          order: card.order,
+          height: card.height,
+          width: card.width,
+          useAvailableWidth: card.useAvailableWidth,
+          useAvailableHeight: card.useAvailableHeight,
+          backgroundColor: card.backgroundColor,
+          textColor: card.textColor,
+          configuration: card.configuration,
+        );
         return PlaceholderCardWidget(
-          card: card as PlaceholderCard,
+          card: placeholderCard,
           onEdit: onEdit,
           onDelete: onDelete,
         );
-      // Ajouter d'autres cas au fur et à mesure
-      // case TableCard:
-      //   return TableCardWidget(
-      //     card: card as TableCard,
-      //     onEdit: onEdit,
-      //     onDelete: onDelete,
-      //   );
       default:
         return Card(
           child: Center(
-            child: Text('Unknown card type: ${card.runtimeType}'),
+            child: Text('Unknown card type: ${card.type}'),
           ),
         );
     }
