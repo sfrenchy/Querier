@@ -211,5 +211,7 @@
     "deleteCard": "Delete Card",
     "deleteCardConfirmation": "Are you sure you want to delete this card?",
     "cancel": "Cancel",
-    "delete": "Delete"
+    "delete": "Delete",
+    "backgroundColor": "Background Color",
+    "textColor": "Text Color"
 } 

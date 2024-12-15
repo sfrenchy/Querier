@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/models/dynamic_row.dart';
 
 abstract class DynamicPageLayoutEvent extends Equatable {
@@ -117,4 +118,14 @@ class ReorderRows extends DynamicPageLayoutEvent {
 
   @override
   List<Object> get props => [pageId, rowIds];
+}
+
+class UpdateCard extends DynamicPageLayoutEvent {
+  final int rowId;
+  final DynamicCard card;
+
+  const UpdateCard(this.rowId, this.card);
+
+  @override
+  List<Object> get props => [rowId, card];
 }

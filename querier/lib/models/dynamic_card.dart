@@ -35,4 +35,32 @@ class DynamicCard extends BaseCard {
       configuration: Map<String, dynamic>.from(json['Configuration'] ?? {}),
     );
   }
+
+  DynamicCard copyWith({
+    int? id,
+    Map<String, String>? titles,
+    int? order,
+    String? type,
+    double? height,
+    double? width,
+    bool? useAvailableWidth,
+    bool? useAvailableHeight,
+    int? backgroundColor,
+    int? textColor,
+    Map<String, dynamic>? configuration,
+  }) {
+    return DynamicCard(
+      id: id ?? this.id,
+      titles: titles ?? this.titles,
+      order: order ?? this.order,
+      type: type ?? this.type,
+      height: height ?? this.height,
+      width: width ?? this.width,
+      useAvailableWidth: useAvailableWidth ?? this.useAvailableWidth,
+      useAvailableHeight: useAvailableHeight ?? this.useAvailableHeight,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      textColor: textColor ?? this.textColor,
+      configuration: configuration ?? this.configuration,
+    );
+  }
 }

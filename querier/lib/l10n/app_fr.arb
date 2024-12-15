@@ -210,5 +210,7 @@
     "deleteCard": "Supprimer la carte",
     "deleteCardConfirmation": "Êtes-vous sûr de vouloir supprimer cette carte ?",
     "cancel": "Annuler",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "backgroundColor": "Couleur de fond",
+    "textColor": "Couleur du texte"
 } 

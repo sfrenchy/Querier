@@ -6,7 +6,6 @@ import 'package:querier/models/page.dart';
 import 'package:querier/pages/settings/menu/pages/bloc/dynamic_pages_bloc.dart';
 import 'package:querier/pages/settings/menu/pages/bloc/dynamic_pages_event.dart';
 import 'package:querier/widgets/icon_selector.dart';
-import 'package:querier/widgets/translation_form_field.dart';
 import 'package:querier/widgets/translation_manager.dart';
 
 class MenuPageForm extends StatefulWidget {
@@ -95,22 +94,16 @@ class _MenuPageFormState extends State<MenuPageForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TranslationManager(
-                translations: _translations,
+                translations: _translations.map((key, controller) => 
+                  MapEntry(key, controller.text)
+                ),
                 onTranslationsChanged: (newTranslations) {
                   setState(() {
-                    for (var entry in newTranslations.entries) {
-                      if (_translations.containsKey(entry.key)) {
-                        _translations[entry.key]!.text = entry.value;
-                      } else {
-                        _translations[entry.key] =
-                            TextEditingController(text: entry.value);
-                      }
-                    }
-
-                    _translations.removeWhere(
-                        (key, _) => !newTranslations.containsKey(key));
-
-                    _names = Map<String, String>.from(newTranslations);
+                    _translations.clear();
+                    newTranslations.forEach((key, value) {
+                      _translations[key] = TextEditingController(text: value);
+                    });
+                    _names = newTranslations;
                   });
                 },
               ),

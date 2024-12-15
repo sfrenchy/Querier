@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/models/dynamic_row.dart';
 import 'package:querier/models/cards/placeholder_card.dart';
+import 'package:querier/pages/settings/menu/pages/cards/config/card_config_screen.dart';
 import 'package:querier/widgets/cards/card_selector.dart';
 import 'package:querier/widgets/cards/card_header.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -56,20 +57,16 @@ class DraggableRow extends StatelessWidget {
     }
   }
 
-  Widget _buildCard(BuildContext context, DynamicCard card, int index) {
-    return Draggable<Map<String, dynamic>>(
-      data: {
-        'cardId': card.id,
-        'rowId': row.id,
-        'sourceIndex': index,
-      },
+  Widget _buildCard(BuildContext context, DynamicCard card) {
+    return Draggable<int>(
+      data: card.id,
       feedback: Material(
         elevation: 4,
         child: SizedBox(
           width: 300,
           child: CardSelector(
             card: card,
-            onEdit: () {},
+            onEdit: () => _showCardConfig(context, card),
             onDelete: () => _confirmDeleteCard(context, card),
             dragHandle: MouseRegion(
               cursor: SystemMouseCursors.grab,
@@ -78,28 +75,34 @@ class DraggableRow extends StatelessWidget {
           ),
         ),
       ),
-      child: DragTarget<Map<String, dynamic>>(
-        onWillAccept: (data) => data != null && data['rowId'] == row.id,
-        onAccept: (data) {
-          final sourceIndex = data['sourceIndex'] as int;
-          if (sourceIndex != index) {
-            onReorderCards(row.id, sourceIndex, index);
-          }
-        },
-        builder: (context, candidateData, rejectedData) {
-          return SizedBox(
-            width: 300,
-            child: CardSelector(
-              card: card,
-              onEdit: () {},
-              onDelete: () => _confirmDeleteCard(context, card),
-              dragHandle: MouseRegion(
-                cursor: SystemMouseCursors.grab,
-                child: const Icon(Icons.drag_handle),
-              ),
-            ),
-          );
-        },
+      child: SizedBox(
+        width: 300,
+        child: CardSelector(
+          card: card,
+          onEdit: () => _showCardConfig(context, card),
+          onDelete: () => _confirmDeleteCard(context, card),
+          dragHandle: MouseRegion(
+            cursor: SystemMouseCursors.grab,
+            child: const Icon(Icons.drag_handle),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCardConfig(BuildContext context, DynamicCard card) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CardConfigScreen(
+          card: card,
+          onSave: (updatedCard) {
+            context.read<DynamicPageLayoutBloc>().add(
+              UpdateCard(row.id, updatedCard),
+            );
+            Navigator.pop(context);
+          },
+        ),
       ),
     );
   }
@@ -164,7 +167,7 @@ class DraggableRow extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: row.cards.asMap().entries.map((entry) => 
-                        _buildCard(context, entry.value, entry.key)
+                        _buildCard(context, entry.value)
                       ).toList(),
                     ),
                   ),

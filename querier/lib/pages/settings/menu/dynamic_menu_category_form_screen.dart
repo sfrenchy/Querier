@@ -137,13 +137,15 @@ class _MenuCategoryFormScreenState extends State<MenuCategoryFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TranslationManager(
-                      translations: _translations,
+                      translations: _translations.map((key, controller) => 
+                        MapEntry(key, controller.text)
+                      ),
                       onTranslationsChanged: (newValues) {
                         setState(() {
-                          _translations = newValues.map(
-                            (key, value) => MapEntry(
-                                key, TextEditingController(text: value)),
-                          );
+                          _translations.clear();
+                          newValues.forEach((key, value) {
+                            _translations[key] = TextEditingController(text: value);
+                          });
                         });
                       },
                     ),

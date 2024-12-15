@@ -23,6 +23,7 @@ class DynamicPageLayoutBloc
     on<AddCardToRow>(_onAddCard);
     on<DeleteCard>(_onDeleteCard);
     on<ReloadPageLayout>(_onReloadPageLayout);
+    on<UpdateCard>(_onUpdateCard);
   }
 
   Future<void> _onLoadPageLayout(
@@ -202,6 +203,32 @@ class DynamicPageLayoutBloc
       emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
     } catch (e) {
       emit(DynamicPageLayoutError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateCard(
+      UpdateCard event, Emitter<DynamicPageLayoutState> emit) async {
+    if (_currentLayout != null) {
+      try {
+        final updatedRows = List<DynamicRow>.from(_currentLayout!.rows);
+        final rowIndex = updatedRows.indexWhere((r) => r.id == event.rowId);
+
+        if (rowIndex != -1) {
+          final row = updatedRows[rowIndex];
+          final cardIndex = row.cards.indexWhere((c) => c.id == event.card.id);
+          
+          if (cardIndex != -1) {
+            final updatedCards = List<DynamicCard>.from(row.cards);
+            updatedCards[cardIndex] = event.card;
+            updatedRows[rowIndex] = row.copyWith(cards: updatedCards);
+            
+            _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
+            emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
+          }
+        }
+      } catch (e) {
+        emit(DynamicPageLayoutError('Failed to update card: $e'));
+      }
     }
   }
 }
