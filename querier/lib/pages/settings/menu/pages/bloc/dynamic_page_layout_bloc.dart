@@ -22,6 +22,7 @@ class DynamicPageLayoutBloc
     on<SaveLayout>(_onSaveLayout);
     on<AddCardToRow>(_onAddCard);
     on<DeleteCard>(_onDeleteCard);
+    on<ReloadPageLayout>(_onReloadPageLayout);
   }
 
   Future<void> _onLoadPageLayout(
@@ -52,7 +53,7 @@ class DynamicPageLayoutBloc
       _currentLayout = _currentLayout!.copyWith(
         rows: [..._currentLayout!.rows, newRow],
       );
-      emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
+      emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
     }
   }
 
@@ -68,7 +69,7 @@ class DynamicPageLayoutBloc
       }
 
       _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-      emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
+      emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
     }
   }
 
@@ -82,7 +83,7 @@ class DynamicPageLayoutBloc
       }
 
       _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-      emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
+      emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
     }
   }
 
@@ -100,7 +101,7 @@ class DynamicPageLayoutBloc
       }
 
       _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-      emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
+      emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
     }
   }
 
@@ -117,7 +118,7 @@ class DynamicPageLayoutBloc
         final layoutToSave = _currentLayout!.copyWith(rows: updatedRows);
         
         await _apiClient.updateLayout(event.pageId, layoutToSave);
-        emit(DynamicPageLayoutLoaded(layoutToSave.rows));
+        emit(DynamicPageLayoutLoaded(layoutToSave.rows, isDirty: false));
       } catch (e) {
         emit(DynamicPageLayoutError(e.toString()));
       }
@@ -146,7 +147,7 @@ class DynamicPageLayoutBloc
           );
           
           _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-          emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
+          emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
         }
       } catch (e) {
         emit(DynamicPageLayoutError('Failed to add card: $e'));
@@ -167,11 +168,22 @@ class DynamicPageLayoutBloc
           updatedRows[rowIndex] = row.copyWith(cards: updatedCards);
           
           _currentLayout = _currentLayout!.copyWith(rows: updatedRows);
-          emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
+          emit(DynamicPageLayoutLoaded(_currentLayout!.rows, isDirty: true));
         }
       } catch (e) {
         emit(DynamicPageLayoutError('Failed to delete card: $e'));
       }
+    }
+  }
+
+  Future<void> _onReloadPageLayout(
+      ReloadPageLayout event, Emitter<DynamicPageLayoutState> emit) async {
+    emit(DynamicPageLayoutLoading());
+    try {
+      _currentLayout = await _apiClient.getLayout(event.pageId);
+      emit(DynamicPageLayoutLoaded(_currentLayout!.rows));
+    } catch (e) {
+      emit(DynamicPageLayoutError(e.toString()));
     }
   }
 }

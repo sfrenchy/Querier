@@ -183,17 +183,19 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
             appBar: AppBar(
               title: Text(l10n.pageLayout),
               actions: [
-                BlocBuilder<DynamicPageLayoutBloc, DynamicPageLayoutState>(
-                  builder: (context, state) {
-                    return IconButton(
-                      icon: const Icon(Icons.save),
-                      onPressed: state is DynamicPageLayoutSaving
-                          ? null
-                          : () => context.read<DynamicPageLayoutBloc>().add(
-                                SaveLayout(widget.pageId),
-                              ),
-                    );
-                  },
+                if (state is DynamicPageLayoutLoaded && state.isDirty)
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () => context.read<DynamicPageLayoutBloc>()
+                      .add(ReloadPageLayout(widget.pageId)),
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.save),
+                  onPressed: state is DynamicPageLayoutSaving
+                      ? null
+                      : () => context.read<DynamicPageLayoutBloc>().add(
+                            SaveLayout(widget.pageId),
+                          ),
                 ),
               ],
             ),

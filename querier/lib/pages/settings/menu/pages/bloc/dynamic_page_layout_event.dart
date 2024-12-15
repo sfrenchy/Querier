@@ -98,3 +98,12 @@ class DeleteCard extends DynamicPageLayoutEvent {
   @override
   List<Object> get props => [rowId, cardId];
 }
+
+class ReloadPageLayout extends DynamicPageLayoutEvent {
+  final int pageId;
+
+  const ReloadPageLayout(this.pageId);
+
+  @override
+  List<Object> get props => [pageId];
+}

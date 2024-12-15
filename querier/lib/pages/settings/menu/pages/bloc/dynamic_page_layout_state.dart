@@ -14,11 +14,12 @@ class DynamicPageLayoutLoading extends DynamicPageLayoutState {}
 
 class DynamicPageLayoutLoaded extends DynamicPageLayoutState {
   final List<DynamicRow> rows;
+  final bool isDirty;
 
-  const DynamicPageLayoutLoaded(this.rows);
+  const DynamicPageLayoutLoaded(this.rows, {this.isDirty = false});
 
   @override
-  List<Object> get props => [rows];
+  List<Object> get props => [rows, isDirty];
 }
 
 class DynamicPageLayoutError extends DynamicPageLayoutState {
