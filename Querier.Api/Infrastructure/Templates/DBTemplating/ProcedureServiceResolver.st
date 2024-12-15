@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Querier.Api.Models.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Querier.Api.Application.Interfaces.Infrastructure;
 
 namespace $nameSpace$.Services
 {

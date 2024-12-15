@@ -2,12 +2,13 @@ using $nameSpace$.ProcedureResultSets;
 using $nameSpace$.ProcedureParameters;
 using Microsoft.Data.SqlClient;
 using System.ComponentModel;
-using Querier.Api.Tools; //using Querier.Tools.DynamicContextExtensions;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
 using System;
 using Microsoft.EntityFrameworkCore;
+using Querier.Api.Infrastructure.Database.Extensions;
+using Querier.Api.Infrastructure.Database.Parameters;
 
 namespace $nameSpace$
 {

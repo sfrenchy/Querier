@@ -2,7 +2,6 @@ using $nameSpace$;
 using $nameSpace$.ProcedureParameters;
 using $nameSpace$.ProcedureReportRequests;
 using $nameSpace$.ProcedureResultSets;
-using Querier.Api.Models.Interfaces;
 using Querier.Api.Tools;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -14,8 +13,9 @@ using System.Threading;
 using System;
 using System.Linq;
 using System.IO;
-using Querier.Api.Models.QDBConnection;
-using Querier.Api.Models.Attributes;
+using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Domain.Common.Attributes;
+using Querier.Api.Infrastructure.Database.Services.Base;
 
 namespace $nameSpace$.Services
 {
