@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:querier/models/dynamic_row.dart';
 
 abstract class DynamicPageLayoutEvent extends Equatable {
@@ -34,4 +35,30 @@ class ReorderRows extends DynamicPageLayoutEvent {
 
   @override
   List<Object> get props => [pageId, rowIds];
+}
+
+class UpdateRowProperties extends DynamicPageLayoutEvent {
+  final int rowId;
+  final MainAxisAlignment alignment;
+  final CrossAxisAlignment crossAlignment;
+  final double spacing;
+
+  const UpdateRowProperties(
+    this.rowId,
+    this.alignment,
+    this.crossAlignment,
+    this.spacing,
+  );
+
+  @override
+  List<Object> get props => [rowId, alignment, crossAlignment, spacing];
+}
+
+class DeleteRow extends DynamicPageLayoutEvent {
+  final int rowId;
+
+  const DeleteRow(this.rowId);
+
+  @override
+  List<Object> get props => [rowId];
 }

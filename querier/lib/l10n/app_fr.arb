@@ -189,5 +189,21 @@
     "confirmDeletePageMessage": "Êtes-vous sûr de vouloir supprimer cette page ?",
     "order": "Ordre",
     "colors": "Couleurs",
-    "dropCardHere": "Déposez une carte ici"
+    "dropCardHere": "Déposez une carte ici",
+    "rowProperties": "Propriétés de la ligne",
+    "horizontalAlignment": "Alignement horizontal",
+    "verticalAlignment": "Alignement vertical",
+    "spacing": "Espacement",
+    "deleteRow": "Supprimer la ligne",
+    "deleteRowConfirmation": "Êtes-vous sûr de vouloir supprimer cette ligne ?",
+    "dropRowHere": "Déposez une ligne ici",
+    "dropCardsHere": "Déposez des cartes ici",
+    "row": "Ligne {number}",
+    "@row": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    }
 } 

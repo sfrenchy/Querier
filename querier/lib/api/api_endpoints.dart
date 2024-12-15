@@ -62,6 +62,12 @@ class ApiEndpoints {
 
   // Wizard endpoints
   static const String setup = '/wizard/setup';
+
+  // Layout Controller
+  static const String getLayout = 'layout/{pageId}';
+  static const String updateLayout = 'layout/{pageId}';
+  static const String deleteLayout = 'layout/{pageId}';
+
   // Helper Methods
   static String buildUrl(String baseUrl, String endpoint) {
     final cleanBaseUrl = baseUrl.endsWith('/')

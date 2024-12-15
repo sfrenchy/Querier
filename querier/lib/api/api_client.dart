@@ -11,6 +11,7 @@ import 'package:querier/models/menu_category.dart';
 import 'package:querier/models/page.dart';
 import 'package:querier/models/dynamic_row.dart';
 import 'package:querier/models/dynamic_card.dart';
+import 'package:querier/models/layout.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -630,6 +631,37 @@ class ApiClient {
         ),
       ),
       data: rows.map((row) => row.toJson()).toList(),
+    );
+  }
+
+  // Layout methods
+  Future<Layout> getLayout(int pageId) async {
+    final response = await get(
+      ApiEndpoints.replaceUrlParams(
+        ApiEndpoints.getLayout,
+        {'pageId': pageId.toString()},
+      ),
+    );
+    return Layout.fromJson(response.data);
+  }
+
+  Future<Layout> updateLayout(int pageId, Layout layout) async {
+    final response = await put(
+      ApiEndpoints.replaceUrlParams(
+        ApiEndpoints.updateLayout,
+        {'pageId': pageId.toString()},
+      ),
+      data: layout.toJson(),
+    );
+    return Layout.fromJson(response.data);
+  }
+
+  Future<void> deleteLayout(int pageId) async {
+    await delete(
+      ApiEndpoints.replaceUrlParams(
+        ApiEndpoints.deleteLayout,
+        {'pageId': pageId.toString()},
+      ),
     );
   }
 }

@@ -3,6 +3,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:querier/api/api_client.dart';
+import 'package:querier/models/dynamic_row.dart';
+import 'package:querier/widgets/draggable_row.dart';
+import 'package:querier/widgets/row_properties_dialog.dart';
 import 'bloc/dynamic_page_layout_bloc.dart';
 import 'bloc/dynamic_page_layout_event.dart';
 import 'bloc/dynamic_page_layout_state.dart';
@@ -42,6 +45,81 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
   void dispose() {
     _collapseTimer?.cancel();
     super.dispose();
+  }
+
+  Widget _buildMainContent(BuildContext context, DynamicPageLayoutState state) {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (state is DynamicPageLayoutLoaded) {
+      return ListView(
+        children: state.rows.map((row) {
+          return DraggableRow(
+            key: ValueKey(row.id),
+            row: row,
+            onEdit: () => _showRowProperties(context, row),
+            onDelete: () => _confirmDeleteRow(context, row),
+            onReorder: (oldIndex, newIndex) {
+              final rows = state.rows;
+              if (oldIndex < newIndex) {
+                newIndex -= 1;
+              }
+              final item = rows.removeAt(oldIndex);
+              rows.insert(newIndex, item);
+
+              final rowIds = rows.map((r) => r.id).toList();
+              context.read<DynamicPageLayoutBloc>().add(
+                    ReorderRows(widget.pageId, rowIds),
+                  );
+            },
+          );
+        }).toList(),
+      );
+    }
+    return Center(child: Text(l10n.dropRowHere));
+  }
+
+  Future<void> _showRowProperties(BuildContext context, DynamicRow row) async {
+    await showDialog(
+      context: context,
+      builder: (context) => RowPropertiesDialog(
+        row: row,
+        onSave: (alignment, crossAlignment, spacing) {
+          context.read<DynamicPageLayoutBloc>().add(
+                UpdateRowProperties(
+                  row.id,
+                  alignment,
+                  crossAlignment,
+                  spacing,
+                ),
+              );
+        },
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteRow(BuildContext context, DynamicRow row) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteRow),
+        content: Text(l10n.deleteRowConfirmation),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      context.read<DynamicPageLayoutBloc>().add(DeleteRow(row.id));
+    }
   }
 
   @override
@@ -218,9 +296,7 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                       ),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Center(
-                      child: Text('Drop components here'),
-                    ),
+                    child: _buildMainContent(context, state),
                   ),
                 ),
               ],
