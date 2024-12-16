@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:querier/models/cards/table_card.dart';
 import 'package:querier/widgets/cards/base_card_widget.dart';
-import 'dart:math';
+import 'package:querier/api/api_client.dart';
+import 'package:provider/provider.dart';
 
 class TableCardWidget extends BaseCardWidget {
   const TableCardWidget({
@@ -11,6 +12,18 @@ class TableCardWidget extends BaseCardWidget {
     super.onDelete,
     super.dragHandle,
   });
+
+  Future<(List<Map<String, dynamic>>, int)> _loadData(BuildContext buildContext, TableCard card) async {
+    final apiClient = buildContext.read<ApiClient>();
+    final context = card.configuration['context'] as String?;
+    final entity = card.configuration['entity'] as String?;
+    
+    if (context == null || entity == null) {
+      throw Exception('Configuration incomplète: context et entity sont requis');
+    }
+
+    return await apiClient.getEntityData(context, entity);
+  }
 
   @override
   Widget? buildHeader(BuildContext context) {
@@ -33,57 +46,7 @@ class TableCardWidget extends BaseCardWidget {
 
   @override
   Widget buildCardContent(BuildContext context) {
-    // Définition des colonnes avec des noms pertinents
-    final columns = [
-      'ID',
-      'Nom',
-      'Prénom',
-      'Email',
-      'Département',
-      'Poste',
-      'Salaire',
-      'Date d\'embauche',
-      'Téléphone',
-      'Manager',
-      'Bureau',
-      'Statut',
-      'Expérience',
-      'Projets',
-      'Performance'
-    ];
-    
-    // Données factices plus réalistes
-    final random = Random();
-    final departments = ['IT', 'RH', 'Finance', 'Marketing', 'Ventes', 'R&D'];
-    final positions = ['Junior', 'Senior', 'Lead', 'Manager', 'Directeur'];
-    final lastNames = ['Martin', 'Dubois', 'Thomas', 'Robert', 'Richard', 'Petit', 'Durand', 'Leroy'];
-    final firstNames = ['Jean', 'Marie', 'Pierre', 'Sophie', 'Lucas', 'Emma', 'Louis', 'Julie'];
-    
-    final rows = List.generate(20, (rowIndex) {
-      final lastName = lastNames[random.nextInt(lastNames.length)];
-      final firstName = firstNames[random.nextInt(firstNames.length)];
-      final dept = departments[random.nextInt(departments.length)];
-      final position = positions[random.nextInt(positions.length)];
-      
-      return [
-        'EMP${(10000 + rowIndex).toString()}', // ID
-        lastName, // Nom
-        firstName, // Prénom
-        '${firstName.toLowerCase()}.${lastName.toLowerCase()}@entreprise.com', // Email
-        dept, // Département
-        '$position ${dept}', // Poste
-        '${(45000 + random.nextInt(55000))}€', // Salaire
-        '${2020 + random.nextInt(4)}-${(random.nextInt(12) + 1).toString().padLeft(2, '0')}-${(random.nextInt(28) + 1).toString().padLeft(2, '0')}', // Date d'embauche
-        '06${random.nextInt(99999999).toString().padLeft(8, '0')}', // Téléphone
-        '${firstNames[random.nextInt(firstNames.length)]} ${lastNames[random.nextInt(lastNames.length)]}', // Manager
-        'B${random.nextInt(5) + 1}-${random.nextInt(20) + 1}', // Bureau
-        ['Actif', 'En congé', 'En mission'][random.nextInt(3)], // Statut
-        '${random.nextInt(15) + 1} ans', // Expérience
-        random.nextInt(5) + 1, // Nombre de projets
-        ['A+', 'A', 'B+', 'B', 'C'][random.nextInt(5)], // Performance
-      ];
-    });
-
+    final tableCard = card as TableCard;
     final ScrollController horizontalController = ScrollController();
     final ScrollController verticalController = ScrollController();
 
@@ -98,23 +61,49 @@ class TableCardWidget extends BaseCardWidget {
           thumbVisibility: true,
           trackVisibility: true,
           notificationPredicate: (notif) => notif.depth == 1,
-          child: SingleChildScrollView(
-            controller: verticalController,
-            child: SingleChildScrollView(
-              controller: horizontalController,
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columns: columns.map((column) => DataColumn(
-                  label: Text(
-                    column,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+          child: FutureBuilder<(List<Map<String, dynamic>>, int)>(
+            future: _loadData(context, tableCard),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Erreur: ${snapshot.error}'),
+                );
+              }
+
+              if (!snapshot.hasData || snapshot.data!.$1.isEmpty) {
+                return const Center(
+                  child: Text('Aucune donnée disponible'),
+                );
+              }
+
+              final (items, total) = snapshot.data!;
+              final columns = tableCard.columns;
+
+              return SingleChildScrollView(
+                controller: verticalController,
+                child: SingleChildScrollView(
+                  controller: horizontalController,
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: columns.map((column) => DataColumn(
+                      label: Text(
+                        column['label']?[Localizations.localeOf(context).languageCode] ?? column['key'],
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    )).toList(),
+                    rows: items.map((row) => DataRow(
+                      cells: columns.map((column) => DataCell(
+                        Text(row[column['key']]?.toString() ?? ''),
+                      )).toList(),
+                    )).toList(),
                   ),
-                )).toList(),
-                rows: rows.map((row) => DataRow(
-                  cells: row.map((cell) => DataCell(Text(cell.toString()))).toList(),
-                )).toList(),
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),
