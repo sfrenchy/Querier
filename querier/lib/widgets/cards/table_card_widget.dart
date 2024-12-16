@@ -84,19 +84,38 @@ class TableCardWidget extends BaseCardWidget {
       ];
     });
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SingleChildScrollView(
-        child: DataTable(
-          columns: columns.map((column) => DataColumn(
-            label: Text(
-              column,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+    final ScrollController horizontalController = ScrollController();
+    final ScrollController verticalController = ScrollController();
+
+    return SizedBox(
+      width: double.infinity,
+      child: Scrollbar(
+        controller: verticalController,
+        thumbVisibility: true,
+        trackVisibility: true,
+        child: Scrollbar(
+          controller: horizontalController,
+          thumbVisibility: true,
+          trackVisibility: true,
+          notificationPredicate: (notif) => notif.depth == 1,
+          child: SingleChildScrollView(
+            controller: verticalController,
+            child: SingleChildScrollView(
+              controller: horizontalController,
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columns: columns.map((column) => DataColumn(
+                  label: Text(
+                    column,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                )).toList(),
+                rows: rows.map((row) => DataRow(
+                  cells: row.map((cell) => DataCell(Text(cell.toString()))).toList(),
+                )).toList(),
+              ),
             ),
-          )).toList(),
-          rows: rows.map((row) => DataRow(
-            cells: row.map((cell) => DataCell(Text(cell.toString()))).toList(),
-          )).toList(),
+          ),
         ),
       ),
     );
