@@ -6,6 +6,7 @@ import 'package:querier/models/cards/table_card.dart';
 import 'package:querier/widgets/cards/base_card_widget.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:provider/provider.dart';
+import 'package:querier/utils/data_formatter.dart';
 
 class TableCardWidget extends BaseCardWidget {
   static const int _pageSize = 10;
@@ -23,6 +24,26 @@ class TableCardWidget extends BaseCardWidget {
     super.onDelete,
     super.dragHandle,
   });
+
+  String _getPropertyType(String columnKey) {
+    try {
+      final tableCard = card as TableCard;
+      final entitySchema = tableCard.configuration['entitySchema'] as Map<String, dynamic>;
+      final properties = entitySchema['Properties'] as List<dynamic>;
+      debugPrint('Recherche du type pour la colonne: $columnKey');
+      debugPrint('Propriétés disponibles: ${properties.map((p) => p['Name'])}');
+      final property = properties.firstWhere(
+        (p) => p['Name'] == columnKey,
+        orElse: () => {'Type': 'String'},
+      );
+      final type = property['Type'] as String? ?? 'String';
+      debugPrint('Type trouvé: $type');
+      return type;
+    } catch (e) {
+      debugPrint('Erreur lors de la récupération du type: $e');
+    }
+    return 'String';
+  }
 
   Future<void> _loadData(BuildContext buildContext, TableCard card, {int page = 1}) async {
     // Vérifier si les données sont dans le cache
@@ -122,7 +143,11 @@ class TableCardWidget extends BaseCardWidget {
                     )).toList(),
                     rows: items.map((row) => DataRow(
                       cells: columns.map((column) => DataCell(
-                        Text(row[column['key']]?.toString() ?? ''),
+                        Text(DataFormatter.format(
+                          row[column['key']],
+                          _getPropertyType(column['key']),
+                          context,
+                        )),
                       )).toList(),
                     )).toList(),
                   ),

@@ -714,4 +714,17 @@ class ApiClient {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> getEntity(String contextName, String entityName) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.replaceUrlParams(
+        ApiEndpoints.entityCRUDGetEntity,
+        {
+          'contextTypeName': contextName,
+          'entityName': entityName,
+        },
+      ),
+    );
+    return response.data!;
+  }
 }
