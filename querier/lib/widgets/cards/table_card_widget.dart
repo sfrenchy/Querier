@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:querier/models/cards/table_card.dart';
 import 'package:querier/widgets/cards/base_card_widget.dart';
@@ -5,7 +8,11 @@ import 'package:querier/api/api_client.dart';
 import 'package:provider/provider.dart';
 
 class TableCardWidget extends BaseCardWidget {
-  const TableCardWidget({
+  static const int _pageSize = 10;
+  final _paginationController = StreamController<(int, int)>();
+  final _dataController = StreamController<(List<Map<String, dynamic>>, int)>();
+
+  TableCardWidget({
     super.key,
     required TableCard super.card,
     super.onEdit,
@@ -13,7 +20,7 @@ class TableCardWidget extends BaseCardWidget {
     super.dragHandle,
   });
 
-  Future<(List<Map<String, dynamic>>, int)> _loadData(BuildContext buildContext, TableCard card) async {
+  Future<void> _loadData(BuildContext buildContext, TableCard card, {int page = 1}) async {
     final apiClient = buildContext.read<ApiClient>();
     final context = card.configuration['context'] as String?;
     final entity = card.configuration['entity'] as String?;
@@ -22,7 +29,15 @@ class TableCardWidget extends BaseCardWidget {
       throw Exception('Configuration incomplète: context et entity sont requis');
     }
 
-    return await apiClient.getEntityData(context, entity);
+    final result = await apiClient.getEntityData(
+      context, 
+      entity,
+      pageNumber: page,
+      pageSize: _pageSize,
+    );
+    
+    _paginationController.add((page, result.$2));
+    _dataController.add(result);
   }
 
   @override
@@ -50,6 +65,8 @@ class TableCardWidget extends BaseCardWidget {
     final ScrollController horizontalController = ScrollController();
     final ScrollController verticalController = ScrollController();
 
+    _loadData(context, tableCard, page: 1);
+
     return SizedBox(
       width: double.infinity,
       child: Scrollbar(
@@ -61,26 +78,14 @@ class TableCardWidget extends BaseCardWidget {
           thumbVisibility: true,
           trackVisibility: true,
           notificationPredicate: (notif) => notif.depth == 1,
-          child: FutureBuilder<(List<Map<String, dynamic>>, int)>(
-            future: _loadData(context, tableCard),
+          child: StreamBuilder<(List<Map<String, dynamic>>, int)>(
+            stream: _dataController.stream,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+              if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text('Erreur: ${snapshot.error}'),
-                );
-              }
-
-              if (!snapshot.hasData || snapshot.data!.$1.isEmpty) {
-                return const Center(
-                  child: Text('Aucune donnée disponible'),
-                );
-              }
-
-              final (items, total) = snapshot.data!;
+              final (items, _) = snapshot.data!;
               final columns = tableCard.columns;
 
               return SingleChildScrollView(
@@ -112,22 +117,44 @@ class TableCardWidget extends BaseCardWidget {
 
   @override
   Widget? buildFooter(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          const Text('1-10 of 100'),
-          IconButton(
-            icon: const Icon(Icons.chevron_left),
-            onPressed: () {},
+    return StreamBuilder<(int, int)>(
+      stream: _paginationController.stream,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        
+        final (currentPage, totalItems) = snapshot.data!;
+        final startIndex = (currentPage - 1) * _pageSize + 1;
+        final endIndex = min(startIndex + _pageSize - 1, totalItems);
+        final totalPages = (totalItems / _pageSize).ceil();
+
+        return Container(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text('$startIndex-$endIndex sur $totalItems'),
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: currentPage > 1 
+                  ? () => _loadData(context, card as TableCard, page: currentPage - 1)
+                  : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: currentPage < totalPages 
+                  ? () => _loadData(context, card as TableCard, page: currentPage + 1)
+                  : null,
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.chevron_right),
-            onPressed: () {},
-          ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  @override
+  void dispose() {
+    _paginationController.close();
+    _dataController.close();
   }
 } 
