@@ -30,14 +30,11 @@ class TableCardWidget extends BaseCardWidget {
       final tableCard = card as TableCard;
       final entitySchema = tableCard.configuration['entitySchema'] as Map<String, dynamic>;
       final properties = entitySchema['Properties'] as List<dynamic>;
-      debugPrint('Recherche du type pour la colonne: $columnKey');
-      debugPrint('Propriétés disponibles: ${properties.map((p) => p['Name'])}');
       final property = properties.firstWhere(
         (p) => p['Name'] == columnKey,
         orElse: () => {'Type': 'String'},
       );
       final type = property['Type'] as String? ?? 'String';
-      debugPrint('Type trouvé: $type');
       return type;
     } catch (e) {
       debugPrint('Erreur lors de la récupération du type: $e');

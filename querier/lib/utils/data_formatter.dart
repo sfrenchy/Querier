@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 class DataFormatter {
   static String format(dynamic value, String type, BuildContext context) {
-    debugPrint('Formatage de la valeur: $value, type: $type');
     if (value == null) return '';
 
     // Gestion des types de dates

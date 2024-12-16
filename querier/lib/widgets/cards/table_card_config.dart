@@ -248,82 +248,191 @@ class _TableCardConfigState extends State<TableCardConfig> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ListTile(
-          title: Text(l10n.dataContext),
-          subtitle: DropdownButton<String>(
-            value: _selectedContext,
-            isExpanded: true,
-            hint: Text(l10n.selectDataContext),
-            items: _contexts.map((context) => 
-              DropdownMenuItem(
-                value: context,
-                child: Text(context),
-              ),
-            ).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedContext = value;
-                _selectedEntity = null;
-                _entities.clear();
-              });
-              if (value != null) {
-                _loadEntities(value);
-                final newConfig = Map<String, dynamic>.from(widget.card.configuration);
-                newConfig['context'] = value;
-                widget.onConfigurationChanged(newConfig);
-              }
-            },
-          ),
-        ),
-        if (_selectedContext != null) ...[
-          ListTile(
-            title: Text(l10n.entity),
-            subtitle: DropdownButton<String>(
-              value: _selectedEntity,
-              isExpanded: true,
-              hint: Text(l10n.selectEntity),
-              items: _entities.map((entity) => 
-                DropdownMenuItem(
-                  value: entity.name,
-                  child: Text(entity.name),
-                ),
-              ).toList(),
-              onChanged: (value) {
-                setState(() => _selectedEntity = value);
-                if (value != null) {
-                  final entity = _entities.firstWhere((e) => e.name == value);
-                  final newConfig = Map<String, dynamic>.from(widget.card.configuration);
-                  newConfig['entity'] = value;
-                  newConfig['entitySchema'] = entity.toJson();
-                  
-                  // Initialiser les colonnes par défaut
-                  newConfig['columns'] = entity.properties.map((prop) => {
-                    'key': prop.name,
-                    'label': {'en': prop.name, 'fr': prop.name},
-                    'alignment': _getDefaultAlignment(prop.type),
-                    'visible': true,
-                    'decimals': _isNumericType(prop.type) ? 0 : null,
-                  }).toList();
-                  
-                  widget.onConfigurationChanged(newConfig);
-                  _initializeColumns();  // Mettre à jour l'interface
-                }
-              },
+        // Section 1: Sélection de la source de données
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Source de données', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                _buildContextSelector(),
+                if (_selectedContext != null) _buildEntitySelector(),
+              ],
             ),
           ),
-        ],
-        if (_selectedEntity != null)
-          _buildColumnsSection(context),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Section 2: Configuration des colonnes
+        if (_selectedEntity != null) Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Colonnes', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 16),
+                _buildColumnsConfiguration(),
+              ],
+            ),
+          ),
+        ),
       ],
     );
+  }
+
+  Widget _buildContextSelector() {
+    final l10n = AppLocalizations.of(context)!;
+    return DropdownButton<String>(
+      value: _selectedContext,
+      isExpanded: true,
+      hint: Text(l10n.selectDataContext),
+      items: _contexts.map((context) => 
+        DropdownMenuItem(
+          value: context,
+          child: Text(context),
+        ),
+      ).toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedContext = value;
+          _selectedEntity = null;
+          _entities.clear();
+        });
+        if (value != null) {
+          _loadEntities(value);
+          final newConfig = Map<String, dynamic>.from(widget.card.configuration);
+          newConfig['context'] = value;
+          widget.onConfigurationChanged(newConfig);
+        }
+      },
+    );
+  }
+
+  Widget _buildEntitySelector() {
+    final l10n = AppLocalizations.of(context)!;
+    return DropdownButton<String>(
+      value: _selectedEntity,
+      isExpanded: true,
+      hint: Text(l10n.selectEntity),
+      items: _entities.map((entity) => 
+        DropdownMenuItem(
+          value: entity.name,
+          child: Text(entity.name),
+        ),
+      ).toList(),
+      onChanged: (value) {
+        setState(() => _selectedEntity = value);
+        if (value != null) {
+          final entity = _entities.firstWhere((e) => e.name == value);
+          final newConfig = Map<String, dynamic>.from(widget.card.configuration);
+          newConfig['entity'] = value;
+          newConfig['entitySchema'] = entity.toJson();
+          
+          // Initialiser les colonnes par défaut
+          newConfig['columns'] = entity.properties.map((prop) => {
+            'key': prop.name,
+            'label': {'en': prop.name, 'fr': prop.name},
+            'alignment': _getDefaultAlignment(prop.type),
+            'visible': true,
+            'decimals': _isNumericType(prop.type) ? 0 : null,
+          }).toList();
+          
+          widget.onConfigurationChanged(newConfig);
+          _initializeColumns();  // Mettre à jour l'interface
+        }
+      },
+    );
+  }
+
+  Widget _buildColumnsConfiguration() {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _selectedColumns.length,
+      separatorBuilder: (_, __) => const Divider(),
+      itemBuilder: (context, index) {
+        final column = _selectedColumns[index];
+        return ExpansionTile(
+          title: Text(column['name']),
+          subtitle: Text('Type: ${column['type']}'),
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  // Traductions
+                  TranslationManager(
+                    translations: column['translations'],
+                    onTranslationsChanged: (newTranslations) => _updateColumnTranslations(index, newTranslations),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Alignement
+                  DropdownButtonFormField<String>(
+                    value: column['alignment'],
+                    decoration: const InputDecoration(labelText: 'Alignement'),
+                    items: ['left', 'center', 'right'].map((align) => 
+                      DropdownMenuItem(value: align, child: Text(align))
+                    ).toList(),
+                    onChanged: (value) => _updateColumnAlignment(index, value!),
+                  ),
+                  
+                  // Visibilité
+                  SwitchListTile(
+                    title: const Text('Visible'),
+                    value: column['visible'],
+                    onChanged: (value) => _updateColumnVisibility(index, value),
+                  ),
+                  
+                  // Décimales (uniquement pour les types numériques)
+                  if (_isNumericType(column['type']))
+                    TextFormField(
+                      decoration: const InputDecoration(labelText: 'Décimales'),
+                      keyboardType: TextInputType.number,
+                      initialValue: column['decimals']?.toString(),
+                      onChanged: (value) => _updateColumnDecimals(index, int.tryParse(value)),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _updateColumnTranslations(int index, Map<String, String> newTranslations) {
+    setState(() {
+      _selectedColumns[index]['translations'] = newTranslations;
+    });
+    _updateColumnConfiguration();
+  }
+
+  void _updateColumnAlignment(int index, String value) {
+    setState(() {
+      _selectedColumns[index]['alignment'] = value;
+    });
+    _updateColumnConfiguration();
+  }
+
+  void _updateColumnVisibility(int index, bool value) {
+    setState(() {
+      _selectedColumns[index]['visible'] = value;
+    });
+    _updateColumnConfiguration();
+  }
+
+  void _updateColumnDecimals(int index, int? value) {
+    setState(() {
+      _selectedColumns[index]['decimals'] = value;
+    });
+    _updateColumnConfiguration();
   }
 } 
