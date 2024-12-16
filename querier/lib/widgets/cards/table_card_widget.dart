@@ -127,7 +127,9 @@ class TableCardWidget extends BaseCardWidget {
               }
 
               final (items, _) = snapshot.data!;
-              final columns = tableCard.columns;
+              final columns = tableCard.columns.where((column) => 
+                column['visible'] == true
+              ).toList();
 
               return SingleChildScrollView(
                 controller: verticalController,

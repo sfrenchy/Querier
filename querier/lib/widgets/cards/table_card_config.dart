@@ -105,8 +105,9 @@ class _TableCardConfigState extends State<TableCardConfig> {
           'name': prop.name,
           'key': prop.name,
           'type': prop.type,
-          'translations': existingColumn?['label'] ?? 
-              {'en': prop.name, 'fr': prop.name},
+          'translations': existingColumn?['label'] != null 
+              ? Map<String, String>.from(existingColumn!['label'] as Map)
+              : {'en': prop.name, 'fr': prop.name},
           'alignment': existingColumn?['alignment'] ?? _getDefaultAlignment(prop.type),
           'visible': existingColumn?['visible'] ?? true,
           'decimals': existingColumn?['decimals'] ?? 
@@ -117,16 +118,24 @@ class _TableCardConfigState extends State<TableCardConfig> {
   }
 
   bool _isNumericType(String type) {
-    return ['Decimal', 'Double', 'Single', 'Int32', 'Int16'].contains(type);
+    return ['Decimal', 'Double', 'Single', 'Int32', 'Int16', 'Decimal?', 'Double?', 'Single?', 'Int32?', 'Int16?'].contains(type);
   }
 
   String _getDefaultAlignment(String type) {
     switch (type) {
+      case "String?":
       case 'String':
         return 'left';
+      case "DateTime?":
+      case "DateTime":
+        return 'right';
+      case "Int32?":
       case 'Int32':
+      case "Int16?":
       case 'Int16':
+      case "Decimal?":
       case 'Decimal':
+      case "Double?":
       case 'Double':
         return 'right';
       default:
