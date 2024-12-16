@@ -9,8 +9,12 @@ import 'package:provider/provider.dart';
 
 class TableCardWidget extends BaseCardWidget {
   static const int _pageSize = 10;
-  final _paginationController = StreamController<(int, int)>();
-  final _dataController = StreamController<(List<Map<String, dynamic>>, int)>();
+  final _paginationController = StreamController<(int, int)>.broadcast();
+  final _dataController = StreamController<(List<Map<String, dynamic>>, int)>.broadcast();
+  
+  // Cache pour stocker les données par page
+  final Map<int, List<Map<String, dynamic>>> _dataCache = {};
+  int? _totalItems;
 
   TableCardWidget({
     super.key,
@@ -21,6 +25,13 @@ class TableCardWidget extends BaseCardWidget {
   });
 
   Future<void> _loadData(BuildContext buildContext, TableCard card, {int page = 1}) async {
+    // Vérifier si les données sont dans le cache
+    if (_dataCache.containsKey(page)) {
+      _dataController.add((_dataCache[page]!, _totalItems!));
+      _paginationController.add((page, _totalItems!));
+      return;
+    }
+
     final apiClient = buildContext.read<ApiClient>();
     final context = card.configuration['context'] as String?;
     final entity = card.configuration['entity'] as String?;
@@ -36,8 +47,17 @@ class TableCardWidget extends BaseCardWidget {
       pageSize: _pageSize,
     );
     
+    // Mettre en cache les données
+    _dataCache[page] = result.$1;
+    _totalItems = result.$2;
+    
     _paginationController.add((page, result.$2));
     _dataController.add(result);
+  }
+
+  void clearCache() {
+    _dataCache.clear();
+    _totalItems = null;
   }
 
   @override
@@ -156,5 +176,6 @@ class TableCardWidget extends BaseCardWidget {
   void dispose() {
     _paginationController.close();
     _dataController.close();
+    _dataCache.clear();
   }
 } 
