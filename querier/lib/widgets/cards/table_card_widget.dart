@@ -136,18 +136,24 @@ class TableCardWidget extends BaseCardWidget {
                   scrollDirection: Axis.horizontal,
                   child: DataTable(
                     columns: columns.map((column) => DataColumn(
-                      label: Text(
-                        column['label']?[Localizations.localeOf(context).languageCode] ?? column['key'],
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      label: Align(
+                        alignment: _getAlignment(column['alignment'] as String?),
+                        child: Text(
+                          column['label']?[Localizations.localeOf(context).languageCode] ?? column['key'],
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     )).toList(),
                     rows: items.map((row) => DataRow(
                       cells: columns.map((column) => DataCell(
-                        Text(DataFormatter.format(
-                          row[column['key']],
-                          _getPropertyType(column['key']),
-                          context,
-                        )),
+                        Align(
+                          alignment: _getAlignment(column['alignment'] as String?),
+                          child: Text(DataFormatter.format(
+                            row[column['key']],
+                            _getPropertyType(column['key']),
+                            context,
+                          )),
+                        ),
                       )).toList(),
                     )).toList(),
                   ),
@@ -216,5 +222,18 @@ class TableCardWidget extends BaseCardWidget {
     _paginationController.close();
     _dataController.close();
     _dataCache.clear();
+  }
+
+  Alignment _getAlignment(String? alignment) {
+    switch (alignment?.toLowerCase()) {
+      case 'left':
+        return Alignment.centerLeft;
+      case 'right':
+        return Alignment.centerRight;
+      case 'center':
+        return Alignment.center;
+      default:
+        return Alignment.centerLeft; // Alignement par défaut
+    }
   }
 } 
