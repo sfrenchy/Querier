@@ -159,6 +159,20 @@ class TableCardWidget extends BaseCardWidget {
                   ? () => _loadData(context, card as TableCard, page: currentPage - 1)
                   : null,
               ),
+              DropdownButton<int>(
+                value: currentPage,
+                isDense: true,
+                items: List.generate(totalPages, (index) => index + 1)
+                    .map((page) => DropdownMenuItem(
+                      value: page,
+                      child: Text('$page / $totalPages'),
+                    )).toList(),
+                onChanged: (newPage) {
+                  if (newPage != null) {
+                    _loadData(context, card as TableCard, page: newPage);
+                  }
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.chevron_right),
                 onPressed: currentPage < totalPages 
