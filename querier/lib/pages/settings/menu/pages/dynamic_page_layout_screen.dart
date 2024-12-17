@@ -131,19 +131,33 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                 height: 80,
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
                   border: Border.all(
                     color: candidateData.isNotEmpty
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey.shade300,
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.outline,
                     width: candidateData.isNotEmpty ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(8),
+                  boxShadow: candidateData.isNotEmpty
+                      ? [
+                          BoxShadow(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.3),
+                            blurRadius: 4,
+                          )
+                        ]
+                      : null,
                 ),
                 child: Center(
                   child: Text(
                     l10n.dropRowHere,
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
                     ),
                   ),
                 ),
@@ -371,19 +385,35 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                                 height: 80,
                                 margin: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surface,
                                   border: Border.all(
                                     color: candidateData.isNotEmpty
-                                        ? Theme.of(context).primaryColor
-                                        : Colors.grey.shade300,
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context).colorScheme.outline,
                                     width: candidateData.isNotEmpty ? 2 : 1,
                                   ),
                                   borderRadius: BorderRadius.circular(8),
+                                  boxShadow: candidateData.isNotEmpty
+                                      ? [
+                                          BoxShadow(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withOpacity(0.3),
+                                            blurRadius: 4,
+                                          )
+                                        ]
+                                      : null,
                                 ),
                                 child: Center(
                                   child: Text(
                                     l10n.dropRowHere,
                                     style: TextStyle(
-                                      color: Theme.of(context).primaryColor,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16,
                                     ),
                                   ),
                                 ),

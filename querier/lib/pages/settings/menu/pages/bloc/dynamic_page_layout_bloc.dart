@@ -100,16 +100,13 @@ class DynamicPageLayoutBloc
 
   Future<void> _onAddCard(
       AddCardToRow event, Emitter<DynamicPageLayoutState> emit) async {
-    print('_onAddCard: rowId=${event.rowId}, cardType=${event.cardType}');
     if (state is DynamicPageLayoutLoaded) {
       final currentState = state as DynamicPageLayoutLoaded;
       final row = currentState.rows.firstWhere((r) => r.id == event.rowId);
 
       DynamicCard newCard;
-      print('Creating card of type: ${event.cardType}');
       switch (event.cardType) {
         case 'placeholder':
-          print('Creating PlaceholderCard');
           newCard = PlaceholderCard(
             id: -(row.cards.length + 1),
             titles: const {'en': 'New Card', 'fr': 'Nouvelle Carte'},
@@ -118,7 +115,6 @@ class DynamicPageLayoutBloc
           );
           break;
         case 'TableEntity':
-          print('Creating TableCard');
           newCard = TableEntityCard(
             id: -(row.cards.length + 1),
             titles: const {'en': 'New Table', 'fr': 'Nouveau Tableau'},
@@ -127,7 +123,6 @@ class DynamicPageLayoutBloc
           );
           break;
         default:
-          print('Unknown card type: ${event.cardType}');
           throw Exception('Unknown card type: ${event.cardType}');
       }
 
