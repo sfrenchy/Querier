@@ -20,6 +20,32 @@ class DynamicPageLayoutBloc
     on<UpdateCard>(_onUpdateCard);
     on<SaveLayout>(_onSaveLayout);
     on<DeleteRow>(_onDeleteRow);
+    on<DeleteCard>((event, emit) async {
+      if (state is DynamicPageLayoutLoaded) {
+        try {
+          final currentState = state as DynamicPageLayoutLoaded;
+
+          // Créer une nouvelle liste de rows
+          final updatedRows = currentState.rows.map((row) {
+            if (row.id == event.rowId) {
+              // Créer une nouvelle liste de cartes sans la carte supprimée
+              final updatedCards =
+                  row.cards.where((card) => card.id != event.cardId).toList();
+              return row.copyWith(cards: updatedCards);
+            }
+            return row;
+          }).toList();
+
+          // Émettre le nouvel état
+          emit(DynamicPageLayoutLoaded(
+            updatedRows,
+            isDirty: true,
+          ));
+        } catch (e) {
+          emit(DynamicPageLayoutError('Error deleting card: $e'));
+        }
+      }
+    });
   }
 
   Future<void> _onUpdateCard(

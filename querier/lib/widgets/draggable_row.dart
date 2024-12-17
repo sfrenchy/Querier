@@ -37,28 +37,26 @@ class DraggableRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(l10n.deleteCard),
         content: Text(l10n.deleteCardConfirmation),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: Text(l10n.cancel),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(l10n.delete),
           ),
         ],
       ),
     );
 
-    if (confirmed == true) {
-      if (context.mounted) {
-        context.read<DynamicPageLayoutBloc>().add(
-              DeleteCard(row.id, card.id),
-            );
-      }
+    if (confirmed == true && context.mounted) {
+      context.read<DynamicPageLayoutBloc>().add(
+            DeleteCard(row.id, card.id),
+          );
     }
   }
 
