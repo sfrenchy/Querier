@@ -28,6 +28,7 @@ class _TableEntityCardConfigState extends State<TableEntityCardConfig> {
   String? _selectedEntity;
   bool _isLoading = true;
   List<Map<String, dynamic>> _selectedColumns = [];
+  final Map<String, bool> _expandedStates = {};
 
   @override
   void initState() {
@@ -299,10 +300,10 @@ class _TableEntityCardConfigState extends State<TableEntityCardConfig> {
       },
       itemBuilder: (context, index) {
         final column = _selectedColumns[index];
-        bool isExpanded = false;
+        final columnKey = column['name'] as String;
 
         return StatefulBuilder(
-          key: ValueKey(column['name']),
+          key: ValueKey(columnKey),
           builder: (context, setState) {
             return Column(
               children: [
@@ -320,15 +321,24 @@ class _TableEntityCardConfigState extends State<TableEntityCardConfig> {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
+                      Icon(_expandedStates[columnKey] == true
+                          ? Icons.expand_less
+                          : Icons.expand_more),
                     ],
                   ),
-                  onTap: () => setState(() => isExpanded = !isExpanded),
+                  onTap: () {
+                    this.setState(() {
+                      _expandedStates[columnKey] =
+                          !(_expandedStates[columnKey] ?? false);
+                    });
+                  },
                 ),
-                if (isExpanded)
+                if (_expandedStates[columnKey] == true)
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32.0, vertical: 16.0),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // Traductions
                         TranslationManager(
@@ -336,13 +346,15 @@ class _TableEntityCardConfigState extends State<TableEntityCardConfig> {
                           onTranslationsChanged: (newTranslations) =>
                               _updateColumnTranslations(index, newTranslations),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 16),
 
                         // Alignement
                         DropdownButtonFormField<String>(
                           value: column['alignment'],
-                          decoration:
-                              InputDecoration(labelText: l10n.columnAlignment),
+                          decoration: InputDecoration(
+                            labelText: l10n.columnAlignment,
+                            border: const OutlineInputBorder(),
+                          ),
                           items: ['left', 'center', 'right']
                               .map((align) => DropdownMenuItem(
                                   value: align,
@@ -355,20 +367,26 @@ class _TableEntityCardConfigState extends State<TableEntityCardConfig> {
                           onChanged: (value) =>
                               _updateColumnAlignment(index, value!),
                         ),
+                        const SizedBox(height: 16),
 
                         // Visibilité
-                        SwitchListTile(
-                          title: Text(l10n.columnVisibility),
-                          value: column['visible'],
-                          onChanged: (value) =>
-                              _updateColumnVisibility(index, value),
+                        Card(
+                          child: SwitchListTile(
+                            title: Text(l10n.columnVisibility),
+                            value: column['visible'],
+                            onChanged: (value) =>
+                                _updateColumnVisibility(index, value),
+                          ),
                         ),
+                        const SizedBox(height: 16),
 
-                        // Décimales (uniquement pour les types numériques)
+                        // Décimales
                         if (_isNumericType(column['type']))
                           TextFormField(
-                            decoration:
-                                InputDecoration(labelText: l10n.decimals),
+                            decoration: InputDecoration(
+                              labelText: l10n.decimals,
+                              border: const OutlineInputBorder(),
+                            ),
                             keyboardType: TextInputType.number,
                             initialValue: column['decimals']?.toString(),
                             onChanged: (value) => _updateColumnDecimals(
