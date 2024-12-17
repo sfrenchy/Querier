@@ -228,5 +228,12 @@
     "columnVisibility": "Visible",
     "decimals": "Decimals",
     "configureDataAccess": "Please configure data access",
-    "configurationRequired": "Configuration required"
+    "configurationRequired": "Configuration required",
+    "columnAlignment": "Alignment",
+    "columnVisibility": "Visible",
+    "columnType": "Type",
+    "left": "Left",
+    "center": "Center",
+    "right": "Right",
+    "dataSource": "Data Source"
 } 
