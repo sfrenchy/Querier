@@ -146,35 +146,66 @@ class DraggableRow extends StatelessWidget {
                     md: 12 - totalGridWidth,
                     lg: 12 - totalGridWidth,
                     child: DragTarget<String>(
-                      onWillAccept: (data) {
-                        print('DraggableRow onWillAccept: data=$data');
-                        return data == 'placeholder' || data == 'TableEntity';
-                      },
+                      onWillAccept: (data) => data != 'row',
                       onAccept: (cardData) {
-                        print('DraggableRow onAcceptCard: cardData=$cardData');
-                        context.read<DynamicPageLayoutBloc>().add(
-                              AddCardToRow(
-                                row.id,
-                                cardData,
-                                gridWidth: 12 - totalGridWidth,
-                              ),
-                            );
+                        onAcceptCard(cardData);
                       },
                       builder: (context, candidateData, rejectedData) {
-                        return Container(
-                          height: 200,
+                        final bool isHovering =
+                            candidateData.isNotEmpty || rejectedData.isNotEmpty;
+
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          height: isHovering ? 80 : 60,
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 4, horizontal: 8),
                           decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
                             border: Border.all(
-                              color: candidateData.isNotEmpty
-                                  ? Theme.of(context).primaryColor
-                                  : Colors.grey.shade300,
+                              color: isHovering
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .outline
+                                      .withOpacity(0.5),
+                              width: isHovering ? 2 : 1,
                             ),
                             borderRadius: BorderRadius.circular(8),
+                            boxShadow: isHovering
+                                ? [
+                                    BoxShadow(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withOpacity(0.3),
+                                      blurRadius: 4,
+                                    )
+                                  ]
+                                : null,
                           ),
                           child: Center(
-                            child: Text(
-                              AppLocalizations.of(context)!.dropCardsHere,
-                              style: TextStyle(color: Colors.grey.shade600),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (isHovering)
+                                  Icon(
+                                    Icons.add_circle_outline,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  AppLocalizations.of(context)!.dropCardHere,
+                                  style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: isHovering
+                                        ? FontWeight.w500
+                                        : FontWeight.normal,
+                                    fontSize: isHovering ? 16 : 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         );
