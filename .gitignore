@@ -494,3 +494,8 @@ build/
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 
 **/Assemblies/
+querier/macos/Flutter/Flutter-Debug.xcconfig
+querier/ios/Flutter/Release.xcconfig
+querier/ios/Podfile
+querier/ios/Flutter/Debug.xcconfig
+querier/ios/Flutter/Release.xcconfig

@@ -1,6 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:querier/models/dynamic_card.dart';
 
+extension AlignmentExtension on MainAxisAlignment {
+  String toJson() {
+    return name[0].toUpperCase() + name.substring(1);
+  }
+}
+
+extension CrossAlignmentExtension on CrossAxisAlignment {
+  String toJson() {
+    return name[0].toUpperCase() + name.substring(1);
+  }
+}
+
 class DynamicRow {
   final int id;
   final int pageId;
@@ -49,8 +61,8 @@ class DynamicRow {
         'Id': id,
         'PageId': pageId,
         'Order': order,
-        'Alignment': alignment.name,
-        'CrossAlignment': crossAlignment.name,
+        'Alignment': alignment.toJson(),
+        'CrossAlignment': crossAlignment.toJson(),
         'Spacing': spacing,
         'Cards': cards.map((card) => card.toJson()).toList(),
       };

@@ -2,42 +2,71 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TranslationManager extends StatefulWidget {
-  final Map<String, TextEditingController> translations;
-  final Function(Map<String, String>) onTranslationsChanged;
+  final Map<String, String> translations;
+  final ValueChanged<Map<String, String>> onTranslationsChanged;
 
   const TranslationManager({
-    super.key,
+    Key? key,
     required this.translations,
     required this.onTranslationsChanged,
-  });
+  }) : super(key: key);
 
   @override
   State<TranslationManager> createState() => _TranslationManagerState();
 }
 
 class _TranslationManagerState extends State<TranslationManager> {
+  late Map<String, String> _translations;
+  final List<String> _availableLanguages = ['en', 'fr'];  // Liste des langues disponibles
+
   @override
   void initState() {
     super.initState();
-    _addListeners();
+    _translations = Map.from(widget.translations);
   }
 
-  void _addListeners() {
-    widget.translations.forEach((key, controller) {
-      controller.addListener(() {
-        final currentValues = Map<String, String>.from(
-            widget.translations.map((k, c) => MapEntry(k, c.text)));
-        widget.onTranslationsChanged(currentValues);
-      });
+  void _addTranslation(String language) {
+    setState(() {
+      _translations[language] = '';
+      widget.onTranslationsChanged(_translations);
     });
   }
 
-  @override
-  void dispose() {
-    widget.translations.values.forEach((controller) {
-      controller.dispose();
+  void _removeTranslation(String language) {
+    setState(() {
+      _translations.remove(language);
+      widget.onTranslationsChanged(_translations);
     });
-    super.dispose();
+  }
+
+  List<String> get _availableNewLanguages {
+    return _availableLanguages.where((lang) => !_translations.containsKey(lang)).toList();
+  }
+
+  void _showLanguageSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.selectLanguage),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: _availableNewLanguages.map((lang) {
+            String languageName = lang == 'en' ? 'English' : 'Français';
+            return ListTile(
+              leading: Text(
+                lang.toUpperCase(),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              title: Text(languageName),
+              onTap: () {
+                Navigator.pop(context);
+                _addTranslation(lang);
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -45,86 +74,52 @@ class _TranslationManagerState extends State<TranslationManager> {
     final l10n = AppLocalizations.of(context)!;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ...widget.translations.entries.map(
-          (entry) => Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 50,
-                    child: Text(entry.key.toUpperCase()),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: entry.value,
-                      decoration: InputDecoration(
-                        labelText: l10n.translatedName,
-                      ),
+        ..._translations.entries.map(
+          (entry) => Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    initialValue: entry.value,
+                    decoration: InputDecoration(
+                      labelText: '${l10n.translatedName} (${entry.key})',
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      setState(() {
-                        widget.translations.remove(entry.key);
-                        widget.onTranslationsChanged(
-                          widget.translations.map((key, controller) =>
-                              MapEntry(key, controller.text)),
-                        );
-                      });
+                    onChanged: (value) {
+                      _translations[entry.key] = value;
+                      widget.onTranslationsChanged(_translations);
                     },
                   ),
-                ],
-              ),
+                ),
+                if (_translations.length > 1)  // Empêcher la suppression de la dernière traduction
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () => _removeTranslation(entry.key),
+                  ),
+              ],
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.add),
-          label: Text(l10n.addTranslation),
-          onPressed: () => _showAddLanguageDialog(context),
-        ),
+        if (_availableNewLanguages.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 16.0),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.add),
+              label: Text(l10n.addTranslation),
+              onPressed: _showLanguageSelectionDialog,
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              l10n.noMoreLanguagesAvailable,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
       ],
-    );
-  }
-
-  void _showAddLanguageDialog(BuildContext context) {
-    final availableLanguages = {'en': 'English', 'fr': 'Français'};
-    final existingLanguages = widget.translations.keys.toSet();
-    final newLanguages = availableLanguages.entries
-        .where((e) => !existingLanguages.contains(e.key));
-
-    if (newLanguages.isEmpty) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.selectLanguage),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: newLanguages
-              .map(
-                (lang) => ListTile(
-                  title: Text(lang.value),
-                  onTap: () {
-                    setState(() {
-                      widget.translations[lang.key] = TextEditingController();
-                      widget.onTranslationsChanged(
-                        widget.translations.map((key, controller) =>
-                            MapEntry(key, controller.text)),
-                      );
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
-              )
-              .toList(),
-        ),
-      ),
     );
   }
 }

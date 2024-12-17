@@ -185,7 +185,7 @@ namespace Querier.Api.Domain.Services
                 List<StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
                 procedureDescription = JsonConvert.SerializeObject(storedProcedures);
                 var templatePath = Path.Combine(
-                    Directory.GetCurrentDirectory(), "Resources", "DBTemplating", "ProcedureParameters.st"
+                    Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureParameters.st"
                 );
                 var procedureParamsTemplate = new Template(File.ReadAllText(templatePath), '$', '$');
                 procedureParamsTemplate.Add("nameSpace", connectionNamespace);
@@ -195,7 +195,7 @@ namespace Querier.Api.Domain.Services
                 sourceFiles.Add(procedureParamsContent);
 
                 var procedureResultTemplate = new Template(File.ReadAllText(
-                    Path.Combine(Directory.GetCurrentDirectory(), "Resources", "DBTemplating", "ProcedureResultSet.st")
+                    Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureResultSet.st")
                 ), '$', '$');
                 procedureResultTemplate.Add("nameSpace", connectionNamespace);
                 procedureResultTemplate.Add("procedureList", storedProcedures.Where(s => s.HasOutput).ToList());
@@ -204,7 +204,7 @@ namespace Querier.Api.Domain.Services
                 sourceFiles.Add(procedureResultContent);
 
                 var procedureReportRequestTemplate = new Template(File.ReadAllText(
-                    Path.Combine(Directory.GetCurrentDirectory(), "Resources", "DBTemplating", "ProcedureReportRequests.st")
+                    Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureReportRequests.st")
                 ), '$', '$');
                 procedureReportRequestTemplate.Add("nameSpace", connectionNamespace);
                 procedureReportRequestTemplate.Add("procedureList", storedProcedures);
@@ -213,7 +213,7 @@ namespace Querier.Api.Domain.Services
                 sourceFiles.Add(procedureReportRequestContent);
 
                 var procedureContextTemplate = new Template(File.ReadAllText(
-                    Path.Combine(Directory.GetCurrentDirectory(), "Resources", "DBTemplating", "ProcedureContext.st")
+                    Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureContext.st")
                 ), '$', '$');
                 procedureContextTemplate.Add("nameSpace", connectionNamespace);
                 procedureContextTemplate.Add("contextNameSpace", contextName);
@@ -223,7 +223,7 @@ namespace Querier.Api.Domain.Services
                 sourceFiles.Add(procedureContextContent);
 
                 var procedureServiceTemplate = new Template(File.ReadAllText(
-                    Path.Combine(Directory.GetCurrentDirectory(), "Resources", "DBTemplating", "ProcedureService.st")
+                    Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureService.st")
                 ), '$', '$');
                 procedureServiceTemplate.Add("nameSpace", connectionNamespace);
                 procedureServiceTemplate.Add("contextNameSpace", contextName);
@@ -232,7 +232,7 @@ namespace Querier.Api.Domain.Services
                 srcZipContent.Add("ProcedureService\\ProcedureService.cs", procedureServiceContent);
                 sourceFiles.Add(procedureServiceContent);
 
-                var procedureServiceResolverTemplate = new Template(File.ReadAllText("./Resources/DBTemplating/ProcedureServiceResolver.st"), '$', '$');
+                var procedureServiceResolverTemplate = new Template(File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureServiceResolver.st")), '$', '$');
                 procedureServiceResolverTemplate.Add("nameSpace", connectionNamespace);
                 procedureServiceResolverTemplate.Add("contextNameSpace", contextName);
                 procedureServiceResolverTemplate.Add("procedureList", storedProcedures);
@@ -240,7 +240,7 @@ namespace Querier.Api.Domain.Services
                 srcZipContent.Add("ProcedureServiceResolver\\ProcedureServiceResolver.cs", procedureServiceResolverContent);
                 sourceFiles.Add(procedureServiceResolverContent);
 
-                var procedureControllerTemplate = new Template(File.ReadAllText("./Resources/DBTemplating/ProcedureController.st"), '$', '$');
+                var procedureControllerTemplate = new Template(File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureController.st")), '$', '$');
                 procedureControllerTemplate.Add("nameSpace", connectionNamespace);
                 procedureControllerTemplate.Add("contextNameSpace", contextName);
                 procedureControllerTemplate.Add("procedureList", storedProcedures);
@@ -266,6 +266,9 @@ namespace Querier.Api.Domain.Services
                 }
                 File.WriteAllBytes(sourceZipPath, sourceStream.ToArray());
             }
+
+            if (!Directory.Exists("Assemblies"))
+                Directory.CreateDirectory("Assemblies");
             string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
             using (FileStream srcFileStream = new FileStream(srcPath, FileMode.Create))
             {
@@ -281,6 +284,11 @@ namespace Querier.Api.Domain.Services
 
             if (!emitResult.Success)
             {
+                var errorDetails = string.Join("\n", emitResult.Diagnostics
+                    .Where(d => d.Severity == DiagnosticSeverity.Error)
+                    .Select(d => $"Error {d.Id} at {d.Location}: {d.GetMessage()}"));
+                _logger.LogError($"Code compilation failed with errors:\n{errorDetails}");
+    
                 var sb = new StringBuilder();
                 foreach (var diag in emitResult.Diagnostics)
                 {

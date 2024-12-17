@@ -22,13 +22,13 @@ namespace Querier.Api.Infrastructure.Data.Context
         public virtual DbSet<Domain.Entities.QDBConnection.QDBConnection> QDBConnections { get; set; }
         public DbSet<ApiRole> ApiRoles { get; set; }
         public DbSet<ApiUserRole> ApiUserRoles { get; set; }
-        public virtual DbSet<MenuCategory> MenuCategories { get; set; }
-        public virtual DbSet<MenuCategoryTranslation> MenuCategoryTranslations { get; set; }
-        public virtual DbSet<Page> Pages { get; set; }
-        public virtual DbSet<PageTranslation> PageTranslations { get; set; }
-        public virtual DbSet<DynamicCard> DynamicCards { get; set; }
+        public virtual DbSet<DynamicMenuCategory> DynamicMenuCategories { get; set; }
+        public virtual DbSet<DynamicMenuCategoryTranslation> DynamicMenuCategoryTranslations { get; set; }
+        public virtual DbSet<DynamicPage> DynamicPages { get; set; }
         public virtual DbSet<DynamicRow> DynamicRows { get; set; }
+        public virtual DbSet<DynamicCard> DynamicCards { get; set; }
         public virtual DbSet<DynamicCardTranslation> DynamicCardTranslations { get; set; }
+        public virtual DbSet<DynamicPageTranslation> DynamicPageTranslations { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -122,9 +122,9 @@ namespace Querier.Api.Infrastructure.Data.Context
             });
 
             // Configuration des entités de menu
-            modelBuilder.Entity<MenuCategory>(entity =>
+            modelBuilder.Entity<DynamicMenuCategory>(entity =>
             {
-                entity.ToTable("MenuCategories");
+                entity.ToTable("DynamicMenuCategories");
                 
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Icon).HasMaxLength(100);
@@ -135,28 +135,28 @@ namespace Querier.Api.Infrastructure.Data.Context
                 entity.HasIndex(e => e.Order);
             });
 
-            modelBuilder.Entity<MenuCategoryTranslation>(entity =>
+            modelBuilder.Entity<DynamicMenuCategoryTranslation>(entity =>
             {
-                entity.ToTable("MenuCategoryTranslations");
+                entity.ToTable("DynamicMenuCategoryTranslations");
                 
                 entity.HasKey(e => e.Id);
                 
                 // Contrainte d'unicité sur la combinaison MenuCategoryId et LanguageCode
-                entity.HasIndex(e => new { e.MenuCategoryId, e.LanguageCode }).IsUnique();
+                entity.HasIndex(e => new { DynamicMenuCategoryId = e.DynamicMenuCategoryId, e.LanguageCode }).IsUnique();
                 
                 entity.Property(e => e.LanguageCode).HasMaxLength(5);
                 entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
 
                 // Configuration de la relation
-                entity.HasOne(d => d.MenuCategory)
+                entity.HasOne(d => d.DynamicMenuCategory)
                     .WithMany(p => p.Translations)
-                    .HasForeignKey(d => d.MenuCategoryId)
+                    .HasForeignKey(d => d.DynamicMenuCategoryId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Données de base pour les menus (optionnel)
-            modelBuilder.Entity<MenuCategory>().HasData(
-                new MenuCategory
+            modelBuilder.Entity<DynamicMenuCategory>().HasData(
+                new DynamicMenuCategory
                 {
                     Id = 1,
                     Icon = "home",
@@ -167,60 +167,60 @@ namespace Querier.Api.Infrastructure.Data.Context
                 }
             );
 
-            modelBuilder.Entity<MenuCategoryTranslation>().HasData(
-                new MenuCategoryTranslation
+            modelBuilder.Entity<DynamicMenuCategoryTranslation>().HasData(
+                new DynamicMenuCategoryTranslation
                 {
                     Id = 1,
-                    MenuCategoryId = 1,
+                    DynamicMenuCategoryId = 1,
                     LanguageCode = "en",
                     Name = "Home"
                 },
-                new MenuCategoryTranslation
+                new DynamicMenuCategoryTranslation
                 {
                     Id = 2,
-                    MenuCategoryId = 1,
+                    DynamicMenuCategoryId = 1,
                     LanguageCode = "fr",
                     Name = "Accueil"
                 }
             );
 
-            modelBuilder.Entity<Page>(entity =>
+            modelBuilder.Entity<DynamicPage>(entity =>
             {
-                entity.ToTable("Pages");
+                entity.ToTable("DynamicPages");
                 
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Icon).HasMaxLength(100);
                 entity.Property(e => e.Route).HasMaxLength(100);
                 entity.Property(e => e.Roles).HasMaxLength(1000);
                 
-                entity.HasOne(e => e.MenuCategory)
+                entity.HasOne(e => e.DynamicMenuCategory)
                       .WithMany(e => e.Pages)
-                      .HasForeignKey(e => e.MenuCategoryId)
+                      .HasForeignKey(e => e.DynamicMenuCategoryId)
                       .OnDelete(DeleteBehavior.Cascade);
                 
                 entity.HasIndex(e => e.Order);
             });
 
-            modelBuilder.Entity<PageTranslation>(entity =>
+            modelBuilder.Entity<DynamicPageTranslation>(entity =>
             {
-                entity.ToTable("PageTranslations");
+                entity.ToTable("DynamicPageTranslations");
                 
                 entity.HasKey(e => e.Id);
                 
-                entity.HasIndex(e => new { e.PageId, e.LanguageCode }).IsUnique();
+                entity.HasIndex(e => new { e.DynamicPageId, e.LanguageCode }).IsUnique();
                 
                 entity.Property(e => e.LanguageCode).HasMaxLength(5);
                 entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
 
-                entity.HasOne(d => d.Page)
-                      .WithMany(p => p.Translations)
-                      .HasForeignKey(d => d.PageId)
+                entity.HasOne(d => d.DynamicPage)
+                      .WithMany(p => p.DynamicPageTranslations)
+                      .HasForeignKey(d => d.DynamicPageId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Ajout du seed pour la page Northwind
-            modelBuilder.Entity<Page>().HasData(
-                new Page
+            modelBuilder.Entity<DynamicPage>().HasData(
+                new DynamicPage
                 {
                     Id = 1,
                     Icon = "dashboard",
@@ -228,22 +228,22 @@ namespace Querier.Api.Infrastructure.Data.Context
                     IsVisible = true,
                     Roles = "Admin,User",
                     Route = "/northwind/home",
-                    MenuCategoryId = 1
+                    DynamicMenuCategoryId = 1
                 }
             );
 
-            modelBuilder.Entity<PageTranslation>().HasData(
-                new PageTranslation
+            modelBuilder.Entity<DynamicPageTranslation>().HasData(
+                new DynamicPageTranslation
                 {
                     Id = 1,
-                    PageId = 1,
+                    DynamicPageId = 1,
                     LanguageCode = "fr",
                     Name = "Northwind - Accueil"
                 },
-                new PageTranslation
+                new DynamicPageTranslation
                 {
                     Id = 2,
-                    PageId = 1,
+                    DynamicPageId = 1,
                     LanguageCode = "en",
                     Name = "Northwind - Home"
                 }

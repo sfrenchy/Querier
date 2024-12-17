@@ -39,20 +39,13 @@ namespace Querier.Api.Infrastructure.Services.Menu
             {
                 Order = order,
                 Type = request.Type,
-                IsResizable = request.IsResizable,
-                IsCollapsible = request.IsCollapsible,
-                Height = request.Height,
-                Width = request.Width,
                 Configuration = request.Configuration != null 
                     ? JsonConvert.SerializeObject(request.Configuration)
                     : null,
                 DynamicRowId = rowId,
-                Translations = (request.Titles ?? new Dictionary<string, string>())
-                    .Select(x => new DynamicCardTranslation
-                    {
-                        LanguageCode = x.Key,
-                        Title = x.Value
-                    }).ToList()
+                GridWidth = 12,
+                BackgroundColor = request.BackgroundColor ?? 0xFF000000,
+                TextColor = request.TextColor ?? 0xFFFFFFFF,
             };
 
             var result = await _repository.CreateAsync(card);
@@ -64,13 +57,12 @@ namespace Querier.Api.Infrastructure.Services.Menu
             var existingCard = await _repository.GetByIdAsync(id);
             if (existingCard == null) return null;
 
-            existingCard.UseAvailableWidth = request.UseAvailableWidth;
+            
             existingCard.Type = request.Type;
-            existingCard.IsResizable = request.IsResizable;
-            existingCard.IsCollapsible = request.IsCollapsible;
-            existingCard.Height = request.Height;
-            existingCard.Width = request.Width;
+            existingCard.GridWidth = request.GridWidth;
             existingCard.Order = request.Order;
+            existingCard.BackgroundColor = request.BackgroundColor;
+            existingCard.TextColor = request.TextColor;
 
             existingCard.Translations.Clear();
             foreach (var translation in request.Titles)
@@ -121,14 +113,14 @@ namespace Querier.Api.Infrastructure.Services.Menu
                 Titles = card.Translations.ToDictionary(x => x.LanguageCode, x => x.Title),
                 Order = card.Order,
                 Type = card.Type.ToString(),
-                IsResizable = card.IsResizable,
-                IsCollapsible = card.IsCollapsible,
-                Height = card.Height,
-                Width = card.Width,
+                GridWidth = card.GridWidth,
                 Configuration = card.Configuration != null 
                     ? JsonConvert.DeserializeObject(card.Configuration)
                     : null,
-                UseAvailableWidth = card.UseAvailableWidth,
+                TextColor = card.TextColor,
+                BackgroundColor = card.BackgroundColor,
+                HeaderBackgroundColor = card.HeaderBackgroundColor,
+                HeaderTextColor = card.HeaderTextColor
             };
         }
     }

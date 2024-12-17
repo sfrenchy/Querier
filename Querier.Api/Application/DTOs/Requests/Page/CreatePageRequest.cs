@@ -10,6 +10,6 @@ namespace Querier.Api.Application.DTOs.Requests.Page
         public bool IsVisible { get; set; }
         public List<string> Roles { get; set; }
         public string Route { get; set; }
-        public int MenuCategoryId { get; set; }
+        public int DynamicMenuCategoryId { get; set; }
     }
 } 

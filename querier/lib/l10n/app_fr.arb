@@ -172,7 +172,7 @@
     "components": "Composants",
     "cards": "Cartes",
     "newRow": "Nouvelle ligne",
-    "tableCard": "Carte tableau",
+    "tableCard": "Carte Tableau",
     "chartCard": "Carte graphique",
     "metricsCard": "Carte métriques",
     "cardTitle": "Titre",
@@ -187,5 +187,44 @@
     "noPagesYet": "Aucune page pour le moment",
     "confirmDelete": "Confirmer la suppression",
     "confirmDeletePageMessage": "Êtes-vous sûr de vouloir supprimer cette page ?",
-    "order": "Ordre"
+    "order": "Ordre",
+    "colors": "Couleurs",
+    "dropCardHere": "Déposez une carte ici",
+    "rowProperties": "Propriétés de la ligne",
+    "horizontalAlignment": "Alignement horizontal",
+    "verticalAlignment": "Alignement vertical",
+    "spacing": "Espacement",
+    "deleteRow": "Supprimer la ligne",
+    "deleteRowConfirmation": "Êtes-vous sûr de vouloir supprimer cette ligne ?",
+    "dropRowHere": "Déposez une ligne ici",
+    "dropCardsHere": "Déposez des cartes ici",
+    "row": "Ligne {number}",
+    "@row": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "placeholderCard": "Carte de base",
+    "deleteCard": "Supprimer la carte",
+    "deleteCardConfirmation": "Êtes-vous sûr de vouloir supprimer cette carte ?",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "backgroundColor": "Couleur de fond",
+    "textColor": "Couleur du texte",
+    "cardLabel": "Libellé",
+    "gridWidth": "Largeur de grille",
+    "gridWidthHint": "1 = très étroit, 12 = pleine largeur",
+    "headerBackgroundColor": "Couleur de fond de l'en-tête",
+    "headerTextColor": "Couleur du texte de l'en-tête",
+    "dataContext": "Contexte de données",
+    "selectDataContext": "Sélectionner un contexte de données",
+    "entity": "Entité",
+    "selectEntity": "Sélectionner une entité",
+    "columns": "Colonnes",
+    "columnAlignment": "Alignement",
+    "columnVisibility": "Visible",
+    "decimals": "Décimales",
+    "configureDataAccess": "Veuillez configurer l'accès aux données"
 } 

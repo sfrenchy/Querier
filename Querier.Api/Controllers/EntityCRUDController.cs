@@ -39,15 +39,30 @@ namespace Querier.Api.Controllers
         }
 
         [HttpGet("GetEntity")]
-        public IActionResult GetEntiy(string contextTypeName, string entityName)
+        public IActionResult GetEntity(string contextTypeName, string entityName)
         {
             return new OkObjectResult(_entityCRUDService.GetEntity(contextTypeName, entityName));
         }
 
         [HttpGet("GetAll")]
-        public IActionResult GetAll(string contextTypeName, string entityTypeName)
+        public IActionResult GetAll(
+            [FromQuery] string contextTypeName, 
+            [FromQuery] string entityTypeName,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
-            return new OkObjectResult(_entityCRUDService.GetAll(contextTypeName, entityTypeName));
+            var paginationParams = new PaginationParameters 
+            { 
+                PageNumber = pageNumber,
+                PageSize = pageSize 
+            };
+            
+            var result = _entityCRUDService.GetAll(contextTypeName, entityTypeName, paginationParams);
+            return Ok(new PagedResult<object>
+            {
+                Data = result.Data,
+                TotalCount = result.TotalCount
+            });
         }
 
         [HttpPost("ReadFromSql")]

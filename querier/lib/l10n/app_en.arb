@@ -188,5 +188,44 @@
     "confirmDeletePageMessage": "Are you sure you want to delete this page?",
     "cancel": "Cancel",
     "delete": "Delete",
-    "order": "Order"
+    "order": "Order",
+    "colors": "Colors",
+    "dropCardHere": "Drop a card here",
+    "rowProperties": "Row Properties",
+    "horizontalAlignment": "Horizontal Alignment",
+    "verticalAlignment": "Vertical Alignment",
+    "spacing": "Spacing",
+    "deleteRow": "Delete Row",
+    "deleteRowConfirmation": "Are you sure you want to delete this row?",
+    "dropRowHere": "Drop a row here",
+    "dropCardsHere": "Drop cards here",
+    "row": "Row {number}",
+    "@row": {
+        "placeholders": {
+            "number": {
+                "type": "int"
+            }
+        }
+    },
+    "placeholderCard": "Placeholder Card",
+    "deleteCard": "Delete Card",
+    "deleteCardConfirmation": "Are you sure you want to delete this card?",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "backgroundColor": "Background Color",
+    "textColor": "Text Color",
+    "cardLabel": "Label",
+    "gridWidth": "Grid Width",
+    "gridWidthHint": "1 = very narrow, 12 = full width",
+    "headerBackgroundColor": "Header Background Color",
+    "headerTextColor": "Header Text Color",
+    "dataContext": "Data Context",
+    "selectDataContext": "Select a data context",
+    "entity": "Entity",
+    "selectEntity": "Select an entity",
+    "columns": "Columns",
+    "columnAlignment": "Alignment",
+    "columnVisibility": "Visible",
+    "decimals": "Decimals",
+    "configureDataAccess": "Please configure data access"
 } 

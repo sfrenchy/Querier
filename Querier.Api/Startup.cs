@@ -250,10 +250,10 @@ namespace Querier.Api
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IDBConnectionService, DBConnectionService>();
             services.AddScoped<IEmailTemplateService, EmailTemplateService>();
-            services.AddScoped<IMenuCategoryRepository, MenuCategoryRepository>();
-            services.AddScoped<IMenuCategoryService, MenuCategoryService>();
-            services.AddScoped<IPageRepository, PageRepository>();
-            services.AddScoped<IPageService, PageService>();
+            services.AddScoped<IDynamicMenuCategoryRepository, DynamicMenuCategoryRepository>();
+            services.AddScoped<IDynamicMenuCategoryService, DynamicMenuCategoryService>();
+            services.AddScoped<IDynamicPageRepository, DynamicPageRepository>();
+            services.AddScoped<IDynamicPageService, DynamicPageService>();
             // services.AddEntityFrameworkSqlServer()
             //     .AddLogging()
             //     .AddEntityFrameworkDesignTimeServices()
@@ -388,6 +388,7 @@ namespace Querier.Api
             // Services
             services.AddScoped<IDynamicRowService, DynamicRowService>();
             services.AddScoped<IDynamicCardService, DynamicCardService>();
+            services.AddScoped<ILayoutService, LayoutService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
