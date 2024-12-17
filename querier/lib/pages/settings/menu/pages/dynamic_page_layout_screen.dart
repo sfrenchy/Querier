@@ -127,19 +127,26 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
               }
             },
             builder: (context, candidateData, rejectedData) {
-              return Container(
-                height: 80,
+              final bool isHovering =
+                  candidateData.isNotEmpty || rejectedData.isNotEmpty;
+
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: isHovering ? 80 : 40,
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   border: Border.all(
-                    color: candidateData.isNotEmpty
+                    color: isHovering
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.outline,
-                    width: candidateData.isNotEmpty ? 2 : 1,
+                        : Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withOpacity(0.5),
+                    width: isHovering ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: candidateData.isNotEmpty
+                  boxShadow: isHovering
                       ? [
                           BoxShadow(
                             color: Theme.of(context)
@@ -156,8 +163,9 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                     l10n.dropRowHere,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16,
+                      fontWeight:
+                          isHovering ? FontWeight.w500 : FontWeight.normal,
+                      fontSize: isHovering ? 16 : 14,
                     ),
                   ),
                 ),
@@ -381,19 +389,27 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                                   .add(AddRow(widget.pageId));
                             },
                             builder: (context, candidateData, rejectedData) {
-                              return Container(
-                                height: 80,
+                              final bool isHovering =
+                                  candidateData.isNotEmpty ||
+                                      rejectedData.isNotEmpty;
+
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                height: isHovering ? 80 : 40,
                                 margin: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).colorScheme.surface,
                                   border: Border.all(
-                                    color: candidateData.isNotEmpty
+                                    color: isHovering
                                         ? Theme.of(context).colorScheme.primary
-                                        : Theme.of(context).colorScheme.outline,
-                                    width: candidateData.isNotEmpty ? 2 : 1,
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .outline
+                                            .withOpacity(0.5),
+                                    width: isHovering ? 2 : 1,
                                   ),
                                   borderRadius: BorderRadius.circular(8),
-                                  boxShadow: candidateData.isNotEmpty
+                                  boxShadow: isHovering
                                       ? [
                                           BoxShadow(
                                             color: Theme.of(context)
@@ -412,8 +428,10 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                                       color: Theme.of(context)
                                           .colorScheme
                                           .onSurface,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 16,
+                                      fontWeight: isHovering
+                                          ? FontWeight.w500
+                                          : FontWeight.normal,
+                                      fontSize: isHovering ? 16 : 14,
                                     ),
                                   ),
                                 ),
