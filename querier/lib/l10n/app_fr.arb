@@ -226,5 +226,6 @@
     "columnAlignment": "Alignement",
     "columnVisibility": "Visible",
     "decimals": "Décimales",
-    "configureDataAccess": "Veuillez configurer l'accès aux données"
+    "configureDataAccess": "Veuillez configurer l'accès aux données",
+    "configurationRequired": "Configuration requise"
 } 

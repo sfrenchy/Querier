@@ -32,7 +32,8 @@ class DraggableRow extends StatelessWidget {
     this.dragHandle,
   }) : super(key: key);
 
-  Future<void> _confirmDeleteCard(BuildContext context, DynamicCard card) async {
+  Future<void> _confirmDeleteCard(
+      BuildContext context, DynamicCard card) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -55,15 +56,15 @@ class DraggableRow extends StatelessWidget {
     if (confirmed == true) {
       if (context.mounted) {
         context.read<DynamicPageLayoutBloc>().add(
-          DeleteCard(row.id, card.id),
-        );
+              DeleteCard(row.id, card.id),
+            );
       }
     }
   }
 
   void _showCardConfig(BuildContext context, DynamicCard card) {
     final bloc = context.read<DynamicPageLayoutBloc>();
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -84,7 +85,8 @@ class DraggableRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Calculer la somme des gridWidth
-    final totalGridWidth = row.cards.fold<int>(0, (sum, card) => sum + card.gridWidth);
+    final totalGridWidth =
+        row.cards.fold<int>(0, (sum, card) => sum + card.gridWidth);
 
     return Container(
       padding: const EdgeInsets.all(8),
@@ -113,14 +115,14 @@ class DraggableRow extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(width: 8),  // Espacement
+          const SizedBox(width: 8), // Espacement
           // Contenu existant
           Expanded(
             child: ResponsiveGridRow(
               children: [
                 // Afficher les cartes existantes
-                ...row.cards.map((card) => 
-                  ResponsiveGridCol(
+                ...row.cards.map(
+                  (card) => ResponsiveGridCol(
                     xs: 12,
                     sm: 6,
                     md: card.gridWidth,
@@ -146,26 +148,26 @@ class DraggableRow extends StatelessWidget {
                     child: DragTarget<String>(
                       onWillAccept: (data) {
                         print('DraggableRow onWillAccept: data=$data');
-                        return data == 'placeholder' || data == 'Table';
+                        return data == 'placeholder' || data == 'TableEntity';
                       },
                       onAccept: (cardData) {
                         print('DraggableRow onAcceptCard: cardData=$cardData');
                         context.read<DynamicPageLayoutBloc>().add(
-                          AddCardToRow(
-                            row.id, 
-                            cardData,
-                            gridWidth: 12 - totalGridWidth,
-                          ),
-                        );
+                              AddCardToRow(
+                                row.id,
+                                cardData,
+                                gridWidth: 12 - totalGridWidth,
+                              ),
+                            );
                       },
                       builder: (context, candidateData, rejectedData) {
                         return Container(
                           height: 200,
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: candidateData.isNotEmpty 
-                                ? Theme.of(context).primaryColor 
-                                : Colors.grey.shade300,
+                              color: candidateData.isNotEmpty
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.grey.shade300,
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),

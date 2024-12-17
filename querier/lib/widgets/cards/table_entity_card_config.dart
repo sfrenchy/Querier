@@ -6,21 +6,21 @@ import 'package:provider/provider.dart';
 import 'package:querier/models/entity_schema.dart';
 import 'package:querier/widgets/translation_manager.dart';
 
-class TableCardConfig extends StatefulWidget {
-  final TableCard card;
+class TableEntityCardConfig extends StatefulWidget {
+  final TableEntityCard card;
   final ValueChanged<Map<String, dynamic>> onConfigurationChanged;
 
-  const TableCardConfig({
+  const TableEntityCardConfig({
     Key? key,
     required this.card,
     required this.onConfigurationChanged,
   }) : super(key: key);
 
   @override
-  State<TableCardConfig> createState() => _TableCardConfigState();
+  State<TableEntityCardConfig> createState() => _TableEntityCardConfigState();
 }
 
-class _TableCardConfigState extends State<TableCardConfig> {
+class _TableEntityCardConfigState extends State<TableEntityCardConfig> {
   List<String> _contexts = [];
   List<EntitySchema> _entities = [];
   String? _selectedContext;
@@ -32,7 +32,7 @@ class _TableCardConfigState extends State<TableCardConfig> {
   void initState() {
     super.initState();
     _loadContexts();
-    
+
     // Si un contexte est déjà configuré, charger les entités
     final savedContext = widget.card.configuration['context'] as String?;
     if (savedContext != null) {
@@ -105,12 +105,13 @@ class _TableCardConfigState extends State<TableCardConfig> {
           'name': prop.name,
           'key': prop.name,
           'type': prop.type,
-          'translations': existingColumn?['label'] != null 
+          'translations': existingColumn?['label'] != null
               ? Map<String, String>.from(existingColumn!['label'] as Map)
               : {'en': prop.name, 'fr': prop.name},
-          'alignment': existingColumn?['alignment'] ?? _getDefaultAlignment(prop.type),
+          'alignment':
+              existingColumn?['alignment'] ?? _getDefaultAlignment(prop.type),
           'visible': existingColumn?['visible'] ?? true,
-          'decimals': existingColumn?['decimals'] ?? 
+          'decimals': existingColumn?['decimals'] ??
               (_isNumericType(prop.type) ? 0 : null),
         };
       }).toList();
@@ -118,7 +119,18 @@ class _TableCardConfigState extends State<TableCardConfig> {
   }
 
   bool _isNumericType(String type) {
-    return ['Decimal', 'Double', 'Single', 'Int32', 'Int16', 'Decimal?', 'Double?', 'Single?', 'Int32?', 'Int16?'].contains(type);
+    return [
+      'Decimal',
+      'Double',
+      'Single',
+      'Int32',
+      'Int16',
+      'Decimal?',
+      'Double?',
+      'Single?',
+      'Int32?',
+      'Int16?'
+    ].contains(type);
   }
 
   String _getDefaultAlignment(String type) {
@@ -166,9 +178,12 @@ class _TableCardConfigState extends State<TableCardConfig> {
             child: DropdownButton<String>(
               value: column['alignment'],
               items: [
-                DropdownMenuItem(value: 'left', child: Icon(Icons.format_align_left)),
-                DropdownMenuItem(value: 'center', child: Icon(Icons.format_align_center)),
-                DropdownMenuItem(value: 'right', child: Icon(Icons.format_align_right)),
+                DropdownMenuItem(
+                    value: 'left', child: Icon(Icons.format_align_left)),
+                DropdownMenuItem(
+                    value: 'center', child: Icon(Icons.format_align_center)),
+                DropdownMenuItem(
+                    value: 'right', child: Icon(Icons.format_align_right)),
               ],
               onChanged: (value) {
                 setState(() {
@@ -188,8 +203,7 @@ class _TableCardConfigState extends State<TableCardConfig> {
                 ),
                 keyboardType: TextInputType.number,
                 controller: TextEditingController(
-                  text: column['decimals']?.toString() ?? '0'
-                ),
+                    text: column['decimals']?.toString() ?? '0'),
                 onChanged: (value) {
                   setState(() {
                     column['decimals'] = int.tryParse(value) ?? 0;
@@ -220,7 +234,9 @@ class _TableCardConfigState extends State<TableCardConfig> {
       children: [
         ReorderableListView(
           shrinkWrap: true,
-          children: _selectedColumns.map((column) => _buildColumnConfig(column)).toList(),
+          children: _selectedColumns
+              .map((column) => _buildColumnConfig(column))
+              .toList(),
           onReorder: (oldIndex, newIndex) {
             setState(() {
               if (newIndex > oldIndex) newIndex--;
@@ -236,13 +252,15 @@ class _TableCardConfigState extends State<TableCardConfig> {
 
   void _updateColumnConfiguration() {
     final newConfig = Map<String, dynamic>.from(widget.card.configuration);
-    newConfig['columns'] = _selectedColumns.map((col) => {
-      'key': col['name'],
-      'label': col['translations'],
-      'alignment': col['alignment'],
-      'visible': col['visible'],
-      'decimals': col['decimals'],
-    }).toList();
+    newConfig['columns'] = _selectedColumns
+        .map((col) => {
+              'key': col['name'],
+              'label': col['translations'],
+              'alignment': col['alignment'],
+              'visible': col['visible'],
+              'decimals': col['decimals'],
+            })
+        .toList();
     widget.onConfigurationChanged(newConfig);
   }
 
@@ -258,7 +276,8 @@ class _TableCardConfigState extends State<TableCardConfig> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Source de données', style: Theme.of(context).textTheme.titleMedium),
+                Text('Source de données',
+                    style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 _buildContextSelector(),
                 if (_selectedContext != null) _buildEntitySelector(),
@@ -270,19 +289,21 @@ class _TableCardConfigState extends State<TableCardConfig> {
         const SizedBox(height: 16),
 
         // Section 2: Configuration des colonnes
-        if (_selectedEntity != null) Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Colonnes', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 16),
-                _buildColumnsConfiguration(),
-              ],
+        if (_selectedEntity != null)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Colonnes',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 16),
+                  _buildColumnsConfiguration(),
+                ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -293,12 +314,14 @@ class _TableCardConfigState extends State<TableCardConfig> {
       value: _selectedContext,
       isExpanded: true,
       hint: Text(l10n.selectDataContext),
-      items: _contexts.map((context) => 
-        DropdownMenuItem(
-          value: context,
-          child: Text(context),
-        ),
-      ).toList(),
+      items: _contexts
+          .map(
+            (context) => DropdownMenuItem(
+              value: context,
+              child: Text(context),
+            ),
+          )
+          .toList(),
       onChanged: (value) {
         setState(() {
           _selectedContext = value;
@@ -307,7 +330,8 @@ class _TableCardConfigState extends State<TableCardConfig> {
         });
         if (value != null) {
           _loadEntities(value);
-          final newConfig = Map<String, dynamic>.from(widget.card.configuration);
+          final newConfig =
+              Map<String, dynamic>.from(widget.card.configuration);
           newConfig['context'] = value;
           widget.onConfigurationChanged(newConfig);
         }
@@ -321,31 +345,36 @@ class _TableCardConfigState extends State<TableCardConfig> {
       value: _selectedEntity,
       isExpanded: true,
       hint: Text(l10n.selectEntity),
-      items: _entities.map((entity) => 
-        DropdownMenuItem(
-          value: entity.name,
-          child: Text(entity.name),
-        ),
-      ).toList(),
+      items: _entities
+          .map(
+            (entity) => DropdownMenuItem(
+              value: entity.name,
+              child: Text(entity.name),
+            ),
+          )
+          .toList(),
       onChanged: (value) {
         setState(() => _selectedEntity = value);
         if (value != null) {
           final entity = _entities.firstWhere((e) => e.name == value);
-          final newConfig = Map<String, dynamic>.from(widget.card.configuration);
+          final newConfig =
+              Map<String, dynamic>.from(widget.card.configuration);
           newConfig['entity'] = value;
           newConfig['entitySchema'] = entity.toJson();
-          
+
           // Initialiser les colonnes par défaut
-          newConfig['columns'] = entity.properties.map((prop) => {
-            'key': prop.name,
-            'label': {'en': prop.name, 'fr': prop.name},
-            'alignment': _getDefaultAlignment(prop.type),
-            'visible': true,
-            'decimals': _isNumericType(prop.type) ? 0 : null,
-          }).toList();
-          
+          newConfig['columns'] = entity.properties
+              .map((prop) => {
+                    'key': prop.name,
+                    'label': {'en': prop.name, 'fr': prop.name},
+                    'alignment': _getDefaultAlignment(prop.type),
+                    'visible': true,
+                    'decimals': _isNumericType(prop.type) ? 0 : null,
+                  })
+              .toList();
+
           widget.onConfigurationChanged(newConfig);
-          _initializeColumns();  // Mettre à jour l'interface
+          _initializeColumns(); // Mettre à jour l'interface
         }
       },
     );
@@ -370,34 +399,37 @@ class _TableCardConfigState extends State<TableCardConfig> {
                   // Traductions
                   TranslationManager(
                     translations: column['translations'],
-                    onTranslationsChanged: (newTranslations) => _updateColumnTranslations(index, newTranslations),
+                    onTranslationsChanged: (newTranslations) =>
+                        _updateColumnTranslations(index, newTranslations),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Alignement
                   DropdownButtonFormField<String>(
                     value: column['alignment'],
                     decoration: const InputDecoration(labelText: 'Alignement'),
-                    items: ['left', 'center', 'right'].map((align) => 
-                      DropdownMenuItem(value: align, child: Text(align))
-                    ).toList(),
+                    items: ['left', 'center', 'right']
+                        .map((align) =>
+                            DropdownMenuItem(value: align, child: Text(align)))
+                        .toList(),
                     onChanged: (value) => _updateColumnAlignment(index, value!),
                   ),
-                  
+
                   // Visibilité
                   SwitchListTile(
                     title: const Text('Visible'),
                     value: column['visible'],
                     onChanged: (value) => _updateColumnVisibility(index, value),
                   ),
-                  
+
                   // Décimales (uniquement pour les types numériques)
                   if (_isNumericType(column['type']))
                     TextFormField(
                       decoration: const InputDecoration(labelText: 'Décimales'),
                       keyboardType: TextInputType.number,
                       initialValue: column['decimals']?.toString(),
-                      onChanged: (value) => _updateColumnDecimals(index, int.tryParse(value)),
+                      onChanged: (value) =>
+                          _updateColumnDecimals(index, int.tryParse(value)),
                     ),
                 ],
               ),
@@ -408,7 +440,8 @@ class _TableCardConfigState extends State<TableCardConfig> {
     );
   }
 
-  void _updateColumnTranslations(int index, Map<String, String> newTranslations) {
+  void _updateColumnTranslations(
+      int index, Map<String, String> newTranslations) {
     setState(() {
       _selectedColumns[index]['translations'] = newTranslations;
     });
@@ -435,4 +468,4 @@ class _TableCardConfigState extends State<TableCardConfig> {
     });
     _updateColumnConfiguration();
   }
-} 
+}
