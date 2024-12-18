@@ -4,8 +4,11 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/blocs/menu_bloc.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/dynamic_page_layout_bloc.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/dynamic_page_layout_event.dart';
 import 'package:querier/widgets/app_drawer.dart';
 import 'package:querier/widgets/cards/card_selector.dart';
+import 'package:querier/widgets/draggable_row.dart';
 import 'package:querier/widgets/menu_drawer.dart';
 import 'package:querier/widgets/user_avatar.dart';
 import 'bloc/home_bloc.dart';
@@ -64,10 +67,9 @@ class HomeScreen extends StatelessWidget {
                 onRefresh: () async {
                   context.read<HomeBloc>().add(RefreshDashboard());
                 },
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(8.0),
+                child: Expanded(
                   child: Container(
-                    margin: const EdgeInsets.all(4.0),
+                    margin: const EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: Colors.grey.shade300,
@@ -75,47 +77,18 @@ class HomeScreen extends StatelessWidget {
                       ),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Column(
-                      children: state.rows
-                          .map((row) => Container(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      row.alignment ?? MainAxisAlignment.start,
-                                  crossAxisAlignment: row.crossAlignment ??
-                                      CrossAxisAlignment.start,
-                                  children: row.cards.map((card) {
-                                    // Calculer la largeur disponible en tenant compte de tous les paddings
-                                    final totalPadding =
-                                        24.0 + // Padding externe (8.0 de chaque côté)
-                                            8.0 + // Margin du Container (4.0 de chaque côté)
-                                            16.0 + // Padding des rows (8.0 de chaque côté)
-                                            (row.spacing?.toDouble() ?? 8.0) *
-                                                2; // Spacing entre cartes
-
-                                    final availableWidth =
-                                        MediaQuery.of(context).size.width -
-                                            totalPadding;
-                                    final width =
-                                        (card.gridWidth / 12) * availableWidth;
-
-                                    return SizedBox(
-                                      width: width,
-                                      child: Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal:
-                                                row.spacing?.toDouble() ?? 8.0),
-                                        child: CardSelector(
-                                          card: card,
-                                          onEdit: () {},
-                                          onDelete: () {},
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ))
-                          .toList(),
+                    child: ListView(
+                      children: [
+                        ...state.rows.map((row) => DraggableRow(
+                              key: ValueKey(row.id),
+                              row: row,
+                              onEdit: () => {},
+                              onDelete: () => {},
+                              onReorder: (oldIndex, newIndex) {},
+                              onAcceptCard: (cardData) {},
+                              onReorderCards: (rowId, oldIndex, newIndex) {},
+                            )),
+                      ],
                     ),
                   ),
                 ),
