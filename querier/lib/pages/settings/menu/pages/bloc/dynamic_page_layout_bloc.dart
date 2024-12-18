@@ -20,9 +20,36 @@ class DynamicPageLayoutBloc
     on<UpdateCard>(_onUpdateCard);
     on<SaveLayout>(_onSaveLayout);
     on<DeleteRow>(_onDeleteRow);
+    on<DeleteCard>((event, emit) async {
+      if (state is DynamicPageLayoutLoaded) {
+        try {
+          final currentState = state as DynamicPageLayoutLoaded;
+
+          // Créer une nouvelle liste de rows
+          final updatedRows = currentState.rows.map((row) {
+            if (row.id == event.rowId) {
+              // Créer une nouvelle liste de cartes sans la carte supprimée
+              final updatedCards =
+                  row.cards.where((card) => card.id != event.cardId).toList();
+              return row.copyWith(cards: updatedCards);
+            }
+            return row;
+          }).toList();
+
+          // Émettre le nouvel état
+          emit(DynamicPageLayoutLoaded(
+            updatedRows,
+            isDirty: true,
+          ));
+        } catch (e) {
+          emit(DynamicPageLayoutError('Error deleting card: $e'));
+        }
+      }
+    });
   }
 
-  Future<void> _onUpdateCard(UpdateCard event, Emitter<DynamicPageLayoutState> emit) async {
+  Future<void> _onUpdateCard(
+      UpdateCard event, Emitter<DynamicPageLayoutState> emit) async {
     if (state is DynamicPageLayoutLoaded) {
       final currentState = state as DynamicPageLayoutLoaded;
       final updatedRows = currentState.rows.map((row) {
@@ -42,12 +69,13 @@ class DynamicPageLayoutBloc
     }
   }
 
-  Future<void> _onSaveLayout(SaveLayout event, Emitter<DynamicPageLayoutState> emit) async {
+  Future<void> _onSaveLayout(
+      SaveLayout event, Emitter<DynamicPageLayoutState> emit) async {
     if (state is DynamicPageLayoutLoaded) {
       try {
         final currentState = state as DynamicPageLayoutLoaded;
         emit(DynamicPageLayoutSaving());
-        
+
         final layout = Layout(
           pageId: event.pageId,
           rows: currentState.rows,
@@ -57,7 +85,7 @@ class DynamicPageLayoutBloc
           roles: const ['User'],
           route: '/layout',
         );
-        
+
         await _apiClient.updateLayout(event.pageId, layout);
         emit(DynamicPageLayoutLoaded(currentState.rows, isDirty: false));
       } catch (e) {
@@ -66,7 +94,8 @@ class DynamicPageLayoutBloc
     }
   }
 
-  Future<void> _onLoadPageLayout(LoadPageLayout event, Emitter<DynamicPageLayoutState> emit) async {
+  Future<void> _onLoadPageLayout(
+      LoadPageLayout event, Emitter<DynamicPageLayoutState> emit) async {
     emit(DynamicPageLayoutLoading());
     try {
       final layout = await _apiClient.getLayout(event.pageId);
@@ -76,7 +105,8 @@ class DynamicPageLayoutBloc
     }
   }
 
-  Future<void> _onAddRow(AddRow event, Emitter<DynamicPageLayoutState> emit) async {
+  Future<void> _onAddRow(
+      AddRow event, Emitter<DynamicPageLayoutState> emit) async {
     if (state is DynamicPageLayoutLoaded) {
       final currentState = state as DynamicPageLayoutLoaded;
       final newRow = DynamicRow(
@@ -94,17 +124,15 @@ class DynamicPageLayoutBloc
     }
   }
 
-  Future<void> _onAddCard(AddCardToRow event, Emitter<DynamicPageLayoutState> emit) async {
-    print('_onAddCard: rowId=${event.rowId}, cardType=${event.cardType}');
+  Future<void> _onAddCard(
+      AddCardToRow event, Emitter<DynamicPageLayoutState> emit) async {
     if (state is DynamicPageLayoutLoaded) {
       final currentState = state as DynamicPageLayoutLoaded;
       final row = currentState.rows.firstWhere((r) => r.id == event.rowId);
-      
+
       DynamicCard newCard;
-      print('Creating card of type: ${event.cardType}');
       switch (event.cardType) {
         case 'placeholder':
-          print('Creating PlaceholderCard');
           newCard = PlaceholderCard(
             id: -(row.cards.length + 1),
             titles: const {'en': 'New Card', 'fr': 'Nouvelle Carte'},
@@ -112,9 +140,8 @@ class DynamicPageLayoutBloc
             gridWidth: event.gridWidth,
           );
           break;
-        case 'Table':
-          print('Creating TableCard');
-          newCard = TableCard(
+        case 'TableEntity':
+          newCard = TableEntityCard(
             id: -(row.cards.length + 1),
             titles: const {'en': 'New Table', 'fr': 'Nouveau Tableau'},
             order: row.cards.length + 1,
@@ -122,27 +149,26 @@ class DynamicPageLayoutBloc
           );
           break;
         default:
-          print('Unknown card type: ${event.cardType}');
           throw Exception('Unknown card type: ${event.cardType}');
       }
 
-      final updatedRows = currentState.rows.map((r) => 
-        r.id == event.rowId 
-          ? r.copyWith(cards: [...r.cards, newCard])
-          : r
-      ).toList();
+      final updatedRows = currentState.rows
+          .map((r) => r.id == event.rowId
+              ? r.copyWith(cards: [...r.cards, newCard])
+              : r)
+          .toList();
 
       emit(DynamicPageLayoutLoaded(updatedRows, isDirty: true));
     }
   }
 
-  Future<void> _onDeleteRow(DeleteRow event, Emitter<DynamicPageLayoutState> emit) async {
+  Future<void> _onDeleteRow(
+      DeleteRow event, Emitter<DynamicPageLayoutState> emit) async {
     if (state is DynamicPageLayoutLoaded) {
       final currentState = state as DynamicPageLayoutLoaded;
-      final updatedRows = currentState.rows
-          .where((row) => row.id != event.rowId)
-          .toList();
-      
+      final updatedRows =
+          currentState.rows.where((row) => row.id != event.rowId).toList();
+
       emit(DynamicPageLayoutLoaded(updatedRows, isDirty: true));
     }
   }

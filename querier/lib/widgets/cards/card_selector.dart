@@ -4,8 +4,8 @@ import 'package:querier/models/cards/placeholder_card.dart';
 import 'package:querier/widgets/cards/placeholder_card_config.dart';
 import 'package:querier/widgets/cards/placeholder_card_widget.dart';
 import 'package:querier/models/cards/table_card.dart';
-import 'package:querier/widgets/cards/table_card_widget.dart';
-import 'package:querier/widgets/cards/table_card_config.dart';
+import 'package:querier/widgets/cards/table_entity_card_widget.dart';
+import 'package:querier/widgets/cards/table_entity_card_config.dart';
 
 class CardSelector extends StatelessWidget {
   final DynamicCard card;
@@ -42,9 +42,9 @@ class CardSelector extends StatelessWidget {
           );
         }
         return null;
-      case 'Table':
+      case 'TableEntity':
         if (onConfigurationChanged != null) {
-          final tableCard = TableCard(
+          final tableCard = TableEntityCard(
             id: card.id,
             titles: card.titles,
             order: card.order,
@@ -55,7 +55,7 @@ class CardSelector extends StatelessWidget {
             headerTextColor: card.headerTextColor,
             configuration: card.configuration,
           );
-          return TableCardConfig(
+          return TableEntityCardConfig(
             card: tableCard,
             onConfigurationChanged: onConfigurationChanged!,
           );
@@ -85,8 +85,8 @@ class CardSelector extends StatelessWidget {
           onDelete: onDelete,
           dragHandle: dragHandle,
         );
-      case 'Table':
-        final tableCard = TableCard(
+      case 'TableEntity':
+        final tableCard = TableEntityCard(
           id: card.id,
           titles: card.titles,
           order: card.order,
@@ -97,7 +97,7 @@ class CardSelector extends StatelessWidget {
           headerTextColor: card.headerTextColor,
           configuration: card.configuration,
         );
-        return TableCardWidget(
+        return TableEntityCardWidget(
           card: tableCard,
           onEdit: onEdit,
           onDelete: onDelete,
@@ -111,4 +111,4 @@ class CardSelector extends StatelessWidget {
         );
     }
   }
-} 
+}

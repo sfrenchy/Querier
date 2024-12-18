@@ -56,26 +56,28 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
           ...state.rows.asMap().entries.map((entry) {
             return DragTarget<DynamicRow>(
               onWillAccept: (data) {
-                print('onWillAccept: data=${data?.id}, targetRow=${entry.value.id}');
+                print(
+                    'onWillAccept: data=${data?.id}, targetRow=${entry.value.id}');
                 return data != null;
               },
               onAccept: (data) {
-                print('onAccept: sourceRow=${data.id}, targetRow=${entry.value.id}');
+                print(
+                    'onAccept: sourceRow=${data.id}, targetRow=${entry.value.id}');
                 final rows = state.rows;
                 final oldIndex = rows.indexOf(data);
                 final newIndex = rows.indexOf(entry.value);
                 print('Indices: oldIndex=$oldIndex, newIndex=$newIndex');
-                
+
                 if (oldIndex != newIndex) {
                   final rowIds = rows.map((r) => r.id).toList();
                   print('Before reorder: rowIds=$rowIds');
                   final id = rowIds.removeAt(oldIndex);
                   rowIds.insert(newIndex, id);
                   print('After reorder: rowIds=$rowIds');
-                  
+
                   context.read<DynamicPageLayoutBloc>().add(
-                    ReorderRows(widget.pageId, rowIds),
-                  );
+                        ReorderRows(widget.pageId, rowIds),
+                      );
                 }
               },
               builder: (context, candidateData, rejectedData) {
@@ -101,13 +103,14 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                   onAcceptCard: (cardData) {
                     final availableWidth = 12 - entry.value.cards.length;
                     context.read<DynamicPageLayoutBloc>().add(
-                      AddCardToRow(entry.value.id, cardData, gridWidth: availableWidth),
-                    );
+                          AddCardToRow(entry.value.id, cardData,
+                              gridWidth: availableWidth),
+                        );
                   },
                   onReorderCards: (rowId, oldIndex, newIndex) {
                     context.read<DynamicPageLayoutBloc>().add(
-                      ReorderCardsInRow(rowId, oldIndex, newIndex),
-                    );
+                          ReorderCardsInRow(rowId, oldIndex, newIndex),
+                        );
                   },
                 );
               },
@@ -118,27 +121,51 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
             onWillAccept: (data) => data == 'row',
             onAccept: (data) {
               if (data == 'row') {
-                context.read<DynamicPageLayoutBloc>().add(AddRow(widget.pageId));
+                context
+                    .read<DynamicPageLayoutBloc>()
+                    .add(AddRow(widget.pageId));
               }
             },
             builder: (context, candidateData, rejectedData) {
-              return Container(
-                height: 80,
+              final bool isHovering =
+                  candidateData.isNotEmpty || rejectedData.isNotEmpty;
+
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: isHovering ? 80 : 40,
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
                   border: Border.all(
-                    color: candidateData.isNotEmpty 
-                      ? Theme.of(context).primaryColor 
-                      : Colors.grey.shade300,
-                    width: candidateData.isNotEmpty ? 2 : 1,
+                    color: isHovering
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withOpacity(0.5),
+                    width: isHovering ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(8),
+                  boxShadow: isHovering
+                      ? [
+                          BoxShadow(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.3),
+                            blurRadius: 4,
+                          )
+                        ]
+                      : null,
                 ),
                 child: Center(
                   child: Text(
                     l10n.dropRowHere,
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight:
+                          isHovering ? FontWeight.w500 : FontWeight.normal,
+                      fontSize: isHovering ? 16 : 14,
                     ),
                   ),
                 ),
@@ -212,8 +239,9 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                   if (state is DynamicPageLayoutLoaded && state.isDirty)
                     IconButton(
                       icon: const Icon(Icons.refresh),
-                      onPressed: () => context.read<DynamicPageLayoutBloc>()
-                        .add(ReloadPageLayout(widget.pageId)),
+                      onPressed: () => context
+                          .read<DynamicPageLayoutBloc>()
+                          .add(ReloadPageLayout(widget.pageId)),
                     ),
                   IconButton(
                     icon: const Icon(Icons.save),
@@ -295,7 +323,7 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                                   const SizedBox(height: 8),
                                   // TableCard draggable
                                   _buildDraggableComponent(
-                                    'Table',
+                                    'TableEntity',
                                     Icons.table_chart,
                                     l10n.tableCard,
                                   ),
@@ -321,60 +349,89 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                       child: ListView(
                         children: [
                           ...state.rows.map((row) => DraggableRow(
-                            key: ValueKey(row.id),
-                            row: row,
-                            onEdit: () => _showRowProperties(context, row),
-                            onDelete: () => _confirmDeleteRow(context, row),
-                            onReorder: (oldIndex, newIndex) {
-                              final rows = state.rows;
-                              if (oldIndex < newIndex) {
-                                newIndex -= 1;
-                              }
-                              final item = rows.removeAt(oldIndex);
-                              rows.insert(newIndex, item);
+                                key: ValueKey(row.id),
+                                row: row,
+                                onEdit: () => _showRowProperties(context, row),
+                                onDelete: () => _confirmDeleteRow(context, row),
+                                onReorder: (oldIndex, newIndex) {
+                                  final rows = state.rows;
+                                  if (oldIndex < newIndex) {
+                                    newIndex -= 1;
+                                  }
+                                  final item = rows.removeAt(oldIndex);
+                                  rows.insert(newIndex, item);
 
-                              final rowIds = rows.map((r) => r.id).toList();
-                              context.read<DynamicPageLayoutBloc>().add(
-                                    ReorderRows(widget.pageId, rowIds),
-                                  );
-                            },
-                            onAcceptCard: (cardData) {
-                              final availableWidth = 12 - row.cards.length;
-                              context.read<DynamicPageLayoutBloc>().add(
-                                AddCardToRow(row.id, cardData, gridWidth: availableWidth),
-                              );
-                            },
-                            onReorderCards: (rowId, oldIndex, newIndex) {
-                              context.read<DynamicPageLayoutBloc>().add(
-                                ReorderCardsInRow(rowId, oldIndex, newIndex),
-                              );
-                            },
-                          )),
+                                  final rowIds = rows.map((r) => r.id).toList();
+                                  context.read<DynamicPageLayoutBloc>().add(
+                                        ReorderRows(widget.pageId, rowIds),
+                                      );
+                                },
+                                onAcceptCard: (cardData) {
+                                  final availableWidth = 12 - row.cards.length;
+                                  context.read<DynamicPageLayoutBloc>().add(
+                                        AddCardToRow(row.id, cardData,
+                                            gridWidth: availableWidth),
+                                      );
+                                },
+                                onReorderCards: (rowId, oldIndex, newIndex) {
+                                  context.read<DynamicPageLayoutBloc>().add(
+                                        ReorderCardsInRow(
+                                            rowId, oldIndex, newIndex),
+                                      );
+                                },
+                              )),
                           // Zone de drop pour nouvelle row
                           DragTarget<String>(
                             onWillAccept: (data) => data == 'row',
                             onAccept: (data) {
-                              context.read<DynamicPageLayoutBloc>()
-                                .add(AddRow(widget.pageId));
+                              context
+                                  .read<DynamicPageLayoutBloc>()
+                                  .add(AddRow(widget.pageId));
                             },
                             builder: (context, candidateData, rejectedData) {
-                              return Container(
-                                height: 80,
+                              final bool isHovering =
+                                  candidateData.isNotEmpty ||
+                                      rejectedData.isNotEmpty;
+
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                height: isHovering ? 80 : 40,
                                 margin: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surface,
                                   border: Border.all(
-                                    color: candidateData.isNotEmpty 
-                                      ? Theme.of(context).primaryColor 
-                                      : Colors.grey.shade300,
-                                    width: candidateData.isNotEmpty ? 2 : 1,
+                                    color: isHovering
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .outline
+                                            .withOpacity(0.5),
+                                    width: isHovering ? 2 : 1,
                                   ),
                                   borderRadius: BorderRadius.circular(8),
+                                  boxShadow: isHovering
+                                      ? [
+                                          BoxShadow(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withOpacity(0.3),
+                                            blurRadius: 4,
+                                          )
+                                        ]
+                                      : null,
                                 ),
                                 child: Center(
                                   child: Text(
                                     l10n.dropRowHere,
                                     style: TextStyle(
-                                      color: Theme.of(context).primaryColor,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
+                                      fontWeight: isHovering
+                                          ? FontWeight.w500
+                                          : FontWeight.normal,
+                                      fontSize: isHovering ? 16 : 14,
                                     ),
                                   ),
                                 ),
@@ -421,7 +478,8 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: _isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
+          mainAxisAlignment:
+              _isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
           children: [
             Icon(icon, size: 20),
             if (_isExpanded) ...[

@@ -84,10 +84,10 @@ class QuerierApp extends StatelessWidget {
             title: 'Querier',
             debugShowCheckedModeBanner: false,
             theme: QuerierTheme.darkTheme,
-            home: LoginScreen(),
+            home: const LoginScreen(),
             routes: {
               '/home': (context) => const HomeScreen(),
-              '/login': (context) => LoginScreen(),
+              '/login': (context) => const LoginScreen(),
               '/profile': (context) => const ProfileScreen(),
               '/users': (context) => const SettingUsersScreen(),
               '/roles': (context) => const SettingRolesScreen(),

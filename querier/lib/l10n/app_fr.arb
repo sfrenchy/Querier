@@ -226,5 +226,13 @@
     "columnAlignment": "Alignement",
     "columnVisibility": "Visible",
     "decimals": "Décimales",
-    "configureDataAccess": "Veuillez configurer l'accès aux données"
+    "configureDataAccess": "Veuillez configurer l'accès aux données",
+    "configurationRequired": "Configuration requise",
+    "columnAlignment": "Alignement",
+    "columnVisibility": "Visible",
+    "columnType": "Type",
+    "left": "Gauche",
+    "center": "Centre",
+    "right": "Droite",
+    "dataSource": "Source de données"
 } 
