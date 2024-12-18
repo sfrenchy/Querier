@@ -479,14 +479,30 @@ class ApiClient {
 
   // Mettre à jour une page
   Future<MenuPage> updatePage(int id, MenuPage page) async {
+    final translations = page.names.entries
+        .map((entry) => {
+              'languageCode': entry.key,
+              'name': entry.value,
+            })
+        .toList();
+
     final response = await _dio.put(
       ApiEndpoints.buildUrl(
         baseUrl,
         ApiEndpoints.replaceUrlParams(
             ApiEndpoints.pageById, {'id': id.toString()}),
       ),
-      data: page.toJson(),
+      data: {
+        'icon': page.icon,
+        'order': page.order,
+        'isVisible': page.isVisible,
+        'roles': page.roles,
+        'route': page.route,
+        'dynamicMenuCategoryId': page.menuCategoryId,
+        'translations': translations,
+      },
     );
+
     return MenuPage.fromJson(response.data);
   }
 
@@ -684,15 +700,16 @@ class ApiClient {
   }
 
   Future<(List<Map<String, dynamic>>, int)> getEntityData(
-    String contextTypeName, 
-    String entityTypeName, 
-    {int pageNumber = 1, int pageSize = 10}
-  ) async {
+      String contextTypeName, String entityTypeName,
+      {int pageNumber = 1, int pageSize = 10}) async {
     try {
       final response = await _dio.get(
         ApiEndpoints.replaceUrlParams(
           ApiEndpoints.entityCRUDGetAll,
-          {'contextTypeName': contextTypeName, 'entityTypeName': entityTypeName},
+          {
+            'contextTypeName': contextTypeName,
+            'entityTypeName': entityTypeName
+          },
         ),
         queryParameters: {
           'pageNumber': pageNumber,
@@ -703,9 +720,10 @@ class ApiClient {
       print('API Response: ${response.data}'); // Debug
 
       final List<Map<String, dynamic>> data = (response.data['Data'] as List)
-          .map((item) => Map<String, dynamic>.from(item as Map<String, dynamic>))
+          .map(
+              (item) => Map<String, dynamic>.from(item as Map<String, dynamic>))
           .toList();
-      
+
       final totalCount = response.data['TotalCount'] as int? ?? 0;
 
       return (data, totalCount);
@@ -715,7 +733,8 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> getEntity(String contextName, String entityName) async {
+  Future<Map<String, dynamic>> getEntity(
+      String contextName, String entityName) async {
     final response = await _dio.get<Map<String, dynamic>>(
       ApiEndpoints.replaceUrlParams(
         ApiEndpoints.entityCRUDGetEntity,

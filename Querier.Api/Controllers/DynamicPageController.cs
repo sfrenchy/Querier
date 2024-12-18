@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Querier.Api.Application.DTOs.Menu.Requests;
 using Querier.Api.Application.DTOs.Requests.Page;
 using Querier.Api.Application.DTOs.Responses.Page;
 using Querier.Api.Application.Interfaces.Services.Menu;
@@ -79,7 +80,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(PageResponse), 200)]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<PageResponse>> Update(int id, CreatePageRequest request)
+        public async Task<ActionResult<PageResponse>> Update(int id, UpdateDynamicPageRequest request)
         {
             var result = await _pageService.UpdateAsync(id, request);
             if (result == null) return NotFound();

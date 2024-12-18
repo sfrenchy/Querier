@@ -13,6 +13,7 @@ class MenuPageForm extends StatefulWidget {
   final int menuCategoryId;
   final VoidCallback onSaved;
   final ApiClient apiClient;
+  final DynamicPagesBloc pagesBloc;
 
   const MenuPageForm({
     super.key,
@@ -20,6 +21,7 @@ class MenuPageForm extends StatefulWidget {
     required this.menuCategoryId,
     required this.onSaved,
     required this.apiClient,
+    required this.pagesBloc,
   });
 
   @override
@@ -94,9 +96,8 @@ class _MenuPageFormState extends State<MenuPageForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TranslationManager(
-                translations: _translations.map((key, controller) => 
-                  MapEntry(key, controller.text)
-                ),
+                translations: _translations
+                    .map((key, controller) => MapEntry(key, controller.text)),
                 onTranslationsChanged: (newTranslations) {
                   setState(() {
                     _translations.clear();
@@ -183,6 +184,7 @@ class _MenuPageFormState extends State<MenuPageForm> {
         }
 
         if (mounted) {
+          widget.pagesBloc.add(LoadPages(widget.menuCategoryId));
           widget.onSaved();
           Navigator.pop(context, true);
         }
