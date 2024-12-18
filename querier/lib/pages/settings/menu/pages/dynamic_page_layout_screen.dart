@@ -9,6 +9,9 @@ import 'package:querier/widgets/row_properties_dialog.dart';
 import 'bloc/dynamic_page_layout_bloc.dart';
 import 'bloc/dynamic_page_layout_event.dart';
 import 'bloc/dynamic_page_layout_state.dart';
+import 'package:querier/models/cards/placeholder_card.dart';
+import 'package:querier/models/cards/table_card.dart';
+import 'package:querier/models/dynamic_card.dart';
 
 class DynamicPageLayoutScreen extends StatefulWidget {
   final int pageId;
@@ -456,8 +459,29 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
 
   Widget _buildDraggableComponent(String type, IconData icon, String label) {
     print('Building draggable component: type=$type');
-    return Draggable<String>(
-      data: type,
+    if (type == 'row') {
+      return Draggable<String>(
+        data: type,
+        feedback: Material(
+          elevation: 4,
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(label),
+          ),
+        ),
+        childWhenDragging: Container(),
+        child: _buildDraggableChild(icon, label),
+      );
+    }
+
+    return Draggable<DynamicCard>(
+      data: type == 'placeholder'
+          ? PlaceholderCard(id: 0, titles: {}, order: 0)
+          : TableEntityCard(id: 0, titles: {}, order: 0),
       feedback: Material(
         elevation: 4,
         child: Container(
@@ -470,31 +494,35 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
         ),
       ),
       childWhenDragging: Container(),
-      child: Container(
-        height: 48,
-        margin: const EdgeInsets.symmetric(horizontal: 4.0),
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          color: Theme.of(context).hoverColor,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment:
-              _isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 20),
-            if (_isExpanded) ...[
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                ),
+      child: _buildDraggableChild(icon, label),
+    );
+  }
+
+  Widget _buildDraggableChild(IconData icon, String label) {
+    return Container(
+      height: 48,
+      margin: const EdgeInsets.symmetric(horizontal: 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: Theme.of(context).hoverColor,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment:
+            _isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 20),
+          if (_isExpanded) ...[
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

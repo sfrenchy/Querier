@@ -17,7 +17,7 @@ class DraggableRow extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final Function(int, int) onReorder;
-  final Function(Map<String, dynamic>) onAcceptCard;
+  final Function(DynamicCard) onAcceptCard;
   final Function(int, int, int) onReorderCards;
   final bool isEditing;
 
@@ -144,26 +144,27 @@ class DraggableRow extends StatelessWidget {
                   ),
                 ),
                 // Zone de drop uniquement si l'espace est disponible
-                if (totalGridWidth < 12)
+                if (totalGridWidth < 12 && isEditing)
                   ResponsiveGridCol(
                     xs: 12,
                     sm: 6,
                     md: 12 - totalGridWidth,
                     lg: 12 - totalGridWidth,
-                    child: DragTarget<Map<String, dynamic>>(
-                      onWillAccept: (data) => data != null,
-                      onAccept: (cardData) {
-                        onAcceptCard(cardData);
+                    child: DragTarget<DynamicCard>(
+                      onWillAccept: (data) {
+                        print('Card onWillAccept: ${data?.runtimeType}');
+                        return data != null;
+                      },
+                      onAccept: (data) {
+                        print('Card onAccept: ${data.runtimeType}');
+                        onAcceptCard(data);
                       },
                       builder: (context, candidateData, rejectedData) {
-                        final bool isHovering =
-                            candidateData.isNotEmpty || rejectedData.isNotEmpty;
-
+                        final bool isHovering = candidateData.isNotEmpty;
                         return AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          height: isHovering ? 80 : 60,
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 4, horizontal: 8),
+                          height: isHovering ? 80 : 40,
+                          margin: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surface,
                             border: Border.all(
@@ -176,41 +177,16 @@ class DraggableRow extends StatelessWidget {
                               width: isHovering ? 2 : 1,
                             ),
                             borderRadius: BorderRadius.circular(8),
-                            boxShadow: isHovering
-                                ? [
-                                    BoxShadow(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withOpacity(0.3),
-                                      blurRadius: 4,
-                                    )
-                                  ]
-                                : null,
                           ),
                           child: Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (isHovering)
-                                  Icon(
-                                    Icons.add_circle_outline,
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                  ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  AppLocalizations.of(context)!.dropCardHere,
-                                  style: TextStyle(
-                                    color:
-                                        Theme.of(context).colorScheme.onSurface,
-                                    fontWeight: isHovering
-                                        ? FontWeight.w500
-                                        : FontWeight.normal,
-                                    fontSize: isHovering ? 16 : 14,
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              'Drop a card here',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: isHovering
+                                    ? FontWeight.w500
+                                    : FontWeight.normal,
+                              ),
                             ),
                           ),
                         );
