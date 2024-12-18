@@ -88,13 +88,15 @@ class DraggableRow extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 1,
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: isEditing
+          ? BoxDecoration(
+              border: Border.all(
+                color: Colors.grey.shade300,
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            )
+          : null,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
