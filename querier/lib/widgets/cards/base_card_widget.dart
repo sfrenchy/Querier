@@ -8,7 +8,8 @@ abstract class BaseCardWidget extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final Widget? dragHandle;
-  
+  final bool isEditing;
+
   // Nouveaux getters optionnels pour header/footer
   Widget? buildHeader(BuildContext context) => null;
   Widget? buildFooter(BuildContext context) => null;
@@ -22,17 +23,18 @@ abstract class BaseCardWidget extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.dragHandle,
+    this.isEditing = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    print('BaseCardWidget.build: headerBackgroundColor = ${card.headerBackgroundColor}'); // Debug
-    print('BaseCardWidget.build: Color value = ${card.headerBackgroundColor != null ? Color(card.headerBackgroundColor!) : null}'); // Debug
-    
+    print(
+        'BaseCardWidget.build: headerBackgroundColor = ${card.headerBackgroundColor}'); // Debug
+    print(
+        'BaseCardWidget.build: Color value = ${card.headerBackgroundColor != null ? Color(card.headerBackgroundColor!) : null}'); // Debug
+
     return Card(
-      color: card.backgroundColor != null 
-        ? Color(card.backgroundColor!) 
-        : null,
+      color: card.backgroundColor != null ? Color(card.backgroundColor!) : null,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -41,25 +43,25 @@ abstract class BaseCardWidget extends StatelessWidget {
             title: card.getLocalizedTitle(
               Localizations.localeOf(context).languageCode,
             ),
-            onEdit: onEdit,
-            onDelete: onDelete,
-            dragHandle: dragHandle,
-            backgroundColor: card.headerBackgroundColor != null 
-              ? Color(card.headerBackgroundColor!) 
-              : null,
-            textColor: card.headerTextColor != null 
-              ? Color(card.headerTextColor!) 
-              : null,
+            onEdit: isEditing ? onEdit : null,
+            onDelete: isEditing ? onDelete : null,
+            dragHandle: isEditing ? dragHandle : null,
+            isEditing: isEditing,
+            backgroundColor: card.headerBackgroundColor != null
+                ? Color(card.headerBackgroundColor!)
+                : null,
+            textColor: card.headerTextColor != null
+                ? Color(card.headerTextColor!)
+                : null,
           ),
-            
+
           // Contenu principal
           Flexible(
             child: buildCardContent(context),
           ),
-          
+
           // Footer optionnel
-          if (buildFooter(context) != null)
-            buildFooter(context)!,
+          if (buildFooter(context) != null) buildFooter(context)!,
         ],
       ),
     );

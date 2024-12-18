@@ -125,12 +125,19 @@ class DraggableRow extends StatelessWidget {
                     lg: card.gridWidth,
                     child: CardSelector(
                       card: card,
-                      onEdit: () => _showCardConfig(context, card),
-                      onDelete: () => _confirmDeleteCard(context, card),
-                      dragHandle: MouseRegion(
-                        cursor: SystemMouseCursors.grab,
-                        child: const Icon(Icons.drag_handle),
-                      ),
+                      onEdit: isEditing
+                          ? () => _showCardConfig(context, card)
+                          : null,
+                      onDelete: isEditing
+                          ? () => _confirmDeleteCard(context, card)
+                          : null,
+                      dragHandle: isEditing
+                          ? MouseRegion(
+                              cursor: SystemMouseCursors.grab,
+                              child: const Icon(Icons.drag_handle),
+                            )
+                          : null,
+                      isEditing: isEditing,
                     ),
                   ),
                 ),
