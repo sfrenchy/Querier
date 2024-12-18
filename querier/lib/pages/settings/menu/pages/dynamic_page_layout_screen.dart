@@ -85,6 +85,7 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                 return DraggableRow(
                   key: ValueKey(entry.value.id),
                   row: entry.value,
+                  isEditing: true,
                   onEdit: () => _showRowProperties(context, entry.value),
                   onDelete: () => _confirmDeleteRow(context, entry.value),
                   onReorder: (oldIndex, newIndex) {
@@ -351,6 +352,7 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                           ...state.rows.map((row) => DraggableRow(
                                 key: ValueKey(row.id),
                                 row: row,
+                                isEditing: true,
                                 onEdit: () => _showRowProperties(context, row),
                                 onDelete: () => _confirmDeleteRow(context, row),
                                 onReorder: (oldIndex, newIndex) {

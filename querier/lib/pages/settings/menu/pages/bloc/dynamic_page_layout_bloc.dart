@@ -131,7 +131,7 @@ class DynamicPageLayoutBloc
       final row = currentState.rows.firstWhere((r) => r.id == event.rowId);
 
       DynamicCard newCard;
-      switch (event.cardType) {
+      switch (event.cardData['type']) {
         case 'placeholder':
           newCard = PlaceholderCard(
             id: -(row.cards.length + 1),
@@ -149,7 +149,7 @@ class DynamicPageLayoutBloc
           );
           break;
         default:
-          throw Exception('Unknown card type: ${event.cardType}');
+          throw Exception('Unknown card type: ${event.cardData['type']}');
       }
 
       final updatedRows = currentState.rows

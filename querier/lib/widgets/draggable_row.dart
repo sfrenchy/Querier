@@ -16,10 +16,10 @@ class DraggableRow extends StatelessWidget {
   final DynamicRow row;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final Function(int oldIndex, int newIndex) onReorder;
-  final Function(String cardData) onAcceptCard;
-  final Function(int rowId, int oldIndex, int newIndex) onReorderCards;
-  final Widget? dragHandle;
+  final Function(int, int) onReorder;
+  final Function(Map<String, dynamic>) onAcceptCard;
+  final Function(int, int, int) onReorderCards;
+  final bool isEditing;
 
   const DraggableRow({
     Key? key,
@@ -29,7 +29,7 @@ class DraggableRow extends StatelessWidget {
     required this.onReorder,
     required this.onAcceptCard,
     required this.onReorderCards,
-    this.dragHandle,
+    this.isEditing = false,
   }) : super(key: key);
 
   Future<void> _confirmDeleteCard(
@@ -98,21 +98,19 @@ class DraggableRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Colonne des boutons à gauche
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: onDelete,
-                tooltip: AppLocalizations.of(context)!.deleteRow,
-              ),
-              MouseRegion(
-                cursor: SystemMouseCursors.grab,
-                child: dragHandle ?? const Icon(Icons.drag_indicator),
-              ),
-            ],
-          ),
+          if (isEditing)
+            Column(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: onEdit,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: onDelete,
+                ),
+              ],
+            ),
           const SizedBox(width: 8), // Espacement
           // Contenu existant
           Expanded(
@@ -143,8 +141,8 @@ class DraggableRow extends StatelessWidget {
                     sm: 6,
                     md: 12 - totalGridWidth,
                     lg: 12 - totalGridWidth,
-                    child: DragTarget<String>(
-                      onWillAccept: (data) => data != 'row',
+                    child: DragTarget<Map<String, dynamic>>(
+                      onWillAccept: (data) => data != null,
                       onAccept: (cardData) {
                         onAcceptCard(cardData);
                       },

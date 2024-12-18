@@ -82,6 +82,7 @@ class HomeScreen extends StatelessWidget {
                         ...state.rows.map((row) => DraggableRow(
                               key: ValueKey(row.id),
                               row: row,
+                              isEditing: false,
                               onEdit: () => {},
                               onDelete: () => {},
                               onReorder: (oldIndex, newIndex) {},
