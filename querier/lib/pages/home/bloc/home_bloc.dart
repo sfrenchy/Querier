@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:querier/api/api_client.dart';
+import 'package:querier/models/dynamic_row.dart';
 
 part 'home_event.dart';
 part 'home_state.dart';
@@ -23,13 +24,18 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final stats = await _apiClient.getQueryStats();
       final activity = await _apiClient.getActivityData();
 
+      // Charger le layout de la page d'accueil (assumons que l'ID est 1)
+      final layout = await _apiClient.getLayout(1);
+      final rows = layout.rows;
+
       emit(HomeLoaded(
-        username: userData.data['name'] ?? '',
+        email: userData.data['email'] ?? '',
         firstName: userData.data['FirstName'] ?? '',
         lastName: userData.data['LastName'] ?? '',
         recentQueries: List<String>.from(recentQueries),
         queryStats: Map<String, int>.from(stats),
         activityData: List<Map<String, dynamic>>.from(activity),
+        rows: rows,
       ));
     } catch (e) {
       emit(HomeError(e.toString()));
@@ -46,12 +52,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         final activity = await _apiClient.getActivityData();
 
         emit(HomeLoaded(
-          username: userData.data['name'] ?? '',
+          email: userData.data['email'] ?? '',
           firstName: userData.data['FirstName'] ?? '',
           lastName: userData.data['LastName'] ?? '',
           recentQueries: List<String>.from(recentQueries),
           queryStats: Map<String, int>.from(stats),
           activityData: List<Map<String, dynamic>>.from(activity),
+          rows: [],
         ));
       }
     } catch (e) {

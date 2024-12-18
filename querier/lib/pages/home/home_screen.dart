@@ -5,6 +5,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/blocs/menu_bloc.dart';
 import 'package:querier/widgets/app_drawer.dart';
+import 'package:querier/widgets/cards/card_selector.dart';
 import 'package:querier/widgets/menu_drawer.dart';
 import 'package:querier/widgets/user_avatar.dart';
 import 'bloc/home_bloc.dart';
@@ -64,17 +65,57 @@ class HomeScreen extends StatelessWidget {
                   context.read<HomeBloc>().add(RefreshDashboard());
                 },
                 child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    margin: const EdgeInsets.all(4.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey.shade300,
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStatsCards(state),
-                        const SizedBox(height: 24),
-                        _buildActivityChart(state),
-                        const SizedBox(height: 24),
-                        _buildRecentQueries(state),
-                      ],
+                      children: state.rows
+                          .map((row) => Container(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      row.alignment ?? MainAxisAlignment.start,
+                                  crossAxisAlignment: row.crossAlignment ??
+                                      CrossAxisAlignment.start,
+                                  children: row.cards.map((card) {
+                                    // Calculer la largeur disponible en tenant compte de tous les paddings
+                                    final totalPadding =
+                                        24.0 + // Padding externe (8.0 de chaque côté)
+                                            8.0 + // Margin du Container (4.0 de chaque côté)
+                                            16.0 + // Padding des rows (8.0 de chaque côté)
+                                            (row.spacing?.toDouble() ?? 8.0) *
+                                                2; // Spacing entre cartes
+
+                                    final availableWidth =
+                                        MediaQuery.of(context).size.width -
+                                            totalPadding;
+                                    final width =
+                                        (card.gridWidth / 12) * availableWidth;
+
+                                    return SizedBox(
+                                      width: width,
+                                      child: Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal:
+                                                row.spacing?.toDouble() ?? 8.0),
+                                        child: CardSelector(
+                                          card: card,
+                                          onEdit: () {},
+                                          onDelete: () {},
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ))
+                          .toList(),
                     ),
                   ),
                 ),
