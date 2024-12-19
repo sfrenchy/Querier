@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Querier.Api.Application.DTOs.Menu.Requests;
 using Querier.Api.Application.DTOs.Requests.Page;
 using Querier.Api.Application.DTOs.Responses.Page;
 using Querier.Api.Application.Interfaces.Repositories.Menu;
@@ -51,32 +52,25 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return MapToResponse(result);
         }
 
-        public async Task<PageResponse> UpdateAsync(int id, CreatePageRequest request)
+        public async Task<PageResponse> UpdateAsync(int id, UpdateDynamicPageRequest request)
         {
-            var existingPage = await _repository.GetByIdAsync(id);
-            if (existingPage == null)
-                throw new KeyNotFoundException($"Page with id {id} not found");
-
-            existingPage.Icon = request.Icon;
-            existingPage.Order = request.Order;
-            existingPage.IsVisible = request.IsVisible;
-            existingPage.Roles = string.Join(",", request.Roles);
-            existingPage.Route = request.Route;
-            existingPage.DynamicMenuCategoryId = request.DynamicMenuCategoryId;
-
-            existingPage.DynamicPageTranslations.Clear();
-            foreach (var translation in request.Names)
+            var page = new DynamicPage
             {
-                existingPage.DynamicPageTranslations.Add(new DynamicPageTranslation
+                Icon = request.Icon,
+                Order = request.Order,
+                IsVisible = request.IsVisible,
+                Roles = string.Join(",", request.Roles),
+                Route = request.Route,
+                DynamicMenuCategoryId = request.DynamicMenuCategoryId,
+                DynamicPageTranslations = request.Translations.Select(t => new DynamicPageTranslation
                 {
-                    LanguageCode = translation.Key,
-                    Name = translation.Value,
-                    DynamicPageId = id
-                });
-            }
+                    LanguageCode = t.LanguageCode,
+                    Name = t.Name
+                }).ToList()
+            };
 
-            var updatedPage = await _repository.UpdateAsync(id, existingPage);
-            return MapToResponse(updatedPage);
+            var updatedPage = await _repository.UpdateAsync(id, page);
+            return updatedPage != null ? MapToResponse(updatedPage) : null;
         }
 
         public async Task<bool> DeleteAsync(int id)

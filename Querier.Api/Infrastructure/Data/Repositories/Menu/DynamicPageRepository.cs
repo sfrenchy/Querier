@@ -35,10 +35,31 @@ namespace Querier.Api.Infrastructure.Data.Repositories.Menu
 
         public async Task<DynamicPage> UpdateAsync(int id, DynamicPage page)
         {
-            var existingPage = await GetByIdAsync(id);
+            var existingPage = await _context.DynamicPages
+                .Include(p => p.DynamicPageTranslations)
+                .FirstOrDefaultAsync(p => p.Id == id);
+            
             if (existingPage == null) return null;
 
-            _context.Entry(existingPage).CurrentValues.SetValues(page);
+            // Mise à jour des propriétés simples
+            existingPage.Icon = page.Icon;
+            existingPage.Order = page.Order;
+            existingPage.IsVisible = page.IsVisible;
+            existingPage.Roles = page.Roles;
+            existingPage.Route = page.Route;
+            existingPage.DynamicMenuCategoryId = page.DynamicMenuCategoryId;
+
+            // Mise à jour des traductions
+            existingPage.DynamicPageTranslations.Clear();
+            foreach (var translation in page.DynamicPageTranslations)
+            {
+                existingPage.DynamicPageTranslations.Add(new DynamicPageTranslation
+                {
+                    LanguageCode = translation.LanguageCode,
+                    Name = translation.Name
+                });
+            }
+
             await _context.SaveChangesAsync();
             return existingPage;
         }

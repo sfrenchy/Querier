@@ -4,7 +4,11 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/blocs/menu_bloc.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/dynamic_page_layout_bloc.dart';
+import 'package:querier/pages/settings/menu/pages/bloc/dynamic_page_layout_event.dart';
 import 'package:querier/widgets/app_drawer.dart';
+import 'package:querier/widgets/cards/card_selector.dart';
+import 'package:querier/widgets/draggable_row.dart';
 import 'package:querier/widgets/menu_drawer.dart';
 import 'package:querier/widgets/user_avatar.dart';
 import 'bloc/home_bloc.dart';
@@ -63,17 +67,21 @@ class HomeScreen extends StatelessWidget {
                 onRefresh: () async {
                   context.read<HomeBloc>().add(RefreshDashboard());
                 },
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                child: Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.all(8.0),
+                    child: ListView(
                       children: [
-                        _buildStatsCards(state),
-                        const SizedBox(height: 24),
-                        _buildActivityChart(state),
-                        const SizedBox(height: 24),
-                        _buildRecentQueries(state),
+                        ...state.rows.map((row) => DraggableRow(
+                              key: ValueKey(row.id),
+                              row: row,
+                              isEditing: false,
+                              onEdit: () => {},
+                              onDelete: () => {},
+                              onReorder: (oldIndex, newIndex) {},
+                              onAcceptCard: (cardData) {},
+                              onReorderCards: (rowId, oldIndex, newIndex) {},
+                            )),
                       ],
                     ),
                   ),
@@ -85,96 +93,6 @@ class HomeScreen extends StatelessWidget {
           return const SizedBox();
         },
       ),
-    );
-  }
-
-  Widget _buildStatsCards(HomeLoaded state) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      children: state.queryStats.entries.map((entry) {
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  entry.value.toString(),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(entry.key),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildActivityChart(HomeLoaded state) {
-    return SizedBox(
-      height: 200,
-      child: LineChart(
-        LineChartData(
-          gridData: const FlGridData(show: false),
-          titlesData: const FlTitlesData(show: false),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: state.activityData
-                  .asMap()
-                  .entries
-                  .map((entry) => FlSpot(
-                        entry.key.toDouble(),
-                        entry.value['value'].toDouble(),
-                      ))
-                  .toList(),
-              isCurved: true,
-              color: Colors.blue,
-              barWidth: 3,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(show: true),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentQueries(HomeLoaded state) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Recent Queries',
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
-        if (state.recentQueries.isEmpty)
-          Center(child: Text('No recent queries')),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: state.recentQueries.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              leading: const Icon(Icons.history),
-              title: Text(state.recentQueries[index]),
-            );
-          },
-        ),
-      ],
     );
   }
 }

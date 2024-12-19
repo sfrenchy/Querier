@@ -16,10 +16,10 @@ class DraggableRow extends StatelessWidget {
   final DynamicRow row;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final Function(int oldIndex, int newIndex) onReorder;
-  final Function(String cardData) onAcceptCard;
-  final Function(int rowId, int oldIndex, int newIndex) onReorderCards;
-  final Widget? dragHandle;
+  final Function(int, int) onReorder;
+  final Function(DynamicCard) onAcceptCard;
+  final Function(int, int, int) onReorderCards;
+  final bool isEditing;
 
   const DraggableRow({
     Key? key,
@@ -29,7 +29,7 @@ class DraggableRow extends StatelessWidget {
     required this.onReorder,
     required this.onAcceptCard,
     required this.onReorderCards,
-    this.dragHandle,
+    this.isEditing = false,
   }) : super(key: key);
 
   Future<void> _confirmDeleteCard(
@@ -88,31 +88,31 @@ class DraggableRow extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 1,
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: isEditing
+          ? BoxDecoration(
+              border: Border.all(
+                color: Colors.grey.shade300,
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            )
+          : null,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Colonne des boutons à gauche
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: onDelete,
-                tooltip: AppLocalizations.of(context)!.deleteRow,
-              ),
-              MouseRegion(
-                cursor: SystemMouseCursors.grab,
-                child: dragHandle ?? const Icon(Icons.drag_indicator),
-              ),
-            ],
-          ),
+          if (isEditing)
+            Column(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: onEdit,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: onDelete,
+                ),
+              ],
+            ),
           const SizedBox(width: 8), // Espacement
           // Contenu existant
           Expanded(
@@ -127,36 +127,44 @@ class DraggableRow extends StatelessWidget {
                     lg: card.gridWidth,
                     child: CardSelector(
                       card: card,
-                      onEdit: () => _showCardConfig(context, card),
-                      onDelete: () => _confirmDeleteCard(context, card),
-                      dragHandle: MouseRegion(
-                        cursor: SystemMouseCursors.grab,
-                        child: const Icon(Icons.drag_handle),
-                      ),
+                      onEdit: isEditing
+                          ? () => _showCardConfig(context, card)
+                          : null,
+                      onDelete: isEditing
+                          ? () => _confirmDeleteCard(context, card)
+                          : null,
+                      dragHandle: isEditing
+                          ? MouseRegion(
+                              cursor: SystemMouseCursors.grab,
+                              child: const Icon(Icons.drag_handle),
+                            )
+                          : null,
+                      isEditing: isEditing,
                     ),
                   ),
                 ),
                 // Zone de drop uniquement si l'espace est disponible
-                if (totalGridWidth < 12)
+                if (totalGridWidth < 12 && isEditing)
                   ResponsiveGridCol(
                     xs: 12,
                     sm: 6,
                     md: 12 - totalGridWidth,
                     lg: 12 - totalGridWidth,
-                    child: DragTarget<String>(
-                      onWillAccept: (data) => data != 'row',
-                      onAccept: (cardData) {
-                        onAcceptCard(cardData);
+                    child: DragTarget<DynamicCard>(
+                      onWillAccept: (data) {
+                        print('Card onWillAccept: ${data?.runtimeType}');
+                        return data != null;
+                      },
+                      onAccept: (data) {
+                        print('Card onAccept: ${data.runtimeType}');
+                        onAcceptCard(data);
                       },
                       builder: (context, candidateData, rejectedData) {
-                        final bool isHovering =
-                            candidateData.isNotEmpty || rejectedData.isNotEmpty;
-
+                        final bool isHovering = candidateData.isNotEmpty;
                         return AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          height: isHovering ? 80 : 60,
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 4, horizontal: 8),
+                          height: isHovering ? 80 : 40,
+                          margin: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surface,
                             border: Border.all(
@@ -169,41 +177,16 @@ class DraggableRow extends StatelessWidget {
                               width: isHovering ? 2 : 1,
                             ),
                             borderRadius: BorderRadius.circular(8),
-                            boxShadow: isHovering
-                                ? [
-                                    BoxShadow(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withOpacity(0.3),
-                                      blurRadius: 4,
-                                    )
-                                  ]
-                                : null,
                           ),
                           child: Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (isHovering)
-                                  Icon(
-                                    Icons.add_circle_outline,
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                  ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  AppLocalizations.of(context)!.dropCardHere,
-                                  style: TextStyle(
-                                    color:
-                                        Theme.of(context).colorScheme.onSurface,
-                                    fontWeight: isHovering
-                                        ? FontWeight.w500
-                                        : FontWeight.normal,
-                                    fontSize: isHovering ? 16 : 14,
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              'Drop a card here',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: isHovering
+                                    ? FontWeight.w500
+                                    : FontWeight.normal,
+                              ),
                             ),
                           ),
                         );

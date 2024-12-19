@@ -21,11 +21,18 @@ class TableEntityCardWidget extends BaseCardWidget {
 
   TableEntityCardWidget({
     super.key,
-    required TableEntityCard super.card,
-    super.onEdit,
-    super.onDelete,
-    super.dragHandle,
-  });
+    required TableEntityCard card,
+    VoidCallback? onEdit,
+    VoidCallback? onDelete,
+    Widget? dragHandle,
+    bool isEditing = false,
+  }) : super(
+          card: card,
+          onEdit: onEdit,
+          onDelete: onDelete,
+          dragHandle: dragHandle,
+          isEditing: isEditing,
+        );
 
   String _getPropertyType(String columnKey) {
     try {
@@ -59,7 +66,7 @@ class TableEntityCardWidget extends BaseCardWidget {
     final entity = card.configuration['entity'] as String?;
 
     if (context == null || entity == null) {
-      // Retourner une liste vide si la configuration n'est pas définie
+      // Retourner une liste vide si la configuration n'est pas d��finie
       _dataCache[page] = [];
       _totalItems = 0;
       _paginationController.add((page, 0));

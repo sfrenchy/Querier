@@ -9,18 +9,20 @@ import 'package:querier/widgets/cards/table_entity_card_config.dart';
 
 class CardSelector extends StatelessWidget {
   final DynamicCard card;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
   final Widget? dragHandle;
   final ValueChanged<Map<String, dynamic>>? onConfigurationChanged;
+  final bool isEditing;
 
   const CardSelector({
     Key? key,
     required this.card,
-    required this.onEdit,
-    required this.onDelete,
+    this.onEdit,
+    this.onDelete,
     this.dragHandle,
     this.onConfigurationChanged,
+    this.isEditing = false,
   }) : super(key: key);
 
   Widget? buildConfigurationWidget() {
@@ -84,6 +86,7 @@ class CardSelector extends StatelessWidget {
           onEdit: onEdit,
           onDelete: onDelete,
           dragHandle: dragHandle,
+          isEditing: isEditing,
         );
       case 'TableEntity':
         final tableCard = TableEntityCard(
@@ -102,6 +105,7 @@ class CardSelector extends StatelessWidget {
           onEdit: onEdit,
           onDelete: onDelete,
           dragHandle: dragHandle,
+          isEditing: isEditing,
         );
       default:
         return Card(

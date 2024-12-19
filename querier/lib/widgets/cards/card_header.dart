@@ -7,6 +7,7 @@ class CardHeader extends StatelessWidget {
   final Widget? dragHandle;
   final Color? textColor;
   final Color? backgroundColor;
+  final bool isEditing;
 
   const CardHeader({
     Key? key,
@@ -16,6 +17,7 @@ class CardHeader extends StatelessWidget {
     this.dragHandle,
     this.textColor,
     this.backgroundColor,
+    this.isEditing = false,
   }) : super(key: key);
 
   @override
@@ -30,7 +32,7 @@ class CardHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (dragHandle != null) dragHandle!,
+          if (isEditing && dragHandle != null) dragHandle!,
           Expanded(
             child: Text(
               title,
@@ -41,18 +43,20 @@ class CardHeader extends StatelessWidget {
               ),
             ),
           ),
-          if (onEdit != null)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: onEdit,
-              color: textColor,
-            ),
-          if (onDelete != null)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: onDelete,
-              color: textColor,
-            ),
+          if (isEditing) ...[
+            if (onEdit != null)
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: onEdit,
+                color: textColor,
+              ),
+            if (onDelete != null)
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: onDelete,
+                color: textColor,
+              ),
+          ],
         ],
       ),
     );

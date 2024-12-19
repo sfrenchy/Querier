@@ -130,27 +130,12 @@ class DynamicPageLayoutBloc
       final currentState = state as DynamicPageLayoutLoaded;
       final row = currentState.rows.firstWhere((r) => r.id == event.rowId);
 
-      DynamicCard newCard;
-      switch (event.cardType) {
-        case 'placeholder':
-          newCard = PlaceholderCard(
-            id: -(row.cards.length + 1),
-            titles: const {'en': 'New Card', 'fr': 'Nouvelle Carte'},
-            order: row.cards.length + 1,
-            gridWidth: event.gridWidth,
-          );
-          break;
-        case 'TableEntity':
-          newCard = TableEntityCard(
-            id: -(row.cards.length + 1),
-            titles: const {'en': 'New Table', 'fr': 'Nouveau Tableau'},
-            order: row.cards.length + 1,
-            gridWidth: event.gridWidth,
-          );
-          break;
-        default:
-          throw Exception('Unknown card type: ${event.cardType}');
-      }
+      // Utiliser directement la carte reçue avec la bonne largeur
+      final newCard = event.card.copyWith(
+        id: -(row.cards.length + 1),
+        order: row.cards.length + 1,
+        gridWidth: event.gridWidth,
+      );
 
       final updatedRows = currentState.rows
           .map((r) => r.id == event.rowId
