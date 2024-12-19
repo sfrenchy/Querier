@@ -12,7 +12,7 @@ import 'package:querier/pages/settings/menu/pages/bloc/dynamic_page_layout_bloc.
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:responsive_grid/responsive_grid.dart';
 
-class DraggableRow extends StatelessWidget {
+class DraggableRow extends StatefulWidget {
   final DynamicRow row;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -33,6 +33,14 @@ class DraggableRow extends StatelessWidget {
     required this.onRowUpdated,
     this.isEditing = false,
   }) : super(key: key);
+
+  @override
+  _DraggableRowState createState() => _DraggableRowState();
+}
+
+class _DraggableRowState extends State<DraggableRow> {
+  double _dragStartHeight = 100;
+  double _dragStartY = 0;
 
   Future<void> _confirmDeleteCard(
       BuildContext context, DynamicCard card) async {
@@ -57,7 +65,7 @@ class DraggableRow extends StatelessWidget {
 
     if (confirmed == true && context.mounted) {
       context.read<DynamicPageLayoutBloc>().add(
-            DeleteCard(row.id, card.id),
+            DeleteCard(widget.row.id, card.id),
           );
     }
   }
@@ -73,7 +81,7 @@ class DraggableRow extends StatelessWidget {
           child: CardConfigScreen(
             card: card,
             onSave: (updatedCard) {
-              bloc.add(UpdateCard(row.id, updatedCard));
+              bloc.add(UpdateCard(widget.row.id, updatedCard));
               Navigator.pop(context);
             },
           ),
@@ -86,15 +94,15 @@ class DraggableRow extends StatelessWidget {
   Widget build(BuildContext context) {
     // Calculer la somme des gridWidth
     final totalGridWidth =
-        row.cards.fold<int>(0, (sum, card) => sum + card.gridWidth);
+        widget.row.cards.fold<int>(0, (sum, card) => sum + card.gridWidth);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          height: row.height,
+          height: widget.row.height,
           padding: const EdgeInsets.all(8),
-          decoration: isEditing
+          decoration: widget.isEditing
               ? BoxDecoration(
                   border: Border.all(
                     color: Colors.grey.shade300,
@@ -104,19 +112,19 @@ class DraggableRow extends StatelessWidget {
                 )
               : null,
           child: Row(
-            mainAxisAlignment: row.alignment,
-            crossAxisAlignment: row.crossAlignment,
+            mainAxisAlignment: widget.row.alignment,
+            crossAxisAlignment: widget.row.crossAlignment,
             children: [
-              if (isEditing)
+              if (widget.isEditing)
                 Column(
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit),
-                      onPressed: onEdit,
+                      onPressed: widget.onEdit,
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete),
-                      onPressed: onDelete,
+                      onPressed: widget.onDelete,
                     ),
                     IconButton(
                       icon: const Icon(Icons.height),
@@ -133,13 +141,14 @@ class DraggableRow extends StatelessWidget {
                                 suffixText: 'px',
                               ),
                               controller: TextEditingController(
-                                text: row.height?.toString() ?? '',
+                                text: widget.row.height?.toString() ?? '',
                               ),
                               onSubmitted: (value) {
                                 final double? height = double.tryParse(value);
                                 print('Height entered in dialog: $height');
                                 if (height != null) {
-                                  onRowUpdated(row.copyWith(height: height));
+                                  widget.onRowUpdated(
+                                      widget.row.copyWith(height: height));
                                 }
                                 Navigator.of(context).pop();
                               },
@@ -159,7 +168,8 @@ class DraggableRow extends StatelessWidget {
                                         .toString(),
                                   );
                                   if (height != null) {
-                                    onRowUpdated(row.copyWith(height: height));
+                                    widget.onRowUpdated(
+                                        widget.row.copyWith(height: height));
                                   }
                                   Navigator.of(context).pop();
                                 },
@@ -179,7 +189,7 @@ class DraggableRow extends StatelessWidget {
                 child: ResponsiveGridRow(
                   children: [
                     // Afficher les cartes existantes
-                    ...row.cards.map(
+                    ...widget.row.cards.map(
                       (card) => ResponsiveGridCol(
                         xs: 12,
                         sm: 6,
@@ -187,24 +197,24 @@ class DraggableRow extends StatelessWidget {
                         lg: card.gridWidth,
                         child: CardSelector(
                           card: card,
-                          onEdit: isEditing
+                          onEdit: widget.isEditing
                               ? () => _showCardConfig(context, card)
                               : null,
-                          onDelete: isEditing
+                          onDelete: widget.isEditing
                               ? () => _confirmDeleteCard(context, card)
                               : null,
-                          dragHandle: isEditing
+                          dragHandle: widget.isEditing
                               ? MouseRegion(
                                   cursor: SystemMouseCursors.grab,
                                   child: const Icon(Icons.drag_handle),
                                 )
                               : null,
-                          isEditing: isEditing,
+                          isEditing: widget.isEditing,
                         ),
                       ),
                     ),
                     // Zone de drop uniquement si l'espace est disponible
-                    if (totalGridWidth < 12 && isEditing)
+                    if (totalGridWidth < 12 && widget.isEditing)
                       ResponsiveGridCol(
                         xs: 12,
                         sm: 6,
@@ -217,7 +227,7 @@ class DraggableRow extends StatelessWidget {
                           },
                           onAccept: (data) {
                             print('Card onAccept: ${data.runtimeType}');
-                            onAcceptCard(data);
+                            widget.onAcceptCard(data);
                           },
                           builder: (context, candidateData, rejectedData) {
                             final bool isHovering = candidateData.isNotEmpty;
@@ -260,15 +270,20 @@ class DraggableRow extends StatelessWidget {
             ],
           ),
         ),
-        if (isEditing)
+        if (widget.isEditing)
           MouseRegion(
             cursor: SystemMouseCursors.resizeRow,
             child: GestureDetector(
+              onVerticalDragStart: (details) {
+                // Sauvegarder la position initiale
+                _dragStartHeight = widget.row.height ?? 100;
+                _dragStartY = details.localPosition.dy;
+              },
               onVerticalDragUpdate: (details) {
-                final newHeight = (row.height ?? 100) + details.delta.dy;
+                final dragDistance = details.localPosition.dy - _dragStartY;
+                final newHeight = _dragStartHeight + dragDistance;
                 if (newHeight >= 50) {
-                  // Hauteur minimum
-                  onRowUpdated(row.copyWith(height: newHeight));
+                  widget.onRowUpdated(widget.row.copyWith(height: newHeight));
                 }
               },
               child: Container(
