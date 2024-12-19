@@ -46,6 +46,27 @@ class DynamicPageLayoutBloc
         }
       }
     });
+    on<UpdateRowProperties>((event, emit) {
+      print('UpdateRowProperties height: ${event.height}');
+      if (state is DynamicPageLayoutLoaded) {
+        final currentState = state as DynamicPageLayoutLoaded;
+        final updatedRows = currentState.rows.map((row) {
+          if (row.id == event.rowId) {
+            final updatedRow = row.copyWith(
+              height: event.height,
+            );
+            print('Updated row height: ${updatedRow.height}');
+            return updatedRow;
+          }
+          return row;
+        }).toList();
+
+        emit(DynamicPageLayoutLoaded(
+          updatedRows,
+          isDirty: true,
+        ));
+      }
+    });
   }
 
   Future<void> _onUpdateCard(

@@ -20,6 +20,7 @@ class DynamicRow {
   final MainAxisAlignment alignment;
   final CrossAxisAlignment crossAlignment;
   final double spacing;
+  final double? height;
   final List<DynamicCard> cards;
 
   const DynamicRow({
@@ -29,11 +30,11 @@ class DynamicRow {
     this.alignment = MainAxisAlignment.start,
     this.crossAlignment = CrossAxisAlignment.start,
     this.spacing = 16.0,
+    this.height,
     this.cards = const [],
   });
 
   factory DynamicRow.fromJson(Map<String, dynamic> json) {
-    print('DynamicRow.fromJson input: $json');
     try {
       final row = DynamicRow(
         id: json['Id'] ?? 0,
@@ -42,17 +43,15 @@ class DynamicRow {
         alignment: _parseMainAxisAlignment(json['Alignment']),
         crossAlignment: _parseCrossAxisAlignment(json['CrossAlignment']),
         spacing: json['Spacing']?.toDouble() ?? 16.0,
+        height: json['Height']?.toDouble(),
         cards: (json['Cards'] as List?)?.map((card) {
-              print('Processing card: $card');
               return DynamicCard.fromJson(card as Map<String, dynamic>);
             }).toList() ??
             const [],
       );
-      print('DynamicRow created successfully: $row');
       return row;
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('Error in DynamicRow.fromJson: $e');
-      print('Stack trace: $stackTrace');
       rethrow;
     }
   }
@@ -61,9 +60,7 @@ class DynamicRow {
         'Id': id,
         'PageId': pageId,
         'Order': order,
-        'Alignment': alignment.toJson(),
-        'CrossAlignment': crossAlignment.toJson(),
-        'Spacing': spacing,
+        'Height': height,
         'Cards': cards.map((card) => card.toJson()).toList(),
       };
 
@@ -74,6 +71,7 @@ class DynamicRow {
     MainAxisAlignment? alignment,
     CrossAxisAlignment? crossAlignment,
     double? spacing,
+    double? height,
     List<DynamicCard>? cards,
   }) {
     return DynamicRow(
@@ -83,6 +81,7 @@ class DynamicRow {
       alignment: alignment ?? this.alignment,
       crossAlignment: crossAlignment ?? this.crossAlignment,
       spacing: spacing ?? this.spacing,
+      height: height ?? this.height,
       cards: cards ?? this.cards,
     );
   }

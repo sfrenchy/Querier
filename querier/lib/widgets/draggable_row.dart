@@ -19,6 +19,7 @@ class DraggableRow extends StatelessWidget {
   final Function(int, int) onReorder;
   final Function(DynamicCard) onAcceptCard;
   final Function(int, int, int) onReorderCards;
+  final Function(DynamicRow) onRowUpdated;
   final bool isEditing;
 
   const DraggableRow({
@@ -29,6 +30,7 @@ class DraggableRow extends StatelessWidget {
     required this.onReorder,
     required this.onAcceptCard,
     required this.onReorderCards,
+    required this.onRowUpdated,
     this.isEditing = false,
   }) : super(key: key);
 
@@ -86,118 +88,207 @@ class DraggableRow extends StatelessWidget {
     final totalGridWidth =
         row.cards.fold<int>(0, (sum, card) => sum + card.gridWidth);
 
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: isEditing
-          ? BoxDecoration(
-              border: Border.all(
-                color: Colors.grey.shade300,
-                width: 1,
-              ),
-              borderRadius: BorderRadius.circular(8),
-            )
-          : null,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isEditing)
-            Column(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: onEdit,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: onDelete,
-                ),
-              ],
-            ),
-          const SizedBox(width: 8), // Espacement
-          // Contenu existant
-          Expanded(
-            child: ResponsiveGridRow(
-              children: [
-                // Afficher les cartes existantes
-                ...row.cards.map(
-                  (card) => ResponsiveGridCol(
-                    xs: 12,
-                    sm: 6,
-                    md: card.gridWidth,
-                    lg: card.gridWidth,
-                    child: CardSelector(
-                      card: card,
-                      onEdit: isEditing
-                          ? () => _showCardConfig(context, card)
-                          : null,
-                      onDelete: isEditing
-                          ? () => _confirmDeleteCard(context, card)
-                          : null,
-                      dragHandle: isEditing
-                          ? MouseRegion(
-                              cursor: SystemMouseCursors.grab,
-                              child: const Icon(Icons.drag_handle),
-                            )
-                          : null,
-                      isEditing: isEditing,
-                    ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          height: row.height,
+          padding: const EdgeInsets.all(8),
+          decoration: isEditing
+              ? BoxDecoration(
+                  border: Border.all(
+                    color: Colors.grey.shade300,
+                    width: 1,
                   ),
-                ),
-                // Zone de drop uniquement si l'espace est disponible
-                if (totalGridWidth < 12 && isEditing)
-                  ResponsiveGridCol(
-                    xs: 12,
-                    sm: 6,
-                    md: 12 - totalGridWidth,
-                    lg: 12 - totalGridWidth,
-                    child: DragTarget<DynamicCard>(
-                      onWillAccept: (data) {
-                        print('Card onWillAccept: ${data?.runtimeType}');
-                        return data != null;
-                      },
-                      onAccept: (data) {
-                        print('Card onAccept: ${data.runtimeType}');
-                        onAcceptCard(data);
-                      },
-                      builder: (context, candidateData, rejectedData) {
-                        final bool isHovering = candidateData.isNotEmpty;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          height: isHovering ? 80 : 40,
-                          margin: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            border: Border.all(
-                              color: isHovering
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .outline
-                                      .withOpacity(0.5),
-                              width: isHovering ? 2 : 1,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Drop a card here',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurface,
-                                fontWeight: isHovering
-                                    ? FontWeight.w500
-                                    : FontWeight.normal,
+                  borderRadius: BorderRadius.circular(8),
+                )
+              : null,
+          child: Row(
+            mainAxisAlignment: row.alignment,
+            crossAxisAlignment: row.crossAlignment,
+            children: [
+              if (isEditing)
+                Column(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: onEdit,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: onDelete,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.height),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title:
+                                Text(AppLocalizations.of(context)!.rowHeight),
+                            content: TextField(
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: AppLocalizations.of(context)!.height,
+                                suffixText: 'px',
                               ),
+                              controller: TextEditingController(
+                                text: row.height?.toString() ?? '',
+                              ),
+                              onSubmitted: (value) {
+                                final double? height = double.tryParse(value);
+                                print('Height entered in dialog: $height');
+                                if (height != null) {
+                                  onRowUpdated(row.copyWith(height: height));
+                                }
+                                Navigator.of(context).pop();
+                              },
                             ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child:
+                                    Text(AppLocalizations.of(context)!.cancel),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  final double? height = double.tryParse(
+                                    (context.findRenderObject() as RenderBox)
+                                        .size
+                                        .height
+                                        .toString(),
+                                  );
+                                  if (height != null) {
+                                    onRowUpdated(row.copyWith(height: height));
+                                  }
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text(AppLocalizations.of(context)!
+                                    .useCurrentHeight),
+                              ),
+                            ],
                           ),
                         );
                       },
                     ),
+                  ],
+                ),
+              const SizedBox(width: 8), // Espacement
+              // Contenu existant
+              Expanded(
+                child: ResponsiveGridRow(
+                  children: [
+                    // Afficher les cartes existantes
+                    ...row.cards.map(
+                      (card) => ResponsiveGridCol(
+                        xs: 12,
+                        sm: 6,
+                        md: card.gridWidth,
+                        lg: card.gridWidth,
+                        child: CardSelector(
+                          card: card,
+                          onEdit: isEditing
+                              ? () => _showCardConfig(context, card)
+                              : null,
+                          onDelete: isEditing
+                              ? () => _confirmDeleteCard(context, card)
+                              : null,
+                          dragHandle: isEditing
+                              ? MouseRegion(
+                                  cursor: SystemMouseCursors.grab,
+                                  child: const Icon(Icons.drag_handle),
+                                )
+                              : null,
+                          isEditing: isEditing,
+                        ),
+                      ),
+                    ),
+                    // Zone de drop uniquement si l'espace est disponible
+                    if (totalGridWidth < 12 && isEditing)
+                      ResponsiveGridCol(
+                        xs: 12,
+                        sm: 6,
+                        md: 12 - totalGridWidth,
+                        lg: 12 - totalGridWidth,
+                        child: DragTarget<DynamicCard>(
+                          onWillAccept: (data) {
+                            print('Card onWillAccept: ${data?.runtimeType}');
+                            return data != null;
+                          },
+                          onAccept: (data) {
+                            print('Card onAccept: ${data.runtimeType}');
+                            onAcceptCard(data);
+                          },
+                          builder: (context, candidateData, rejectedData) {
+                            final bool isHovering = candidateData.isNotEmpty;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              height: isHovering ? 80 : 40,
+                              margin: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                border: Border.all(
+                                  color: isHovering
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .outline
+                                          .withOpacity(0.5),
+                                  width: isHovering ? 2 : 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Drop a card here',
+                                  style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: isHovering
+                                        ? FontWeight.w500
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (isEditing)
+          MouseRegion(
+            cursor: SystemMouseCursors.resizeRow,
+            child: GestureDetector(
+              onVerticalDragUpdate: (details) {
+                final newHeight = (row.height ?? 100) + details.delta.dy;
+                if (newHeight >= 50) {
+                  // Hauteur minimum
+                  onRowUpdated(row.copyWith(height: newHeight));
+                }
+              },
+              child: Container(
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withOpacity(0.5),
+                      width: 2,
+                    ),
                   ),
-              ],
+                ),
+              ),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }

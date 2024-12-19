@@ -66,7 +66,7 @@ class AppDrawer extends StatelessWidget {
                                   Navigator.pop(context);
                                   Navigator.pushReplacementNamed(
                                     context,
-                                    '/dynamic-page',
+                                    '/home',
                                     arguments: page.id,
                                   );
                                 },

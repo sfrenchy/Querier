@@ -235,5 +235,8 @@
     "left": "Left",
     "center": "Center",
     "right": "Right",
-    "dataSource": "Data Source"
+    "dataSource": "Data Source",
+    "rowHeight": "Row height",
+    "height": "Height",
+    "useCurrentHeight": "Use current height"
 } 

@@ -116,6 +116,16 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                           ReorderCardsInRow(rowId, oldIndex, newIndex),
                         );
                   },
+                  onRowUpdated: (updatedRow) =>
+                      context.read<DynamicPageLayoutBloc>().add(
+                            UpdateRowProperties(
+                              updatedRow.id,
+                              updatedRow.alignment,
+                              updatedRow.crossAlignment,
+                              updatedRow.spacing,
+                              height: updatedRow.height!,
+                            ),
+                          ),
                 );
               },
             );
@@ -384,6 +394,16 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                                             rowId, oldIndex, newIndex),
                                       );
                                 },
+                                onRowUpdated: (updatedRow) =>
+                                    context.read<DynamicPageLayoutBloc>().add(
+                                          UpdateRowProperties(
+                                            updatedRow.id,
+                                            updatedRow.alignment,
+                                            updatedRow.crossAlignment,
+                                            updatedRow.spacing,
+                                            height: updatedRow.height!,
+                                          ),
+                                        ),
                               )),
                           // Zone de drop pour nouvelle row
                           DragTarget<String>(
