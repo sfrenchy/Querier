@@ -210,6 +210,7 @@ class _DraggableRowState extends State<DraggableRow> {
                                 )
                               : null,
                           isEditing: widget.isEditing,
+                          rowMaxHeight: widget.row.height,
                         ),
                       ),
                     ),

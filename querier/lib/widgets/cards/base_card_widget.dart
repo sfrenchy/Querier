@@ -9,6 +9,7 @@ abstract class BaseCardWidget extends StatelessWidget {
   final VoidCallback? onDelete;
   final Widget? dragHandle;
   final bool isEditing;
+  final double? maxRowHeight;
 
   // Nouveaux getters optionnels pour header/footer
   Widget? buildHeader(BuildContext context) => null;
@@ -24,6 +25,7 @@ abstract class BaseCardWidget extends StatelessWidget {
     this.onDelete,
     this.dragHandle,
     this.isEditing = false,
+    this.maxRowHeight,
   });
 
   @override
@@ -35,34 +37,30 @@ abstract class BaseCardWidget extends StatelessWidget {
 
     return Card(
       color: card.backgroundColor != null ? Color(card.backgroundColor!) : null,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header par défaut avec titre et actions
-          CardHeader(
-            title: card.getLocalizedTitle(
-              Localizations.localeOf(context).languageCode,
+      child: SizedBox(
+        height: maxRowHeight! - 26,
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            CardHeader(
+              title: card.getLocalizedTitle(
+                Localizations.localeOf(context).languageCode,
+              ),
+              onEdit: isEditing ? onEdit : null,
+              onDelete: isEditing ? onDelete : null,
+              dragHandle: isEditing ? dragHandle : null,
+              isEditing: isEditing,
+              backgroundColor: card.headerBackgroundColor != null
+                  ? Color(card.headerBackgroundColor!)
+                  : null,
+              textColor: card.headerTextColor != null
+                  ? Color(card.headerTextColor!)
+                  : null,
             ),
-            onEdit: isEditing ? onEdit : null,
-            onDelete: isEditing ? onDelete : null,
-            dragHandle: isEditing ? dragHandle : null,
-            isEditing: isEditing,
-            backgroundColor: card.headerBackgroundColor != null
-                ? Color(card.headerBackgroundColor!)
-                : null,
-            textColor: card.headerTextColor != null
-                ? Color(card.headerTextColor!)
-                : null,
-          ),
-
-          // Contenu principal
-          Flexible(
-            child: buildCardContent(context),
-          ),
-
-          // Footer optionnel
-          if (buildFooter(context) != null) buildFooter(context)!,
-        ],
+            Expanded(child: buildCardContent(context)),
+            if (buildFooter(context) != null) buildFooter(context)!,
+          ],
+        ),
       ),
     );
   }

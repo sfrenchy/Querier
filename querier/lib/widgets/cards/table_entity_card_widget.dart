@@ -26,6 +26,7 @@ class TableEntityCardWidget extends BaseCardWidget {
     VoidCallback? onDelete,
     Widget? dragHandle,
     bool isEditing = false,
+    super.maxRowHeight,
   }) : super(
           card: card,
           onEdit: onEdit,
@@ -66,7 +67,7 @@ class TableEntityCardWidget extends BaseCardWidget {
     final entity = card.configuration['entity'] as String?;
 
     if (context == null || entity == null) {
-      // Retourner une liste vide si la configuration n'est pas d��finie
+      // Retourner une liste vide si la configuration n'est pas définie
       _dataCache[page] = [];
       _totalItems = 0;
       _paginationController.add((page, 0));
