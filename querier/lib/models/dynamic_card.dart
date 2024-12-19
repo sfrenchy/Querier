@@ -27,7 +27,7 @@ class DynamicCard extends BaseCard {
   factory DynamicCard.fromJson(Map<String, dynamic> json) {
     print('DynamicCard.fromJson: raw json = $json');
     print('HeaderBackgroundColor from json: ${json['HeaderBackgroundColor']}');
-    
+
     return DynamicCard(
       id: json['Id'],
       titles: Map<String, String>.from(json['Titles']),
@@ -42,29 +42,32 @@ class DynamicCard extends BaseCard {
     );
   }
 
+  @override
   DynamicCard copyWith({
     int? id,
     Map<String, String>? titles,
     int? order,
-    String? type,
     int? gridWidth,
     int? backgroundColor,
     int? textColor,
-    int? headerTextColor,
     int? headerBackgroundColor,
+    int? headerTextColor,
     Map<String, dynamic>? configuration,
   }) {
+    print('DynamicCard.copyWith: gridWidth parameter = $gridWidth'); // Debug
+
     return DynamicCard(
       id: id ?? this.id,
       titles: titles ?? this.titles,
       order: order ?? this.order,
-      type: type ?? this.type,
       gridWidth: gridWidth ?? this.gridWidth,
       backgroundColor: backgroundColor ?? this.backgroundColor,
       textColor: textColor ?? this.textColor,
+      headerBackgroundColor:
+          headerBackgroundColor ?? this.headerBackgroundColor,
       headerTextColor: headerTextColor ?? this.headerTextColor,
-      headerBackgroundColor: headerBackgroundColor ?? this.headerBackgroundColor,
       configuration: configuration ?? this.configuration,
+      type: type,
     );
   }
 

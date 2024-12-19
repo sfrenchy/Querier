@@ -105,10 +105,21 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                         );
                   },
                   onAcceptCard: (cardData) {
-                    final availableWidth = 12 - entry.value.cards.length;
+                    final totalGridWidth = entry.value.cards.fold<int>(
+                      0,
+                      (sum, card) => sum + card.gridWidth,
+                    );
+                    final availableWidth = 12 - totalGridWidth;
+
+                    print('Available width calculation:');
+                    print('Total grid width used: $totalGridWidth');
+                    print('Available width: $availableWidth');
+
                     context.read<DynamicPageLayoutBloc>().add(
-                          AddCardToRow(entry.value.id, cardData,
-                              gridWidth: availableWidth),
+                          AddCardToRow(
+                            entry.value.id,
+                            cardData.copyWith(gridWidth: availableWidth),
+                          ),
                         );
                   },
                   onReorderCards: (rowId, oldIndex, newIndex) {
@@ -382,10 +393,23 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                                       );
                                 },
                                 onAcceptCard: (cardData) {
-                                  final availableWidth = 12 - row.cards.length;
+                                  final totalGridWidth = row.cards.fold<int>(
+                                    0,
+                                    (sum, card) => sum + card.gridWidth,
+                                  );
+                                  final availableWidth = 12 - totalGridWidth;
+
+                                  print('Available width calculation:');
+                                  print(
+                                      'Total grid width used: $totalGridWidth');
+                                  print('Available width: $availableWidth');
+
                                   context.read<DynamicPageLayoutBloc>().add(
-                                        AddCardToRow(row.id, cardData,
-                                            gridWidth: availableWidth),
+                                        AddCardToRow(
+                                          row.id,
+                                          cardData.copyWith(
+                                              gridWidth: availableWidth),
+                                        ),
                                       );
                                 },
                                 onReorderCards: (rowId, oldIndex, newIndex) {
@@ -498,10 +522,24 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
       );
     }
 
+    final card = type == 'placeholder'
+        ? PlaceholderCard(
+            id: 0,
+            titles: {},
+            order: 0,
+            gridWidth: 1,
+            configuration: const {},
+          )
+        : TableEntityCard(
+            id: 0,
+            titles: {},
+            order: 0,
+            gridWidth: 1,
+            configuration: const {},
+          );
+
     return Draggable<DynamicCard>(
-      data: type == 'placeholder'
-          ? PlaceholderCard(id: 0, titles: {}, order: 0)
-          : TableEntityCard(id: 0, titles: {}, order: 0),
+      data: card,
       feedback: Material(
         elevation: 4,
         child: Container(
@@ -545,5 +583,10 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
         ],
       ),
     );
+  }
+
+  void _onAcceptCard(DynamicCard card, int rowId) {
+    print('_onAcceptCard: gridWidth before = ${card.gridWidth}');
+    context.read<DynamicPageLayoutBloc>().add(AddCardToRow(rowId, card));
   }
 }

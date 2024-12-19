@@ -228,7 +228,20 @@ class _DraggableRowState extends State<DraggableRow> {
                           },
                           onAccept: (data) {
                             print('Card onAccept: ${data.runtimeType}');
-                            widget.onAcceptCard(data);
+                            final availableWidth = 12 - totalGridWidth;
+                            final newCard = DynamicCard(
+                              id: data.id,
+                              titles: data.titles,
+                              order: data.order,
+                              type: data.type,
+                              gridWidth: availableWidth,
+                              backgroundColor: data.backgroundColor,
+                              textColor: data.textColor,
+                              headerBackgroundColor: data.headerBackgroundColor,
+                              headerTextColor: data.headerTextColor,
+                              configuration: data.configuration,
+                            );
+                            widget.onAcceptCard(newCard);
                           },
                           builder: (context, candidateData, rejectedData) {
                             final bool isHovering = candidateData.isNotEmpty;

@@ -85,12 +85,11 @@ class AddCard extends DynamicPageLayoutEvent {
 class AddCardToRow extends DynamicPageLayoutEvent {
   final int rowId;
   final DynamicCard card;
-  final int gridWidth;
 
-  const AddCardToRow(this.rowId, this.card, {required this.gridWidth});
+  const AddCardToRow(this.rowId, this.card);
 
   @override
-  List<Object> get props => [rowId, card, gridWidth];
+  List<Object> get props => [rowId, card];
 }
 
 class DeleteCard extends DynamicPageLayoutEvent {
