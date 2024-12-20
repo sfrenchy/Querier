@@ -12,6 +12,7 @@ import 'bloc/dynamic_page_layout_state.dart';
 import 'package:querier/models/cards/placeholder_card.dart';
 import 'package:querier/models/cards/table_card.dart';
 import 'package:querier/models/dynamic_card.dart';
+import 'package:querier/widgets/cards/fl_line_chart_card_widget.dart';
 
 class DynamicPageLayoutScreen extends StatefulWidget {
   final int pageId;
@@ -352,6 +353,13 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                                     Icons.table_chart,
                                     l10n.tableCard,
                                   ),
+                                  const SizedBox(height: 8),
+                                  // LineChart draggable
+                                  _buildDraggableComponent(
+                                    'FLLineChart',
+                                    Icons.show_chart,
+                                    'Line Chart',
+                                  ),
                                 ],
                               ),
                             ),
@@ -522,21 +530,37 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
       );
     }
 
-    final card = type == 'placeholder'
-        ? PlaceholderCard(
-            id: 0,
-            titles: {},
-            order: 0,
-            gridWidth: 1,
-            configuration: const {},
-          )
-        : TableEntityCard(
-            id: 0,
-            titles: {},
-            order: 0,
-            gridWidth: 1,
-            configuration: const {},
-          );
+    final card = switch (type) {
+      'placeholder' => PlaceholderCard(
+          id: 0,
+          titles: {},
+          order: 0,
+          gridWidth: 1,
+          configuration: const {},
+        ),
+      'TableEntity' => TableEntityCard(
+          id: 0,
+          titles: {},
+          order: 0,
+          gridWidth: 1,
+          configuration: const {},
+        ),
+      'FLLineChart' => DynamicCard(
+          id: 0,
+          titles: {},
+          type: 'FLLineChart',
+          order: 0,
+          gridWidth: 1,
+          configuration: const {},
+        ),
+      _ => PlaceholderCard(
+          id: 0,
+          titles: {},
+          order: 0,
+          gridWidth: 1,
+          configuration: const {},
+        ),
+    };
 
     return Draggable<DynamicCard>(
       data: card,
