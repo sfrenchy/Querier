@@ -250,6 +250,36 @@ class _FLLineChartContentState extends State<_FLLineChartContent> {
 
     final xAxisField = widget.card.configuration['xAxisLabelField'] as String?;
 
+    // Calculer min/max Y à partir des données
+    double? minY, maxY;
+    final lines = List<Map<String, dynamic>>.from(
+        widget.card.configuration['lines'] ?? []);
+    for (var line in lines) {
+      final dataField = line['dataField'] as String?;
+      if (dataField != null && _data!.containsKey(dataField)) {
+        final values = _data![dataField] as List;
+        for (var value in values) {
+          final number = double.tryParse(value.toString());
+          if (number != null) {
+            minY = minY != null ? min(minY, number) : number;
+            maxY = maxY != null ? max(maxY, number) : number;
+          }
+        }
+      }
+    }
+
+    // Ajouter une marge de 10% pour l'affichage
+    if ((minY ?? 0) > 0) {
+      // Si toutes les valeurs sont positives
+      minY = 0;
+      maxY = (maxY ?? 0) * 1.1; // Ajouter 10% seulement au maximum
+    } else {
+      // Sinon, ajouter la marge des deux côtés
+      final yRange = (maxY ?? 0) - (minY ?? 0);
+      minY = (minY ?? 0) - (yRange * 0.1);
+      maxY = (maxY ?? 0) + (yRange * 0.1);
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: LineChart(
@@ -293,8 +323,18 @@ class _FLLineChartContentState extends State<_FLLineChartContent> {
               ),
             ),
             leftTitles: AxisTitles(
-              axisNameWidget: Text(
-                widget.card.configuration['yAxisLabel'] ?? '',
+              axisNameWidget:
+                  Text(widget.card.configuration['yAxisLabel'] ?? ''),
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                interval: ((maxY - minY) / 5).roundToDouble(), // 5 intervalles
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    value.toStringAsFixed(1),
+                    style: const TextStyle(fontSize: 10),
+                  );
+                },
               ),
             ),
             rightTitles: const AxisTitles(
@@ -305,10 +345,8 @@ class _FLLineChartContentState extends State<_FLLineChartContent> {
             ),
           ),
           borderData: FlBorderData(show: true),
-          minY: double.tryParse(
-              widget.card.configuration['yAxisMin']?.toString() ?? ''),
-          maxY: double.tryParse(
-              widget.card.configuration['yAxisMax']?.toString() ?? ''),
+          minY: minY,
+          maxY: maxY,
           lineBarsData: _buildLineBarsData(),
           lineTouchData: LineTouchData(
             enabled: widget.card.configuration['showTooltip'] ?? true,
