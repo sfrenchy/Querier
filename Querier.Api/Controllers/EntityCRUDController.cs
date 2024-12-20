@@ -48,8 +48,8 @@ namespace Querier.Api.Controllers
         public IActionResult GetAll(
             [FromQuery] string contextTypeName, 
             [FromQuery] string entityTypeName,
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10)
+            [FromQuery] int pageNumber = 0,
+            [FromQuery] int pageSize = 0)
         {
             var paginationParams = new PaginationParameters 
             { 

@@ -125,8 +125,8 @@ namespace Querier.Api.Domain.Services
             var query = ((IEnumerable<object>)dbSet);
             var totalCount = query.Count();
             var data = query
-                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
-                .Take(pagination.PageSize)
+                .Skip(pagination.PageNumber != 0 ? (pagination.PageNumber - 1) * pagination.PageSize : 0)
+                .Take(pagination.PageNumber != 0 ? pagination.PageSize : totalCount)
                 .Select(e => e.GetType()
                     .GetProperties()
                     .Where(p => p.PropertyType.Namespace == "System" || p.PropertyType.IsValueType)

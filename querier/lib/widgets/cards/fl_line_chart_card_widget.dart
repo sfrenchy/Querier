@@ -75,11 +75,8 @@ class _FLLineChartContentState extends State<_FLLineChartContent> {
       } else {
         final apiClient = context.read<ApiClient>();
         final (data, _) = await apiClient.getEntityData(
-          config['dataContext'] as String,
-          config['entity'] as String,
-          pageNumber: 1,
-          pageSize: 100,
-        );
+            config['dataContext'] as String, config['entity'] as String,
+            pageNumber: 0, pageSize: 0);
 
         // Restructurer les données par colonne
         final Map<String, List<dynamic>> columnData = {};
