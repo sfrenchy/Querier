@@ -3,6 +3,8 @@ import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/widgets/color_picker_button.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+enum DataSourceType { api, contextEntity }
+
 class FLLineChartCardConfig extends StatefulWidget {
   final DynamicCard card;
   final ValueChanged<Map<String, dynamic>> onConfigurationChanged;
@@ -19,6 +21,7 @@ class FLLineChartCardConfig extends StatefulWidget {
 
 class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
   late final Map<String, dynamic> config;
+  Map<String, dynamic>? previewData;
 
   @override
   void initState() {
@@ -26,11 +29,11 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
     config = Map<String, dynamic>.from(widget.card.configuration);
     if (!config.containsKey('lines')) {
       config['lines'] = [];
-      // Utiliser Future.microtask pour éviter l'erreur de setState pendant le build
       Future.microtask(() {
         widget.onConfigurationChanged(config);
       });
     }
+    config['dataSourceType'] ??= DataSourceType.api.toString();
   }
 
   void updateConfig(Map<String, dynamic> newConfig) {
@@ -56,18 +59,84 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
               title: Text(l10n.dataSource),
               initiallyExpanded: true,
               children: [
-                TextFormField(
+                DropdownButtonFormField<DataSourceType>(
                   decoration: InputDecoration(
-                    labelText: l10n.apiEndpoint,
-                    helperText: l10n.urlToFetchData,
+                    labelText: "Data Source Type", //l10n.dataSourceType,
                   ),
-                  initialValue: (config['dataSource'] as String?) ?? '',
+                  value: DataSourceType.values.firstWhere(
+                    (e) => e.toString() == config['dataSourceType'],
+                    orElse: () => DataSourceType.api,
+                  ),
+                  items: DataSourceType.values.map((type) {
+                    return DropdownMenuItem(
+                      value: type,
+                      child: Text(type == DataSourceType.api
+                          ? l10n.apiEndpoint
+                          : "Context/Entity"), //l10n.contextEntity),
+                    );
+                  }).toList(),
                   onChanged: (value) {
                     final newConfig = Map<String, dynamic>.from(config);
-                    newConfig['dataSource'] = value;
+                    newConfig['dataSourceType'] = value.toString();
                     updateConfig(newConfig);
                   },
                 ),
+                const SizedBox(height: 16),
+                if (config['dataSourceType'] ==
+                    DataSourceType.api.toString()) ...[
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: l10n.apiEndpoint,
+                      helperText: l10n.urlToFetchData,
+                    ),
+                    initialValue: (config['dataSource'] as String?) ?? '',
+                    onChanged: (value) {
+                      final newConfig = Map<String, dynamic>.from(config);
+                      newConfig['dataSource'] = value;
+                      updateConfig(newConfig);
+                    },
+                  ),
+                ] else ...[
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: l10n.dataContext,
+                    ),
+                    value: config['dataContext'] as String?,
+                    items: _getAvailableContexts().map((context) {
+                      return DropdownMenuItem(
+                        value: context,
+                        child: Text(context),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      final newConfig = Map<String, dynamic>.from(config);
+                      newConfig['dataContext'] = value;
+                      updateConfig(newConfig);
+                      _loadPreviewData();
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  if (config['dataContext'] != null)
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: l10n.entity,
+                      ),
+                      value: config['entity'] as String?,
+                      items: _getAvailableEntities(config['dataContext'])
+                          .map((entity) {
+                        return DropdownMenuItem(
+                          value: entity,
+                          child: Text(entity),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        final newConfig = Map<String, dynamic>.from(config);
+                        newConfig['entity'] = value;
+                        updateConfig(newConfig);
+                        _loadPreviewData();
+                      },
+                    ),
+                ],
                 const SizedBox(height: 8),
                 TextFormField(
                   decoration: InputDecoration(
@@ -82,6 +151,24 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
                     updateConfig(newConfig);
                   },
                 ),
+                if (previewData != null) ...[
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(l10n.preview,
+                              style: Theme.of(context).textTheme.titleSmall),
+                          const SizedBox(height: 8),
+                          Text(previewData.toString(),
+                              style: Theme.of(context).textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
 
@@ -359,5 +446,19 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
         ),
       ),
     );
+  }
+
+  List<String> _getAvailableContexts() {
+    return ['Context1', 'Context2'];
+  }
+
+  List<String> _getAvailableEntities(String? context) {
+    return ['Entity1', 'Entity2'];
+  }
+
+  Future<void> _loadPreviewData() async {
+    if (config['dataContext'] == null || config['entity'] == null) return;
+
+    try {} catch (e) {}
   }
 }

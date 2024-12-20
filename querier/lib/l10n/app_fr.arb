@@ -258,5 +258,14 @@
     "tooltipSettings": "Paramètres de l'infobulle",
     "showTooltip": "Afficher l'infobulle",
     "tooltipFormat": "Format de l'infobulle",
-    "tooltipFormatExample": "Ex: {value}°C"
+    "tooltipFormatExample": "Ex: {value}°C",
+    "dataSourceType": "Type de source de données",
+    "@dataSourceType": {
+        "description": "Label for data source type selector"
+    },
+    "contextEntity": "Contexte/Entité",
+    "@contextEntity": {
+        "description": "Label for context/entity selector"
+    },
+    "preview": "Aperçu des données"
 } 

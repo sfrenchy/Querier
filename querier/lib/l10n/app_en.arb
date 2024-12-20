@@ -259,5 +259,14 @@
     "tooltipSettings": "Tooltip Settings",
     "showTooltip": "Show Tooltip",
     "tooltipFormat": "Tooltip Format",
-    "tooltipFormatExample": "Ex: {value}°C"
+    "tooltipFormatExample": "Ex: {value}°C",
+    "dataSourceType": "Data Source Type",
+    "@dataSourceType": {
+        "description": "Label for data source type selector"
+    },
+    "contextEntity": "Context/Entity",
+    "@contextEntity": {
+        "description": "Label for context/entity selector"
+    },
+    "preview": "Data Preview"
 } 
