@@ -10,6 +10,7 @@ class PlaceholderCardWidget extends BaseCardWidget {
     VoidCallback? onDelete,
     Widget? dragHandle,
     bool isEditing = false,
+    super.maxRowHeight,
   }) : super(
           card: card,
           onEdit: onEdit,

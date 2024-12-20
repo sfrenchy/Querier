@@ -14,6 +14,7 @@ class CardSelector extends StatelessWidget {
   final Widget? dragHandle;
   final ValueChanged<Map<String, dynamic>>? onConfigurationChanged;
   final bool isEditing;
+  final double? rowMaxHeight;
 
   const CardSelector({
     Key? key,
@@ -23,6 +24,7 @@ class CardSelector extends StatelessWidget {
     this.dragHandle,
     this.onConfigurationChanged,
     this.isEditing = false,
+    this.rowMaxHeight,
   }) : super(key: key);
 
   Widget? buildConfigurationWidget() {
@@ -87,6 +89,7 @@ class CardSelector extends StatelessWidget {
           onDelete: onDelete,
           dragHandle: dragHandle,
           isEditing: isEditing,
+          maxRowHeight: rowMaxHeight,
         );
       case 'TableEntity':
         final tableCard = TableEntityCard(
@@ -106,6 +109,7 @@ class CardSelector extends StatelessWidget {
           onDelete: onDelete,
           dragHandle: dragHandle,
           isEditing: isEditing,
+          maxRowHeight: rowMaxHeight,
         );
       default:
         return Card(

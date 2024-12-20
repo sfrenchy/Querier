@@ -234,5 +234,8 @@
     "left": "Gauche",
     "center": "Centre",
     "right": "Droite",
-    "dataSource": "Source de données"
+    "dataSource": "Source de données",
+    "rowHeight": "Hauteur de la ligne",
+    "height": "Hauteur",
+    "useCurrentHeight": "Utiliser la hauteur actuelle"
 } 

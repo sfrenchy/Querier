@@ -663,6 +663,8 @@ class ApiClient {
   }
 
   Future<Layout> updateLayout(int pageId, Layout layout) async {
+    print(
+        'Updating layout, row heights: ${layout.rows.map((r) => r.height).toList()}');
     final response = await put(
       ApiEndpoints.replaceUrlParams(
         ApiEndpoints.updateLayout,

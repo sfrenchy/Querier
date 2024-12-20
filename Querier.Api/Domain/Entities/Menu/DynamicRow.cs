@@ -5,14 +5,11 @@ namespace Querier.Api.Domain.Entities.Menu
     public class DynamicRow
     {
         public int Id { get; set; }
-        public int Order { get; set; }
         public int PageId { get; set; }
-        public MainAxisAlignment Alignment { get; set; }
-        public CrossAxisAlignment CrossAlignment { get; set; }
-        public double Spacing { get; set; }
-
+        public int Order { get; set; }
+        public double? Height { get; set; }
         public virtual DynamicPage Page { get; set; }
-        public virtual ICollection<DynamicCard> Cards { get; set; }
+        public virtual ICollection<DynamicCard> Cards { get; set; } = new List<DynamicCard>();
     }
 
     public enum MainAxisAlignment

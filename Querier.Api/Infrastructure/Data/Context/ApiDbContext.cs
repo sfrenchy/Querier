@@ -253,7 +253,6 @@ namespace Querier.Api.Infrastructure.Data.Context
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Order).IsRequired();
-                entity.Property(e => e.Spacing).HasDefaultValue(16.0);
                 
                 entity.HasOne(d => d.Page)
                       .WithMany(p => p.Rows)

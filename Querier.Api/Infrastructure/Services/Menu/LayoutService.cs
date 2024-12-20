@@ -57,9 +57,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
                 {
                     Id = row.Id,
                     Order = row.Order,
-                    Alignment = row.Alignment.ToString(),
-                    CrossAlignment = row.CrossAlignment.ToString(),
-                    Spacing = row.Spacing,
+                    Height = row.Height,
                     Cards = cardResponses
                 });
             }
@@ -114,9 +112,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
                 {
                     PageId = pageId,
                     Order = rowResponse.Order,
-                    Alignment = Enum.Parse<MainAxisAlignment>(rowResponse.Alignment),
-                    CrossAlignment = Enum.Parse<CrossAxisAlignment>(rowResponse.CrossAlignment),
-                    Spacing = rowResponse.Spacing
+                    Height = rowResponse.Height,
                 };
 
                 var savedRow = await _rowRepository.CreateAsync(newRow);

@@ -81,6 +81,7 @@ class HomeScreen extends StatelessWidget {
                               onReorder: (oldIndex, newIndex) {},
                               onAcceptCard: (cardData) {},
                               onReorderCards: (rowId, oldIndex, newIndex) {},
+                              onRowUpdated: (updatedRow) {},
                             )),
                       ],
                     ),

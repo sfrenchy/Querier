@@ -44,16 +44,14 @@ class UpdateRowProperties extends DynamicPageLayoutEvent {
   final MainAxisAlignment alignment;
   final CrossAxisAlignment crossAlignment;
   final double spacing;
+  final double height;
 
   const UpdateRowProperties(
-    this.rowId,
-    this.alignment,
-    this.crossAlignment,
-    this.spacing,
-  );
+      this.rowId, this.alignment, this.crossAlignment, this.spacing,
+      {this.height = 400});
 
   @override
-  List<Object> get props => [rowId, alignment, crossAlignment, spacing];
+  List<Object> get props => [rowId, alignment, crossAlignment, spacing, height];
 }
 
 class DeleteRow extends DynamicPageLayoutEvent {
@@ -87,12 +85,11 @@ class AddCard extends DynamicPageLayoutEvent {
 class AddCardToRow extends DynamicPageLayoutEvent {
   final int rowId;
   final DynamicCard card;
-  final int gridWidth;
 
-  const AddCardToRow(this.rowId, this.card, {required this.gridWidth});
+  const AddCardToRow(this.rowId, this.card);
 
   @override
-  List<Object> get props => [rowId, card, gridWidth];
+  List<Object> get props => [rowId, card];
 }
 
 class DeleteCard extends DynamicPageLayoutEvent {

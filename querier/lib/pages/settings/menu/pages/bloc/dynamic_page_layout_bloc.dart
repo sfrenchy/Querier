@@ -46,6 +46,36 @@ class DynamicPageLayoutBloc
         }
       }
     });
+    on<UpdateRowProperties>((event, emit) {
+      print('UpdateRowProperties height: ${event.height}');
+      if (state is DynamicPageLayoutLoaded) {
+        final currentState = state as DynamicPageLayoutLoaded;
+        final updatedRows = currentState.rows.map((row) {
+          if (row.id == event.rowId) {
+            final updatedRow = row.copyWith(
+              height: event.height,
+            );
+            print('Updated row height: ${updatedRow.height}');
+            return updatedRow;
+          }
+          return row;
+        }).toList();
+
+        emit(DynamicPageLayoutLoaded(
+          updatedRows,
+          isDirty: true,
+        ));
+      }
+    });
+    on<ReloadPageLayout>((event, emit) async {
+      emit(DynamicPageLayoutLoading());
+      try {
+        final layout = await _apiClient.getLayout(event.pageId);
+        emit(DynamicPageLayoutLoaded(layout.rows));
+      } catch (e) {
+        emit(DynamicPageLayoutError(e.toString()));
+      }
+    });
   }
 
   Future<void> _onUpdateCard(
@@ -126,22 +156,33 @@ class DynamicPageLayoutBloc
 
   Future<void> _onAddCard(
       AddCardToRow event, Emitter<DynamicPageLayoutState> emit) async {
+    print('_onAddCard: initial gridWidth = ${event.card.gridWidth}');
     if (state is DynamicPageLayoutLoaded) {
       final currentState = state as DynamicPageLayoutLoaded;
       final row = currentState.rows.firstWhere((r) => r.id == event.rowId);
 
-      // Utiliser directement la carte reçue avec la bonne largeur
-      final newCard = event.card.copyWith(
+      // Créer une nouvelle carte en préservant le gridWidth
+      final newCard = DynamicCard(
         id: -(row.cards.length + 1),
+        titles: event.card.titles,
         order: row.cards.length + 1,
-        gridWidth: event.gridWidth,
+        type: event.card.type,
+        gridWidth: event.card.gridWidth, // Préserver le gridWidth
+        backgroundColor: event.card.backgroundColor,
+        textColor: event.card.textColor,
+        headerBackgroundColor: event.card.headerBackgroundColor,
+        headerTextColor: event.card.headerTextColor,
+        configuration: event.card.configuration,
       );
 
-      final updatedRows = currentState.rows
-          .map((r) => r.id == event.rowId
-              ? r.copyWith(cards: [...r.cards, newCard])
-              : r)
-          .toList();
+      print('_onAddCard: final gridWidth = ${newCard.gridWidth}');
+
+      final updatedRows = currentState.rows.map((r) {
+        if (r.id == event.rowId) {
+          return r.copyWith(cards: [...r.cards, newCard]);
+        }
+        return r;
+      }).toList();
 
       emit(DynamicPageLayoutLoaded(updatedRows, isDirty: true));
     }
