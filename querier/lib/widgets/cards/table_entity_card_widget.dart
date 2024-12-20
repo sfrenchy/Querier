@@ -19,6 +19,9 @@ class TableEntityCardWidget extends BaseCardWidget {
   final Map<int, List<Map<String, dynamic>>> _dataCache = {};
   int? _totalItems;
 
+  // Ajouter cette propriété à la classe TableEntityCardWidget
+  String? _sortColumn;
+
   TableEntityCardWidget({
     super.key,
     required TableEntityCard card,
@@ -80,6 +83,7 @@ class TableEntityCardWidget extends BaseCardWidget {
       entity,
       pageNumber: page,
       pageSize: _pageSize,
+      orderBy: _sortColumn == null ? "" : _sortColumn!,
     );
 
     // Mettre en cache les données
@@ -187,6 +191,11 @@ class TableEntityCardWidget extends BaseCardWidget {
                                       fontWeight: FontWeight.bold),
                                 ),
                               ),
+                              onSort: (_, __) {
+                                _sortColumn = column['key'];
+                                clearCache();
+                                _loadData(context, tableCard, page: 1);
+                              },
                             ))
                         .toList(),
                     rows: items

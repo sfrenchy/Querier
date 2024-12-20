@@ -269,5 +269,9 @@
         "description": "Label for context/entity selector"
     },
     "preview": "Data Preview",
-    "orderBy": "Order by"
+    "orderBy": "Order by",
+    "enablePagination": "Enable pagination",
+    "itemsPerPage": "Items per page",
+    "invalidNumber": "Please enter a valid number greater than 0",
+    "required": "This field is required"
 } 

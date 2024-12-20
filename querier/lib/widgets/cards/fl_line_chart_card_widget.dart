@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +28,10 @@ class FLLineChartCardWidget extends BaseCardWidget {
 
   @override
   Widget buildCardContent(BuildContext context) {
-    return _FLLineChartContent(card: card);
+    return _FLLineChartContent(
+      card: card,
+      onBuildFooter: buildFooter,
+    );
   }
 
   @override
@@ -36,8 +40,12 @@ class FLLineChartCardWidget extends BaseCardWidget {
 
 class _FLLineChartContent extends StatefulWidget {
   final DynamicCard card;
+  final Widget? Function(BuildContext)? onBuildFooter;
 
-  const _FLLineChartContent({required this.card});
+  const _FLLineChartContent({
+    required this.card,
+    this.onBuildFooter,
+  });
 
   @override
   State<_FLLineChartContent> createState() => _FLLineChartContentState();
@@ -47,6 +55,10 @@ class _FLLineChartContentState extends State<_FLLineChartContent> {
   Map<String, dynamic>? _data;
   Timer? _refreshTimer;
   late final DataContextService _dataContextService;
+  final _paginationController = StreamController<(int, int)>.broadcast();
+  static const int _defaultPageSize = 100;
+  int? _totalItems;
+  int _currentPage = 1;
 
   @override
   void initState() {
@@ -74,13 +86,26 @@ class _FLLineChartContentState extends State<_FLLineChartContent> {
         // TODO: Implémenter le chargement depuis l'API
       } else {
         final apiClient = context.read<ApiClient>();
-        final (data, _) = await apiClient.getEntityData(
+
+        // Utiliser la pagination si elle est activée
+        final bool isPaginated = config['pagination'] ?? false;
+        final int pageSize =
+            isPaginated ? (config['pageSize'] as int? ?? _defaultPageSize) : 0;
+        final int pageNumber = isPaginated ? _currentPage : 0;
+
+        final (data, total) = await apiClient.getEntityData(
           config['dataContext'] as String,
           config['entity'] as String,
-          pageNumber: 0,
-          pageSize: 0,
+          pageNumber: pageNumber,
+          pageSize: pageSize,
           orderBy: config['orderBy'] as String? ?? '',
         );
+
+        // Mettre à jour le total et envoyer l'état de pagination
+        _totalItems = total;
+        if (isPaginated) {
+          _paginationController.add((_currentPage, total));
+        }
 
         // Restructurer les données par colonne
         final Map<String, List<dynamic>> columnData = {};
@@ -99,12 +124,86 @@ class _FLLineChartContentState extends State<_FLLineChartContent> {
 
   @override
   void dispose() {
+    _paginationController.close();
     _refreshTimer?.cancel();
     super.dispose();
   }
 
+  Widget? _buildFooter(BuildContext context) {
+    if (!(widget.card.configuration['pagination'] as bool? ?? false)) {
+      return null;
+    }
+
+    return StreamBuilder<(int, int)>(
+      stream: _paginationController.stream,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+
+        final (currentPage, totalItems) = snapshot.data!;
+        final pageSize =
+            widget.card.configuration['pageSize'] as int? ?? _defaultPageSize;
+        final startIndex = (currentPage - 1) * pageSize + 1;
+        final endIndex = min(startIndex + pageSize - 1, totalItems);
+        final totalPages = (totalItems / pageSize).ceil();
+
+        return Container(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text('$startIndex-$endIndex sur $totalItems'),
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: currentPage > 1
+                    ? () {
+                        setState(() => _currentPage--);
+                        _loadData();
+                      }
+                    : null,
+              ),
+              DropdownButton<int>(
+                value: currentPage,
+                isDense: true,
+                items: List.generate(totalPages, (index) => index + 1)
+                    .map((page) => DropdownMenuItem(
+                          value: page,
+                          child: Text('$page / $totalPages'),
+                        ))
+                    .toList(),
+                onChanged: (newPage) {
+                  if (newPage != null) {
+                    setState(() => _currentPage = newPage);
+                    _loadData();
+                  }
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: currentPage < totalPages
+                    ? () {
+                        setState(() => _currentPage++);
+                        _loadData();
+                      }
+                    : null,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(child: _buildChart()),
+        if (_buildFooter(context) != null) _buildFooter(context)!,
+      ],
+    );
+  }
+
+  Widget _buildChart() {
     if (_data == null) {
       return const Center(child: CircularProgressIndicator());
     }
