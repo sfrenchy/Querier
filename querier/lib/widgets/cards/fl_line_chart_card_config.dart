@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:querier/models/dynamic_card.dart';
+import 'package:querier/models/entity_schema.dart';
 import 'package:querier/widgets/color_picker_button.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:querier/services/data_context_service.dart';
+import 'package:querier/api/api_client.dart';
+import 'package:provider/provider.dart';
 
 enum DataSourceType { api, contextEntity }
 
@@ -22,18 +26,51 @@ class FLLineChartCardConfig extends StatefulWidget {
 class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
   late final Map<String, dynamic> config;
   Map<String, dynamic>? previewData;
+  late final DataContextService _dataContextService;
+  List<String> _contexts = [];
+  List<EntitySchema> _entities = [];
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    config = Map<String, dynamic>.from(widget.card.configuration);
-    if (!config.containsKey('lines')) {
-      config['lines'] = [];
-      Future.microtask(() {
-        widget.onConfigurationChanged(config);
-      });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _dataContextService = DataContextService(context.read<ApiClient>());
+      config = Map<String, dynamic>.from(widget.card.configuration);
+      if (!config.containsKey('lines')) {
+        config['lines'] = [];
+        Future.microtask(() {
+          widget.onConfigurationChanged(config);
+        });
+      }
+      config['dataSourceType'] ??= DataSourceType.api.toString();
+
+      final savedContext = config['dataContext'] as String?;
+      if (savedContext != null) {
+        _loadEntities(savedContext).then((_) {
+          if (config['entity'] != null) {
+            _loadPreviewData();
+          }
+        });
+      }
+
+      _initialized = true;
     }
-    config['dataSourceType'] ??= DataSourceType.api.toString();
+    _loadContexts();
+  }
+
+  Future<void> _loadContexts() async {
+    final contexts = await _dataContextService.getAvailableContexts();
+    setState(() {
+      _contexts = contexts;
+    });
+  }
+
+  Future<void> _loadEntities(String context) async {
+    final entities = await _dataContextService.getAvailableEntities(context);
+    setState(() {
+      _entities = entities;
+    });
   }
 
   void updateConfig(Map<String, dynamic> newConfig) {
@@ -112,7 +149,9 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
                       final newConfig = Map<String, dynamic>.from(config);
                       newConfig['dataContext'] = value;
                       updateConfig(newConfig);
-                      _loadPreviewData();
+                      if (value != null) {
+                        _loadEntities(value);
+                      }
                     },
                   ),
                   const SizedBox(height: 8),
@@ -162,8 +201,14 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
                           Text(l10n.preview,
                               style: Theme.of(context).textTheme.titleSmall),
                           const SizedBox(height: 8),
-                          Text(previewData.toString(),
-                              style: Theme.of(context).textTheme.bodySmall),
+                          ...previewData!.entries.map((entry) => Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 4.0),
+                                child: Text(
+                                  '${entry.key}: ${entry.value}',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              )),
                         ],
                       ),
                     ),
@@ -333,6 +378,14 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
   Widget _buildLineItem(
       Map<String, dynamic> line, Map<String, dynamic> config) {
     final l10n = AppLocalizations.of(context)!;
+    final numericFields = _getNumericFields();
+    final currentValue = line['dataField'] as String?;
+
+    // Vérifier si la valeur actuelle existe dans les champs numériques
+    final validValue =
+        currentValue != null && numericFields.contains(currentValue)
+            ? currentValue
+            : null;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -376,12 +429,18 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
                 ),
               ],
             ),
-            TextFormField(
+            DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: l10n.dataField,
                 helperText: l10n.jsonFieldPath,
               ),
-              initialValue: (line['dataField'] as String?) ?? '',
+              value: validValue,
+              items: numericFields.map((field) {
+                return DropdownMenuItem(
+                  value: field,
+                  child: Text(field),
+                );
+              }).toList(),
               onChanged: (value) {
                 final newConfig = Map<String, dynamic>.from(config);
                 final lines =
@@ -448,17 +507,55 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
     );
   }
 
-  List<String> _getAvailableContexts() {
-    return ['Context1', 'Context2'];
-  }
-
-  List<String> _getAvailableEntities(String? context) {
-    return ['Entity1', 'Entity2'];
-  }
+  List<String> _getAvailableContexts() => _contexts;
+  List<String> _getAvailableEntities(String? context) =>
+      _entities.map((e) => e.name).toList();
 
   Future<void> _loadPreviewData() async {
     if (config['dataContext'] == null || config['entity'] == null) return;
 
-    try {} catch (e) {}
+    try {
+      final preview = await _dataContextService.getEntityPreview(
+        config['dataContext'] as String,
+        config['entity'] as String,
+      );
+
+      if (mounted) {
+        setState(() {
+          previewData = preview;
+        });
+      }
+    } catch (e) {
+      print('Error loading preview data: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading preview data: $e')),
+        );
+      }
+    }
+  }
+
+  List<String> _getNumericFields() {
+    if (previewData == null) return [];
+
+    return previewData!.entries
+        .where((entry) => _isNumericType(entry.value))
+        .map((entry) => entry.key)
+        .toList();
+  }
+
+  bool _isNumericType(String type) {
+    return [
+      'Int32',
+      'Int16',
+      'Decimal',
+      'Double',
+      'Single',
+      'Int32?',
+      'Int16?',
+      'Decimal?',
+      'Double?',
+      'Single?'
+    ].contains(type);
   }
 }

@@ -13,18 +13,21 @@ import 'package:querier/models/dynamic_row.dart';
 import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/models/layout.dart';
 import 'package:querier/models/entity_schema.dart';
+import 'package:querier/services/data_context_service.dart';
 
 class ApiClient {
   final Dio _dio;
   String baseUrl;
   final FlutterSecureStorage _secureStorage;
   final NavigatorState _navigator;
+  late final DataContextService dataContextService;
 
   ApiClient(this.baseUrl, this._navigator)
       : _dio = Dio(),
         _secureStorage = const FlutterSecureStorage() {
     updateBaseUrl(baseUrl);
     _setupInterceptors();
+    dataContextService = DataContextService(this);
   }
 
   void _setupInterceptors() {
