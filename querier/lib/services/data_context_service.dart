@@ -56,4 +56,15 @@ class DataContextService {
     }
     return null;
   }
+
+  Future<EntitySchema?> getEntitySchema(String context, String entity) async {
+    try {
+      final entities = await getAvailableEntities(context);
+      return entities.firstWhere(
+        (e) => e.name == entity,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
 }

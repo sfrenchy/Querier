@@ -329,6 +329,24 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
                     updateConfig(newConfig);
                   },
                 ),
+                // Ajouter le dropdown pour la colonne des libellés X
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: l10n.xAxisLabelField,
+                  ),
+                  value: config['xAxisLabelField'] as String?,
+                  items: _getAllFields().map((field) {
+                    return DropdownMenuItem(
+                      value: field,
+                      child: Text(field),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    final newConfig = Map<String, dynamic>.from(config);
+                    newConfig['xAxisLabelField'] = value;
+                    updateConfig(newConfig);
+                  },
+                ),
 
                 // Y Axis
                 Text(l10n.yAxis,

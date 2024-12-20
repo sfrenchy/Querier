@@ -4,10 +4,12 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:querier/models/dynamic_card.dart';
+import 'package:querier/models/entity_schema.dart';
 import 'package:querier/services/data_context_service.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:provider/provider.dart';
 import 'package:querier/widgets/cards/base_card_widget.dart';
+import 'package:intl/intl.dart';
 
 class FLLineChartCardWidget extends BaseCardWidget {
   const FLLineChartCardWidget({
@@ -203,10 +205,50 @@ class _FLLineChartContentState extends State<_FLLineChartContent> {
     );
   }
 
+  Future<String> _formatValue(dynamic value, String? fieldName) async {
+    if (value == null || fieldName == null) return '';
+
+    try {
+      final dataContext = widget.card.configuration['dataContext'] as String?;
+      final entity = widget.card.configuration['entity'] as String?;
+
+      if (dataContext == null || entity == null) return value.toString();
+
+      final entitySchema =
+          await _dataContextService.getEntitySchema(dataContext, entity);
+      if (entitySchema == null) return value.toString();
+
+      final property = entitySchema.properties.firstWhere(
+        (p) => p.name == fieldName,
+        orElse: () => EntityProperty(
+          name: fieldName,
+          type: 'String',
+          options: const [],
+        ),
+      );
+
+      if (property.type.toLowerCase().contains('date')) {
+        try {
+          final date = DateTime.parse(value.toString());
+          return DateFormat(
+                  'dd/MM/yyyy', Localizations.localeOf(context).languageCode)
+              .format(date);
+        } catch (e) {
+          return value.toString();
+        }
+      }
+      return value.toString();
+    } catch (e) {
+      return value.toString();
+    }
+  }
+
   Widget _buildChart() {
     if (_data == null) {
       return const Center(child: CircularProgressIndicator());
     }
+
+    final xAxisField = widget.card.configuration['xAxisLabelField'] as String?;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -221,8 +263,33 @@ class _FLLineChartContentState extends State<_FLLineChartContent> {
           ),
           titlesData: FlTitlesData(
             bottomTitles: AxisTitles(
-              axisNameWidget: Text(
-                widget.card.configuration['xAxisLabel'] ?? '',
+              axisNameWidget:
+                  Text(widget.card.configuration['xAxisLabel'] ?? ''),
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 30,
+                interval: 1,
+                getTitlesWidget: (value, meta) {
+                  if (xAxisField != null && _data!.containsKey(xAxisField)) {
+                    final index = value.toInt();
+                    final labels = _data![xAxisField] as List;
+                    if (index >= 0 && index < labels.length) {
+                      return RotatedBox(
+                        quarterTurns: 1,
+                        child: FutureBuilder<String>(
+                          future: _formatValue(labels[index], xAxisField),
+                          builder: (context, snapshot) {
+                            return Text(
+                              snapshot.data ?? value.toString(),
+                              style: const TextStyle(fontSize: 9),
+                            );
+                          },
+                        ),
+                      );
+                    }
+                  }
+                  return Text(value.toInt().toString());
+                },
               ),
             ),
             leftTitles: AxisTitles(

@@ -272,5 +272,6 @@
     "enablePagination": "Activer la pagination",
     "itemsPerPage": "Éléments par page",
     "invalidNumber": "Veuillez entrer un nombre valide supérieur à 0",
-    "required": "Ce champ est requis"
+    "required": "Ce champ est requis",
+    "xAxisLabelField": "Champ des libellés de l'axe X"
 } 

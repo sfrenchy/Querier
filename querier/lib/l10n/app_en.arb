@@ -273,5 +273,6 @@
     "enablePagination": "Enable pagination",
     "itemsPerPage": "Items per page",
     "invalidNumber": "Please enter a valid number greater than 0",
-    "required": "This field is required"
+    "required": "This field is required",
+    "xAxisLabelField": "X-axis label field"
 } 
