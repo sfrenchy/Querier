@@ -237,5 +237,35 @@
     "dataSource": "Source de données",
     "rowHeight": "Hauteur de la ligne",
     "height": "Hauteur",
-    "useCurrentHeight": "Utiliser la hauteur actuelle"
+    "useCurrentHeight": "Utiliser la hauteur actuelle",
+    "apiEndpoint": "Point d'accès API",
+    "urlToFetchData": "URL pour récupérer les données",
+    "refreshInterval": "Intervalle de rafraîchissement (secondes)",
+    "dataRefreshFrequency": "Fréquence de rafraîchissement des données",
+    "axesConfiguration": "Configuration des axes",
+    "xAxis": "Axe X",
+    "yAxis": "Axe Y",
+    "showGridLines": "Afficher la grille",
+    "axisLabel": "Étiquette de l'axe",
+    "minValue": "Valeur minimale",
+    "maxValue": "Valeur maximale",
+    "linesConfiguration": "Configuration des lignes",
+    "addNewLine": "Ajouter une ligne",
+    "lineName": "Nom de la ligne",
+    "dataField": "Champ de données",
+    "jsonFieldPath": "Chemin du champ JSON pour les valeurs",
+    "lineWidth": "Épaisseur de la ligne",
+    "tooltipSettings": "Paramètres de l'infobulle",
+    "showTooltip": "Afficher l'infobulle",
+    "tooltipFormat": "Format de l'infobulle",
+    "tooltipFormatExample": "Ex: {value}°C",
+    "dataSourceType": "Type de source de données",
+    "@dataSourceType": {
+        "description": "Label for data source type selector"
+    },
+    "contextEntity": "Contexte/Entité",
+    "@contextEntity": {
+        "description": "Label for context/entity selector"
+    },
+    "preview": "Aperçu des données"
 } 

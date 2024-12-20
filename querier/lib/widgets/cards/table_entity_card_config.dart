@@ -6,6 +6,7 @@ import 'package:querier/models/cards/table_card.dart';
 import 'package:provider/provider.dart';
 import 'package:querier/models/entity_schema.dart';
 import 'package:querier/widgets/translation_manager.dart';
+import 'package:querier/services/data_context_service.dart';
 
 class TableEntityCardConfig extends StatefulWidget {
   final TableEntityCard card;
@@ -29,60 +30,51 @@ class _TableEntityCardConfigState extends State<TableEntityCardConfig> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _selectedColumns = [];
   final Map<String, bool> _expandedStates = {};
+  late final DataContextService _dataContextService;
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _dataContextService = context.read<ApiClient>().dataContextService;
+      _initialized = true;
+    }
     _loadContexts();
+  }
 
-    // Si un contexte est déjà configuré, charger les entités
-    final savedContext = widget.card.configuration['context'] as String?;
-    if (savedContext != null) {
-      _loadEntities(savedContext).then((_) {
-        // Une fois les entités chargées, initialiser l'entité sélectionnée
+  Future<void> _loadContexts() async {
+    try {
+      final contexts = await _dataContextService.getAvailableContexts();
+      if (mounted) {
         setState(() {
+          _contexts = contexts;
+          _isLoading = false;
+          _selectedContext = widget.card.configuration['context'] as String?;
+          if (_selectedContext != null) {
+            _loadEntities(_selectedContext!);
+          }
+        });
+      }
+    } catch (e) {
+      // Gérer l'erreur
+    }
+  }
+
+  Future<void> _loadEntities(String context) async {
+    try {
+      final entities = await _dataContextService.getAvailableEntities(context);
+      if (mounted) {
+        setState(() {
+          _entities = entities;
           _selectedEntity = widget.card.configuration['entity'] as String?;
           if (_selectedEntity != null) {
             _initializeColumns();
           }
         });
-      });
-    }
-  }
-
-  Future<void> _loadContexts() async {
-    try {
-      final apiClient = context.read<ApiClient>();
-      final contexts = await apiClient.getEntityContexts();
-      setState(() {
-        _contexts = contexts;
-        _isLoading = false;
-        _selectedContext = widget.card.configuration['context'] as String?;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading contexts: $e')),
-        );
       }
-    }
-  }
-
-  Future<void> _loadEntities(String contextTypeName) async {
-    try {
-      final apiClient = context.read<ApiClient>();
-      final entities = await apiClient.getEntities(contextTypeName);
-      setState(() {
-        _entities = entities;
-        _selectedEntity = widget.card.configuration['entity'] as String?;
-      });
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading entities: $e')),
-        );
-      }
+      // Gérer l'erreur
     }
   }
 

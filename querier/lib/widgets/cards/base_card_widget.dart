@@ -30,11 +30,6 @@ abstract class BaseCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(
-        'BaseCardWidget.build: headerBackgroundColor = ${card.headerBackgroundColor}'); // Debug
-    print(
-        'BaseCardWidget.build: Color value = ${card.headerBackgroundColor != null ? Color(card.headerBackgroundColor!) : null}'); // Debug
-
     return Card(
       color: card.backgroundColor != null ? Color(card.backgroundColor!) : null,
       child: SizedBox(

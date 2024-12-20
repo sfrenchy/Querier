@@ -238,5 +238,35 @@
     "dataSource": "Data Source",
     "rowHeight": "Row height",
     "height": "Height",
-    "useCurrentHeight": "Use current height"
+    "useCurrentHeight": "Use current height",
+    "apiEndpoint": "API Endpoint",
+    "urlToFetchData": "URL to fetch data",
+    "refreshInterval": "Refresh Interval (seconds)",
+    "dataRefreshFrequency": "Data refresh frequency",
+    "axesConfiguration": "Axes Configuration",
+    "xAxis": "X Axis",
+    "yAxis": "Y Axis",
+    "showGridLines": "Show Grid Lines",
+    "axisLabel": "Axis Label",
+    "minValue": "Min Value",
+    "maxValue": "Max Value",
+    "linesConfiguration": "Lines Configuration",
+    "addNewLine": "Add New Line",
+    "lineName": "Line Name",
+    "dataField": "Data Field",
+    "jsonFieldPath": "JSON field path for values",
+    "lineWidth": "Line Width",
+    "tooltipSettings": "Tooltip Settings",
+    "showTooltip": "Show Tooltip",
+    "tooltipFormat": "Tooltip Format",
+    "tooltipFormatExample": "Ex: {value}°C",
+    "dataSourceType": "Data Source Type",
+    "@dataSourceType": {
+        "description": "Label for data source type selector"
+    },
+    "contextEntity": "Context/Entity",
+    "@contextEntity": {
+        "description": "Label for context/entity selector"
+    },
+    "preview": "Data Preview"
 } 

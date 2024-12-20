@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/models/cards/placeholder_card.dart';
+import 'package:querier/widgets/cards/fl_line_chart_card_widget.dart';
 import 'package:querier/widgets/cards/placeholder_card_config.dart';
 import 'package:querier/widgets/cards/placeholder_card_widget.dart';
 import 'package:querier/models/cards/table_card.dart';
 import 'package:querier/widgets/cards/table_entity_card_widget.dart';
 import 'package:querier/widgets/cards/table_entity_card_config.dart';
+import 'package:querier/widgets/cards/fl_line_chart_card_config.dart';
 
 class CardSelector extends StatelessWidget {
   final DynamicCard card;
@@ -65,6 +67,24 @@ class CardSelector extends StatelessWidget {
           );
         }
         return null;
+      case 'FLLineChart':
+        if (onConfigurationChanged != null) {
+          final lineChartCard = DynamicCard(
+            id: card.id,
+            titles: card.titles,
+            type: card.type,
+            order: card.order,
+            gridWidth: card.gridWidth,
+            backgroundColor: card.backgroundColor,
+            textColor: card.textColor,
+            configuration: card.configuration,
+          );
+          return FLLineChartCardConfig(
+            card: lineChartCard,
+            onConfigurationChanged: onConfigurationChanged!,
+          );
+        }
+        return null;
       default:
         return null;
     }
@@ -105,6 +125,25 @@ class CardSelector extends StatelessWidget {
         );
         return TableEntityCardWidget(
           card: tableCard,
+          onEdit: onEdit,
+          onDelete: onDelete,
+          dragHandle: dragHandle,
+          isEditing: isEditing,
+          maxRowHeight: rowMaxHeight,
+        );
+      case 'FLLineChart':
+        final lineChartCard = DynamicCard(
+          id: card.id,
+          titles: card.titles,
+          type: card.type,
+          order: card.order,
+          gridWidth: card.gridWidth,
+          backgroundColor: card.backgroundColor,
+          textColor: card.textColor,
+          configuration: card.configuration,
+        );
+        return FLLineChartCardWidget(
+          card: lineChartCard,
           onEdit: onEdit,
           onDelete: onDelete,
           dragHandle: dragHandle,
