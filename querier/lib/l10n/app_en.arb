@@ -268,5 +268,11 @@
     "@contextEntity": {
         "description": "Label for context/entity selector"
     },
-    "preview": "Data Preview"
+    "preview": "Data Preview",
+    "orderBy": "Order by",
+    "enablePagination": "Enable pagination",
+    "itemsPerPage": "Items per page",
+    "invalidNumber": "Please enter a valid number greater than 0",
+    "required": "This field is required",
+    "xAxisLabelField": "X-axis label field"
 } 

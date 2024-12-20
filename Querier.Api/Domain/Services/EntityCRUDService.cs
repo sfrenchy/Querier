@@ -104,7 +104,7 @@ namespace Querier.Api.Domain.Services
             return newEntity;
         }
 
-        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, PaginationParameters pagination)
+        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, PaginationParameters pagination, string OrderBy = "")
         {
             Type reqType = Utils.GetType(entityTypeFullname);
             if (reqType == null)
@@ -123,10 +123,19 @@ namespace Querier.Api.Domain.Services
                 throw new Exception($"Entity \"{entityTypeFullname}\" is not handled by any DbSet in the \"{contextTypeFullname}\" context.");
 
             var query = ((IEnumerable<object>)dbSet);
+            
+            // Ajouter le tri si OrderBy est spécifié
+            if (!string.IsNullOrEmpty(OrderBy))
+            {
+                query = query.OrderBy(x => x.GetType()
+                    .GetProperty(OrderBy)
+                    ?.GetValue(x, null));
+            }
+
             var totalCount = query.Count();
             var data = query
-                .Skip((pagination.PageNumber - 1) * pagination.PageSize)
-                .Take(pagination.PageSize)
+                .Skip(pagination.PageNumber != 0 ? (pagination.PageNumber - 1) * pagination.PageSize : 0)
+                .Take(pagination.PageNumber != 0 ? pagination.PageSize : totalCount)
                 .Select(e => e.GetType()
                     .GetProperties()
                     .Where(p => p.PropertyType.Namespace == "System" || p.PropertyType.IsValueType)

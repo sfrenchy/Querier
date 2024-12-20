@@ -69,7 +69,7 @@ namespace Querier.Api.Domain.Services
         /// <returns>An enumerable that hold the datas for entity of the context</returns>
         public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilter> filters);
 
-        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, PaginationParameters pagination);
+        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, PaginationParameters pagination, string OrderBy);
 
         /// <summary>
         /// Update an entity in a specific context

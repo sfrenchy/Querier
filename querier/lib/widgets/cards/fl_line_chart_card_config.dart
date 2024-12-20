@@ -175,6 +175,27 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
                         _loadPreviewData();
                       },
                     ),
+                  if (config['dataContext'] != null &&
+                      config['entity'] != null) ...[
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: l10n.orderBy,
+                      ),
+                      value: config['orderBy'] as String?,
+                      items: _getAllFields().map((field) {
+                        return DropdownMenuItem(
+                          value: field,
+                          child: Text(field),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        final newConfig = Map<String, dynamic>.from(config);
+                        newConfig['orderBy'] = value;
+                        updateConfig(newConfig);
+                      },
+                    ),
+                  ],
                 ],
                 const SizedBox(height: 8),
                 TextFormField(
@@ -214,6 +235,70 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
                     ),
                   ),
                 ],
+                Column(
+                  children: [
+                    // Ajouter le switch pour la pagination
+                    SwitchListTile(
+                      title:
+                          Text(AppLocalizations.of(context)!.enablePagination),
+                      value:
+                          (widget.card.configuration['pagination'] as bool?) ??
+                              false,
+                      onChanged: (bool value) {
+                        setState(() {
+                          widget.card.configuration['pagination'] = value;
+                          widget.onConfigurationChanged(
+                              widget.card.configuration);
+                        });
+                      },
+                    ),
+
+                    // Afficher le champ de saisie du nombre d'éléments par page uniquement si la pagination est activée
+                    if (widget.card.configuration['pagination'] == true)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  labelText: AppLocalizations.of(context)!
+                                      .itemsPerPage,
+                                ),
+                                initialValue:
+                                    ((widget.card.configuration['pageSize']
+                                                as int?) ??
+                                            100)
+                                        .toString(),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return AppLocalizations.of(context)!
+                                        .required;
+                                  }
+                                  final number = int.tryParse(value);
+                                  if (number == null || number <= 0) {
+                                    return AppLocalizations.of(context)!
+                                        .invalidNumber;
+                                  }
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  final number = int.tryParse(value);
+                                  if (number != null && number > 0) {
+                                    widget.card.configuration['pageSize'] =
+                                        number;
+                                    widget.onConfigurationChanged(
+                                        widget.card.configuration);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
 
@@ -241,6 +326,24 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
                   onChanged: (value) {
                     final newConfig = Map<String, dynamic>.from(config);
                     newConfig['xAxisLabel'] = value;
+                    updateConfig(newConfig);
+                  },
+                ),
+                // Ajouter le dropdown pour la colonne des libellés X
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: l10n.xAxisLabelField,
+                  ),
+                  value: config['xAxisLabelField'] as String?,
+                  items: _getAllFields().map((field) {
+                    return DropdownMenuItem(
+                      value: field,
+                      child: Text(field),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    final newConfig = Map<String, dynamic>.from(config);
+                    newConfig['xAxisLabelField'] = value;
                     updateConfig(newConfig);
                   },
                 ),
@@ -557,5 +660,10 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
       'Double?',
       'Single?'
     ].contains(type);
+  }
+
+  List<String> _getAllFields() {
+    if (previewData == null) return [];
+    return previewData!.entries.map((entry) => entry.key).toList();
   }
 }
