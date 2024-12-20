@@ -175,6 +175,27 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
                         _loadPreviewData();
                       },
                     ),
+                  if (config['dataContext'] != null &&
+                      config['entity'] != null) ...[
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: l10n.orderBy,
+                      ),
+                      value: config['orderBy'] as String?,
+                      items: _getAllFields().map((field) {
+                        return DropdownMenuItem(
+                          value: field,
+                          child: Text(field),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        final newConfig = Map<String, dynamic>.from(config);
+                        newConfig['orderBy'] = value;
+                        updateConfig(newConfig);
+                      },
+                    ),
+                  ],
                 ],
                 const SizedBox(height: 8),
                 TextFormField(
@@ -557,5 +578,10 @@ class _FLLineChartCardConfigState extends State<FLLineChartCardConfig> {
       'Double?',
       'Single?'
     ].contains(type);
+  }
+
+  List<String> _getAllFields() {
+    if (previewData == null) return [];
+    return previewData!.entries.map((entry) => entry.key).toList();
   }
 }

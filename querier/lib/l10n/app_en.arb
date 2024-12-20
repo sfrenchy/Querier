@@ -268,5 +268,6 @@
     "@contextEntity": {
         "description": "Label for context/entity selector"
     },
-    "preview": "Data Preview"
+    "preview": "Data Preview",
+    "orderBy": "Order by"
 } 

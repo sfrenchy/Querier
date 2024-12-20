@@ -49,7 +49,8 @@ namespace Querier.Api.Controllers
             [FromQuery] string contextTypeName, 
             [FromQuery] string entityTypeName,
             [FromQuery] int pageNumber = 0,
-            [FromQuery] int pageSize = 0)
+            [FromQuery] int pageSize = 0,
+            [FromQuery] string OrderBy = "")
         {
             var paginationParams = new PaginationParameters 
             { 
@@ -57,7 +58,7 @@ namespace Querier.Api.Controllers
                 PageSize = pageSize 
             };
             
-            var result = _entityCRUDService.GetAll(contextTypeName, entityTypeName, paginationParams);
+            var result = _entityCRUDService.GetAll(contextTypeName, entityTypeName, paginationParams, OrderBy);
             return Ok(new PagedResult<object>
             {
                 Data = result.Data,

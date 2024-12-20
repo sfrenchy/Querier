@@ -706,7 +706,7 @@ class ApiClient {
 
   Future<(List<Map<String, dynamic>>, int)> getEntityData(
       String contextTypeName, String entityTypeName,
-      {int pageNumber = 1, int pageSize = 10}) async {
+      {int pageNumber = 1, int pageSize = 10, String orderBy = ""}) async {
     try {
       final response = await _dio.get(
         ApiEndpoints.replaceUrlParams(
@@ -719,6 +719,7 @@ class ApiClient {
         queryParameters: {
           'pageNumber': pageNumber,
           'pageSize': pageSize,
+          'orderBy': orderBy,
         },
       );
 
