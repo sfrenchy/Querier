@@ -29,7 +29,23 @@ namespace Querier.Api.Infrastructure.Services.Menu
         public async Task<LayoutResponse> GetLayoutAsync(int pageId)
         {
             var page = await _pageRepository.GetByIdAsync(pageId);
-            if (page == null) return null;
+            if (page == null)
+            {
+                return new LayoutResponse
+                {
+                    PageId = pageId,
+                    Icon = "settings",
+                    Names = new Dictionary<string, string>
+                    {
+                        { "en", "Page Not Found" },
+                        { "fr", "Page Non Trouvée" }
+                    },
+                    IsVisible = true,
+                    Roles = new List<string>(),
+                    Route = $"/page/{pageId}",
+                    Rows = new List<DynamicRowResponse>()
+                };
+            }
 
             var rows = await _rowRepository.GetByPageIdAsync(pageId);
             var rowResponses = new List<DynamicRowResponse>();

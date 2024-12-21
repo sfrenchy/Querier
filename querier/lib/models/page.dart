@@ -47,7 +47,7 @@ class MenuPage {
       isVisible: json['IsVisible'] ?? false,
       roles: List<String>.from(json['Roles'] ?? []),
       route: json['Route'] ?? '',
-      menuCategoryId: json['MenuCategoryId'] ?? 0,
+      menuCategoryId: json['DynamicMenuCategoryId'] ?? 0,
     );
   }
 
@@ -59,6 +59,6 @@ class MenuPage {
         'IsVisible': isVisible,
         'Roles': roles,
         'Route': route,
-        'MenuCategoryId': menuCategoryId,
+        'DynamicMenuCategoryId': menuCategoryId,
       };
 }
