@@ -113,8 +113,11 @@ public class SQLQueryService : ISQLQueryService
                 {
                     foreach (KeyValuePair<string, object> p in sampleParameters)
                     {
-                        // TODO: Handle all database parameters types...
-                        //parameters.Add(new SqlParameter() { ParameterName = p.Key, Value = p.Value });
+                        var command = context.Database.GetDbConnection().CreateCommand();
+                        var parameter = command.CreateParameter();
+                        parameter.ParameterName = p.Key;
+                        parameter.Value = p.Value ?? DBNull.Value;
+                        parameters.Add(parameter);
                     }
                 }
 
