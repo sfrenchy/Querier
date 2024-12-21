@@ -37,6 +37,18 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
     _queryController = TextEditingController(text: widget.query?.query);
     _isPublic = widget.query?.isPublic ?? false;
     _selectedConnectionId = widget.query?.connectionId;
+
+    print('Initial parameters from query: ${widget.query?.parameters}');
+
+    if (widget.query?.parameters != null &&
+        widget.query!.parameters.isNotEmpty) {
+      setState(() {
+        _sampleParameters.clear();
+        _sampleParameters.addAll(widget.query!.parameters);
+      });
+    }
+
+    print('Initialized sample parameters: $_sampleParameters');
   }
 
   @override
@@ -228,6 +240,7 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
     if (name.isNotEmpty && value.isNotEmpty) {
       setState(() {
         _sampleParameters[name] = value;
+        print('Added parameter: $_sampleParameters'); // Debug log
         _paramNameController.clear();
         _paramValueController.clear();
       });
@@ -247,6 +260,8 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
         return;
       }
 
+      print('Sample parameters before submit: $_sampleParameters'); // Debug log
+
       final query = SQLQuery(
         id: widget.query?.id ?? 0,
         name: _nameController.text,
@@ -256,17 +271,20 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
         createdAt: widget.query?.createdAt ?? DateTime.now(),
         lastModifiedAt: DateTime.now(),
         isPublic: _isPublic,
-        parameters: widget.query?.parameters ?? {},
+        parameters: {},
         connectionId: _selectedConnectionId,
       );
 
+      final params = Map<String, dynamic>.from(_sampleParameters);
+      print('Copied parameters: $params'); // Debug log
+
       if (widget.query != null) {
         context.read<QueriesBloc>().add(
-              UpdateQuery(query, sampleParameters: _sampleParameters),
+              UpdateQuery(query, sampleParameters: params),
             );
       } else {
         context.read<QueriesBloc>().add(
-              AddQuery(query, sampleParameters: _sampleParameters),
+              AddQuery(query, sampleParameters: params),
             );
       }
 

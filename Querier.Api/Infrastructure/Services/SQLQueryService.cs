@@ -252,36 +252,44 @@ public class SQLQueryService : ISQLQueryService
 
         // Sécuriser l'exécution de la requête
         // TODO: Ajouter une validation/sanitization de la requête
-
-        using (var command = Utils.GetDbContextFromTypeName(query.Connection.ContextName).Database.GetDbConnection().CreateCommand())
+        try
         {
-            command.CommandText = query.Query;
-            command.CommandType = CommandType.Text;
-
-            foreach (var param in parameters)
+            using (var dbContext = Utils.GetDbContextFromTypeName(query.Connection.ContextName))
             {
-                var parameter = command.CreateParameter();
-                parameter.ParameterName = param.Key;
-                parameter.Value = param.Value;
-                command.Parameters.Add(parameter);
-            }
+                var command = dbContext.Database.GetDbConnection().CreateCommand();
+                command.CommandText = query.Query;
+                command.CommandType = CommandType.Text;
 
-            await _context.Database.OpenConnectionAsync();
-            
-            using (var result = await command.ExecuteReaderAsync())
-            {
-                var data = new List<dynamic>();
-                while (await result.ReadAsync())
+                foreach (var param in parameters)
                 {
-                    var row = new ExpandoObject() as IDictionary<string, object>;
-                    for (var i = 0; i < result.FieldCount; i++)
-                    {
-                        row.Add(result.GetName(i), result.GetValue(i));
-                    }
-                    data.Add(row);
+                    var parameter = command.CreateParameter();
+                    parameter.ParameterName = param.Key;
+                    parameter.Value = param.Value;
+                    command.Parameters.Add(parameter);
                 }
-                return data;
+
+                await dbContext.Database.OpenConnectionAsync();
+                
+                using (var result = await command.ExecuteReaderAsync())
+                {
+                    var data = new List<dynamic>();
+                    while (await result.ReadAsync())
+                    {
+                        var row = new ExpandoObject() as IDictionary<string, object>;
+                        for (var i = 0; i < result.FieldCount; i++)
+                        {
+                            row.Add(result.GetName(i), result.GetValue(i));
+                        }
+                        data.Add(row);
+                    }
+                    return data;
+                }
             }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
         }
     }
 } 

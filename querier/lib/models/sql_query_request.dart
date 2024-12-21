@@ -6,11 +6,11 @@ class SQLQueryRequest {
 
   SQLQueryRequest({
     required this.query,
-    this.sampleParameters,
+    required this.sampleParameters,
   });
 
   Map<String, dynamic> toJson() => {
-        'query': query.toJson(),
-        'sampleParameters': sampleParameters,
+        'Query': query.toJson(),
+        'SampleParameters': sampleParameters,
       };
 }
