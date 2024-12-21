@@ -254,6 +254,7 @@ namespace Querier.Api
             services.AddScoped<IDynamicMenuCategoryService, DynamicMenuCategoryService>();
             services.AddScoped<IDynamicPageRepository, DynamicPageRepository>();
             services.AddScoped<IDynamicPageService, DynamicPageService>();
+            services.AddScoped<ISQLQueryService, SQLQueryService>();
             // services.AddEntityFrameworkSqlServer()
             //     .AddLogging()
             //     .AddEntityFrameworkDesignTimeServices()

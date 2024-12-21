@@ -32,6 +32,7 @@ import 'package:querier/pages/databases/database_details_screen.dart';
 import 'package:querier/pages/settings/menu/dynamic_menu_categories_screen.dart';
 import 'package:querier/pages/settings/menu/dynamic_menu_category_form_screen.dart';
 import 'package:querier/blocs/menu_bloc.dart';
+import 'package:querier/widgets/query_builder/sql_query_builder_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -132,6 +133,7 @@ class QuerierApp extends StatelessWidget {
                   child: MenuCategoryFormScreen(categoryToEdit: category),
                 );
               },
+              '/sql-query-builder': (context) => const SQLQueryBuilderScreen(),
             },
             localizationsDelegates: const [
               AppLocalizations.delegate,
