@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Querier.Api.Domain.Entities;
 using Querier.Api.Domain.Exceptions;
+using Querier.Api.Application.DTOs;
 
 namespace Querier.Api.Controllers
 {
@@ -13,7 +14,7 @@ namespace Querier.Api.Controllers
     /// Controller for managing SQL queries
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [Authorize]
     public class SQLQueryController : ControllerBase
     {
@@ -30,8 +31,8 @@ namespace Querier.Api.Controllers
         /// <returns>List of SQL queries (public ones and those created by the user)</returns>
         /// <response code="200">Returns the list of queries</response>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<SQLQuery>), 200)]
-        public async Task<ActionResult<IEnumerable<SQLQuery>>> GetQueries()
+        [ProducesResponseType(typeof(IEnumerable<SQLQueryDTO>), 200)]
+        public async Task<ActionResult<IEnumerable<SQLQueryDTO>>> GetQueries()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var queries = await _sqlQueryService.GetAllQueriesAsync(userId);

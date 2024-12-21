@@ -5,6 +5,7 @@ import 'package:querier/const.dart';
 import 'package:querier/models/db_connection.dart';
 import 'package:querier/models/menu_category.dart';
 import 'package:querier/models/role.dart';
+import 'package:querier/models/sql_query.dart';
 import 'package:querier/models/user.dart';
 import 'package:querier/pages/home/home_screen.dart';
 import 'package:querier/pages/login/login_bloc.dart';
@@ -15,6 +16,8 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:querier/blocs/language_bloc.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/config.dart';
+import 'package:querier/pages/queries/bloc/queries_bloc.dart';
+import 'package:querier/pages/queries/queries_screen.dart';
 import 'package:querier/pages/settings/menu/bloc/dynamic_menu_categories_bloc.dart';
 import 'package:querier/pages/settings/roles/bloc/roles_bloc.dart';
 import 'package:querier/pages/settings/users/bloc/users_bloc.dart';
@@ -33,6 +36,7 @@ import 'package:querier/pages/settings/menu/dynamic_menu_categories_screen.dart'
 import 'package:querier/pages/settings/menu/dynamic_menu_category_form_screen.dart';
 import 'package:querier/blocs/menu_bloc.dart';
 import 'package:querier/widgets/query_builder/sql_query_builder_screen.dart';
+import 'package:querier/pages/queries/sql_query_form_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -76,6 +80,9 @@ class QuerierApp extends StatelessWidget {
         BlocProvider<MenuBloc>(
           create: (context) =>
               MenuBloc(context.read<ApiClient>())..add(LoadMenu()),
+        ),
+        BlocProvider<QueriesBloc>(
+          create: (context) => QueriesBloc(context.read<ApiClient>()),
         ),
       ],
       child: BlocBuilder<LanguageBloc, Locale>(
@@ -134,6 +141,12 @@ class QuerierApp extends StatelessWidget {
                 );
               },
               '/sql-query-builder': (context) => const SQLQueryBuilderScreen(),
+              '/queries': (context) => const QueriesScreen(),
+              '/sql-query-form': (context) {
+                final query =
+                    ModalRoute.of(context)?.settings.arguments as SQLQuery?;
+                return SQLQueryFormScreen(query: query);
+              },
             },
             localizationsDelegates: const [
               AppLocalizations.delegate,
@@ -151,6 +164,10 @@ class QuerierApp extends StatelessWidget {
       ),
     );
   }
+}
+
+class SQLQueriesScreen {
+  const SQLQueriesScreen();
 }
 // Add connection page in this code
 // Add UI in different pages

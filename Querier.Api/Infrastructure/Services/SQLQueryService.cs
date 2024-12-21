@@ -10,10 +10,11 @@ using Querier.Api.Domain.Entities;
 using Querier.Api.Infrastructure.Data.Context;
 using Microsoft.AspNetCore.Http;
 using Querier.Api.Domain.Exceptions;
+using Querier.Api.Application.DTOs;
 
 public interface ISQLQueryService
 {
-    Task<IEnumerable<SQLQuery>> GetAllQueriesAsync(string userId);
+    Task<IEnumerable<SQLQueryDTO>> GetAllQueriesAsync(string userId);
     Task<SQLQuery> GetQueryByIdAsync(int id);
     Task<SQLQuery> CreateQueryAsync(SQLQuery query);
     Task<SQLQuery> UpdateQueryAsync(SQLQuery query);
@@ -37,12 +38,27 @@ public class SQLQueryService : ISQLQueryService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<IEnumerable<SQLQuery>> GetAllQueriesAsync(string userId)
+    public async Task<IEnumerable<SQLQueryDTO>> GetAllQueriesAsync(string userId)
     {
-        return await _context.SQLQueries
+        var queries = await _context.SQLQueries
             .Where(q => q.IsPublic || q.CreatedBy == userId)
             .OrderByDescending(q => q.CreatedAt)
+            .Select(q => new SQLQueryDTO
+            {
+                Id = q.Id,
+                Name = q.Name,
+                Description = q.Description,
+                Query = q.Query,
+                CreatedBy = q.CreatedBy,
+                CreatedAt = q.CreatedAt,
+                LastModifiedAt = q.LastModifiedAt,
+                IsPublic = q.IsPublic,
+                Parameters = q.Parameters,
+                ConnectionId = q.ConnectionId
+            })
             .ToListAsync();
+
+        return queries;
     }
 
     public async Task<SQLQuery> GetQueryByIdAsync(int id)

@@ -274,5 +274,13 @@
     "itemsPerPage": "Items per page",
     "invalidNumber": "Please enter a valid number greater than 0",
     "required": "This field is required",
-    "xAxisLabelField": "X-axis label field"
+    "xAxisLabelField": "X-axis label field",
+    "queries": "SQL Queries",
+    "deleteQuery": "Delete Query",
+    "deleteQueryConfirmation": "Are you sure you want to delete this query?",
+    "newQuery": "New Query",
+    "editQuery": "Edit Query",
+    "description": "Description",
+    "isPublic": "Public query",
+    "databaseRequired": "Please select a database"
 } 

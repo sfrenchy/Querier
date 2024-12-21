@@ -14,6 +14,7 @@ import 'package:querier/models/dynamic_card.dart';
 import 'package:querier/models/layout.dart';
 import 'package:querier/models/entity_schema.dart';
 import 'package:querier/services/data_context_service.dart';
+import 'package:querier/models/sql_query.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -751,5 +752,64 @@ class ApiClient {
       ),
     );
     return response.data!;
+  }
+
+  Future<List<SQLQuery>> getSQLQueries() async {
+    final response = await get(ApiEndpoints.sqlQueries);
+    print('Raw response data: ${response.data}');
+
+    try {
+      if (response.data is List) {
+        return (response.data as List).map((item) {
+          if (item is Map) {
+            return SQLQuery.fromJson(Map<String, dynamic>.from(item));
+          }
+          // Si l'item est déjà un Map<String, dynamic>
+          return SQLQuery.fromJson(item as Map<String, dynamic>);
+        }).toList();
+      } else if (response.data is Map) {
+        return [SQLQuery.fromJson(Map<String, dynamic>.from(response.data))];
+      } else {
+        throw FormatException('Unexpected response format: ${response.data}');
+      }
+    } catch (e, stackTrace) {
+      print('Error parsing SQLQueries: $e\n$stackTrace');
+      rethrow;
+    }
+  }
+
+  Future<SQLQuery> getSQLQuery(int id) async {
+    final response = await get(
+      ApiEndpoints.replaceUrlParams(
+        ApiEndpoints.sqlQuery,
+        {'id': id.toString()},
+      ),
+    );
+    return SQLQuery.fromJson(response.data);
+  }
+
+  Future<SQLQuery> createSQLQuery(SQLQuery query) async {
+    final response = await post(ApiEndpoints.sqlQueries, data: query.toJson());
+    return SQLQuery.fromJson(response.data);
+  }
+
+  Future<SQLQuery> updateSQLQuery(int id, SQLQuery query) async {
+    final response = await put(
+      ApiEndpoints.replaceUrlParams(
+        ApiEndpoints.sqlQuery,
+        {'id': id.toString()},
+      ),
+      data: query.toJson(),
+    );
+    return SQLQuery.fromJson(response.data);
+  }
+
+  Future<void> deleteSQLQuery(int id) async {
+    await delete(
+      ApiEndpoints.replaceUrlParams(
+        ApiEndpoints.sqlQuery,
+        {'id': id.toString()},
+      ),
+    );
   }
 }

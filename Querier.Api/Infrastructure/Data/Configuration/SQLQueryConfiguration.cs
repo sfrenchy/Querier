@@ -23,5 +23,11 @@ public class SQLQueryConfiguration : IEntityTypeConfiguration<SQLQuery>
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                 v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null))
             .HasColumnType("jsonb"); // Pour PostgreSQL, utilisez "json" pour SQLite/SQL Server
+
+        // Configuration de la relation
+        builder.HasOne(x => x.Connection)
+               .WithMany()
+               .HasForeignKey(x => x.ConnectionId)
+               .OnDelete(DeleteBehavior.Cascade);
     }
 }

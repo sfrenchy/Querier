@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Querier.Api.Domain.Entities
+namespace Querier.Api.Application.DTOs
 {
-    public class SQLQuery
+    public class SQLQueryDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -14,9 +14,6 @@ namespace Querier.Api.Domain.Entities
         public DateTime? LastModifiedAt { get; set; }
         public bool IsPublic { get; set; }
         public Dictionary<string, object> Parameters { get; set; }
-        
-        // Ajout de la relation avec QDBConnection
         public int ConnectionId { get; set; }
-        public virtual QDBConnection.QDBConnection Connection { get; set; }
     }
 } 
