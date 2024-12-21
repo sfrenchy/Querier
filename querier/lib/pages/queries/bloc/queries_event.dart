@@ -5,7 +5,7 @@ abstract class QueriesEvent extends Equatable {
   const QueriesEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class LoadQueries extends QueriesEvent {}
@@ -21,18 +21,20 @@ class DeleteQuery extends QueriesEvent {
 
 class AddQuery extends QueriesEvent {
   final SQLQuery query;
+  final Map<String, dynamic>? sampleParameters;
 
-  const AddQuery(this.query);
+  const AddQuery(this.query, {this.sampleParameters});
 
   @override
-  List<Object> get props => [query];
+  List<Object?> get props => [query, sampleParameters];
 }
 
 class UpdateQuery extends QueriesEvent {
   final SQLQuery query;
+  final Map<String, dynamic>? sampleParameters;
 
-  const UpdateQuery(this.query);
+  const UpdateQuery(this.query, {this.sampleParameters});
 
   @override
-  List<Object> get props => [query];
+  List<Object?> get props => [query, sampleParameters];
 }

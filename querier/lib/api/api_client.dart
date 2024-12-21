@@ -15,6 +15,7 @@ import 'package:querier/models/layout.dart';
 import 'package:querier/models/entity_schema.dart';
 import 'package:querier/services/data_context_service.dart';
 import 'package:querier/models/sql_query.dart';
+import 'package:querier/models/sql_query_request.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -788,18 +789,27 @@ class ApiClient {
     return SQLQuery.fromJson(response.data);
   }
 
-  Future<SQLQuery> createSQLQuery(SQLQuery query) async {
-    final response = await post(ApiEndpoints.sqlQueries, data: query.toJson());
+  Future<SQLQuery> createSQLQuery(SQLQuery query,
+      {Map<String, dynamic>? sampleParameters}) async {
+    final request = SQLQueryRequest(
+      query: query,
+      sampleParameters: sampleParameters,
+    );
+    final response =
+        await post(ApiEndpoints.sqlQueries, data: request.toJson());
     return SQLQuery.fromJson(response.data);
   }
 
-  Future<SQLQuery> updateSQLQuery(int id, SQLQuery query) async {
+  Future<SQLQuery> updateSQLQuery(int id, SQLQuery query,
+      {Map<String, dynamic>? sampleParameters}) async {
+    final request = SQLQueryRequest(
+      query: query,
+      sampleParameters: sampleParameters,
+    );
     final response = await put(
       ApiEndpoints.replaceUrlParams(
-        ApiEndpoints.sqlQuery,
-        {'id': id.toString()},
-      ),
-      data: query.toJson(),
+          ApiEndpoints.sqlQuery, {'id': id.toString()}),
+      data: request.toJson(),
     );
     return SQLQuery.fromJson(response.data);
   }

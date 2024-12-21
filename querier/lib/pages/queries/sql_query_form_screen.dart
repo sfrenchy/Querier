@@ -24,6 +24,10 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
   bool _isPublic = false;
   int? _selectedConnectionId;
 
+  final Map<String, dynamic> _sampleParameters = {};
+  final _paramNameController = TextEditingController();
+  final _paramValueController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -152,11 +156,82 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
                   });
                 },
               ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.testParameters,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              _buildParametersSection(),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildParametersSection() {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ..._sampleParameters.entries.map((entry) => Card(
+              child: ListTile(
+                title: Text(entry.key),
+                subtitle: Text(entry.value.toString()),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                      _sampleParameters.remove(entry.key);
+                    });
+                  },
+                ),
+              ),
+            )),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _paramNameController,
+                decoration: InputDecoration(
+                  labelText: l10n.parameterName,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: _paramValueController,
+                decoration: InputDecoration(
+                  labelText: l10n.parameterValue,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: _addParameter,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _addParameter() {
+    final name = _paramNameController.text.trim();
+    final value = _paramValueController.text.trim();
+
+    if (name.isNotEmpty && value.isNotEmpty) {
+      setState(() {
+        _sampleParameters[name] = value;
+        _paramNameController.clear();
+        _paramValueController.clear();
+      });
+    }
   }
 
   void _submitForm() {
@@ -186,9 +261,13 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
       );
 
       if (widget.query != null) {
-        context.read<QueriesBloc>().add(UpdateQuery(query));
+        context.read<QueriesBloc>().add(
+              UpdateQuery(query, sampleParameters: _sampleParameters),
+            );
       } else {
-        context.read<QueriesBloc>().add(AddQuery(query));
+        context.read<QueriesBloc>().add(
+              AddQuery(query, sampleParameters: _sampleParameters),
+            );
       }
 
       Navigator.pop(context);

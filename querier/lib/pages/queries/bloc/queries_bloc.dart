@@ -43,7 +43,10 @@ class QueriesBloc extends Bloc<QueriesEvent, QueriesState> {
     Emitter<QueriesState> emit,
   ) async {
     try {
-      await _apiClient.createSQLQuery(event.query);
+      await _apiClient.createSQLQuery(
+        event.query,
+        sampleParameters: event.sampleParameters,
+      );
       add(LoadQueries()); // Recharger la liste après ajout
     } catch (e) {
       emit(QueriesError(e.toString()));
@@ -55,7 +58,11 @@ class QueriesBloc extends Bloc<QueriesEvent, QueriesState> {
     Emitter<QueriesState> emit,
   ) async {
     try {
-      await _apiClient.updateSQLQuery(event.query.id, event.query);
+      await _apiClient.updateSQLQuery(
+        event.query.id,
+        event.query,
+        sampleParameters: event.sampleParameters,
+      );
       add(LoadQueries()); // Recharger la liste après mise à jour
     } catch (e) {
       emit(QueriesError(e.toString()));

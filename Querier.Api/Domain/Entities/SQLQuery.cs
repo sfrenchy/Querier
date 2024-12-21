@@ -18,5 +18,6 @@ namespace Querier.Api.Domain.Entities
         // Ajout de la relation avec QDBConnection
         public int ConnectionId { get; set; }
         public virtual QDBConnection.QDBConnection Connection { get; set; }
+        public string OutputDescription { get; set; }
     }
 } 

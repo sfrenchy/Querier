@@ -281,5 +281,9 @@
     "editQuery": "Modifier la requête",
     "description": "Description",
     "isPublic": "Requête publique",
-    "databaseRequired": "Veuillez sélectionner une base de données"
+    "databaseRequired": "Veuillez sélectionner une base de données",
+    "testParameters": "Paramètres de test",
+    "parameterName": "Nom du paramètre",
+    "parameterValue": "Valeur",
+    "addParameter": "Ajouter un paramètre"
 } 

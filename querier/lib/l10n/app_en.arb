@@ -282,5 +282,9 @@
     "editQuery": "Edit Query",
     "description": "Description",
     "isPublic": "Public query",
-    "databaseRequired": "Please select a database"
+    "databaseRequired": "Please select a database",
+    "testParameters": "Test Parameters",
+    "parameterName": "Parameter Name",
+    "parameterValue": "Value",
+    "addParameter": "Add Parameter"
 } 
