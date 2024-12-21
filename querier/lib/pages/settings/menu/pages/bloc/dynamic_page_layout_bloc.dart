@@ -146,6 +146,7 @@ class DynamicPageLayoutBloc
         alignment: MainAxisAlignment.start,
         crossAlignment: CrossAxisAlignment.start,
         spacing: 16.0,
+        height: event.height,
         cards: const [],
       );
 

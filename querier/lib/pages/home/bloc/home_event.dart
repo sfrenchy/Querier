@@ -7,8 +7,22 @@ abstract class HomeEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class LoadDashboard extends HomeEvent {}
+class LoadDashboard extends HomeEvent {
+  final int pageId;
 
-class RefreshDashboard extends HomeEvent {}
+  const LoadDashboard(this.pageId);
+
+  @override
+  List<Object> get props => [pageId];
+}
+
+class RefreshDashboard extends HomeEvent {
+  final int pageId;
+
+  const RefreshDashboard(this.pageId);
+
+  @override
+  List<Object> get props => [pageId];
+}
 
 class LogoutRequested extends HomeEvent {}

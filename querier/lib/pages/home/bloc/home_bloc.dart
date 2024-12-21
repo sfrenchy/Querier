@@ -25,7 +25,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final activity = await _apiClient.getActivityData();
 
       // Charger le layout de la page d'accueil (assumons que l'ID est 1)
-      final layout = await _apiClient.getLayout(1);
+      final layout = await _apiClient.getLayout(event.pageId);
       final rows = layout.rows;
 
       emit(HomeLoaded(

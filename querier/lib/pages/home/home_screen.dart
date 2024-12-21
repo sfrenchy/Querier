@@ -19,12 +19,13 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final pageId = ModalRoute.of(context)?.settings.arguments as int? ?? 1;
 
     context.read<MenuBloc>().add(LoadMenu());
 
     return BlocProvider(
       create: (context) =>
-          HomeBloc(context.read<ApiClient>())..add(LoadDashboard()),
+          HomeBloc(context.read<ApiClient>())..add(LoadDashboard(pageId)),
       child: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) {
           if (state is HomeLoading) {
@@ -65,7 +66,7 @@ class HomeScreen extends StatelessWidget {
               drawer: const AppDrawer(),
               body: RefreshIndicator(
                 onRefresh: () async {
-                  context.read<HomeBloc>().add(RefreshDashboard());
+                  context.read<HomeBloc>().add(RefreshDashboard(pageId));
                 },
                 child: Expanded(
                   child: Container(
