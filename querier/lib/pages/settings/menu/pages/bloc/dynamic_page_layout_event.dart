@@ -21,11 +21,12 @@ class LoadPageLayout extends DynamicPageLayoutEvent {
 
 class AddRow extends DynamicPageLayoutEvent {
   final int pageId;
+  final double height;
 
-  const AddRow(this.pageId);
+  const AddRow(this.pageId, {this.height = 500.0});
 
   @override
-  List<Object> get props => [pageId];
+  List<Object> get props => [pageId, height];
 }
 
 class ReorderCardsInRow extends DynamicPageLayoutEvent {

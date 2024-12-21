@@ -149,7 +149,7 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
               if (data == 'row') {
                 context
                     .read<DynamicPageLayoutBloc>()
-                    .add(AddRow(widget.pageId));
+                    .add(AddRow(widget.pageId, height: 500));
               }
             },
             builder: (context, candidateData, rejectedData) {
@@ -441,9 +441,14 @@ class _DynamicPageLayoutScreenState extends State<DynamicPageLayoutScreen> {
                           DragTarget<String>(
                             onWillAccept: (data) => data == 'row',
                             onAccept: (data) {
-                              context
-                                  .read<DynamicPageLayoutBloc>()
-                                  .add(AddRow(widget.pageId));
+                              if (data == 'row') {
+                                context.read<DynamicPageLayoutBloc>().add(
+                                      AddRow(
+                                        widget.pageId,
+                                        height: 500,
+                                      ),
+                                    );
+                              }
                             },
                             builder: (context, candidateData, rejectedData) {
                               final bool isHovering =
