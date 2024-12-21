@@ -6,6 +6,8 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../models/db_connection.dart';
 import 'bloc/queries_bloc.dart';
 import 'bloc/queries_event.dart';
+import 'package:flutter_highlight/flutter_highlight.dart';
+import 'package:flutter_highlight/themes/vs2015.dart';
 
 class SQLQueryFormScreen extends StatefulWidget {
   final SQLQuery? query;
@@ -141,21 +143,48 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _queryController,
-                decoration: InputDecoration(
-                  labelText: 'SQL Query',
-                  border: const OutlineInputBorder(),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                maxLines: 10,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return l10n.required;
-                  }
-                  return null;
-                },
-                style: const TextStyle(
-                  fontFamily: 'monospace',
+                child: TextFormField(
+                  controller: _queryController,
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.all(12),
+                    fillColor: Theme.of(context).colorScheme.surface,
+                    filled: true,
+                  ),
+                  maxLines: null,
+                  style: const TextStyle(
+                    fontFamily: 'Fira Code',
+                    fontSize: 14,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.required;
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    setState(() {});
+                  },
+                  buildCounter: (context,
+                      {required currentLength, required isFocused, maxLength}) {
+                    return Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: HighlightView(
+                        _queryController.text,
+                        language: 'sql',
+                        theme: vs2015Theme,
+                        textStyle: const TextStyle(
+                          fontFamily: 'Fira Code',
+                          fontSize: 14,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 16),

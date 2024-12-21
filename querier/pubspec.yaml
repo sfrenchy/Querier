@@ -50,6 +50,8 @@ dependencies:
   dio: ^5.7.0
   flutter_secure_storage: ^9.2.2
   vtable: ^0.4.0
+  flutter_highlight: ^0.7.0
+  highlight: ^0.7.0
   
 dev_dependencies:
   flutter_test:
@@ -108,3 +110,8 @@ flutter:
 
   assets:
     - assets/images/
+
+  fonts:
+    - family: Fira Code
+      fonts:
+        - asset: assets/fonts/FiraCode-Regular.ttf
