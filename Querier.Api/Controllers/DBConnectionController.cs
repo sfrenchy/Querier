@@ -162,5 +162,46 @@ namespace Querier.Api.Controllers
                 return StatusCode(500, "An error occurred while retrieving the database schema");
             }
         }
+
+        /// <summary>
+        /// Analyzes a SQL query to find referenced objects
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///     POST /api/v1/dbconnection/{connectionId}/analyze-query
+        ///     {
+        ///         "query": "SELECT o.OrderID, o.OrderDate FROM Orders o",
+        ///         "parameters": {}
+        ///     }
+        /// </remarks>
+        /// <param name="connectionId">Database connection ID</param>
+        /// <param name="request">Query to analyze</param>
+        /// <response code="200">Returns the list of referenced objects</response>
+        /// <response code="400">If the query is invalid</response>
+        /// <response code="404">If the connection was not found</response>
+        [HttpPost("{connectionId}/analyze-query")]
+        [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<List<string>>> AnalyzeQuery(
+            int connectionId, 
+            [FromBody] AnalyzeQueryRequest request)
+        {
+            try
+            {
+                var objects = await _dbConnectionService.GetQueryObjects(connectionId, request.Query);
+                return Ok(objects);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound($"Database connection with ID {connectionId} not found");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error analyzing query");
+                return StatusCode(500, "An error occurred while analyzing the query");
+            }
+        }
     }
 }

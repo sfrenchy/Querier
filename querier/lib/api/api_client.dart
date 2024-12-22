@@ -847,4 +847,12 @@ class ApiClient {
       rethrow;
     }
   }
+
+  Future<List<String>> analyzeQuery(int connectionId, String query) async {
+    final response = await post(
+      ApiEndpoints.analyzeQuery(connectionId),
+      data: query,
+    );
+    return List<String>.from(response.data);
+  }
 }

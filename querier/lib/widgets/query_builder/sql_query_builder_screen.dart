@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:querier/models/db_connection.dart';
 import 'package:querier/models/db_schema.dart';
 import 'package:querier/api/api_client.dart';
+import 'package:querier/utils/sql_parser.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:resizable_widget/resizable_widget.dart';
 import '../resizable_panel.dart';
@@ -12,11 +13,13 @@ import '../resizable_panel.dart';
 class SQLQueryBuilderScreen extends StatefulWidget {
   final DBConnection database;
   final ApiClient apiClient;
+  final String? initialQuery;
 
   const SQLQueryBuilderScreen({
     super.key,
     required this.database,
     required this.apiClient,
+    this.initialQuery,
   });
 
   @override
@@ -32,10 +35,28 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
   final List<String> _selectedFields = [];
   final List<String> _conditions = [];
 
+  late TextEditingController _queryController;
+
   @override
   void initState() {
     super.initState();
+    _queryController =
+        TextEditingController(text: widget.initialQuery ?? _buildMockQuery());
+
+    // Parser la requête initiale si elle existe
+    if (widget.initialQuery != null) {
+      final parser = SQLParser(widget.initialQuery!);
+      final tables = parser.extractTables();
+      _selectedTables.addAll(tables);
+    }
+
     _loadDatabaseSchema();
+  }
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDatabaseSchema() async {
@@ -64,6 +85,16 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
       setState(() {
         _error = e.toString();
         _loading = false;
+      });
+    }
+  }
+
+  // Mettre à jour la requête quand les tables sont modifiées
+  void _updateQuery() {
+    if (!_queryController.text.startsWith('--')) {
+      // Ne pas écraser une requête personnalisée
+      setState(() {
+        _queryController.text = _buildMockQuery();
       });
     }
   }
@@ -149,6 +180,7 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
                                               if (!_selectedTables
                                                   .contains(table.name)) {
                                                 _selectedTables.add(table.name);
+                                                _updateQuery(); // Mettre à jour la requête
                                               }
                                             });
                                           },
@@ -172,6 +204,7 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
                                               if (!_selectedTables
                                                   .contains(view.name)) {
                                                 _selectedTables.add(view.name);
+                                                _updateQuery(); // Mettre à jour la requête
                                               }
                                             });
                                           },
@@ -304,13 +337,18 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
                                 width: 1,
                               ),
                             ),
-                            child: SelectableText(
-                              _buildMockQuery(),
+                            child: TextField(
+                              controller: _queryController,
                               style: const TextStyle(
                                 fontFamily: 'ui-monospace',
                                 fontSize: 14,
                                 color: Colors.white,
                                 height: 1.5,
+                              ),
+                              maxLines: null,
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
                               ),
                             ),
                           ),

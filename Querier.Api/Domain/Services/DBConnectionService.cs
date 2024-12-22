@@ -743,5 +743,99 @@ namespace Querier.Api.Domain.Services
             // TODO: Implémenter la logique spécifique à PostgreSQL
             throw new NotImplementedException("PostgreSQL schema extraction not yet implemented");
         }
+
+        public async Task<QueryAnalysisResponse> GetQueryObjects(int connectionId, string query)
+        {
+            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
+            var connection = await apiDbContext.QDBConnections.FindAsync(connectionId);
+            
+            if (connection == null)
+                throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
+
+            try
+            {
+                switch (connection.ConnectionType)
+                {
+                    case QDBConnectionType.SqlServer:
+                        using (var sqlConnection = new SqlConnection(connection.ConnectionString))
+                        {
+                            await sqlConnection.OpenAsync();
+                            
+                            var response = new QueryAnalysisResponse();
+                            var tempProcName = $"TempQuery_{Guid.NewGuid():N}";
+                            
+                            try
+                            {
+                                // Créer la procédure temporaire
+                                using var createCmd = new SqlCommand($@"
+                                    CREATE PROCEDURE [dbo].[{tempProcName}] AS
+                                    BEGIN
+                                        SET QUOTED_IDENTIFIER ON;
+                                        SET NOCOUNT ON;
+                                        {query}
+                                    END", sqlConnection);
+                                await createCmd.ExecuteNonQueryAsync();
+
+                                // Analyser les dépendances avec leur type
+                                using var analyzeCmd = new SqlCommand($@"
+                                    SELECT DISTINCT 
+                                        SCHEMA_NAME(o.schema_id) + '.' + referenced_entity_name as full_name,
+                                        CASE o.type
+                                            WHEN 'U' THEN 'Table'
+                                            WHEN 'V' THEN 'View'
+                                            WHEN 'P' THEN 'StoredProcedure'
+                                            WHEN 'FN' THEN 'Function'
+                                            WHEN 'IF' THEN 'Function'
+                                            WHEN 'TF' THEN 'Function'
+                                            ELSE o.type
+                                        END as object_type
+                                    FROM sys.dm_sql_referenced_entities('dbo.{tempProcName}', 'OBJECT') r
+                                    JOIN sys.objects o ON o.name = r.referenced_entity_name
+                                    WHERE referenced_minor_name IS NULL
+                                    AND o.name NOT IN ('fn_diagramobjects')", sqlConnection);
+                                
+                                using var reader = await analyzeCmd.ExecuteReaderAsync();
+                                while (await reader.ReadAsync())
+                                {
+                                    var objectName = reader.GetString(0);
+                                    var objectType = reader.GetString(1);
+                                    
+                                    switch (objectType)
+                                    {
+                                        case "Table":
+                                            response.Tables.Add(objectName);
+                                            break;
+                                        case "View":
+                                            response.Views.Add(objectName);
+                                            break;
+                                        case "StoredProcedure":
+                                            response.StoredProcedures.Add(objectName);
+                                            break;
+                                        case "Function":
+                                            response.UserFunctions.Add(objectName);
+                                            break;
+                                    }
+                                }
+                            }
+                            finally
+                            {
+                                using var dropCmd = new SqlCommand($"DROP PROCEDURE IF EXISTS [{tempProcName}]", sqlConnection);
+                                await dropCmd.ExecuteNonQueryAsync();
+                            }
+
+                            return response;
+                        }
+                        
+                    // Ajouter des cas similaires pour MySQL et PostgreSQL
+                    default:
+                        throw new NotSupportedException($"Database type {connection.ConnectionType} not supported");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error analyzing query objects for connection {ConnectionId}", connectionId);
+                throw;
+            }
+        }
     }
 }

@@ -205,6 +205,7 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
                                 builder: (context) => SQLQueryBuilderScreen(
                                   database: selectedDB,
                                   apiClient: context.read<ApiClient>(),
+                                  initialQuery: controller.text,
                                 ),
                               ),
                             );
