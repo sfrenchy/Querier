@@ -5,6 +5,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:querier/models/db_connection.dart';
 import 'package:querier/models/db_schema.dart';
 import 'package:querier/api/api_client.dart';
+import 'package:reorderables/reorderables.dart';
+import 'package:resizable_widget/resizable_widget.dart';
+import '../resizable_panel.dart';
 
 class SQLQueryBuilderScreen extends StatefulWidget {
   final DBConnection database;
@@ -114,9 +117,8 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
       ),
       body: Row(
         children: [
-          // Panneau latéral gauche - Liste des tables
-          SizedBox(
-            width: 250,
+          ResizablePanel(
+            key: const ValueKey('left_panel'),
             child: Card(
               margin: const EdgeInsets.all(8),
               child: Column(
@@ -223,6 +225,7 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
           ),
           // Zone principale de construction
           Expanded(
+            key: const ValueKey('main_content'),
             child: Column(
               children: [
                 // Zone de visualisation des tables sélectionnées
@@ -321,6 +324,7 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
           ),
           // Panneau latéral droit - Options de requête
           SizedBox(
+            key: const ValueKey('right_panel'),
             width: 250,
             child: Card(
               margin: const EdgeInsets.all(8),

@@ -517,6 +517,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.2"
+  reorderables:
+    dependency: "direct main"
+    description:
+      name: reorderables
+      sha256: "004a886e4878df1ee27321831c838bc1c976311f4ca6a74ce7d561e506540a77"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.0"
+  resizable_widget:
+    dependency: "direct main"
+    description:
+      name: resizable_widget
+      sha256: db2919754b93f386b9b3fb15e9f48f6c9d6d41f00a24397629133c99df86606a
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.5"
   responsive_grid:
     dependency: "direct main"
     description:
