@@ -8,6 +8,8 @@ import 'bloc/queries_bloc.dart';
 import 'bloc/queries_event.dart';
 import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/vs2015.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:highlight/languages/sql.dart';
 
 class SQLQueryFormScreen extends StatefulWidget {
   final SQLQuery? query;
@@ -22,7 +24,10 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
-  late TextEditingController _queryController;
+  late final controller = CodeController(
+    text: widget.query?.query ?? '',
+    language: sql,
+  );
   bool _isPublic = false;
   int? _selectedConnectionId;
 
@@ -30,13 +35,18 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
   final _paramNameController = TextEditingController();
   final _paramValueController = TextEditingController();
 
+  List<DBConnection> _connections = [];
+  bool _isLoadingConnections = true;
+
+  final ScrollController _horizontalController = ScrollController();
+  final ScrollController _verticalController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.query?.name);
     _descriptionController =
         TextEditingController(text: widget.query?.description);
-    _queryController = TextEditingController(text: widget.query?.query);
     _isPublic = widget.query?.isPublic ?? false;
     _selectedConnectionId = widget.query?.connectionId;
 
@@ -51,13 +61,31 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
     }
 
     print('Initialized sample parameters: $_sampleParameters');
+
+    _loadConnections();
+  }
+
+  Future<void> _loadConnections() async {
+    try {
+      final connections = await context.read<ApiClient>().getDBConnections();
+      setState(() {
+        _connections = connections;
+        _isLoadingConnections = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingConnections = false;
+      });
+    }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
-    _queryController.dispose();
+    controller.dispose();
+    _horizontalController.dispose();
+    _verticalController.dispose();
     super.dispose();
   }
 
@@ -107,84 +135,54 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
-              FutureBuilder<List<DBConnection>>(
-                future: context.read<ApiClient>().getDBConnections(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
-                  }
-
-                  final connections = snapshot.data ?? [];
-
-                  return DropdownButtonFormField<int>(
-                    value: _selectedConnectionId,
-                    decoration: InputDecoration(
-                      labelText: l10n.database,
-                      border: const OutlineInputBorder(),
+              _isLoadingConnections
+                  ? const CircularProgressIndicator()
+                  : DropdownButtonFormField<int>(
+                      value: _selectedConnectionId,
+                      decoration: InputDecoration(
+                        labelText: l10n.database,
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: _connections
+                          .map((conn) => DropdownMenuItem(
+                                value: conn.id,
+                                child: Text(conn.name),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedConnectionId = value;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return l10n.required;
+                        }
+                        return null;
+                      },
                     ),
-                    items: connections
-                        .map((conn) => DropdownMenuItem(
-                              value: conn.id,
-                              child: Text(conn.name),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedConnectionId = value;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return l10n.required;
-                      }
-                      return null;
-                    },
-                  );
-                },
-              ),
               const SizedBox(height: 16),
               Container(
+                height: 300,
+                width: double.infinity,
                 decoration: BoxDecoration(
                   border: Border.all(color: Theme.of(context).dividerColor),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: TextFormField(
-                  controller: _queryController,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(12),
-                    fillColor: Theme.of(context).colorScheme.surface,
-                    filled: true,
+                child: SingleChildScrollView(
+                  child: CodeField(
+                    controller: controller,
+                    textStyle: const TextStyle(
+                      fontFamily: 'Fira Code',
+                      fontSize: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    minLines: 1,
+                    maxLines: null,
                   ),
-                  maxLines: null,
-                  style: const TextStyle(
-                    fontFamily: 'Fira Code',
-                    fontSize: 14,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.required;
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    setState(() {});
-                  },
-                  buildCounter: (context,
-                      {required currentLength, required isFocused, maxLength}) {
-                    return Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: HighlightView(
-                        _queryController.text,
-                        language: 'sql',
-                        theme: vs2015Theme,
-                        textStyle: const TextStyle(
-                          fontFamily: 'Fira Code',
-                          fontSize: 14,
-                        ),
-                      ),
-                    );
-                  },
                 ),
               ),
               const SizedBox(height: 16),
@@ -295,7 +293,7 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
         id: widget.query?.id ?? 0,
         name: _nameController.text,
         description: _descriptionController.text,
-        query: _queryController.text,
+        query: controller.text,
         createdBy: widget.query?.createdBy ?? '',
         createdAt: widget.query?.createdAt ?? DateTime.now(),
         lastModifiedAt: DateTime.now(),
