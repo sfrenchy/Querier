@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:querier/api/api_client.dart';
 import 'package:querier/models/sql_query.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:querier/widgets/query_builder/sql_query_builder_screen.dart';
 import '../../models/db_connection.dart';
 import 'bloc/queries_bloc.dart';
 import 'bloc/queries_event.dart';
@@ -162,28 +163,54 @@ class _SQLQueryFormScreenState extends State<SQLQueryFormScreen> {
                       },
                     ),
               const SizedBox(height: 16),
-              Container(
-                height: 300,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Theme.of(context).dividerColor),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: SingleChildScrollView(
-                  child: CodeField(
-                    controller: controller,
-                    textStyle: const TextStyle(
-                      fontFamily: 'Fira Code',
-                      fontSize: 14,
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 300,
+                      decoration: BoxDecoration(
+                        border:
+                            Border.all(color: Theme.of(context).dividerColor),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: SingleChildScrollView(
+                        child: CodeField(
+                          controller: controller,
+                          textStyle: const TextStyle(
+                            fontFamily: 'Fira Code',
+                            fontSize: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E1E1E),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          minLines: 1,
+                          maxLines: null,
+                        ),
+                      ),
                     ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E1E1E),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    minLines: 1,
-                    maxLines: null,
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.build),
+                    tooltip: l10n.queryBuilder,
+                    onPressed: _selectedConnectionId == null
+                        ? null
+                        : () {
+                            final selectedDB = _connections.firstWhere(
+                                (db) => db.id == _selectedConnectionId);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SQLQueryBuilderScreen(
+                                  database: selectedDB,
+                                  apiClient: context.read<ApiClient>(),
+                                ),
+                              ),
+                            );
+                          },
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               SwitchListTile(

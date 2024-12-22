@@ -2,15 +2,57 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:querier/models/db_connection.dart';
+import 'package:querier/models/db_schema.dart';
+import 'package:querier/api/api_client.dart';
 
 class SQLQueryBuilderScreen extends StatefulWidget {
-  const SQLQueryBuilderScreen({super.key});
+  final DBConnection database;
+  final ApiClient apiClient;
+
+  const SQLQueryBuilderScreen({
+    super.key,
+    required this.database,
+    required this.apiClient,
+  });
 
   @override
   State<SQLQueryBuilderScreen> createState() => _SQLQueryBuilderScreenState();
 }
 
 class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
+  DatabaseSchema? _schema;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDatabaseSchema();
+  }
+
+  Future<void> _loadDatabaseSchema() async {
+    try {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+
+      final schema =
+          await widget.apiClient.getDatabaseSchema(widget.database.id);
+
+      setState(() {
+        _schema = schema;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
   // Pour le mock, on simule quelques tables
   final List<String> _tables = ['Users', 'Orders', 'Products', 'Categories'];
   final List<String> _selectedTables = [];
@@ -19,6 +61,34 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Erreur: $_error'),
+              ElevatedButton(
+                onPressed: _loadDatabaseSchema,
+                child: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Remplacer la liste mockée _tables par les vraies tables
+    final tables = _schema?.tables ?? [];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Constructeur de requêtes SQL'),
@@ -58,17 +128,17 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
                   ),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: _tables.length,
+                      itemCount: tables.length,
                       itemBuilder: (context, index) {
-                        final table = _tables[index];
+                        final table = tables[index];
                         return ListTile(
-                          title: Text(table),
+                          title: Text(table.name),
                           trailing: IconButton(
                             icon: const Icon(Icons.add),
                             onPressed: () {
                               setState(() {
-                                if (!_selectedTables.contains(table)) {
-                                  _selectedTables.add(table);
+                                if (!_selectedTables.contains(table.name)) {
+                                  _selectedTables.add(table.name);
                                 }
                               });
                             },

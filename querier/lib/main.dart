@@ -140,7 +140,6 @@ class QuerierApp extends StatelessWidget {
                   child: MenuCategoryFormScreen(categoryToEdit: category),
                 );
               },
-              '/sql-query-builder': (context) => const SQLQueryBuilderScreen(),
               '/queries': (context) => const QueriesScreen(),
               '/sql-query-form': (context) {
                 final query =

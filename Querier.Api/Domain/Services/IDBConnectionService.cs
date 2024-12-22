@@ -12,5 +12,6 @@ namespace Querier.Api.Domain.Services
         Task<AddDBConnectionResponse> AddConnectionAsync(AddDBConnectionRequest request);
         Task<DeleteDBConnectionResponse> DeleteDBConnectionAsync(DeleteDBConnectionRequest request);
         Task<List<QDBConnectionResponse>> GetAll();
+        Task<DatabaseSchemaResponse> GetDatabaseSchema(int connectionId);
     }
 }

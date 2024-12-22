@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Http;
 using Querier.Api.Application.DTOs.Requests.DBConnection;
 using Querier.Api.Domain.Entities.QDBConnection;
 using Querier.Api.Domain.Services;
+using System.Collections.Generic;
+using System;
 
 namespace Querier.Api.Controllers
 {
@@ -115,6 +117,50 @@ namespace Querier.Api.Controllers
         public async Task<IActionResult> GetAll()
         {
             return Ok(await _dbConnectionService.GetAll());
+        }
+
+        /// <summary>
+        /// Gets the database schema description
+        /// </summary>
+        /// <remarks>
+        /// Returns a detailed description of the database schema including:
+        /// - Tables with their columns and relationships
+        /// - Views with their columns
+        /// - Stored procedures with their parameters
+        /// - User-defined functions
+        /// 
+        /// Sample request:
+        ///     GET /api/v1/dbconnection/{connectionId}/schema
+        /// </remarks>
+        /// <param name="connectionId">The ID of the database connection</param>
+        /// <returns>Detailed description of the database schema</returns>
+        /// <response code="200">Returns the database schema description</response>
+        /// <response code="404">If the connection was not found</response>
+        /// <response code="400">If there's an error retrieving the schema</response>
+        [HttpGet("{connectionId}/schema")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetDatabaseSchema(int connectionId)
+        {
+            try
+            {
+                var schema = await _dbConnectionService.GetDatabaseSchema(connectionId);
+                return Ok(schema);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound($"Database connection with ID {connectionId} not found");
+            }
+            catch (NotSupportedException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving database schema for connection {ConnectionId}", connectionId);
+                return StatusCode(500, "An error occurred while retrieving the database schema");
+            }
         }
     }
 }

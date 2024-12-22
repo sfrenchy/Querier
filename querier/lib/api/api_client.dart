@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:querier/models/db_schema.dart';
 import 'api_endpoints.dart';
 import 'package:querier/models/user.dart';
 import 'package:querier/models/role.dart';
@@ -821,5 +822,12 @@ class ApiClient {
         {'id': id.toString()},
       ),
     );
+  }
+
+  Future<DatabaseSchema> getDatabaseSchema(int connectionId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.dbConnectionSchema(connectionId),
+    );
+    return DatabaseSchema.fromJson(response.data!);
   }
 }
