@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:querier/models/db_connection.dart';
 import 'package:querier/models/db_schema.dart';
 import 'package:querier/api/api_client.dart';
+import 'package:querier/models/query_analysis.dart';
 import 'package:querier/utils/sql_parser.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:resizable_widget/resizable_widget.dart';
@@ -31,11 +33,16 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
   bool _loading = true;
   String? _error;
 
-  final List<String> _selectedTables = [];
+  List<String> _selectedTables = [];
   final List<String> _selectedFields = [];
   final List<String> _conditions = [];
 
   late TextEditingController _queryController;
+
+  // Ajout d'une variable pour stocker les objets analysés
+  QueryAnalysis? _queryAnalysis;
+
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -51,10 +58,23 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
     }
 
     _loadDatabaseSchema();
+
+    // Ajouter un listener avec debounce pour analyser la requête
+    _queryController.addListener(() {
+      if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+      _debounceTimer = Timer(const Duration(milliseconds: 500), _analyzeQuery);
+    });
+
+    // Si une requête initiale est fournie, l'analyser immédiatement
+    if (widget.initialQuery != null) {
+      _analyzeQuery();
+    }
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
+    _queryController.removeListener(_analyzeQuery);
     _queryController.dispose();
     super.dispose();
   }
@@ -86,6 +106,34 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
         _error = e.toString();
         _loading = false;
       });
+    }
+  }
+
+  // Nouvelle méthode pour analyser la requête
+  Future<void> _analyzeQuery() async {
+    if (_queryController.text.trim().isEmpty) return;
+
+    try {
+      print('Analyzing query: ${_queryController.text}'); // Debug log
+      final analysis = await widget.apiClient.analyzeQuery(
+        widget.database.id,
+        _queryController.text,
+      );
+
+      print('Analysis result - Tables: ${analysis.tables}'); // Debug tables
+      print('Analysis result - Views: ${analysis.views}'); // Debug views
+
+      setState(() {
+        _queryAnalysis = analysis;
+        _selectedTables = [
+          ...analysis.tables.map((t) => t.split('.').last),
+          ...analysis.views.map((v) => v.split('.').last),
+        ];
+        print(
+            'Selected tables after update: $_selectedTables'); // Debug final state
+      });
+    } catch (e) {
+      print('Error analyzing query: $e');
     }
   }
 
@@ -426,23 +474,11 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
       return '-- Sélectionnez des tables pour construire la requête';
     }
 
-    final selectedTablesInfo = _selectedTables.map((tableName) {
-      final tableOrView = _schema?.tables.firstWhere(
-        (t) => t.name == tableName,
-        orElse: () => TableDescription(
-          name: tableName,
-          schema: 'dbo',
-          columns: [],
-        ),
-      );
-      return '${tableOrView?.schema ?? 'dbo'}.$tableName';
-    }).toList();
-
     return '''
 SELECT 
-  ${selectedTablesInfo.map((t) => '$t.*').join(', ')}
+  ${_selectedTables.map((t) => '$t.*').join(', ')}
 FROM 
-  ${selectedTablesInfo.join(' \nJOIN ')}
+  ${_selectedTables.join(' \nJOIN ')}
 WHERE 
   -- Conditions seront ajoutées ici
 ORDER BY 

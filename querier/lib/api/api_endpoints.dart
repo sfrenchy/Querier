@@ -37,6 +37,8 @@ class ApiEndpoints {
   static const String updateDbConnection = 'dbconnection/{id}';
   static const String dbConnectionSchema =
       '/dbconnection/{connectionId}/schema';
+  static const String analyzeQuery =
+      '/dbconnection/{connectionId}/analyze-query';
 
   // Menu Category Controller
   static const String menuCategories = '/dynamicmenucategory';
