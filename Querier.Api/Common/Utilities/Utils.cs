@@ -1,13 +1,44 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-
+using Microsoft.EntityFrameworkCore;
+using Querier.Api.Infrastructure.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
+using System.Dynamic;
+using System.Linq;
+using System.Reflection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Querier.Api.Tools;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+using System.IO;
+using Querier.Api.Application.DTOs.Requests.Entity;
+using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Domain.Common.ValueObjects;
+using Querier.Api.Infrastructure.DependencyInjection;
 namespace Querier.Api.Tools
 {
     public static class Utils
     {
+        public static DbContext GetDbContextFromTypeName(string contextTypeName)
+        {
+            List<Type> contextTypes = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(assembly => assembly.GetTypes())
+                .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == contextTypeName).ToList();
+
+
+            DbContext target = ServiceActivator.GetScope().ServiceProvider.GetService(contextTypes.First()) as DbContext ??
+                               Activator.CreateInstance(contextTypes.First()) as DbContext;
+            return target;
+        }
         public static string RandomString(int length)
         {
             var random = new Random();

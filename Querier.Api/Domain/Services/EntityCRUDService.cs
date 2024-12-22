@@ -60,7 +60,7 @@ namespace Querier.Api.Domain.Services
         public List<EntityDefinition> GetEntities(string contextTypeFullname)
         {
             List<EntityDefinition> result = new List<EntityDefinition>();
-            DbContext targetContext = GetDbContextFromTypeName(contextTypeFullname);
+            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
             if (targetContext != null)
             {
                 List<PropertyInfo> contextDbSetProperties = targetContext.GetType().GetProperties()
@@ -85,7 +85,7 @@ namespace Querier.Api.Domain.Services
             if (entityType == null)
                 throw new Exception($"Entity \"{entityTypeFullname}\" is not handled in the {contextTypeFullname} context.");
 
-            DbContext targetContext = GetDbContextFromTypeName(contextTypeFullname);
+            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
 
             object newEntity = Activator.CreateInstance(entityType);
             dynamic modelEntity = JsonSerializer.Deserialize(entity.ToString(), entityType);
@@ -110,7 +110,7 @@ namespace Querier.Api.Domain.Services
             if (reqType == null)
                 throw new Exception($"Entity \"{entityTypeFullname}\" is not handled in the \"{contextTypeFullname}\" context.");
 
-            DbContext targetContext = GetDbContextFromTypeName(contextTypeFullname);
+            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
             targetContext.ChangeTracker.LazyLoadingEnabled = false;  // Désactiver le lazy loading
 
             var dbSet = targetContext.GetType()
@@ -162,7 +162,7 @@ namespace Querier.Api.Domain.Services
             if (reqType == null)
                 throw new Exception($"Entity \"{entityTypeFullname}\" is not handled in the \"{contextTypeFullname}\" context.");
 
-            DbContext targetContext = GetDbContextFromTypeName(contextTypeFullname);
+            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
 
             PropertyInfo contextProperty = targetContext.GetType().GetProperties().Where(p => p.PropertyType.Name.Contains("DbSet")).FirstOrDefault(p => p.PropertyType.GetGenericArguments().Any(a => a == reqType));
             if (contextProperty == null)
@@ -177,7 +177,7 @@ namespace Querier.Api.Domain.Services
 
         public DataTable GetDatatableFromSql(string contextTypeFullname, string SqlQuery, List<DataFilter> Filters)
         {
-            DbContext apiDbContext = GetDbContextFromTypeName(contextTypeFullname);
+            DbContext apiDbContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
             DataTable dt = apiDbContext.Database.RawSqlQuery(SqlQuery);
             return dt.Filter(Filters);
         }
@@ -199,7 +199,7 @@ namespace Querier.Api.Domain.Services
             if (keyProperty == null)
                 throw new Exception($"Entity \"{entityFullname}\" has no defined Key attribute defined in the datamart context.");
 
-            DbContext targetContext = GetDbContextFromTypeName(contextTypeFullname);
+            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
 
             object modelEntity = JsonSerializer.Deserialize(entity.ToString(), entityType);
             object keyValue = modelEntity.GetType().GetProperty(keyProperty.Name).GetValue(modelEntity, null);
@@ -232,7 +232,7 @@ namespace Querier.Api.Domain.Services
             if (keyProperty == null)
                 throw new Exception($"Entity \"{entityFullname}\" has no defined Key attribute defined in the datamart context.");
 
-            DbContext targetContext = GetDbContextFromTypeName(contextTypeFullname);
+            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
 
             object modelEntity = JsonSerializer.Deserialize(entity.ToString(), entityType);
             object keyValue = modelEntity.GetType().GetProperty(keyProperty.Name).GetValue(modelEntity, null);
@@ -254,7 +254,7 @@ namespace Querier.Api.Domain.Services
             if (keyProperty == null)
                 throw new Exception($"Entity \"{entityFullname}\" has no defined Key attribute defined in the datamart context.");
 
-            DbContext targetContext = GetDbContextFromTypeName(contextTypeFullname);
+            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
 
             object entityKey = Convert.ChangeType(entityIdentifier, keyProperty.PropertyType);
             object existingEntity = targetContext.Find(entityType, entityKey);
@@ -269,7 +269,7 @@ namespace Querier.Api.Domain.Services
             result.QuerySuccessful = true;
             // TODO : --> On ne doit pas ramener la donnée dans le front
             result.Datas = new List<dynamic>();
-            DbContext apiDbContext = GetDbContextFromTypeName(request.ContextTypeName);
+            DbContext apiDbContext = Utils.GetDbContextFromTypeName(request.ContextTypeName);
 
             try
             {
@@ -308,16 +308,6 @@ namespace Querier.Api.Domain.Services
             return result;
         }
 
-        private DbContext GetDbContextFromTypeName(string contextTypeName)
-        {
-            List<Type> contextTypes = AppDomain.CurrentDomain.GetAssemblies()
-                       .SelectMany(assembly => assembly.GetTypes())
-                       .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == contextTypeName).ToList();
-
-
-            DbContext target = ServiceActivator.GetScope().ServiceProvider.GetService(contextTypes.First()) as DbContext ??
-                               Activator.CreateInstance(contextTypes.First()) as DbContext;
-            return target;
-        }
+        
     }
 }

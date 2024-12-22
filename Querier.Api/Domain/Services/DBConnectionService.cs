@@ -310,6 +310,7 @@ namespace Querier.Api.Domain.Services
             pdbStream.Seek(0, SeekOrigin.Begin);
             // Store connection to database
             QDBConnection newConnection = new QDBConnection();
+            newConnection.ContextName = connectionNamespace + "." + contextName;
             newConnection.ApiRoute = connection.ContextApiRoute;
 
             if (!Path.Exists("Assemblies"))

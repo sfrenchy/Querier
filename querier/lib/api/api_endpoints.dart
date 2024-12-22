@@ -88,16 +88,24 @@ class ApiEndpoints {
   }
 
   static const String entityCRUD = '/EntityCRUD/GetContexts';
-  static const String entityCRUDEntities = '/EntityCRUD/GetEntities?contextTypeName={contextTypeName}';
-  static const String entityCRUDGetAll = '/EntityCRUD/GetAll?contextTypeName={contextTypeName}&entityTypeName={entityTypeName}';
-  static const String entityCRUDGetEntity = '/EntityCRUD/GetEntity?contextTypeName={contextTypeName}&entityName={entityName}';
+  static const String entityCRUDEntities =
+      '/EntityCRUD/GetEntities?contextTypeName={contextTypeName}';
+  static const String entityCRUDGetAll =
+      '/EntityCRUD/GetAll?contextTypeName={contextTypeName}&entityTypeName={entityTypeName}';
+  static const String entityCRUDGetEntity =
+      '/EntityCRUD/GetEntity?contextTypeName={contextTypeName}&entityName={entityName}';
 
-  static String getEntity(String contextTypeName, String entityName) => 
-    replaceUrlParams(
-      entityCRUDGetEntity,
-      {
-        'contextTypeName': contextTypeName,
-        'entityName': entityName,
-      },
-    );
+  static String getEntity(String contextTypeName, String entityName) =>
+      replaceUrlParams(
+        entityCRUDGetEntity,
+        {
+          'contextTypeName': contextTypeName,
+          'entityName': entityName,
+        },
+      );
+
+  // SQL Query endpoints
+  static const String sqlQueries = 'SQLQuery';
+  static const String sqlQuery = 'SQLQuery/{id}';
+  static const String executeSqlQuery = 'SQLQuery/{id}/execute';
 }

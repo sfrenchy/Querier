@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Querier.Api.Domain.Common.Metadata;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Entities.Menu;
+using Querier.Api.Domain.Entities;
 
 namespace Querier.Api.Infrastructure.Data.Context
 {
@@ -29,6 +30,7 @@ namespace Querier.Api.Infrastructure.Data.Context
         public virtual DbSet<DynamicCard> DynamicCards { get; set; }
         public virtual DbSet<DynamicCardTranslation> DynamicCardTranslations { get; set; }
         public virtual DbSet<DynamicPageTranslation> DynamicPageTranslations { get; set; }
+        public DbSet<SQLQuery> SQLQueries { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -289,6 +291,8 @@ namespace Querier.Api.Infrastructure.Data.Context
                     .HasForeignKey(d => d.DynamicCardId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            modelBuilder.ApplyConfiguration(new SQLQueryConfiguration());
         }
     }
 }

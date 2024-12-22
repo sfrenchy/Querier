@@ -83,6 +83,15 @@ class AppDrawer extends StatelessWidget {
                 Navigator.pushNamed(context, '/databases');
               },
             ),
+          // Menu SQL Queries
+          if (canManageDatabase)
+            ListTile(
+              leading: const Icon(Icons.query_stats),
+              title: Text(l10n.queries),
+              onTap: () {
+                Navigator.pushNamed(context, '/queries');
+              },
+            ),
           // Menu Contents
           if (canManageContent)
             ListTile(
