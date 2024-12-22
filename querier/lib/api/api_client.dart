@@ -825,9 +825,26 @@ class ApiClient {
   }
 
   Future<DatabaseSchema> getDatabaseSchema(int connectionId) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      ApiEndpoints.dbConnectionSchema(connectionId),
-    );
-    return DatabaseSchema.fromJson(response.data!);
+    try {
+      print('Calling getDatabaseSchema for connectionId: $connectionId');
+
+      final url = ApiEndpoints.replaceUrlParams(
+        ApiEndpoints.dbConnectionSchema,
+        {'connectionId': connectionId.toString()},
+      );
+      print('URL: $url');
+
+      final response = await _dio.get<Map<String, dynamic>>(url);
+      print('Raw API Response: ${response.data}');
+
+      final schema = DatabaseSchema.fromJson(response.data!);
+      print('Parsed Schema: $schema');
+
+      return schema;
+    } catch (e, stackTrace) {
+      print('Error in getDatabaseSchema: $e');
+      print('Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 }

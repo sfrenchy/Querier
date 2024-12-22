@@ -25,6 +25,10 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
   bool _loading = true;
   String? _error;
 
+  final List<String> _selectedTables = [];
+  final List<String> _selectedFields = [];
+  final List<String> _conditions = [];
+
   @override
   void initState() {
     super.initState();
@@ -41,23 +45,25 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
       final schema =
           await widget.apiClient.getDatabaseSchema(widget.database.id);
 
+      print('Schema loaded:');
+      print('Tables: ${schema.tables.length}');
+      print('Views: ${schema.views.length}');
+      print('Stored Procedures: ${schema.storedProcedures.length}');
+      print('User Functions: ${schema.userFunctions.length}');
+
       setState(() {
         _schema = schema;
         _loading = false;
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('Error loading schema: $e');
+      print('Stack trace: $stackTrace');
       setState(() {
         _error = e.toString();
         _loading = false;
       });
     }
   }
-
-  // Pour le mock, on simule quelques tables
-  final List<String> _tables = ['Users', 'Orders', 'Products', 'Categories'];
-  final List<String> _selectedTables = [];
-  final List<String> _selectedFields = [];
-  final List<String> _conditions = [];
 
   @override
   Widget build(BuildContext context) {
@@ -85,9 +91,6 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
         ),
       );
     }
-
-    // Remplacer la liste mockée _tables par les vraies tables
-    final tables = _schema?.tables ?? [];
 
     return Scaffold(
       appBar: AppBar(
@@ -122,29 +125,96 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
                   const Padding(
                     padding: EdgeInsets.all(8.0),
                     child: Text(
-                      'Tables disponibles',
+                      'Objects',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: tables.length,
-                      itemBuilder: (context, index) {
-                        final table = tables[index];
-                        return ListTile(
-                          title: Text(table.name),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.add),
-                            onPressed: () {
-                              setState(() {
-                                if (!_selectedTables.contains(table.name)) {
-                                  _selectedTables.add(table.name);
-                                }
-                              });
-                            },
-                          ),
-                        );
-                      },
+                    child: ListView(
+                      children: [
+                        // Tables Section
+                        ExpansionTile(
+                          title: const Text('Tables'),
+                          initiallyExpanded: true,
+                          children: _schema?.tables
+                                  .map((table) => ListTile(
+                                        title: Text(table.name),
+                                        subtitle: Text(table.schema),
+                                        trailing: IconButton(
+                                          icon: const Icon(Icons.add),
+                                          onPressed: () {
+                                            setState(() {
+                                              if (!_selectedTables
+                                                  .contains(table.name)) {
+                                                _selectedTables.add(table.name);
+                                              }
+                                            });
+                                          },
+                                        ),
+                                      ))
+                                  .toList() ??
+                              [],
+                        ),
+
+                        // Views Section
+                        ExpansionTile(
+                          title: const Text('Views'),
+                          children: _schema?.views
+                                  .map((view) => ListTile(
+                                        title: Text(view.name),
+                                        subtitle: Text(view.schema),
+                                        trailing: IconButton(
+                                          icon: const Icon(Icons.add),
+                                          onPressed: () {
+                                            setState(() {
+                                              if (!_selectedTables
+                                                  .contains(view.name)) {
+                                                _selectedTables.add(view.name);
+                                              }
+                                            });
+                                          },
+                                        ),
+                                      ))
+                                  .toList() ??
+                              [],
+                        ),
+
+                        // Stored Procedures Section
+                        ExpansionTile(
+                          title: const Text('Stored Procedures'),
+                          children: _schema?.storedProcedures
+                                  .map((proc) => ListTile(
+                                        title: Text(proc.name),
+                                        subtitle: Text(proc.schema),
+                                        trailing: IconButton(
+                                          icon: const Icon(Icons.add),
+                                          onPressed: () {
+                                            // TODO: Implémenter la logique pour les procédures stockées
+                                          },
+                                        ),
+                                      ))
+                                  .toList() ??
+                              [],
+                        ),
+
+                        // User Functions Section
+                        ExpansionTile(
+                          title: const Text('User Functions'),
+                          children: _schema?.userFunctions
+                                  .map((func) => ListTile(
+                                        title: Text(func.name),
+                                        subtitle: Text(func.schema),
+                                        trailing: IconButton(
+                                          icon: const Icon(Icons.add),
+                                          onPressed: () {
+                                            // TODO: Implémenter la logique pour les fonctions
+                                          },
+                                        ),
+                                      ))
+                                  .toList() ??
+                              [],
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -314,11 +384,23 @@ class _SQLQueryBuilderScreenState extends State<SQLQueryBuilderScreen> {
       return '-- Sélectionnez des tables pour construire la requête';
     }
 
+    final selectedTablesInfo = _selectedTables.map((tableName) {
+      final tableOrView = _schema?.tables.firstWhere(
+        (t) => t.name == tableName,
+        orElse: () => TableDescription(
+          name: tableName,
+          schema: 'dbo',
+          columns: [],
+        ),
+      );
+      return '${tableOrView?.schema ?? 'dbo'}.$tableName';
+    }).toList();
+
     return '''
 SELECT 
-  ${_selectedTables.map((t) => '$t.*').join(', ')}
+  ${selectedTablesInfo.map((t) => '$t.*').join(', ')}
 FROM 
-  ${_selectedTables.join(' \nJOIN ')}
+  ${selectedTablesInfo.join(' \nJOIN ')}
 WHERE 
   -- Conditions seront ajoutées ici
 ORDER BY 

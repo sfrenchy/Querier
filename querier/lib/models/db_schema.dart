@@ -13,19 +13,19 @@ class DatabaseSchema {
 
   factory DatabaseSchema.fromJson(Map<String, dynamic> json) {
     return DatabaseSchema(
-      tables: (json['tables'] as List?)
+      tables: (json['Tables'] as List?)
               ?.map((x) => TableDescription.fromJson(x))
               .toList() ??
           [],
-      views: (json['views'] as List?)
+      views: (json['Views'] as List?)
               ?.map((x) => ViewDescription.fromJson(x))
               .toList() ??
           [],
-      storedProcedures: (json['storedProcedures'] as List?)
+      storedProcedures: (json['StoredProcedures'] as List?)
               ?.map((x) => StoredProcedureDescription.fromJson(x))
               .toList() ??
           [],
-      userFunctions: (json['userFunctions'] as List?)
+      userFunctions: (json['UserFunctions'] as List?)
               ?.map((x) => UserFunctionDescription.fromJson(x))
               .toList() ??
           [],
@@ -46,9 +46,9 @@ class TableDescription {
 
   factory TableDescription.fromJson(Map<String, dynamic> json) {
     return TableDescription(
-      name: json['name'] ?? '',
-      schema: json['schema'] ?? '',
-      columns: (json['columns'] as List?)
+      name: json['Name'] ?? '',
+      schema: json['Schema'] ?? '',
+      columns: (json['Columns'] as List?)
               ?.map((x) => ColumnDescription.fromJson(x))
               .toList() ??
           [],
@@ -69,9 +69,9 @@ class ViewDescription {
 
   factory ViewDescription.fromJson(Map<String, dynamic> json) {
     return ViewDescription(
-      name: json['name'] ?? '',
-      schema: json['schema'] ?? '',
-      columns: (json['columns'] as List?)
+      name: json['Name'] ?? '',
+      schema: json['Schema'] ?? '',
+      columns: (json['Columns'] as List?)
               ?.map((x) => ColumnDescription.fromJson(x))
               .toList() ??
           [],
@@ -100,13 +100,13 @@ class ColumnDescription {
 
   factory ColumnDescription.fromJson(Map<String, dynamic> json) {
     return ColumnDescription(
-      name: json['name'] ?? '',
-      dataType: json['dataType'] ?? '',
-      isNullable: json['isNullable'] ?? false,
-      isPrimaryKey: json['isPrimaryKey'] ?? false,
-      isForeignKey: json['isForeignKey'] ?? false,
-      foreignKeyTable: json['foreignKeyTable'],
-      foreignKeyColumn: json['foreignKeyColumn'],
+      name: json['Name'] ?? '',
+      dataType: json['DataType'] ?? '',
+      isNullable: json['IsNullable'] ?? false,
+      isPrimaryKey: json['IsPrimaryKey'] ?? false,
+      isForeignKey: json['IsForeignKey'] ?? false,
+      foreignKeyTable: json['ForeignKeyTable'],
+      foreignKeyColumn: json['ForeignKeyColumn'],
     );
   }
 }
@@ -124,9 +124,9 @@ class StoredProcedureDescription {
 
   factory StoredProcedureDescription.fromJson(Map<String, dynamic> json) {
     return StoredProcedureDescription(
-      name: json['name'] ?? '',
-      schema: json['schema'] ?? '',
-      parameters: (json['parameters'] as List?)
+      name: json['Name'] ?? '',
+      schema: json['Schema'] ?? '',
+      parameters: (json['Parameters'] as List?)
               ?.map((x) => ParameterDescription.fromJson(x))
               .toList() ??
           [],
@@ -149,13 +149,13 @@ class UserFunctionDescription {
 
   factory UserFunctionDescription.fromJson(Map<String, dynamic> json) {
     return UserFunctionDescription(
-      name: json['name'] ?? '',
-      schema: json['schema'] ?? '',
-      parameters: (json['parameters'] as List?)
+      name: json['Name'] ?? '',
+      schema: json['Schema'] ?? '',
+      parameters: (json['Parameters'] as List?)
               ?.map((x) => ParameterDescription.fromJson(x))
               .toList() ??
           [],
-      returnType: json['returnType'],
+      returnType: json['ReturnType'],
     );
   }
 }
@@ -173,9 +173,9 @@ class ParameterDescription {
 
   factory ParameterDescription.fromJson(Map<String, dynamic> json) {
     return ParameterDescription(
-      name: json['name'] ?? '',
-      dataType: json['dataType'] ?? '',
-      mode: json['mode'] ?? '',
+      name: json['Name'] ?? '',
+      dataType: json['DataType'] ?? '',
+      mode: json['Mode'] ?? '',
     );
   }
 }
