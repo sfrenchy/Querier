@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:querier/models/db_schema.dart';
+import 'package:querier/models/query_analysis.dart';
 import 'api_endpoints.dart';
 import 'package:querier/models/user.dart';
 import 'package:querier/models/role.dart';
@@ -16,6 +18,7 @@ import 'package:querier/models/entity_schema.dart';
 import 'package:querier/services/data_context_service.dart';
 import 'package:querier/models/sql_query.dart';
 import 'package:querier/models/sql_query_request.dart';
+import 'package:querier/models/analyze_query_request.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -821,5 +824,41 @@ class ApiClient {
         {'id': id.toString()},
       ),
     );
+  }
+
+  Future<DatabaseSchema> getDatabaseSchema(int connectionId) async {
+    try {
+      print('Calling getDatabaseSchema for connectionId: $connectionId');
+
+      final url = ApiEndpoints.replaceUrlParams(
+        ApiEndpoints.dbConnectionSchema,
+        {'connectionId': connectionId.toString()},
+      );
+      print('URL: $url');
+
+      final response = await _dio.get<Map<String, dynamic>>(url);
+      print('Raw API Response: ${response.data}');
+
+      final schema = DatabaseSchema.fromJson(response.data!);
+      print('Parsed Schema: $schema');
+
+      return schema;
+    } catch (e, stackTrace) {
+      print('Error in getDatabaseSchema: $e');
+      print('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  Future<QueryAnalysis> analyzeQuery(int connectionId, String query) async {
+    final request = AnalyzeQueryRequest(query: query);
+    final response = await post(
+      ApiEndpoints.replaceUrlParams(
+        ApiEndpoints.analyzeQuery,
+        {'connectionId': connectionId.toString()},
+      ),
+      data: request.toJson(),
+    );
+    return QueryAnalysis.fromJson(response.data);
   }
 }

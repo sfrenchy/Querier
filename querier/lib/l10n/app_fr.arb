@@ -285,5 +285,6 @@
     "testParameters": "Paramètres de test",
     "parameterName": "Nom du paramètre",
     "parameterValue": "Valeur",
-    "addParameter": "Ajouter un paramètre"
+    "addParameter": "Ajouter un paramètre",
+    "queryBuilder": "Constructeur de requêtes"
 } 

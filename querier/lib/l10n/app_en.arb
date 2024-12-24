@@ -286,5 +286,6 @@
     "testParameters": "Test Parameters",
     "parameterName": "Parameter Name",
     "parameterValue": "Value",
-    "addParameter": "Add Parameter"
+    "addParameter": "Add Parameter",
+    "queryBuilder": "Query Builder"
 } 

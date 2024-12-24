@@ -53,6 +53,8 @@ dependencies:
   vtable: ^0.4.0
   flutter_highlight: ^0.7.0
   highlight: ^0.7.0
+  reorderables: ^0.6.0 
+  resizable_widget: ^1.0.5
 
 dev_dependencies:
   flutter_test:
