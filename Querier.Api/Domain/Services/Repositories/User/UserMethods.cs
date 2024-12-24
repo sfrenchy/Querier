@@ -14,6 +14,7 @@ using Querier.Api.Tools;
 using static Google.Apis.Auth.JsonWebToken;
 using Microsoft.Extensions.DependencyInjection;
 using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Domain.Services;
 using Querier.Api.Infrastructure.Data.Context;
 using Querier.Api.Infrastructure.DependencyInjection;
 
@@ -22,7 +23,11 @@ namespace Querier.Api.Services.Repositories.User
     public static class UserMethods
     {
         //Code mort//
-        public static async Task<SignUpResponse> Register([FromBody] SignUpRequest user, UserManager<ApiUser> userManager, JwtConfig jwtConfig, ApiDbContext apiDbContext)
+        public static async Task<SignUpResponse> Register(
+            [FromBody] SignUpRequest user, 
+            UserManager<ApiUser> userManager, 
+            ApiDbContext apiDbContext,
+            ISettingService settingService)
         {
             // check if the user with the same email exist
             var existingUser = await userManager.FindByEmailAsync(user.Email);
@@ -44,7 +49,8 @@ namespace Querier.Api.Services.Repositories.User
 
             if (isCreated.Succeeded)
             {
-                var result = await GenerateJwtToken(newUser, jwtConfig, apiDbContext);
+                // Nous utilisons directement le settingService passé en paramètre
+                var result = await GenerateJwtToken(newUser, apiDbContext, settingService);
                 var userObj = await userManager.FindByEmailAsync(user.Email);
 
                 return new SignUpResponse()
@@ -69,7 +75,7 @@ namespace Querier.Api.Services.Repositories.User
         }
         //  //
 
-        public static async Task<AuthResult> VerifyToken(TokenRequest tokenRequest, TokenValidationParameters tokenValidationParameters, UserManager<ApiUser> userManager, JwtConfig jwtConfig, ApiDbContext apiDbContext)
+        public static async Task<AuthResult> VerifyToken(TokenRequest tokenRequest, TokenValidationParameters tokenValidationParameters, UserManager<ApiUser> userManager, ApiDbContext apiDbContext, ISettingService settingService)
         {
             var jwtTokenHandler = new JwtSecurityTokenHandler();
 
@@ -166,7 +172,7 @@ namespace Querier.Api.Services.Repositories.User
                 await apiDbContext.SaveChangesAsync();
 
                 var dbUser = await userManager.FindByIdAsync(storedRefreshToken.UserId);
-                return await GenerateJwtToken(dbUser, jwtConfig, apiDbContext);
+                return await GenerateJwtToken(dbUser, apiDbContext, settingService);
             }
             catch (Exception ex)
             {
@@ -175,10 +181,15 @@ namespace Querier.Api.Services.Repositories.User
         }
 
 
-        public static async Task<AuthResult> GenerateJwtToken(ApiUser user, JwtConfig jwtConfig, ApiDbContext context)
+        public static async Task<AuthResult> GenerateJwtToken(ApiUser user, ApiDbContext context, ISettingService settingService)
         {
-            var jwtTokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(jwtConfig.Secret);
+            var jwtSecret = await settingService.GetSettingValue("JwtSecret");
+            var jwtIssuer = await settingService.GetSettingValue("JwtIssuer");
+            var jwtAudience = await settingService.GetSettingValue("JwtAudience");
+            var jwtExpiryInMinutes = await settingService.GetSettingValue("JwtExpiryInMinutes");
+
+            if (string.IsNullOrEmpty(jwtSecret))
+                throw new InvalidOperationException("JWT secret is not configured");
 
             // Récupérer les rôles de l'utilisateur
             var scope = ServiceActivator.GetScope();
@@ -187,28 +198,33 @@ namespace Querier.Api.Services.Repositories.User
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim("Id", user.Id),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            // Ajouter un claim pour chaque rôle
+            // Ajouter les rôles aux claims
             foreach (var role in userRoles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
+            var key = Encoding.ASCII.GetBytes(jwtSecret);
+            var expiryInMinutes = int.Parse(jwtExpiryInMinutes);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddHours(6),
+                Expires = DateTime.UtcNow.AddMinutes(expiryInMinutes),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature
                 ),
-                Issuer = jwtConfig.Issuer,           // Ajout de l'émetteur
-                Audience = jwtConfig.Audience         // Ajout de l'audience
+                Issuer = jwtIssuer,
+                Audience = jwtAudience
             };
 
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
             var jwtToken = jwtTokenHandler.WriteToken(token);
 

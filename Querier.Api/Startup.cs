@@ -220,20 +220,14 @@ namespace Querier.Api
                     opt.TokenLifespan = TimeSpan.FromMinutes(int.Parse(resetPasswordValidity));
                 });
             }
-            var key = Encoding.ASCII.GetBytes(_configuration["JwtConfig:Secret"]);
 
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ValidateLifetime = true,
                 RequireExpirationTime = false,
-
-                // Allow to use seconds for expiration of token
-                // Required only when token lifetime less than 5 minutes
-                // THIS ONE
                 ClockSkew = TimeSpan.Zero
             };
 
@@ -336,31 +330,36 @@ namespace Querier.Api
             {
                 options.SaveToken = true;
                 options.RequireHttpsMetadata = false;
+
+                // Configurer la validation du token de manière dynamique
+                var settingService = services.BuildServiceProvider().GetRequiredService<ISettingService>();
+                var secret = settingService.GetSettingValue("JwtSecret").Result;
+                var key = Encoding.ASCII.GetBytes(secret);
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = _configuration["JwtConfig:Issuer"],
-                    ValidAudience = _configuration["JwtConfig:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(_configuration["JwtConfig:Secret"])),
-                    ClockSkew = TimeSpan.Zero
+                    RequireExpirationTime = true,
+                    ClockSkew = TimeSpan.Zero,
+                    ValidIssuer = settingService.GetSettingValue("JwtIssuer").Result,
+                    ValidAudience = settingService.GetSettingValue("JwtAudience").Result
                 };
-                // Ajoutez ces événements pour le debug
+
                 options.Events = new JwtBearerEvents
                 {
+                    OnTokenValidated = async context =>
+                    {
+                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
+                        logger.LogInformation("Token validated successfully");
+                    },
                     OnAuthenticationFailed = context =>
                     {
                         var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
                         logger.LogError($"Authentication failed: {context.Exception}");
-                        return Task.CompletedTask;
-                    },
-                    OnTokenValidated = context =>
-                    {
-                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
-                        logger.LogInformation("Token validated successfully");
                         return Task.CompletedTask;
                     }
                 };
@@ -469,6 +468,28 @@ namespace Querier.Api
             app.UseStaticFiles();
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllers();
+            });
+
+            app.Use(async (context, next) =>
+            {
+                // Si la route nécessite une authentification (pas marquée [AllowAnonymous])
+                var endpoint = context.GetEndpoint();
+                if (endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() == null)
+                {
+                    // Vérifier si l'application est configurée
+                    using var scope = context.RequestServices.CreateScope();
+                    var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
+                    var isConfigured = await settingService.GetIsConfigured();
+                    
+                    if (!isConfigured)
+                    {
+                        context.Response.StatusCode = 503; // Service Unavailable
+                        await context.Response.WriteAsJsonAsync(new { error = "Application not configured" });
+                        return;
+                    }
+                }
+                
+                await next();
             });
         }
     }

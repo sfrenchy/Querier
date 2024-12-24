@@ -52,6 +52,18 @@ namespace Querier.Api.Domain.Services
                 {
                     using var context = await _contextFactory.CreateDbContextAsync();
 
+                    // Configuration JWT
+                    _logger.LogInformation("Configuring JWT settings...");
+                    var jwtSecret = GenerateSecureSecret();
+                    var jwtSettings = new[]
+                    {
+                        new QSetting { Name = "JwtSecret", Value = jwtSecret, Description = "JWT authentication secret key", Type = "string" },
+                        new QSetting { Name = "JwtIssuer", Value = "QuerierApi", Description = "JWT issuer", Type = "string" },
+                        new QSetting { Name = "JwtAudience", Value = "QuerierClient", Description = "JWT audience", Type = "string" },
+                        new QSetting { Name = "JwtExpiryInMinutes", Value = "60", Description = "JWT token expiry in minutes", Type = "integer" }
+                    };
+                    await context.QSettings.AddRangeAsync(jwtSettings);
+
                     if (!await _roleManager.RoleExistsAsync("Admin"))
                     {
                         _logger.LogInformation("Creating Admin role...");
@@ -149,6 +161,16 @@ namespace Querier.Api.Domain.Services
             {
                 _semaphore.Release();
                 _logger.LogInformation("Setup lock released");
+            }
+        }
+
+        private string GenerateSecureSecret(int length = 32)
+        {
+            using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider())
+            {
+                var bytes = new byte[length];
+                rng.GetBytes(bytes);
+                return Convert.ToBase64String(bytes);
             }
         }
 

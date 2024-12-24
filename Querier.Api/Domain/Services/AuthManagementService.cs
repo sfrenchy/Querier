@@ -70,90 +70,80 @@ namespace Querier.Api.Domain.Services
 
     public class AuthManagementService : IAuthManagementService
     {
-        private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private readonly JwtConfig _jwtConfig;
         private readonly TokenValidationParameters _tokenValidationParameters;
         private readonly IUserManagerService _userManager;
+        private readonly ISettingService _settingService;
+        private readonly ApiDbContext _context;
 
-        public AuthManagementService(IUserManagerService userManager, IOptionsMonitor<JwtConfig> optionsMonitor, TokenValidationParameters tokenValidationParameters, IDbContextFactory<ApiDbContext> contextFactory)
+        public AuthManagementService(
+            IUserManagerService userManager,
+            ISettingService settingService,
+            ApiDbContext context,
+            TokenValidationParameters tokenValidationParameters)
         {
             _userManager = userManager;
-            _jwtConfig = optionsMonitor.CurrentValue;
+            _settingService = settingService;
+            _context = context;
             _tokenValidationParameters = tokenValidationParameters;
-            _contextFactory = contextFactory;
         }
 
         public async Task<SignUpResponse> SignUp(SignUpRequest user)
         {
-            using (var apidbContext = _contextFactory.CreateDbContext())
-            {
-                var result = await UserMethods.Register(user, _userManager.Instance, _jwtConfig, apidbContext);
-                return result;
-            }
+            var result = await UserMethods.Register(user, _userManager.Instance, _context, _settingService);
+            return result;
         }
 
         public async Task<SignUpResponse> SignIn(SignInRequest user)
         {
-            using (var apidbContext = _contextFactory.CreateDbContext())
+            var existingUser = await _userManager.FindByEmailAsync(user.Email);
+            if (existingUser == null)
             {
-                var existingUser = await _userManager.FindByEmailAsync(user.Email);
-                if (existingUser == null)
+                return new SignUpResponse()
                 {
-                    // We dont want to give to much information on why the request has failed for security reasons
-                    return new SignUpResponse()
-                    {
-                        Success = false,
-                        Errors = new List<string>(){
-                            "Invalid authentication request"
-                        }
+                    Success = false,
+                    Errors = new List<string>(){
+                        "Invalid authentication request"
+                    }
+                };
+            }
 
-                    };
-                }
+            var PasswordisCorrect = await _userManager.Instance.CheckPasswordAsync(existingUser, user.Password);
+            var EmailConfirmed = await _userManager.Instance.IsEmailConfirmedAsync(existingUser);
 
-                var PasswordisCorrect = await _userManager.Instance.CheckPasswordAsync(existingUser, user.Password);
-                var EmailConfirmed = await _userManager.Instance.IsEmailConfirmedAsync(existingUser);
+            if (PasswordisCorrect && EmailConfirmed)
+            {
+                AuthResult r = await UserMethods.GenerateJwtToken(existingUser, _context, _settingService);
+                var roles = await _userManager.GetRolesAsync(existingUser);
 
-                if (PasswordisCorrect && EmailConfirmed)
+                return new SignUpResponse()
                 {
-                    AuthResult r = await UserMethods.GenerateJwtToken(existingUser, _jwtConfig, apidbContext);
-                    var roles = await _userManager.GetRolesAsync(existingUser);
-
-                    return new SignUpResponse()
-                    {
-                        Id = existingUser.Id,
-                        FirstName = existingUser.FirstName,
-                        LastName = existingUser.LastName,
-                        Roles = roles.ToList(),
-                        RefreshToken = r.RefreshToken,
-                        Success = r.Success,
-                        Token = r.Token,
-                        Email = existingUser.Email,
-                        UserName = existingUser.UserName,
-                    };
-                }
-                else
+                    Id = existingUser.Id,
+                    FirstName = existingUser.FirstName,
+                    LastName = existingUser.LastName,
+                    Roles = roles.ToList(),
+                    RefreshToken = r.RefreshToken,
+                    Success = r.Success,
+                    Token = r.Token,
+                    Email = existingUser.Email,
+                    UserName = existingUser.UserName,
+                };
+            }
+            else
+            {
+                return new SignUpResponse()
                 {
-                    // We dont want to give to much information on why the request has failed for security reasons
-                    return new SignUpResponse()
-                    {
-                        Success = false,
-                        Errors = new List<string>(){
-                            "Invalid authentication request"
-                        }
-                    };
-                }
+                    Success = false,
+                    Errors = new List<string>(){
+                        "Invalid authentication request"
+                    }
+                };
             }
         }
 
-
-
         public async Task<AuthResult> RefreshToken(TokenRequest tokenRequest)
         {
-            using (var apidbContext = _contextFactory.CreateDbContext())
-            {
-                var res = await UserMethods.VerifyToken(tokenRequest, _tokenValidationParameters, _userManager.Instance, _jwtConfig, apidbContext);
-                return res;
-            }
+            var res = await UserMethods.VerifyToken(tokenRequest, _tokenValidationParameters, _userManager.Instance, _context, _settingService);
+            return res;
         }
     }
 }
