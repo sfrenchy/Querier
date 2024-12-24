@@ -333,20 +333,24 @@ namespace Querier.Api
 
                 // Configurer la validation du token de manière dynamique
                 var settingService = services.BuildServiceProvider().GetRequiredService<ISettingService>();
-                var secret = settingService.GetSettingValue("JwtSecret").Result;
+                var secret = settingService.GetSettingValue("JwtSecret").Result ?? 
+                    "DefaultDevSecretKey_12345678901234567890123456789012";  // Clé par défaut pour le dev
                 var key = Encoding.ASCII.GetBytes(secret);
+
+                // Créer une clé de signature unique
+                var signingKey = new SymmetricSecurityKey(key) { KeyId = "default_signing_key" };
 
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    IssuerSigningKey = signingKey,
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     RequireExpirationTime = true,
                     ClockSkew = TimeSpan.Zero,
-                    ValidIssuer = settingService.GetSettingValue("JwtIssuer").Result,
-                    ValidAudience = settingService.GetSettingValue("JwtAudience").Result
+                    ValidIssuer = settingService.GetSettingValue("JwtIssuer").Result ?? "QuerierApi",
+                    ValidAudience = settingService.GetSettingValue("JwtAudience").Result ?? "QuerierClient"
                 };
 
                 options.Events = new JwtBearerEvents
@@ -356,11 +360,18 @@ namespace Querier.Api
                         var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
                         logger.LogInformation("Token validated successfully");
                     },
-                    OnAuthenticationFailed = context =>
+                    OnAuthenticationFailed = async context =>
                     {
-                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
-                        logger.LogError($"Authentication failed: {context.Exception}");
-                        return Task.CompletedTask;
+                        var settingService = context.HttpContext.RequestServices
+                            .GetRequiredService<ISettingService>();
+                        
+                        // Si l'application n'est pas configurée, on permet l'accès
+                        if (!await settingService.GetIsConfigured())
+                        {
+                            context.NoResult();
+                            context.Success();
+                            return;
+                        }
                     }
                 };
             });
