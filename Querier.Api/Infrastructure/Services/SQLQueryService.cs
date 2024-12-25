@@ -209,9 +209,70 @@ public class SQLQueryService : ISQLQueryService
             using (var dbContext = Utils.GetDbContextFromTypeName(query.Connection.ContextName))
             {
                 var command = dbContext.Database.GetDbConnection().CreateCommand();
-                command.CommandText = query.Query;
+
+                // Construire la requête paginée
+                string sqlQuery = query.Query.TrimEnd(';');
+                if (pageSize > 0)
+                {
+                    // Si la requête commence par WITH, on doit la traiter différemment
+                    if (sqlQuery.TrimStart().StartsWith("WITH", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Extraire toutes les CTEs existantes
+                        var withoutFirstWith = sqlQuery.TrimStart().Substring(4).TrimStart();
+                        var lastSelectIndex = withoutFirstWith.LastIndexOf("SELECT", StringComparison.OrdinalIgnoreCase);
+                        var ctes = withoutFirstWith.Substring(0, lastSelectIndex).TrimEnd();
+                        var mainSelect = withoutFirstWith.Substring(lastSelectIndex);
+
+                        sqlQuery = $@"WITH {ctes},
+BaseResult AS (
+    {mainSelect}
+),
+CountData AS (
+    SELECT COUNT(*) AS Total FROM BaseResult
+),
+PaginatedData AS (
+    SELECT 
+        ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowNum,
+        (SELECT Total FROM CountData) AS TotalCount,
+        fr.*
+    FROM BaseResult fr
+)
+SELECT *
+FROM PaginatedData
+WHERE RowNum BETWEEN @Skip + 1 AND @Skip + @Take;";
+                    }
+                    else
+                    {
+                        sqlQuery = $@"WITH CountData AS (
+    SELECT COUNT(*) AS Total FROM ({sqlQuery}) BaseQuery
+),
+QueryData AS (
+    SELECT 
+        ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowNum,
+        (SELECT Total FROM CountData) AS TotalCount,
+        q.*
+    FROM ({sqlQuery}) q
+)
+SELECT *
+FROM QueryData
+WHERE RowNum BETWEEN @Skip + 1 AND @Skip + @Take;";
+                    }
+
+                    var skipParameter = command.CreateParameter();
+                    skipParameter.ParameterName = "@Skip";
+                    skipParameter.Value = (pageNumber - 1) * pageSize;
+                    command.Parameters.Add(skipParameter);
+
+                    var takeParameter = command.CreateParameter();
+                    takeParameter.ParameterName = "@Take";
+                    takeParameter.Value = pageSize;
+                    command.Parameters.Add(takeParameter);
+                }
+
+                command.CommandText = sqlQuery;
                 command.CommandType = CommandType.Text;
 
+                // Ajouter les autres paramètres de la requête
                 foreach (var param in parameters)
                 {
                     var parameter = command.CreateParameter();
@@ -225,24 +286,34 @@ public class SQLQueryService : ISQLQueryService
                 using (var result = await command.ExecuteReaderAsync())
                 {
                     var data = new List<dynamic>();
+                    int totalCount = 0;
+
                     while (await result.ReadAsync())
                     {
                         var row = new ExpandoObject() as IDictionary<string, object>;
+                        
+                        // Récupérer le total si on est en mode paginé
+                        if (pageSize > 0 && totalCount == 0)
+                        {
+                            totalCount = Convert.ToInt32(result.GetValue(result.GetOrdinal("TotalCount")));
+                        }
+
+                        // Ajouter toutes les colonnes sauf RowNum et TotalCount si on est en mode paginé
                         for (var i = 0; i < result.FieldCount; i++)
                         {
-                            row.Add(result.GetName(i), result.GetValue(i));
+                            var columnName = result.GetName(i);
+                            if (pageSize == 0 || (columnName != "RowNum" && columnName != "TotalCount"))
+                            {
+                                row.Add(columnName, result.GetValue(i));
+                            }
                         }
                         data.Add(row);
                     }
 
-                    // Appliquer la pagination avec LINQ
-                    var totalCount = data.Count;
-                    if (pageSize > 0)
+                    // Si pas de pagination, le total est le nombre de lignes
+                    if (pageSize == 0)
                     {
-                        data = data
-                            .Skip((pageNumber - 1) * pageSize)
-                            .Take(pageSize)
-                            .ToList();
+                        totalCount = data.Count;
                     }
 
                     return new PagedResult<dynamic>(data, totalCount);
