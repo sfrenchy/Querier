@@ -235,7 +235,17 @@ public class SQLQueryService : ISQLQueryService
                         data.Add(row);
                     }
 
-                    return new PagedResult<dynamic>(data, data.Count);
+                    // Appliquer la pagination avec LINQ
+                    var totalCount = data.Count;
+                    if (pageSize > 0)
+                    {
+                        data = data
+                            .Skip((pageNumber - 1) * pageSize)
+                            .Take(pageSize)
+                            .ToList();
+                    }
+
+                    return new PagedResult<dynamic>(data, totalCount);
                 }
             }
         }
