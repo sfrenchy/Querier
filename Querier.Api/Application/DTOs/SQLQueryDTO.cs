@@ -15,5 +15,6 @@ namespace Querier.Api.Application.DTOs
         public bool IsPublic { get; set; }
         public Dictionary<string, object> Parameters { get; set; }
         public int ConnectionId { get; set; }
+        public string? OutputDescription { get; set; }
     }
 } 
