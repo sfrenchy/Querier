@@ -1,7 +1,16 @@
 using System.Collections.Generic;
 
-public class PagedResult<T>
+namespace Querier.Api.Domain.Common.Models
 {
-    public IEnumerable<T> Data { get; set; }
-    public int TotalCount { get; set; }
+    public class PagedResult<T>
+    {
+        public IEnumerable<T> Items { get; }
+        public int Total { get; }
+
+        public PagedResult(IEnumerable<T> items, int total)
+        {
+            Items = items;
+            Total = total;
+        }
+    }
 } 

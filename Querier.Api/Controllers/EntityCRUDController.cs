@@ -8,6 +8,7 @@ using System.Linq;
 using Querier.Api.Tools;
 using Querier.Api.Application.DTOs.Requests.Entity;
 using Querier.Api.Application.DTOs.Responses.Entity;
+using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
@@ -59,11 +60,7 @@ namespace Querier.Api.Controllers
             };
             
             var result = _entityCRUDService.GetAll(contextTypeName, entityTypeName, paginationParams, OrderBy);
-            return Ok(new PagedResult<object>
-            {
-                Data = result.Data,
-                TotalCount = result.TotalCount
-            });
+            return Ok(result);
         }
 
         [HttpPost("ReadFromSql")]

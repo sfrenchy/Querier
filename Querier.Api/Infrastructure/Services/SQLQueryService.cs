@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Data.Entity.Infrastructure;
 using System.Data.SqlClient;
 using System.Dynamic;
 using System.Linq;
@@ -13,8 +14,11 @@ using Querier.Api.Infrastructure.Data.Context;
 using Microsoft.AspNetCore.Http;
 using Querier.Api.Domain.Exceptions;
 using Querier.Api.Application.DTOs;
+using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Services;
 using Querier.Api.Tools;
+using System.Text.Json;
+using Querier.Api.Domain.Common.ValueObjects;
 
 public interface ISQLQueryService
 {
@@ -23,7 +27,7 @@ public interface ISQLQueryService
     Task<SQLQuery> CreateQueryAsync(SQLQuery query, Dictionary<string, object> sampleParameters = null);
     Task<SQLQuery> UpdateQueryAsync(SQLQuery query, Dictionary<string, object> sampleParameters = null);
     Task DeleteQueryAsync(int id);
-    Task<IEnumerable<dynamic>> ExecuteQueryAsync(int id, Dictionary<string, object> parameters);
+    Task<PagedResult<dynamic>> ExecuteQueryAsync(int queryId, Dictionary<string, object> parameters, int pageNumber = 1, int pageSize = 0);
 }
 
 public class SQLQueryService : ISQLQueryService
@@ -64,6 +68,19 @@ public class SQLQueryService : ISQLQueryService
                 ConnectionId = q.ConnectionId
             })
             .ToListAsync();
+
+        // Valider et obtenir la description pour chaque requête
+        foreach (var query in queries)
+        {
+            if (string.IsNullOrEmpty(query.OutputDescription))
+            {
+                var fullQuery = await GetQueryByIdAsync(query.Id);
+                if (ValidateAndDescribeQuery(fullQuery, null, out string outputDescription))
+                {
+                    query.OutputDescription = outputDescription;
+                }
+            }
+        }
 
         return queries;
     }
@@ -123,43 +140,22 @@ public class SQLQueryService : ISQLQueryService
 
                 DataTable dt = context.Database.RawSqlQuery(query.Query, parameters);
                 
-                var columnsDescription = dt.Columns.Cast<DataColumn>()
-                    .Select(column => new
-                    {
-                        name = column.ColumnName,
-                        type = new
-                        {
-                            clrType = column.DataType.Name,
-                            sqlType = GetSqlType(column),
-                            isNullable = column.AllowDBNull
-                        },
-                        constraints = new
-                        {
-                            isPrimaryKey = column.Unique && !column.AllowDBNull,
-                            isUnique = column.Unique,
-                            allowNull = column.AllowDBNull,
-                            maxLength = GetMaxLength(column),
-                            defaultValue = column.DefaultValue?.ToString()
-                        }
-                    })
-                    .ToList();
-
-                var description = new
+                var entityDefinition = new EntityDefinition
                 {
-                    columns = columnsDescription,
-                    metadata = new
-                    {
-                        totalColumns = dt.Columns.Count,
-                        hasParameters = parameters.Any(),
-                        parameters = parameters.Select(p => new { name = p.ParameterName, type = p.DbType.ToString() })
-                    }
+                    Name = query.Name,
+                    Properties = dt.Columns.Cast<DataColumn>()
+                        .Select(column => new PropertyDefinition
+                        {
+                            Name = column.ColumnName,
+                            Type = column.AllowDBNull ? $"{column.DataType.Name}?" : column.DataType.Name,
+                            Options = column.AllowDBNull 
+                                ? new List<PropertyOption> { PropertyOption.IsNullable }
+                                : new List<PropertyOption>()
+                        })
+                        .ToList()
                 };
 
-                outputDescription = System.Text.Json.JsonSerializer.Serialize(
-                    description, 
-                    new System.Text.Json.JsonSerializerOptions { WriteIndented = false }
-                );
-
+                outputDescription = JsonSerializer.Serialize(entityDefinition);
                 return true;
             }
         }
@@ -167,48 +163,6 @@ public class SQLQueryService : ISQLQueryService
         {
             outputDescription = ex.Message;
             return false;
-        }
-    }
-
-    private string GetSqlType(DataColumn column)
-    {
-        // Mapping de base entre types .NET et types SQL
-        var typeMap = new Dictionary<Type, string>
-        {
-            { typeof(int), "int" },
-            { typeof(long), "bigint" },
-            { typeof(string), "nvarchar" },
-            { typeof(DateTime), "datetime2" },
-            { typeof(bool), "bit" },
-            { typeof(decimal), "decimal" },
-            { typeof(float), "real" },
-            { typeof(double), "float" },
-            { typeof(Guid), "uniqueidentifier" },
-            { typeof(byte[]), "varbinary" }
-        };
-
-        return typeMap.TryGetValue(column.DataType, out var sqlType) ? sqlType : "unknown";
-    }
-
-    private int? GetMaxLength(DataColumn column)
-    {
-        try
-        {
-            if (column.MaxLength > 0)
-                return column.MaxLength;
-            
-            // Pour les types string, on peut essayer de détecter la taille via le schéma
-            if (column.DataType == typeof(string))
-            {
-                // Logique additionnelle pour détecter la taille via le schéma si nécessaire
-                return null;
-            }
-            
-            return null;
-        }
-        catch
-        {
-            return null;
         }
     }
 
@@ -245,26 +199,85 @@ public class SQLQueryService : ISQLQueryService
         }
     }
 
-    public async Task<IEnumerable<dynamic>> ExecuteQueryAsync(int id, Dictionary<string, object> parameters)
+    public async Task<PagedResult<dynamic>> ExecuteQueryAsync(int id, Dictionary<string, object> parameters, int pageNumber = 1, int pageSize = 0)
     {
         var query = await GetQueryByIdAsync(id);
         if (query == null) throw new NotFoundException("Query not found");
 
-        // Sécuriser l'exécution de la requête
-        // TODO: Ajouter une validation/sanitization de la requête
         try
         {
             using (var dbContext = Utils.GetDbContextFromTypeName(query.Connection.ContextName))
             {
                 var command = dbContext.Database.GetDbConnection().CreateCommand();
-                command.CommandText = query.Query;
+
+                // Construire la requête paginée
+                string sqlQuery = query.Query.TrimEnd(';');
+                if (pageSize > 0)
+                {
+                    // Si la requête commence par WITH, on doit la traiter différemment
+                    if (sqlQuery.TrimStart().StartsWith("WITH", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Extraire toutes les CTEs existantes
+                        var withoutFirstWith = sqlQuery.TrimStart().Substring(4).TrimStart();
+                        var lastSelectIndex = withoutFirstWith.LastIndexOf("SELECT", StringComparison.OrdinalIgnoreCase);
+                        var ctes = withoutFirstWith.Substring(0, lastSelectIndex).TrimEnd();
+                        var mainSelect = withoutFirstWith.Substring(lastSelectIndex);
+
+                        sqlQuery = $@"WITH {ctes},
+BaseResult AS (
+    {mainSelect}
+),
+CountData AS (
+    SELECT COUNT(*) AS Total FROM BaseResult
+),
+PaginatedData AS (
+    SELECT 
+        ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowNum,
+        (SELECT Total FROM CountData) AS TotalCount,
+        fr.*
+    FROM BaseResult fr
+)
+SELECT *
+FROM PaginatedData
+WHERE RowNum BETWEEN @Skip + 1 AND @Skip + @Take;";
+                    }
+                    else
+                    {
+                        sqlQuery = $@"WITH CountData AS (
+    SELECT COUNT(*) AS Total FROM ({sqlQuery}) BaseQuery
+),
+QueryData AS (
+    SELECT 
+        ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowNum,
+        (SELECT Total FROM CountData) AS TotalCount,
+        q.*
+    FROM ({sqlQuery}) q
+)
+SELECT *
+FROM QueryData
+WHERE RowNum BETWEEN @Skip + 1 AND @Skip + @Take;";
+                    }
+
+                    var skipParameter = command.CreateParameter();
+                    skipParameter.ParameterName = "@Skip";
+                    skipParameter.Value = (pageNumber - 1) * pageSize;
+                    command.Parameters.Add(skipParameter);
+
+                    var takeParameter = command.CreateParameter();
+                    takeParameter.ParameterName = "@Take";
+                    takeParameter.Value = pageSize;
+                    command.Parameters.Add(takeParameter);
+                }
+
+                command.CommandText = sqlQuery;
                 command.CommandType = CommandType.Text;
 
+                // Ajouter les autres paramètres de la requête
                 foreach (var param in parameters)
                 {
                     var parameter = command.CreateParameter();
                     parameter.ParameterName = param.Key;
-                    parameter.Value = param.Value;
+                    parameter.Value = param.Value ?? DBNull.Value;
                     command.Parameters.Add(parameter);
                 }
 
@@ -273,16 +286,37 @@ public class SQLQueryService : ISQLQueryService
                 using (var result = await command.ExecuteReaderAsync())
                 {
                     var data = new List<dynamic>();
+                    int totalCount = 0;
+
                     while (await result.ReadAsync())
                     {
                         var row = new ExpandoObject() as IDictionary<string, object>;
+                        
+                        // Récupérer le total si on est en mode paginé
+                        if (pageSize > 0 && totalCount == 0)
+                        {
+                            totalCount = Convert.ToInt32(result.GetValue(result.GetOrdinal("TotalCount")));
+                        }
+
+                        // Ajouter toutes les colonnes sauf RowNum et TotalCount si on est en mode paginé
                         for (var i = 0; i < result.FieldCount; i++)
                         {
-                            row.Add(result.GetName(i), result.GetValue(i));
+                            var columnName = result.GetName(i);
+                            if (pageSize == 0 || (columnName != "RowNum" && columnName != "TotalCount"))
+                            {
+                                row.Add(columnName, result.GetValue(i));
+                            }
                         }
                         data.Add(row);
                     }
-                    return data;
+
+                    // Si pas de pagination, le total est le nombre de lignes
+                    if (pageSize == 0)
+                    {
+                        totalCount = data.Count;
+                    }
+
+                    return new PagedResult<dynamic>(data, totalCount);
                 }
             }
         }

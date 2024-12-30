@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Querier.Api.Domain.Entities;
 using Querier.Api.Domain.Exceptions;
 using Querier.Api.Application.DTOs;
+using Querier.Api.Domain.Common;
+using Querier.Api.Domain.Common.Models;
 
 namespace Querier.Api.Controllers
 {
@@ -117,23 +119,29 @@ namespace Querier.Api.Controllers
         /// <response code="404">If the query is not found</response>
         /// <response code="400">If there's an error executing the query</response>
         [HttpPost("{id}/execute")]
-        [ProducesResponseType(typeof(IEnumerable<dynamic>), 200)]
+        [ProducesResponseType(typeof(PagedResult<dynamic>), 200)]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<IEnumerable<dynamic>>> ExecuteQuery(int id, [FromBody] Dictionary<string, object> parameters)
+        public async Task<ActionResult<PagedResult<dynamic>>> ExecuteQuery(
+            int id,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 0,
+            [FromBody] Dictionary<string, object>? parameters = null)
         {
             try
             {
-                var results = await _sqlQueryService.ExecuteQueryAsync(id, parameters);
-                return Ok(results);
-            }
-            catch (NotFoundException)
-            {
-                return NotFound();
+                parameters ??= new Dictionary<string, object>();
+                var result = await _sqlQueryService.ExecuteQueryAsync(
+                    id, 
+                    parameters,
+                    pageNumber, 
+                    pageSize
+                );
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { error = ex.Message });
+                return BadRequest(ex.Message);
             }
         }
     }
