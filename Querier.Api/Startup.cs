@@ -418,6 +418,7 @@ namespace Querier.Api
                 var allowedOrigins = settingService.GetSettingValue("api:allowedOrigins", "*").Result?.Split(',');
                 var allowedMethods = settingService.GetSettingValue("api:allowedMethods", "GET,POST,DELETE,OPTIONS,PUT").Result?.Split(',');
                 var allowedHeaders = settingService.GetSettingValue("api:allowedHeaders", "X-Request-Token,Accept,Content-Type,Authorization").Result?.Split(',');
+                var preflightMaxAge = settingService.GetSettingValue("api:PreflightMaxAge", "10").Result;
 
                 app.UseCors(builder =>
                 {
@@ -447,6 +448,8 @@ namespace Querier.Api
                     {
                         builder.WithMethods(allowedMethods);
                     }
+
+                    builder.SetPreflightMaxAge(TimeSpan.FromMinutes(Convert.ToInt32(preflightMaxAge)));
                 });
             }
 
