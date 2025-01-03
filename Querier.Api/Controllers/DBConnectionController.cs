@@ -13,6 +13,8 @@ using Querier.Api.Domain.Entities.QDBConnection;
 using Querier.Api.Domain.Services;
 using System.Collections.Generic;
 using System;
+using System.Linq;
+using Querier.Api.Application.DTOs.Responses.DBConnection;
 
 namespace Querier.Api.Controllers
 {
@@ -201,6 +203,50 @@ namespace Querier.Api.Controllers
             {
                 _logger.LogError(ex, "Error analyzing query");
                 return StatusCode(500, "An error occurred while analyzing the query");
+            }
+        }
+
+        /// <summary>
+        /// Enumerates database servers available on the network
+        /// </summary>
+        /// <remarks>
+        /// Searches for accessible database servers of the specified type on the network.
+        /// 
+        /// Supported database types:
+        /// - SQLServer
+        /// - MySQL
+        /// - PostgreSQL
+        /// 
+        /// Sample request:
+        ///     GET /api/v1/dbconnection/enumerate-servers/SQLServer
+        /// </remarks>
+        /// <param name="databaseType">Type of database to search for</param>
+        /// <returns>List of found servers with their information</returns>
+        /// <response code="200">Returns the list of found servers</response>
+        /// <response code="400">If the database type is not supported</response>
+        [HttpGet("enumerate-servers/{databaseType}")]
+        [ProducesResponseType(typeof(List<DatabaseServerInfo>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<List<DatabaseServerInfo>>> EnumerateServers(string databaseType)
+        {
+            try
+            {
+                if (!new[] { "SQLServer", "MySQL", "PostgreSQL" }.Contains(databaseType))
+                {
+                    return BadRequest($"Database type '{databaseType}' is not supported. Supported types are: SQLServer, MySQL, PostgreSQL");
+                }
+
+                var servers = await _dbConnectionService.EnumerateServersAsync(databaseType);
+                return Ok(servers);
+            }
+            catch (NotSupportedException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error enumerating {DatabaseType} servers", databaseType);
+                return StatusCode(500, $"An error occurred while enumerating {databaseType} servers");
             }
         }
     }
