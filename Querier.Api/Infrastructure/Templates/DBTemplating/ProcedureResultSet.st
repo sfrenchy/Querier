@@ -9,10 +9,10 @@ namespace $nameSpace$.ProcedureResultSets
         public partial class $procedure.CSName$Result
         {
             $procedure.OutputSet: {column|
-                [JsonPropertyName("$column.Name;format="capital"$")]
-                [JsonProperty("$column.Name;format="capital"$", Required = Required.AllowNull, NullValueHandling = NullValueHandling.Include)]
+                [JsonPropertyName("$column.Name$")]
+                [JsonProperty("$column.Name$", Required = Required.AllowNull, NullValueHandling = NullValueHandling.Include)]
                 $column.ColumnAttribute$
-                public $column.CSType$ $column.CSName$ { get; set; \}   
+                public $column.CSType$ $column.CSName$ { get; set; \}
             }$
         \}
     }$

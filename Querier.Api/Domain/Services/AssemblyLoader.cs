@@ -39,61 +39,71 @@ namespace Querier.Api.Domain.Services
                     try
                     {
                         var assembly = Assembly.LoadFrom(file);
-                        var dynamicInterfaceType = typeof(IDynamicContextProceduresServicesResolver);
 
-                        if (assembly.GetTypes().Any(t => dynamicInterfaceType.IsAssignableFrom(t)))
+                        // Load procedure services
+                        var procedureServicesResolverType = assembly.GetTypes()
+                            .FirstOrDefault(t => typeof(IDynamicContextProceduresServicesResolver).IsAssignableFrom(t));
+
+                        if (procedureServicesResolverType != null)
                         {
-                            var resolverTypes = assembly.GetTypes()
-                                .Where(t => dynamicInterfaceType.IsAssignableFrom(t))
-                                .ToList();
-
-                            if (resolverTypes.Count != 1)
-                            {
-                                logger.LogWarning($"Assembly {fileName} contains {resolverTypes.Count} implementations of IDynamicContextProceduresServicesResolver. Skipping.");
-
-                            }
-
-                            var resolverType = resolverTypes.First();
-                            var resolver = (IDynamicContextProceduresServicesResolver)Activator.CreateInstance(resolverType);
+                            var resolver = (IDynamicContextProceduresServicesResolver)Activator.CreateInstance(procedureServicesResolverType);
 
                             // Ajouter au DynamicContextList
                             var dynamicContextList = DynamicContextList.Instance;
 
                             resolver.ConfigureServices((IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)), connection.ConnectionString);
                             var dynamicContextListService = serviceProvider.GetRequiredService<IDynamicContextList>();
-                            Console.WriteLine($"Adding DynamicContext {connection.Name}");
+                            logger.LogInformation($"Adding DynamicContext {connection.Name} for procedures");
                             dynamicContextListService.DynamicContexts.Add(connection.Name, resolver);
 
                             foreach (KeyValuePair<Type, Type> service in resolver.ProceduresServices)
                             {
-                                Console.WriteLine($"Registering service {service.Key}");
+                                logger.LogInformation($"Registering procedure service {service.Key}");
                                 serviceProvider.GetRequiredService<IServiceCollection>().AddSingleton(service.Key, service.Value);
                             }
+                        }
 
-                            // Ajouter les contrôleurs dynamiquement
-                            partManager.ApplicationParts.Add(new AssemblyPart(assembly));
-                            var feature = new ControllerFeature();
-                            partManager.PopulateFeature(feature);
+                        // Load entity services
+                        var entityServicesResolverType = assembly.GetTypes()
+                            .FirstOrDefault(t => typeof(IDynamicContextEntityServicesResolver).IsAssignableFrom(t));
 
-                            // Log des contrôleurs trouvés
-                            foreach (var controller in feature.Controllers)
+                        if (entityServicesResolverType != null)
+                        {
+                            var resolver = (IDynamicContextEntityServicesResolver)Activator.CreateInstance(entityServicesResolverType);
+
+                            resolver.ConfigureServices((IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)), connection.ConnectionString);
+                            logger.LogInformation($"Adding DynamicContext {connection.Name} for entities");
+
+                            foreach (KeyValuePair<Type, Type> service in resolver.EntityServices)
                             {
-                                logger.LogInformation($"Found controller: {controller.FullName}");
-                                foreach (var method in controller.GetMethods())
+                                logger.LogInformation($"Registering entity service {service.Key}");
+                                serviceProvider.GetRequiredService<IServiceCollection>().AddScoped(service.Key, service.Value);
+                            }
+                        }
+
+                        // Ajouter les contrôleurs dynamiquement
+                        partManager.ApplicationParts.Add(new AssemblyPart(assembly));
+                        var feature = new ControllerFeature();
+                        partManager.PopulateFeature(feature);
+
+                        // Log des contrôleurs trouvés
+                        foreach (var controller in feature.Controllers)
+                        {
+                            logger.LogInformation($"Found controller: {controller.FullName}");
+                            foreach (var method in controller.GetMethods())
+                            {
+                                var attributes = method.GetCustomAttributes(typeof(HttpGetAttribute), true)
+                                    .Concat(method.GetCustomAttributes(typeof(HttpPostAttribute), true))
+                                    .Concat(method.GetCustomAttributes(typeof(HttpPutAttribute), true))
+                                    .Concat(method.GetCustomAttributes(typeof(HttpDeleteAttribute), true));
+                                if (attributes.Any())
                                 {
-                                    var attributes = method.GetCustomAttributes(typeof(HttpGetAttribute), true)
-                                        .Concat(method.GetCustomAttributes(typeof(HttpPostAttribute), true))
-                                        .Concat(method.GetCustomAttributes(typeof(HttpPutAttribute), true))
-                                        .Concat(method.GetCustomAttributes(typeof(HttpDeleteAttribute), true));
-                                    if (attributes.Any())
-                                    {
-                                        logger.LogInformation($"  - Route: {method.Name}");
-                                    }
+                                    logger.LogInformation($"  - Route: {method.Name}");
                                 }
                             }
-
-                            logger.LogInformation($"Successfully loaded assembly {fileName} for context {connection.Name}");
                         }
+
+                        logger.LogInformation($"Successfully loaded assembly {fileName} for context {connection.Name}");
                     }
                     catch (Exception ex)
                     {

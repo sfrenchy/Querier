@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Antlr4.StringTemplate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +56,7 @@ using Querier.Api.Domain.Entities.QDBConnection;
 using Querier.Api.Infrastructure.Data.Context;
 using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Parameters;
+using Querier.Api.Infrastructure.Database.Models;
 
 namespace Querier.Api.Domain.Services
 {
@@ -158,7 +160,8 @@ namespace Querier.Api.Domain.Services
                 ContextName = contextName,
                 ContextNamespace = connectionNamespace,
                 ModelNamespace = connectionNamespace,
-                SuppressConnectionStringWarning = true
+                SuppressConnectionStringWarning = true,
+                SuppressOnConfiguring = true
             };
 
             var scaffoldedModelSources = scaffolder.ScaffoldModel(connection.ConnectionString, dbOpts, modelOpts, codeGenOpts);
@@ -186,12 +189,20 @@ namespace Querier.Api.Domain.Services
             {
                 List<StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
                 procedureDescription = JsonConvert.SerializeObject(storedProcedures);
-                var templatePath = Path.Combine(
-                    Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureParameters.st"
-                );
-                var procedureParamsTemplate = new Template(File.ReadAllText(templatePath), '$', '$');
-                procedureParamsTemplate.Add("nameSpace", connectionNamespace);
-                procedureParamsTemplate.Add("procedureList", storedProcedures);
+
+                var procedureModel = new StoredProcedureTemplateModel
+                {
+                    NameSpace = connectionNamespace,
+                    ContextNameSpace = contextName,
+                    ContextRoute = connection.ContextApiRoute,
+                    ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
+                };
+
+                var procedureParamsTemplate = new Template(File.ReadAllText(
+                    Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureParameters.st")
+                ), '$', '$');
+                procedureParamsTemplate.Add("nameSpace", procedureModel.NameSpace);
+                procedureParamsTemplate.Add("procedureList", procedureModel.ProcedureList);
                 string procedureParamsContent = procedureParamsTemplate.Render();
                 srcZipContent.Add("ProcedureParameters\\ProcedureParameters.cs", procedureParamsContent);
                 sourceFiles.Add(procedureParamsContent);
@@ -199,8 +210,8 @@ namespace Querier.Api.Domain.Services
                 var procedureResultTemplate = new Template(File.ReadAllText(
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureResultSet.st")
                 ), '$', '$');
-                procedureResultTemplate.Add("nameSpace", connectionNamespace);
-                procedureResultTemplate.Add("procedureList", storedProcedures.Where(s => s.HasOutput).ToList());
+                procedureResultTemplate.Add("nameSpace", procedureModel.NameSpace);
+                procedureResultTemplate.Add("procedureList", procedureModel.ProcedureList.Where(s => s.HasOutput).ToList());
                 string procedureResultContent = procedureResultTemplate.Render();
                 srcZipContent.Add("ProcedureResultSet\\ProcedureResultSet.cs", procedureResultContent);
                 sourceFiles.Add(procedureResultContent);
@@ -208,8 +219,8 @@ namespace Querier.Api.Domain.Services
                 var procedureReportRequestTemplate = new Template(File.ReadAllText(
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureReportRequests.st")
                 ), '$', '$');
-                procedureReportRequestTemplate.Add("nameSpace", connectionNamespace);
-                procedureReportRequestTemplate.Add("procedureList", storedProcedures);
+                procedureReportRequestTemplate.Add("nameSpace", procedureModel.NameSpace);
+                procedureReportRequestTemplate.Add("procedureList", procedureModel.ProcedureList);
                 string procedureReportRequestContent = procedureReportRequestTemplate.Render();
                 srcZipContent.Add("ProcedureReportRequests\\ProcedureReportRequests.cs", procedureReportRequestContent);
                 sourceFiles.Add(procedureReportRequestContent);
@@ -217,9 +228,9 @@ namespace Querier.Api.Domain.Services
                 var procedureContextTemplate = new Template(File.ReadAllText(
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureContext.st")
                 ), '$', '$');
-                procedureContextTemplate.Add("nameSpace", connectionNamespace);
-                procedureContextTemplate.Add("contextNameSpace", contextName);
-                procedureContextTemplate.Add("procedureList", storedProcedures);
+                procedureContextTemplate.Add("nameSpace", procedureModel.NameSpace);
+                procedureContextTemplate.Add("contextNameSpace", procedureModel.ContextNameSpace);
+                procedureContextTemplate.Add("procedureList", procedureModel.ProcedureList);
                 string procedureContextContent = procedureContextTemplate.Render();
                 srcZipContent.Add("ProcedureContext\\ProcedureContext.cs", procedureContextContent);
                 sourceFiles.Add(procedureContextContent);
@@ -227,30 +238,84 @@ namespace Querier.Api.Domain.Services
                 var procedureServiceTemplate = new Template(File.ReadAllText(
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureService.st")
                 ), '$', '$');
-                procedureServiceTemplate.Add("nameSpace", connectionNamespace);
-                procedureServiceTemplate.Add("contextNameSpace", contextName);
-                procedureServiceTemplate.Add("procedureList", storedProcedures);
+                procedureServiceTemplate.Add("nameSpace", procedureModel.NameSpace);
+                procedureServiceTemplate.Add("contextNameSpace", procedureModel.ContextNameSpace);
+                procedureServiceTemplate.Add("procedureList", procedureModel.ProcedureList);
                 string procedureServiceContent = procedureServiceTemplate.Render();
                 srcZipContent.Add("ProcedureService\\ProcedureService.cs", procedureServiceContent);
                 sourceFiles.Add(procedureServiceContent);
 
-                var procedureServiceResolverTemplate = new Template(File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureServiceResolver.st")), '$', '$');
-                procedureServiceResolverTemplate.Add("nameSpace", connectionNamespace);
-                procedureServiceResolverTemplate.Add("contextNameSpace", contextName);
-                procedureServiceResolverTemplate.Add("procedureList", storedProcedures);
+                var procedureServiceResolverTemplate = new Template(File.ReadAllText(
+                    Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureServiceResolver.st")
+                ), '$', '$');
+                procedureServiceResolverTemplate.Add("nameSpace", procedureModel.NameSpace);
+                procedureServiceResolverTemplate.Add("contextNameSpace", procedureModel.ContextNameSpace);
+                procedureServiceResolverTemplate.Add("procedureList", procedureModel.ProcedureList);
                 string procedureServiceResolverContent = procedureServiceResolverTemplate.Render();
                 srcZipContent.Add("ProcedureServiceResolver\\ProcedureServiceResolver.cs", procedureServiceResolverContent);
                 sourceFiles.Add(procedureServiceResolverContent);
 
-                var procedureControllerTemplate = new Template(File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureController.st")), '$', '$');
-                procedureControllerTemplate.Add("nameSpace", connectionNamespace);
-                procedureControllerTemplate.Add("contextNameSpace", contextName);
-                procedureControllerTemplate.Add("procedureList", storedProcedures);
-                procedureControllerTemplate.Add("contextRoute", connection.ContextApiRoute);
+                var procedureControllerTemplate = new Template(File.ReadAllText(
+                    Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "ProcedureController.st")
+                ), '$', '$');
+                procedureControllerTemplate.Add("nameSpace", procedureModel.NameSpace);
+                procedureControllerTemplate.Add("contextNameSpace", procedureModel.ContextNameSpace);
+                procedureControllerTemplate.Add("procedureList", procedureModel.ProcedureList);
+                procedureControllerTemplate.Add("contextRoute", procedureModel.ContextRoute);
                 string procedureControllerContent = procedureControllerTemplate.Render();
                 srcZipContent.Add("ProcedureController\\ProcedureController.cs", procedureControllerContent);
                 sourceFiles.Add(procedureControllerContent);
             }
+
+            // Extract entity metadata from scaffolded model
+            var entityModel = new TemplateModel
+            {
+                NameSpace = connectionNamespace,
+                ContextNameSpace = contextName,
+                ContextRoute = connection.ContextApiRoute,
+                EntityList = ExtractEntityMetadata(scaffoldedModelSources)
+            };
+
+            // Generate CRUD code using templates
+            var entityDtoTemplate = new Template(File.ReadAllText(
+                Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "EntityDto.st")
+            ), '$', '$');
+            entityDtoTemplate.Add("nameSpace", entityModel.NameSpace);
+            entityDtoTemplate.Add("entityList", entityModel.EntityList);
+            string entityDtoContent = entityDtoTemplate.Render();
+            srcZipContent.Add("DTOs\\EntityDtos.cs", entityDtoContent);
+            sourceFiles.Add(entityDtoContent);
+
+            var entityServiceTemplate = new Template(File.ReadAllText(
+                Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "EntityService.st")
+            ), '$', '$');
+            entityServiceTemplate.Add("nameSpace", entityModel.NameSpace);
+            entityServiceTemplate.Add("contextNameSpace", entityModel.ContextNameSpace);
+            entityServiceTemplate.Add("entityList", entityModel.EntityList);
+            string entityServiceContent = entityServiceTemplate.Render();
+            srcZipContent.Add("Services\\EntityServices.cs", entityServiceContent);
+            sourceFiles.Add(entityServiceContent);
+
+            var entityControllerTemplate = new Template(File.ReadAllText(
+                Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "EntityController.st")
+            ), '$', '$');
+            entityControllerTemplate.Add("nameSpace", entityModel.NameSpace);
+            entityControllerTemplate.Add("contextRoute", entityModel.ContextRoute);
+            entityControllerTemplate.Add("entityList", entityModel.EntityList);
+            string entityControllerContent = entityControllerTemplate.Render();
+            srcZipContent.Add("Controllers\\EntityControllers.cs", entityControllerContent);
+            sourceFiles.Add(entityControllerContent);
+
+            // Generate entity services resolver
+            var entityServiceResolverTemplate = new Template(File.ReadAllText(
+                Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", "EntityServiceResolver.st")
+            ), '$', '$');
+            entityServiceResolverTemplate.Add("nameSpace", entityModel.NameSpace);
+            entityServiceResolverTemplate.Add("contextNameSpace", entityModel.ContextNameSpace);
+            entityServiceResolverTemplate.Add("entityList", entityModel.EntityList);
+            string entityServiceResolverContent = entityServiceResolverTemplate.Render();
+            srcZipContent.Add("Services\\EntityServiceResolver.cs", entityServiceResolverContent);
+            sourceFiles.Add(entityServiceResolverContent);
 
             using (var sourceStream = new MemoryStream())
             {
@@ -960,6 +1025,121 @@ namespace Querier.Api.Domain.Services
                 _logger.LogError(ex, "Error enumerating {DatabaseType} servers", databaseType);
                 throw;
             }
+        }
+
+        private List<TemplateEntityMetadata> ExtractEntityMetadata(ScaffoldedModel scaffoldedModel)
+        {
+            var entities = new List<TemplateEntityMetadata>();
+            var entityFiles = scaffoldedModel.AdditionalFiles.Where(f => !f.Path.EndsWith("Context.cs"));
+            var pluralizer = new Bricelam.EntityFrameworkCore.Design.Pluralizer();
+
+            foreach (var entityFile in entityFiles)
+            {
+                var syntaxTree = CSharpSyntaxTree.ParseText(entityFile.Code);
+                var root = syntaxTree.GetRoot();
+                var classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().First();
+                
+                var entityName = classDeclaration.Identifier.Text;
+                var entity = new TemplateEntityMetadata
+                {
+                    Name = entityName,
+                    PluralName = pluralizer.Pluralize(entityName),
+                    Properties = new List<TemplateProperty>()
+                };
+
+                foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
+                {
+                    var attributes = property.AttributeLists
+                        .SelectMany(al => al.Attributes)
+                        .Select(a => a.Name.ToString())
+                        .ToList();
+
+                    // Check for [Key] attribute or if property name contains "Id" or ends with "Id"
+                    var isKey = attributes.Contains("Key") || 
+                               property.Identifier.Text.Equals("Id", StringComparison.OrdinalIgnoreCase) ||
+                               property.Identifier.Text.EndsWith("Id", StringComparison.OrdinalIgnoreCase);
+
+                    var isRequired = attributes.Contains("Required");
+                    var isAutoGenerated = attributes.Contains("DatabaseGenerated") && 
+                        property.AttributeLists
+                            .SelectMany(al => al.Attributes)
+                            .Any(a => a.ArgumentList?.Arguments
+                                .Any(arg => arg.ToString().Contains("DatabaseGeneratedOption.Identity")) ?? false);
+
+                    var prop = new TemplateProperty
+                    {
+                        Name = property.Identifier.Text,
+                        CSName = property.Identifier.Text,
+                        CSType = property.Type.ToString(),
+                        IsKey = isKey,
+                        IsRequired = isRequired,
+                        IsAutoGenerated = isAutoGenerated
+                    };
+
+                    entity.Properties.Add(prop);
+
+                    if (isKey)
+                    {
+                        entity.KeyType = property.Type.ToString();
+                        entity.KeyName = property.Identifier.Text;
+                    }
+                }
+
+                // Si aucune clé n'a été trouvée, on prend la première propriété qui se termine par "Id"
+                if (string.IsNullOrEmpty(entity.KeyType))
+                {
+                    var idProperty = entity.Properties.FirstOrDefault(p => 
+                        p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) ||
+                        p.Name.EndsWith("Id", StringComparison.OrdinalIgnoreCase));
+
+                    if (idProperty != null)
+                    {
+                        idProperty.IsKey = true;
+                        entity.KeyType = idProperty.CSType;
+                        entity.KeyName = idProperty.Name;
+                    }
+                    else
+                    {
+                        // Fallback: utiliser la première propriété comme clé
+                        var firstProperty = entity.Properties.First();
+                        firstProperty.IsKey = true;
+                        entity.KeyType = firstProperty.CSType;
+                        entity.KeyName = firstProperty.Name;
+                    }
+                }
+
+                entities.Add(entity);
+            }
+
+            return entities;
+        }
+
+        private List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(List<StoredProcedure> procedures)
+        {
+            return procedures.Select(p => new StoredProcedureMetadata
+            {
+                Name = p.Name,
+                CSName = p.CSName,
+                CSReturnSignature = p.CSReturnSignature,
+                CSParameterSignature = p.CSParameterSignature,
+                InlineParameters = p.InlineParameters,
+                HasOutput = p.HasOutput,
+                HasParameters = p.HasParameters,
+                Parameters = p.Parameters.Select(param => new TemplateProperty
+                {
+                    Name = param.Name,
+                    CSName = param.CSName,
+                    CSType = param.CSType,
+                    SqlParameterType = param.SqlParameterType
+                }).ToList(),
+                OutputSet = p.OutputSet.Select(col => new TemplateProperty
+                {
+                    Name = col.Name,
+                    CSName = col.CSName,
+                    CSType = col.CSType
+                }).ToList(),
+                SummableOutputColumns = p.SummableOutputColumns
+            }).ToList();
         }
     }
 }
