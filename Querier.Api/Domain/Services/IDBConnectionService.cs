@@ -4,6 +4,7 @@ using Querier.Api.Application.DTOs.Requests.DBConnection;
 using Querier.Api.Application.DTOs.Responses.DBConnection;
 using Querier.Api.Domain.Entities.QDBConnection;
 using static Querier.Api.Domain.Services.DBConnectionService;
+using Querier.Api.Infrastructure.Database.Models;
 
 namespace Querier.Api.Domain.Services
 {
@@ -16,5 +17,6 @@ namespace Querier.Api.Domain.Services
         Task<QueryAnalysisResponse> GetQueryObjects(int connectionId, string query);
         Task<List<DatabaseServerInfo>> EnumerateServersAsync(string databaseType);
         Task<SourceDownload> GetConnectionSourcesAsync(int connectionId);
+        Task<List<EndpointInfoResponse>> GetEndpointsAsync(int connectionId);
     }
 }

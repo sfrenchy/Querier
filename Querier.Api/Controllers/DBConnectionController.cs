@@ -280,5 +280,31 @@ namespace Querier.Api.Controllers
                 return StatusCode(500, $"An error occurred while enumerating {databaseType} servers");
             }
         }
+
+        /// <summary>
+        /// Obtient la liste des endpoints disponibles pour une connexion
+        /// </summary>
+        /// <param name="id">ID de la connexion</param>
+        /// <returns>Liste des endpoints avec leurs schémas JSON</returns>
+        [HttpGet("{id}/endpoints")]
+        [ProducesResponseType(typeof(List<EndpointInfoResponse>), 200)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<List<EndpointInfoResponse>>> GetEndpoints(int id)
+        {
+            try
+            {
+                var endpoints = await _dbConnectionService.GetEndpointsAsync(id);
+                return Ok(endpoints);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound($"Connection with ID {id} not found");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting endpoints for connection {ConnectionId}", id);
+                throw;
+            }
+        }
     }
 }
