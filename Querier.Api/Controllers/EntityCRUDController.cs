@@ -1,11 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
-using Querier.Api.Tools;
 using Querier.Api.Application.DTOs.Requests.Entity;
 using Querier.Api.Application.DTOs.Responses.Entity;
 using Querier.Api.Domain.Common.Models;

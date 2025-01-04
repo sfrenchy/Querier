@@ -4,8 +4,6 @@ using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using System.Linq;
 using Querier.Api.Application.DTOs.Requests.Setup;
 using Querier.Api.Domain.Entities.Auth;

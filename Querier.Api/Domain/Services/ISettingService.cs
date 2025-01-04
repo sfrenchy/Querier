@@ -1,8 +1,4 @@
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using Microsoft.AspNetCore.Authorization;
-using System;
 using System.Collections.Generic;
 using Querier.Api.Domain.Common.Metadata;
 

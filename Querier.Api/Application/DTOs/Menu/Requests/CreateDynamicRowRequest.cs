@@ -1,5 +1,3 @@
-using Querier.Api.Domain.Entities.Menu;
-
 namespace Querier.Api.Application.DTOs.Menu.Requests
 {
     public class CreateDynamicRowRequest

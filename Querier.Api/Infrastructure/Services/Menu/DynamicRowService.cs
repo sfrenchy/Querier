@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Querier.Api.Application.DTOs.Menu.Requests;
-using Querier.Api.Application.DTOs.Menu.Responses;
 using Querier.Api.Application.Interfaces.Repositories.Menu;
 using Querier.Api.Application.Interfaces.Services.Menu;
 using Querier.Api.Domain.Entities.Menu;

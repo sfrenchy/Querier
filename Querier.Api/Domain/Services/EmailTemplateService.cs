@@ -1,12 +1,10 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Antlr4.StringTemplate;
-using System.Collections;
 
 namespace Querier.Api.Domain.Services
 {

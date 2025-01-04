@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Querier.Api.Application.DTOs.Menu.Requests;
-using Querier.Api.Application.DTOs.Menu.Responses;
 
 namespace Querier.Api.Application.Interfaces.Services.Menu
 {

@@ -2,8 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Querier.Api.Infrastructure.Data.Context;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Querier.Api.Application.Interfaces.Repositories.Menu;
-using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Infrastructure.Data.Repositories.Menu
 {

@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Querier.Api.Tools;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Services;
 using Querier.Api.Infrastructure.Data.Context;

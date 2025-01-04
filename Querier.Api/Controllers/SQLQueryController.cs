@@ -5,9 +5,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Querier.Api.Domain.Entities;
-using Querier.Api.Domain.Exceptions;
 using Querier.Api.Application.DTOs;
-using Querier.Api.Domain.Common;
 using Querier.Api.Domain.Common.Models;
 
 namespace Querier.Api.Controllers

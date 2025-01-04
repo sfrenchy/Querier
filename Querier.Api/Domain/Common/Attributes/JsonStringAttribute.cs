@@ -2,6 +2,5 @@
 
 namespace Querier.Api.Domain.Common.Attributes
 {
-    public class JsonStringAttribute : Attribute
-    { }
+    public class JsonStringAttribute : Attribute;
 }

@@ -2,11 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
 using Microsoft.Extensions.Logging;
-using System.Linq;
 using Microsoft.AspNetCore.Identity;
-using System.Collections.Generic;
 using Querier.Api.Application.DTOs.Auth.Email;
 using Querier.Api.Application.DTOs.Auth.Password;
 using Querier.Api.Application.DTOs.Requests.Auth;

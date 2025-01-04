@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs.Requests.Auth;

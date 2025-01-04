@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 using System.IO;
 using System.IO.Compression;
@@ -15,11 +14,10 @@ using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Proxies;
 using Microsoft.EntityFrameworkCore.Scaffolding;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Npgsql;
@@ -27,14 +25,13 @@ using Querier.Api.Application.DTOs.Requests.DBConnection;
 using Querier.Api.Application.DTOs.Responses.DBConnection;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Domain.Common.Enums;
-using Querier.Api.Domain.Entities.QDBConnection.Endpoints;
 using Querier.Api.Infrastructure.Data.Context;
 using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Templates;
+using Swashbuckle.AspNetCore.Swagger;
 using System.Security.Cryptography;
 using QDBConnection = Querier.Api.Domain.Entities.QDBConnection.QDBConnection;
 using ParamInfo = Querier.Api.Application.DTOs.Responses.DBConnection.ParameterInfo;
-using ReflectionParameterInfo = System.Reflection.ParameterInfo;
 
 namespace Querier.Api.Domain.Services
 {
@@ -234,7 +231,11 @@ namespace Querier.Api.Domain.Services
 
             result.State = QDBConnectionState.Available;
             await AssemblyLoader.LoadAssemblyFromQDBConnection(newConnection, _serviceProvider, _partManager, _logger);
-
+            
+            // Regenerate Swagger documentation
+            var swaggerProvider = _serviceProvider.GetRequiredService<ISwaggerProvider>();
+            AssemblyLoader.RegenerateSwagger(swaggerProvider, _logger);
+            
             return result;
         }
 

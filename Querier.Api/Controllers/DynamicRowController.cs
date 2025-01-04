@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Querier.Api.Application.DTOs.Menu.Requests;
-using Querier.Api.Application.DTOs.Menu.Responses;
 using Querier.Api.Application.Interfaces.Services.Menu;
 
 namespace Querier.Api.Controllers

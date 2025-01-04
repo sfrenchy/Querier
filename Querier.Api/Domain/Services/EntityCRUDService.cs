@@ -12,12 +12,10 @@ using Newtonsoft.Json;
 using Querier.Api.Tools;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.IO;
-using DocumentFormat.OpenXml.Drawing.Charts;
 using Querier.Api.Application.DTOs.Requests.Entity;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Common.ValueObjects;
-using Querier.Api.Infrastructure.DependencyInjection;
 using DataTable = System.Data.DataTable;
 
 namespace Querier.Api.Domain.Services
