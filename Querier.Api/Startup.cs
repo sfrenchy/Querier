@@ -19,6 +19,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Querier.Api.Services.Repositories.User;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Swagger;
 using Querier.Api.Application.Interfaces.Infrastructure;
@@ -296,9 +297,9 @@ namespace Querier.Api
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
-                builder.AddConsole(options =>
+                builder.AddSimpleConsole(options =>
                 {
-                    options.IncludeScopes = true;
+                    options.SingleLine = true;
                     options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] ";
                 });
                 builder.AddDebug();
