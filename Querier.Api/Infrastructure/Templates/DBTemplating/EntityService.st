@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using $nameSpace$.DTOs;
 using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Domain.Common.Models;
 
 namespace $nameSpace$.Services
 {
@@ -14,7 +15,7 @@ namespace $nameSpace$.Services
     #region $entity.Name$
     public interface I$entity.Name$Service : IDynamicContextEntityService
     {
-        Task<List<$entity.Name$Dto>> GetAllAsync();
+        Task<PagedResult<$entity.Name$Dto>> GetAllAsync(PaginationParameters? parameters = null);
         Task<$entity.Name$Dto?> GetByIdAsync($entity.KeyType$ id);
         Task<$entity.Name$Dto> CreateAsync(Create$entity.Name$Dto createDto);
         Task<$entity.Name$Dto?> UpdateAsync($entity.KeyType$ id, Update$entity.Name$Dto updateDto);
@@ -64,11 +65,21 @@ namespace $nameSpace$.Services
             }$
         \}
 
-        public async Task<List<$entity.Name$Dto>> GetAllAsync()
+        public async Task<PagedResult<$entity.Name$Dto>> GetAllAsync(PaginationParameters? parameters = null)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
-            var entities = await context.$entity.PluralName$.ToListAsync();
-            return entities.Select(MapToDto).ToList();
+            var query = context.$entity.PluralName$.AsQueryable();
+            
+            var total = await query.CountAsync();
+            
+            if (parameters != null)
+            {
+                var skip = (parameters.PageNumber - 1) * parameters.PageSize;
+                query = query.Skip(skip).Take(parameters.PageSize);
+            \}
+                
+            var items = await query.ToListAsync();
+            return new PagedResult<$entity.Name$Dto>(items.Select(MapToDto), total);
         \}
 
         public async Task<$entity.Name$Dto?> GetByIdAsync($entity.KeyType$ id)

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using $nameSpace$.DTOs;
 using $nameSpace$.Services;
+using Querier.Api.Domain.Common.Models;
 
 namespace $nameSpace$.Controllers
 {
@@ -27,11 +28,11 @@ namespace $nameSpace$.Controllers
         \}
 
         [HttpGet]
-        [ProducesResponseType(typeof(List<$entity.Name$Dto>), 200)]
-        public async Task<IActionResult> GetAll()
+        [ProducesResponseType(typeof(PagedResult<$entity.Name$Dto>), 200)]
+        public async Task<IActionResult> GetAll([FromQuery] PaginationParameters? parameters = null)
         {
             _logger.LogInformation("GetAll $entity.Name$ action called");
-            var result = await _service.GetAllAsync();
+            var result = await _service.GetAllAsync(parameters);
             return Ok(result);
         \}
 
