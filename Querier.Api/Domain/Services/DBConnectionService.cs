@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 using System.IO;
 using System.IO.Compression;
@@ -13,6 +15,8 @@ using System.Runtime.Loader;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 using Antlr4.StringTemplate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -52,14 +56,29 @@ using Querier.Api.Application.DTOs.Requests.DBConnection;
 using Querier.Api.Application.DTOs.Responses.DBConnection;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Domain.Common.Enums;
-using Querier.Api.Domain.Entities.QDBConnection;
+using Querier.Api.Domain.Common.Models;
+using Querier.Api.Domain.Entities.QDBConnection.Endpoints;
 using Querier.Api.Infrastructure.Data.Context;
 using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Parameters;
 using Querier.Api.Infrastructure.Database.Models;
+using System.Security.Cryptography;
+using QDBConnection = Querier.Api.Domain.Entities.QDBConnection.QDBConnection;
+using EndpointParameterInfo = Querier.Api.Application.DTOs.Responses.DBConnection.ParameterInfo;
 
 namespace Querier.Api.Domain.Services
 {
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false)]
+    public class SummaryAttribute : Attribute
+    {
+        public string Summary { get; }
+
+        public SummaryAttribute(string summary)
+        {
+            Summary = summary;
+        }
+    }
+
     public class DBConnectionService : IDBConnectionService
     {
         private readonly IDbContextFactory<ApiDbContext> _apiDbContextFactory;
@@ -187,8 +206,8 @@ namespace Querier.Api.Domain.Services
             // if scaffolding OK => Generate a common DB Schema representation for stored procedure
             if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == QDBConnectionType.SqlServer)
             {
-                List<StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
-                procedureDescription = JsonConvert.SerializeObject(storedProcedures);
+                List<Querier.Api.Domain.Entities.QDBConnection.StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
+                procedureDescription = JsonSerializer.Serialize(storedProcedures);
 
                 var procedureModel = new StoredProcedureTemplateModel
                 {
@@ -317,6 +336,8 @@ namespace Querier.Api.Domain.Services
             srcZipContent.Add("Services\\EntityServiceResolver.cs", entityServiceResolverContent);
             sourceFiles.Add(entityServiceResolverContent);
 
+            // Créer le zip des sources une seule fois
+            byte[] sourceZipBytes;
             using (var sourceStream = new MemoryStream())
             {
                 using (ZipArchive archive = new ZipArchive(sourceStream, ZipArchiveMode.Create))
@@ -331,19 +352,14 @@ namespace Querier.Api.Domain.Services
                         }
                     }
                 }
-                File.WriteAllBytes(sourceZipPath, sourceStream.ToArray());
+                sourceZipBytes = sourceStream.ToArray();
             }
 
             if (!Directory.Exists("Assemblies"))
                 Directory.CreateDirectory("Assemblies");
             string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
-            using (FileStream srcFileStream = new FileStream(srcPath, FileMode.Create))
-            {
-                using (FileStream zipFileStream = new FileStream(sourceZipPath, FileMode.Open))
-                {
-                    zipFileStream.CopyTo(srcFileStream);
-                }
-            }
+            File.WriteAllBytes(srcPath, sourceZipBytes);
+
             // Templating done, we are now compiling generated sources
             MemoryStream peStream = new MemoryStream();
             MemoryStream pdbStream = new MemoryStream();
@@ -351,62 +367,64 @@ namespace Querier.Api.Domain.Services
 
             if (!emitResult.Success)
             {
-                var errorDetails = string.Join("\n", emitResult.Diagnostics
+                var compilationErrors = emitResult.Diagnostics
                     .Where(d => d.Severity == DiagnosticSeverity.Error)
-                    .Select(d => $"Error {d.Id} at {d.Location}: {d.GetMessage()}"));
-                _logger.LogError($"Code compilation failed with errors:\n{errorDetails}");
-    
-                var sb = new StringBuilder();
-                foreach (var diag in emitResult.Diagnostics)
-                {
-                    sb.AppendLine(diag.ToString());
-                }
-                string errorMessage = sb.ToString();
-                Console.WriteLine(errorMessage);
-                result.State = QDBConnectionState.CompilationError;
-                result.Messages = new List<string>();
-                result.Messages.Add(errorMessage);
-                return result;
+                    .Select(d => new
+                    {
+                        Location = d.Location.GetLineSpan().StartLinePosition,
+                        Message = d.GetMessage(),
+                        ErrorCode = d.Id
+                    })
+                    .ToList();
+
+                var errorMessage = string.Join("\n", compilationErrors.Select(e => 
+                    $"Error {e.ErrorCode} at line {e.Location.Line + 1}: {e.Message}"));
+                
+                _logger.LogError("Code compilation failed:\n{Errors}", errorMessage);
+                return new AddDBConnectionResponse 
+                { 
+                    State = QDBConnectionState.CompilationError,
+                    Messages = new List<string> { errorMessage }
+                };
             }
 
-            // Compiling done, we load the context
-            var assemblyLoadContext = new AssemblyLoadContext("DbContext", false);
+            // Sauvegarder les bytes des assemblies
             peStream.Seek(0, SeekOrigin.Begin);
-            var assembly = assemblyLoadContext.LoadFromStream(peStream);
-            peStream.Seek(0, SeekOrigin.Begin);
+            var assemblyBytes = peStream.ToArray();
             pdbStream.Seek(0, SeekOrigin.Begin);
-            // Store connection to database
-            QDBConnection newConnection = new QDBConnection();
-            newConnection.ContextName = connectionNamespace + "." + contextName;
-            newConnection.ApiRoute = connection.ContextApiRoute;
+            var pdbBytes = pdbStream.ToArray();
 
-            if (!Path.Exists("Assemblies"))
-                Directory.CreateDirectory("Assemblies");
+            // Calculer le hash de l'assembly
+            var hash = ComputeAssemblyHash(assemblyBytes);
 
-            string dllPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.dll");
-            string pdbPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.pdb");
+            // Charger l'assembly depuis une nouvelle copie des bytes
+            var assemblyLoadContext = new AssemblyLoadContext("DbContext", false);
+            var loadedAssembly = assemblyLoadContext.LoadFromStream(new MemoryStream(assemblyBytes));
 
-            using (FileStream dllFileStream = new FileStream(dllPath, FileMode.Create))
+            // Créer la nouvelle connexion
+            var endpoints = ExtractEndpointDescriptions(loadedAssembly);
+            var newConnection = new QDBConnection
             {
-                peStream.CopyTo(dllFileStream);
-            }
-            using (FileStream pdbFileStream = new FileStream(pdbPath, FileMode.Create))
-            {
-                pdbStream.CopyTo(pdbFileStream);
-            }
-
-
-            newConnection.Name = connection.Name;
-            newConnection.ConnectionString = connection.ConnectionString;
-            newConnection.ConnectionType = connection.ConnectionType;
-            newConnection.Description = procedureDescription;
+                Name = connection.Name,
+                ConnectionString = connection.ConnectionString,
+                ConnectionType = connection.ConnectionType,
+                Description = procedureDescription,
+                AssemblyHash = hash,
+                AssemblyDll = assemblyBytes,
+                AssemblyPdb = pdbBytes,
+                AssemblySourceZip = sourceZipBytes,
+                ContextName = connectionNamespace + "." + contextName,
+                ApiRoute = connection.ContextApiRoute
+            };
+            newConnection.Endpoints = endpoints;
+            
             using (var apiDbContext = _apiDbContextFactory.CreateDbContext())
             {
                 apiDbContext.QDBConnections.Add(newConnection);
                 await apiDbContext.SaveChangesAsync();
             }
+
             result.State = QDBConnectionState.Available;
-            File.Delete(sourceZipPath);
             await AssemblyLoader.LoadAssemblyFromQDBConnection(newConnection, _serviceProvider, _partManager, _logger);
 
             AssemblyLoader.RegenerateSwagger(_swaggerProvider, _logger);
@@ -458,6 +476,15 @@ namespace Querier.Api.Domain.Services
                 options: new CSharpCompilationOptions(
                     OutputKind.DynamicallyLinkedLibrary,
                     optimizationLevel: OptimizationLevel.Debug));
+        }
+
+        private string ComputeAssemblyHash(byte[] assemblyBytes)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var hash = sha256.ComputeHash(assemblyBytes);
+                return Convert.ToBase64String(hash);
+            }
         }
 
         private List<MetadataReference> GetCompilationReferences()
@@ -1114,7 +1141,7 @@ namespace Querier.Api.Domain.Services
             return entities;
         }
 
-        private List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(List<StoredProcedure> procedures)
+        private List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(List<Querier.Api.Domain.Entities.QDBConnection.StoredProcedure> procedures)
         {
             return procedures.Select(p => new StoredProcedureMetadata
             {
@@ -1140,6 +1167,419 @@ namespace Querier.Api.Domain.Services
                 }).ToList(),
                 SummableOutputColumns = p.SummableOutputColumns
             }).ToList();
+        }
+
+        public class SourceDownload
+        {
+            public byte[] Content { get; set; }
+            public string FileName { get; set; }
+        }
+
+        public async Task<SourceDownload> GetConnectionSourcesAsync(int connectionId)
+        {
+            using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
+            {
+                var connection = await apiDbContext.QDBConnections.FindAsync(connectionId);
+                if (connection == null)
+                    throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
+
+                if (connection.AssemblySourceZip == null)
+                    throw new InvalidOperationException($"No source code available for connection {connectionId}");
+
+                return new SourceDownload
+                {
+                    Content = connection.AssemblySourceZip,
+                    FileName = $"{connection.Name}.DynamicContext.Sources.zip"
+                };
+            }
+        }
+
+        private List<EndpointDescription> ExtractEndpointDescriptions(Assembly assembly)
+        {
+            var endpoints = new List<EndpointDescription>();
+            
+            foreach (var controller in assembly.GetTypes().Where(t => typeof(ControllerBase).IsAssignableFrom(t)))
+            {
+                var controllerRoute = controller.GetCustomAttributes<RouteAttribute>()
+                    .FirstOrDefault()?.Template ?? string.Empty;
+
+                foreach (var action in controller.GetMethods())
+                {
+                    var httpMethods = action.GetCustomAttributes()
+                        .Where(a => a is HttpGetAttribute || 
+                                  a is HttpPostAttribute || 
+                                  a is HttpPutAttribute || 
+                                  a is HttpDeleteAttribute)
+                        .Select(a => a switch
+                        {
+                            HttpGetAttribute _ => "GET",
+                            HttpPostAttribute _ => "POST",
+                            HttpPutAttribute _ => "PUT",
+                            HttpDeleteAttribute _ => "DELETE",
+                            _ => "GET"
+                        })
+                        .ToList();
+
+                    if (!httpMethods.Any()) continue;
+
+                    var actionRoute = action.GetCustomAttributes<RouteAttribute>()
+                        .FirstOrDefault()?.Template ?? string.Empty;
+
+                    var description = new EndpointDescription
+                    {
+                        Controller = controller.Name,
+                        Action = action.Name,
+                        HttpMethod = string.Join(", ", httpMethods),
+                        Route = CombineRoutes(controllerRoute, actionRoute),
+                        Description = action.GetCustomAttribute<SummaryAttribute>()?.Summary ?? string.Empty,
+                        Parameters = ExtractParameters(action).ToList(),
+                        Responses = ExtractResponses(action).ToList()
+                    };
+
+                    endpoints.Add(description);
+                }
+            }
+
+            return endpoints;
+        }
+
+        private IEnumerable<EndpointParameter> ExtractParameters(MethodInfo method)
+        {
+            foreach (var param in method.GetParameters())
+            {
+                var fromBody = param.GetCustomAttribute<FromBodyAttribute>();
+                var fromQuery = param.GetCustomAttribute<FromQueryAttribute>();
+                var fromRoute = param.GetCustomAttribute<FromRouteAttribute>();
+                var required = param.GetCustomAttribute<RequiredAttribute>();
+
+                var jsonSchema = GenerateJsonSchema(param.ParameterType);
+
+                yield return new EndpointParameter
+                {
+                    Name = param.Name,
+                    Type = param.ParameterType.Name,
+                    Description = param.GetCustomAttribute<SummaryAttribute>()?.Summary ?? string.Empty,
+                    IsRequired = required != null || !param.IsOptional,
+                    Source = fromBody != null ? "FromBody" :
+                            fromQuery != null ? "FromQuery" :
+                            fromRoute != null ? "FromRoute" : "FromQuery",
+                    JsonSchema = jsonSchema
+                };
+            }
+        }
+
+        private IEnumerable<EndpointResponse> ExtractResponses(MethodInfo method)
+        {
+            var produces = method.GetCustomAttributes<ProducesResponseTypeAttribute>().ToList();
+            
+            foreach (var response in produces)
+            {
+                var jsonSchema = response.Type != null ? GenerateJsonSchema(response.Type) : GenerateErrorSchema(response.StatusCode);
+
+                yield return new EndpointResponse
+                {
+                    StatusCode = response.StatusCode,
+                    Type = response.Type?.Name ?? "void",
+                    Description = GetResponseDescription(response.StatusCode),
+                    JsonSchema = jsonSchema
+                };
+            }
+        }
+
+        private string GenerateErrorSchema(int statusCode)
+        {
+            var schema = new
+            {
+                type = "object",
+                properties = new
+                {
+                    code = new
+                    {
+                        type = "string",
+                        description = "Code d'erreur"
+                    },
+                    message = new
+                    {
+                        type = "string",
+                        description = "Message d'erreur"
+                    },
+                    details = new
+                    {
+                        type = "array",
+                        items = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                field = new
+                                {
+                                    type = "string",
+                                    description = "Champ concerné par l'erreur"
+                                },
+                                message = new
+                                {
+                                    type = "string",
+                                    description = "Description de l'erreur"
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            return JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = false });
+        }
+
+        private string GetResponseDescription(int statusCode)
+        {
+            return statusCode switch
+            {
+                200 => "Success",
+                201 => "Created",
+                204 => "No Content",
+                400 => "Bad Request",
+                401 => "Unauthorized",
+                403 => "Forbidden",
+                404 => "Not Found",
+                500 => "Internal Server Error",
+                _ => string.Empty
+            };
+        }
+
+        private string CombineRoutes(params string[] routes)
+        {
+            return string.Join("/", routes
+                .Where(r => !string.IsNullOrEmpty(r))
+                .Select(r => r.Trim('/'))
+            );
+        }
+
+        private string GenerateJsonSchema(Type type)
+        {
+            if (type == null) return null;
+
+            // Gérer les types génériques
+            if (type.IsGenericType)
+            {
+                var genericTypeDef = type.GetGenericTypeDefinition();
+                var genericArgs = type.GetGenericArguments();
+
+                // Cas spécial pour PagedResult<T>
+                if (genericTypeDef == typeof(PagedResult<>))
+                {
+                    var itemType = genericArgs[0];
+                    var schema = new
+                    {
+                        type = "object",
+                        description = "Liste paginée de résultats",
+                        properties = new
+                        {
+                            items = new
+                            {
+                                type = "array",
+                                description = "Liste des éléments",
+                                items = JsonSerializer.Deserialize<object>(GenerateJsonSchema(itemType))
+                            },
+                            total = new
+                            {
+                                type = "integer",
+                                format = "int32",
+                                description = "Nombre total d'éléments"
+                            }
+                        }
+                    };
+                    return JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = false });
+                }
+
+                // Cas spécial pour IEnumerable<T>, List<T>, etc.
+                if (typeof(IEnumerable).IsAssignableFrom(type))
+                {
+                    var itemType = genericArgs[0];
+                    var schema = new
+                    {
+                        type = "array",
+                        description = $"Liste de {itemType.Name}",
+                        items = JsonSerializer.Deserialize<object>(GenerateJsonSchema(itemType))
+                    };
+                    return JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = false });
+                }
+
+                // Cas spécial pour Task<T>
+                if (genericTypeDef == typeof(Task<>))
+                {
+                    return GenerateJsonSchema(genericArgs[0]);
+                }
+
+                // Cas spécial pour les types Nullable<T>
+                if (genericTypeDef == typeof(Nullable<>))
+                {
+                    var schema = JsonSerializer.Deserialize<object>(GenerateJsonSchema(genericArgs[0]));
+                    // Ajouter null comme valeur possible
+                    var schemaDict = JsonSerializer.Deserialize<Dictionary<string, object>>(JsonSerializer.Serialize(schema));
+                    schemaDict["nullable"] = true;
+                    return JsonSerializer.Serialize(schemaDict, new JsonSerializerOptions { WriteIndented = false });
+                }
+            }
+
+            // Pour les types non génériques, utiliser la logique existante
+            var baseSchema = new
+            {
+                type = GetJsonType(type),
+                format = GetJsonFormat(type),
+                description = type.GetCustomAttribute<SummaryAttribute>()?.Summary,
+                required = GetRequiredProperties(type),
+                properties = GetJsonProperties(type),
+                @enum = type.IsEnum ? Enum.GetNames(type) : null,
+                minimum = GetMinValue(type),
+                maximum = GetMaxValue(type),
+                minLength = GetMinLength(type),
+                maxLength = GetMaxLength(type),
+                pattern = GetPattern(type)
+            };
+
+            return JsonSerializer.Serialize(baseSchema, new JsonSerializerOptions { WriteIndented = false });
+        }
+
+        private string[] GetRequiredProperties(Type type)
+        {
+            if (!type.IsClass || type == typeof(string)) return null;
+
+            return type.GetProperties()
+                .Where(p => p.GetCustomAttribute<RequiredAttribute>() != null)
+                .Select(p => p.Name)
+                .ToArray();
+        }
+
+        private object GetMinValue(Type type)
+        {
+            var rangeAttr = type.GetCustomAttribute<RangeAttribute>();
+            return rangeAttr?.Minimum;
+        }
+
+        private object GetMaxValue(Type type)
+        {
+            var rangeAttr = type.GetCustomAttribute<RangeAttribute>();
+            return rangeAttr?.Maximum;
+        }
+
+        private int? GetMinLength(Type type)
+        {
+            var strLengthAttr = type.GetCustomAttribute<StringLengthAttribute>();
+            return strLengthAttr?.MinimumLength;
+        }
+
+        private int? GetMaxLength(Type type)
+        {
+            var strLengthAttr = type.GetCustomAttribute<StringLengthAttribute>();
+            return strLengthAttr?.MaximumLength;
+        }
+
+        private string GetPattern(Type type)
+        {
+            var regexAttr = type.GetCustomAttribute<RegularExpressionAttribute>();
+            return regexAttr?.Pattern;
+        }
+
+        private string GetJsonType(Type type)
+        {
+            if (type == typeof(string)) return "string";
+            if (type == typeof(int) || type == typeof(long)) return "integer";
+            if (type == typeof(float) || type == typeof(double) || type == typeof(decimal)) return "number";
+            if (type == typeof(bool)) return "boolean";
+            if (type == typeof(DateTime)) return "string";
+            if (type.IsArray || typeof(IEnumerable<>).IsAssignableFrom(type)) return "array";
+            if (type.IsEnum) return "string";
+            if (type.IsClass && type != typeof(string)) return "object";
+            return "string";
+        }
+
+        private string GetJsonFormat(Type type)
+        {
+            if (type == typeof(DateTime)) return "date-time";
+            if (type == typeof(int)) return "int32";
+            if (type == typeof(long)) return "int64";
+            if (type == typeof(float)) return "float";
+            if (type == typeof(double)) return "double";
+            if (type == typeof(decimal)) return "decimal";
+            if (type == typeof(string))
+            {
+                var emailAttr = type.GetCustomAttribute<EmailAddressAttribute>();
+                if (emailAttr != null) return "email";
+                
+                var phoneAttr = type.GetCustomAttribute<PhoneAttribute>();
+                if (phoneAttr != null) return "phone";
+                
+                var urlAttr = type.GetCustomAttribute<UrlAttribute>();
+                if (urlAttr != null) return "uri";
+            }
+            return null;
+        }
+
+        private object GetJsonProperties(Type type)
+        {
+            if (!type.IsClass || type == typeof(string)) return null;
+
+            var properties = type.GetProperties()
+                .Where(p => p.CanRead && p.CanWrite)
+                .ToDictionary(
+                    p => p.Name,
+                    p => new
+                    {
+                        type = GetJsonType(p.PropertyType),
+                        format = GetJsonFormat(p.PropertyType),
+                        description = p.GetCustomAttribute<SummaryAttribute>()?.Summary,
+                        required = p.GetCustomAttribute<RequiredAttribute>() != null,
+                        @enum = p.PropertyType.IsEnum ? Enum.GetNames(p.PropertyType) : null,
+                        minimum = GetMinValue(p.PropertyType),
+                        maximum = GetMaxValue(p.PropertyType),
+                        minLength = GetMinLength(p.PropertyType),
+                        maxLength = GetMaxLength(p.PropertyType),
+                        pattern = GetPattern(p.PropertyType)
+                    }
+                );
+
+            return properties.Count > 0 ? properties : null;
+        }
+
+        public async Task<List<EndpointInfoResponse>> GetEndpointsAsync(int connectionId)
+        {
+            using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
+            {
+                var connection = await apiDbContext.QDBConnections
+                    .Include(c => c.Endpoints)
+                        .ThenInclude(e => e.Parameters)
+                    .Include(c => c.Endpoints)
+                        .ThenInclude(e => e.Responses)
+                    .FirstOrDefaultAsync(c => c.Id == connectionId);
+
+                if (connection == null)
+                    throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
+
+                return connection.Endpoints.Select(e => new EndpointInfoResponse
+                {
+                    Controller = e.Controller,
+                    Action = e.Action,
+                    Route = e.Route,
+                    HttpMethod = e.HttpMethod,
+                    Description = e.Description,
+                    Parameters = e.Parameters.Select(p => new Querier.Api.Application.DTOs.Responses.DBConnection.ParameterInfo
+                    {
+                        Name = p.Name,
+                        Type = p.Type,
+                        Description = p.Description,
+                        IsRequired = p.IsRequired,
+                        Source = p.Source,
+                        JsonSchema = p.JsonSchema
+                    }).ToList(),
+                    Responses = e.Responses.Select(r => new ResponseInfo
+                    {
+                        StatusCode = r.StatusCode,
+                        Type = r.Type,
+                        Description = r.Description,
+                        JsonSchema = r.JsonSchema
+                    }).ToList()
+                }).ToList();
+            }
         }
     }
 }

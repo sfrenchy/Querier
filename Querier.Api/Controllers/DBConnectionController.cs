@@ -207,6 +207,37 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
+        /// Downloads the source code of a compiled database connection
+        /// </summary>
+        /// <remarks>
+        /// Returns the source code as a zip file containing all generated files.
+        /// </remarks>
+        /// <param name="connectionId">The ID of the database connection</param>
+        /// <returns>A zip file containing the source code</returns>
+        /// <response code="200">Returns the zip file</response>
+        /// <response code="404">If the connection was not found</response>
+        [HttpGet("{connectionId}/sources")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DownloadSources(int connectionId)
+        {
+            try
+            {
+                var sources = await _dbConnectionService.GetConnectionSourcesAsync(connectionId);
+                return File(sources.Content, "application/zip", sources.FileName);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound($"Database connection with ID {connectionId} not found");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error downloading sources for connection {ConnectionId}", connectionId);
+                return StatusCode(500, "An error occurred while downloading the sources");
+            }
+        }
+
+        /// <summary>
         /// Enumerates database servers available on the network
         /// </summary>
         /// <remarks>
@@ -247,6 +278,32 @@ namespace Querier.Api.Controllers
             {
                 _logger.LogError(ex, "Error enumerating {DatabaseType} servers", databaseType);
                 return StatusCode(500, $"An error occurred while enumerating {databaseType} servers");
+            }
+        }
+
+        /// <summary>
+        /// Obtient la liste des endpoints disponibles pour une connexion
+        /// </summary>
+        /// <param name="id">ID de la connexion</param>
+        /// <returns>Liste des endpoints avec leurs schémas JSON</returns>
+        [HttpGet("{id}/endpoints")]
+        [ProducesResponseType(typeof(List<EndpointInfoResponse>), 200)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<List<EndpointInfoResponse>>> GetEndpoints(int id)
+        {
+            try
+            {
+                var endpoints = await _dbConnectionService.GetEndpointsAsync(id);
+                return Ok(endpoints);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound($"Connection with ID {id} not found");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting endpoints for connection {ConnectionId}", id);
+                throw;
             }
         }
     }
