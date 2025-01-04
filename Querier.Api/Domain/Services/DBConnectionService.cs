@@ -351,22 +351,25 @@ namespace Querier.Api.Domain.Services
 
             if (!emitResult.Success)
             {
-                var errorDetails = string.Join("\n", emitResult.Diagnostics
+                var compilationErrors = emitResult.Diagnostics
                     .Where(d => d.Severity == DiagnosticSeverity.Error)
-                    .Select(d => $"Error {d.Id} at {d.Location}: {d.GetMessage()}"));
-                _logger.LogError($"Code compilation failed with errors:\n{errorDetails}");
-    
-                var sb = new StringBuilder();
-                foreach (var diag in emitResult.Diagnostics)
-                {
-                    sb.AppendLine(diag.ToString());
-                }
-                string errorMessage = sb.ToString();
-                Console.WriteLine(errorMessage);
-                result.State = QDBConnectionState.CompilationError;
-                result.Messages = new List<string>();
-                result.Messages.Add(errorMessage);
-                return result;
+                    .Select(d => new
+                    {
+                        Location = d.Location.GetLineSpan().StartLinePosition,
+                        Message = d.GetMessage(),
+                        ErrorCode = d.Id
+                    })
+                    .ToList();
+
+                var errorMessage = string.Join("\n", compilationErrors.Select(e => 
+                    $"Error {e.ErrorCode} at line {e.Location.Line + 1}: {e.Message}"));
+                
+                _logger.LogError("Code compilation failed:\n{Errors}", errorMessage);
+                return new AddDBConnectionResponse 
+                { 
+                    State = QDBConnectionState.CompilationError,
+                    Messages = new List<string> { errorMessage }
+                };
             }
 
             // Compiling done, we load the context
