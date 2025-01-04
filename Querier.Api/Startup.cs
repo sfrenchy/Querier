@@ -16,6 +16,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Querier.Api.Services.Repositories.User;
 using Microsoft.Extensions.Logging;
@@ -52,7 +53,7 @@ namespace Querier.Api
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public async void ConfigureServices(IServiceCollection services)
+        public async Task ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(services);
             services.AddHttpContextAccessor();
@@ -330,6 +331,7 @@ namespace Querier.Api
                     {
                         var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
                         logger.LogInformation("Token validated successfully");
+                        await Task.CompletedTask;
                     },
                     OnAuthenticationFailed = async context =>
                     {
