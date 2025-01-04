@@ -1,4 +1,3 @@
-using System;
 using Microsoft.EntityFrameworkCore;
 
 namespace Querier.Api.Application.Interfaces.Infrastructure

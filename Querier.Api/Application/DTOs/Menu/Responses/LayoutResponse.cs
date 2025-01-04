@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Querier.Api.Application.DTOs.Menu.Responses;
 
 namespace Querier.Api.Application.DTOs.Menu.Responses
 {

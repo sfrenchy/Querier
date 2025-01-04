@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Querier.Api.Domain.Common.Models
 {
     public class PaginationParameters

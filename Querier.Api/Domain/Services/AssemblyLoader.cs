@@ -11,8 +11,6 @@ using System.Linq;
 using System.IO;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.Extensions.Options;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Domain.Entities.QDBConnection;
 using System.Security.Cryptography;

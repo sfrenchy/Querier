@@ -4,9 +4,7 @@ using System.Threading.Tasks;
 using Querier.Api.Application.DTOs.Menu.Requests;
 using Querier.Api.Application.DTOs.Requests.Page;
 using Querier.Api.Application.DTOs.Responses.Page;
-using Querier.Api.Application.Interfaces.Repositories.Menu;
 using Querier.Api.Application.Interfaces.Services.Menu;
-using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Infrastructure.Services.Menu
 {

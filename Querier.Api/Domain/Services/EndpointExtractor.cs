@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -59,10 +58,10 @@ namespace Querier.Api.Domain.Services
                            a is HttpDeleteAttribute)
                 .Select(a => a switch
                 {
-                    HttpGetAttribute _ => "GET",
-                    HttpPostAttribute _ => "POST",
-                    HttpPutAttribute _ => "PUT",
-                    HttpDeleteAttribute _ => "DELETE",
+                    HttpGetAttribute => "GET",
+                    HttpPostAttribute => "POST",
+                    HttpPutAttribute => "PUT",
+                    HttpDeleteAttribute => "DELETE",
                     _ => "GET"
                 });
         }

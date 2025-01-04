@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Querier.Api.Domain.Entities.QDBConnection
 {
     public class ProcedureOutput

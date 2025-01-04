@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using System.Data.Entity.Core.Objects;
-using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -48,7 +46,7 @@ namespace Querier.Api.Tools
 
         static readonly MethodInfo SetMethod =
             typeof(DbContext).GetMethod(nameof(DbContext.Set), 1, Array.Empty<Type>()) ??
-            throw new Exception($"Type not found: DbContext.Set");
+            throw new Exception("Type not found: DbContext.Set");
 
         public static IQueryable Query(this DbContext context, string entityName) =>
             context.Query(context.Model.FindEntityType(entityName).ClrType);
@@ -275,7 +273,7 @@ namespace Querier.Api.Tools
                     object value = columnType.GetValueFromString(filter.Operand);
                     switch (columnType)
                     {
-                        case Type _ when columnType == typeof(Int64):
+                        case Type when columnType == typeof(Int64):
                             Int64 int64Value = (Int64) value;
                             switch (filter.Operator)
                             {
@@ -299,7 +297,7 @@ namespace Querier.Api.Tools
                                     break;
                             }
                             break;
-                         case Type _ when columnType == typeof(int):
+                         case Type when columnType == typeof(int):
                             int intValue = (int) value;
                             switch (filter.Operator)
                             {
@@ -323,7 +321,7 @@ namespace Querier.Api.Tools
                                     break;
                             }
                             break;
-                        case Type _ when columnType == typeof(decimal):
+                        case Type when columnType == typeof(decimal):
                             decimal decimalValue = (decimal)value;
                             switch (filter.Operator)
                             {
@@ -347,7 +345,7 @@ namespace Querier.Api.Tools
                                     break;
                             }
                             break;
-                        case Type _ when columnType == typeof(DateTime):
+                        case Type when columnType == typeof(DateTime):
                             DateTime dateTimeValue = (DateTime) value; 
                             switch (filter.Operator)
                             {
@@ -371,7 +369,7 @@ namespace Querier.Api.Tools
                                     break;
                             }
                             break;
-                        case Type _ when columnType == typeof(string):
+                        case Type when columnType == typeof(string):
                             string stringValue = (string)value;
                             switch (filter.Operator)
                             {
@@ -407,15 +405,15 @@ namespace Querier.Api.Tools
         {
             switch(type)
             {
-                case Type _ when type == typeof(Decimal):
+                case Type when type == typeof(Decimal):
                     return Convert.ToDecimal(val);
-                case Type _ when type == typeof(Int64):
+                case Type when type == typeof(Int64):
                     return Convert.ToInt64(val);
-                case Type _ when type == typeof(int):
+                case Type when type == typeof(int):
                     return Convert.ToInt32(val);
-                case Type _ when type == typeof(string):
+                case Type when type == typeof(string):
                     return Convert.ToString(val);
-                case Type _ when type == typeof(DateTime):
+                case Type when type == typeof(DateTime):
                     return DateTime.ParseExact(val, "yyyy-MM-dd", CultureInfo.CurrentCulture);
                 default:
                     throw new NotImplementedException($"Type {type} not handled yet");

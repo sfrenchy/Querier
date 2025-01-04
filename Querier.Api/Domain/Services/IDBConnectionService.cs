@@ -2,9 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Querier.Api.Application.DTOs.Requests.DBConnection;
 using Querier.Api.Application.DTOs.Responses.DBConnection;
-using Querier.Api.Domain.Entities.QDBConnection;
 using static Querier.Api.Domain.Services.DBConnectionService;
-using Querier.Api.Infrastructure.Database.Models;
 
 namespace Querier.Api.Domain.Services
 {

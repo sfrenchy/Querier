@@ -2,7 +2,7 @@ using System;
 
 namespace Querier.Api.Domain.Services
 {
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter)]
     public class SummaryAttribute : Attribute
     {
         public string Summary { get; }

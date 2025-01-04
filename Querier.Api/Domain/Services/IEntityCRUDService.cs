@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Dynamic;
 using Querier.Api.Application.DTOs.Requests.Entity;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Common.ValueObjects;

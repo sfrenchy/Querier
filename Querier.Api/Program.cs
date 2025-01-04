@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Linq;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using Querier.Api.Infrastructure.Data.Context;

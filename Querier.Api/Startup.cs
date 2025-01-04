@@ -7,24 +7,17 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Querier.Api.Services.Repositories.User;
-using Querier.Api.Tools;
-using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Swagger;
@@ -45,7 +38,6 @@ using Querier.Api.Infrastructure.DependencyInjection;
 using Querier.Api.Infrastructure.Security.TokenProviders;
 using Querier.Api.Infrastructure.Services.Menu;
 using Querier.Api.Infrastructure.Swagger.Helpers;
-using Querier.Api.Infrastructure.Data.Repositories.Menu;
 
 namespace Querier.Api
 {
@@ -90,7 +82,7 @@ namespace Querier.Api
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
                 
                 // Ensure this path matches where your XML file is actually being generated
-                var xmlFile = $"Querier.Api.xml";
+                var xmlFile = "Querier.Api.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
                 
@@ -116,7 +108,7 @@ namespace Querier.Api
                                     Id = "bearerAuth"
                                 }
                             },
-                            new string[] {}
+                            []
                     }
                 });
 
@@ -128,7 +120,7 @@ namespace Querier.Api
             {
                 default:
                     // Register DbContext options
-                    services.AddSingleton<DbContextOptions<ApiDbContext>>(provider =>
+                    services.AddSingleton(_ =>
                         new DbContextOptionsBuilder<ApiDbContext>()
                             .UseSqlite(_configuration.GetConnectionString("ApiDBConnection"))
                             .Options);
@@ -331,28 +323,6 @@ namespace Querier.Api
                 options.SaveToken = true;
                 options.RequireHttpsMetadata = false;
 
-                // Configurer la validation du token de manière dynamique
-                var settingService = services.BuildServiceProvider().GetRequiredService<ISettingService>();
-                var secret = settingService.GetSettingValue("JwtSecret").Result ?? 
-                    "DefaultDevSecretKey_12345678901234567890123456789012";  // Clé par défaut pour le dev
-                var key = Encoding.ASCII.GetBytes(secret);
-
-                // Créer une clé de signature unique
-                var signingKey = new SymmetricSecurityKey(key) { KeyId = "default_signing_key" };
-
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = signingKey,
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    RequireExpirationTime = true,
-                    ClockSkew = TimeSpan.Zero,
-                    ValidIssuer = settingService.GetSettingValue("JwtIssuer").Result ?? "QuerierApi",
-                    ValidAudience = settingService.GetSettingValue("JwtAudience").Result ?? "QuerierClient"
-                };
-
                 options.Events = new JwtBearerEvents
                 {
                     OnTokenValidated = async context =>
@@ -372,6 +342,28 @@ namespace Querier.Api
                             context.Success();
                             return;
                         }
+                    },
+                    OnMessageReceived = async context =>
+                    {
+                        var settingService = context.HttpContext.RequestServices.GetRequiredService<ISettingService>();
+                        var secret = await settingService.GetSettingValue("JwtSecret") ?? 
+                            "DefaultDevSecretKey_12345678901234567890123456789012";
+                        var key = Encoding.ASCII.GetBytes(secret);
+                        var signingKey = new SymmetricSecurityKey(key) { KeyId = "default_signing_key" };
+
+                        // Mettre à jour les paramètres de validation du token de manière dynamique
+                        context.Options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = signingKey,
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
+                            RequireExpirationTime = true,
+                            ClockSkew = TimeSpan.Zero,
+                            ValidIssuer = await settingService.GetSettingValue("JwtIssuer") ?? "QuerierApi",
+                            ValidAudience = await settingService.GetSettingValue("JwtAudience") ?? "QuerierClient"
+                        };
                     }
                 };
             });
