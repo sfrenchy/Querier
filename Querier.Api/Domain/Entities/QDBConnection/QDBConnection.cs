@@ -15,6 +15,7 @@ namespace Querier.Api.Domain.Entities.QDBConnection
         public string ContextName { get; set; }
         public string ApiRoute { get; set; }
         public string Description { get; set; }
+        public string AssemblyHash { get; set; }
     }
 
     public class AddDBConnectionRequest

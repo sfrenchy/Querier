@@ -15,11 +15,31 @@ using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Domain.Entities.QDBConnection;
+using System.Security.Cryptography;
+using System.Security;
 
 namespace Querier.Api.Domain.Services
 {
     public static class AssemblyLoader
     {
+        private static bool VerifyAssemblyIntegrity(string assemblyPath, string expectedHash, ILogger logger)
+        {
+            try
+            {
+                var assemblyBytes = File.ReadAllBytes(assemblyPath);
+                using (var sha256 = SHA256.Create())
+                {
+                    var actualHash = Convert.ToBase64String(sha256.ComputeHash(assemblyBytes));
+                    return expectedHash == actualHash;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error verifying assembly integrity for {assemblyPath}");
+                return false;
+            }
+        }
+
         public static async Task LoadAssemblyFromQDBConnection(
             QDBConnection connection,
             IServiceProvider serviceProvider,
@@ -38,6 +58,14 @@ namespace Querier.Api.Domain.Services
                 {
                     try
                     {
+                        // Vérifier l'intégrité de l'assembly avant de le charger
+                        if (string.IsNullOrEmpty(connection.AssemblyHash) || 
+                            !VerifyAssemblyIntegrity(file, connection.AssemblyHash, logger))
+                        {
+                            logger.LogError($"Assembly integrity verification failed for {fileName}");
+                            throw new SecurityException($"Invalid assembly integrity for {fileName}");
+                        }
+
                         var assembly = Assembly.LoadFrom(file);
 
                         // Load procedure services

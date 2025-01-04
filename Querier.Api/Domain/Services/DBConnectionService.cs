@@ -57,6 +57,7 @@ using Querier.Api.Infrastructure.Data.Context;
 using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Parameters;
 using Querier.Api.Infrastructure.Database.Models;
+using System.Security.Cryptography;
 
 namespace Querier.Api.Domain.Services
 {
@@ -398,11 +399,17 @@ namespace Querier.Api.Domain.Services
                 pdbStream.CopyTo(pdbFileStream);
             }
 
+            // Calculer et sauvegarder le hash de l'assembly
+            peStream.Seek(0, SeekOrigin.Begin);
+            var assemblyBytes = peStream.ToArray();
+            var hash = ComputeAssemblyHash(assemblyBytes);
 
             newConnection.Name = connection.Name;
             newConnection.ConnectionString = connection.ConnectionString;
             newConnection.ConnectionType = connection.ConnectionType;
             newConnection.Description = procedureDescription;
+            newConnection.AssemblyHash = hash;  // Stockage du hash dans la base de données
+            
             using (var apiDbContext = _apiDbContextFactory.CreateDbContext())
             {
                 apiDbContext.QDBConnections.Add(newConnection);
@@ -461,6 +468,15 @@ namespace Querier.Api.Domain.Services
                 options: new CSharpCompilationOptions(
                     OutputKind.DynamicallyLinkedLibrary,
                     optimizationLevel: OptimizationLevel.Debug));
+        }
+
+        private string ComputeAssemblyHash(byte[] assemblyBytes)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var hash = sha256.ComputeHash(assemblyBytes);
+                return Convert.ToBase64String(hash);
+            }
         }
 
         private List<MetadataReference> GetCompilationReferences()
