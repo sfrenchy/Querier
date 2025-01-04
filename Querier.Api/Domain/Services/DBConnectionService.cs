@@ -1357,20 +1357,20 @@ namespace Querier.Api.Domain.Services
                     var schema = new
                     {
                         type = "object",
-                        description = "Liste paginée de résultats",
+                        description = "Paginated result list",
                         properties = new
                         {
                             items = new
                             {
                                 type = "array",
-                                description = "Liste des éléments",
+                                description = "List of items",
                                 items = JsonSerializer.Deserialize<object>(GenerateJsonSchema(itemType))
                             },
                             total = new
                             {
                                 type = "integer",
                                 format = "int32",
-                                description = "Nombre total d'éléments"
+                                description = "Total number of items"
                             }
                         }
                     };
@@ -1384,7 +1384,7 @@ namespace Querier.Api.Domain.Services
                     var schema = new
                     {
                         type = "array",
-                        description = $"Liste de {itemType.Name}",
+                        description = $"List of {itemType.Name}",
                         items = JsonSerializer.Deserialize<object>(GenerateJsonSchema(itemType))
                     };
                     return JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = false });
