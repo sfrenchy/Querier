@@ -1270,7 +1270,9 @@ namespace Querier.Api.Domain.Services
 
         private IEnumerable<EndpointResponse> ExtractResponses(MethodInfo method)
         {
-            var produces = method.GetCustomAttributes<ProducesResponseTypeAttribute>().ToList();
+            var produces = method.GetCustomAttributes<ProducesResponseTypeAttribute>()
+                .Where(attr => attr.StatusCode == 200)
+                .ToList();
             
             foreach (var response in produces)
             {
@@ -1280,7 +1282,7 @@ namespace Querier.Api.Domain.Services
                 {
                     StatusCode = response.StatusCode,
                     Type = response.Type?.Name ?? "void",
-                    Description = GetResponseDescription(response.StatusCode),
+                    Description = "Success",
                     JsonSchema = jsonSchema
                 };
             }
@@ -1328,22 +1330,6 @@ namespace Querier.Api.Domain.Services
             };
 
             return JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = false });
-        }
-
-        private string GetResponseDescription(int statusCode)
-        {
-            return statusCode switch
-            {
-                200 => "Success",
-                201 => "Created",
-                204 => "No Content",
-                400 => "Bad Request",
-                401 => "Unauthorized",
-                403 => "Forbidden",
-                404 => "Not Found",
-                500 => "Internal Server Error",
-                _ => string.Empty
-            };
         }
 
         private string CombineRoutes(params string[] routes)
