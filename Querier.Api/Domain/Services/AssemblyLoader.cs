@@ -17,6 +17,7 @@ using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Domain.Entities.QDBConnection;
 using System.Security.Cryptography;
 using System.Security;
+using System.Runtime.Loader;
 
 namespace Querier.Api.Domain.Services
 {
@@ -50,23 +51,23 @@ namespace Querier.Api.Domain.Services
                 .Select(a => Path.GetFileName(a.Location))
                 .ToList();
 
-            string file = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.dll");
-            if (File.Exists(file))
+            var assemblyName = $"{connection.Name}.DynamicContext.dll";
+            if (!loadedAssemblies.Contains(assemblyName))
             {
-                var fileName = Path.GetFileName(file);
-                if (!loadedAssemblies.Contains(fileName))
+                try
                 {
-                    try
+                    // Vérifier l'intégrité de l'assembly
+                    if (string.IsNullOrEmpty(connection.AssemblyHash) || 
+                        connection.AssemblyDll == null ||
+                        ComputeHash(connection.AssemblyDll) != connection.AssemblyHash)
                     {
-                        // Vérifier l'intégrité de l'assembly avant de le charger
-                        if (string.IsNullOrEmpty(connection.AssemblyHash) || 
-                            !VerifyAssemblyIntegrity(file, connection.AssemblyHash, logger))
-                        {
-                            logger.LogError($"Assembly integrity verification failed for {fileName}");
-                            throw new SecurityException($"Invalid assembly integrity for {fileName}");
-                        }
+                        logger.LogError($"Assembly integrity verification failed for {assemblyName}");
+                        throw new SecurityException($"Invalid assembly integrity for {assemblyName}");
+                    }
 
-                        var assembly = Assembly.LoadFrom(file);
+                    // Charger l'assembly depuis la mémoire
+                    var assemblyLoadContext = new AssemblyLoadContext(connection.Name, false);
+                    var assembly = assemblyLoadContext.LoadFromStream(new MemoryStream(connection.AssemblyDll));
 
                         // Load procedure services
                         var procedureServicesResolverType = assembly.GetTypes()
@@ -131,12 +132,11 @@ namespace Querier.Api.Domain.Services
                             }
                         }
 
-                        logger.LogInformation($"Successfully loaded assembly {fileName} for context {connection.Name}");
+                    logger.LogInformation($"Successfully loaded assembly {assemblyName} for context {connection.Name}");
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, $"Error loading assembly {fileName}");
-                    }
+                    logger.LogError(ex, $"Error loading assembly {assemblyName}");
                 }
             }
         }
@@ -163,6 +163,15 @@ namespace Querier.Api.Domain.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error regenerating Swagger");
+            }
+        }
+
+        private static string ComputeHash(byte[] assemblyBytes)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var hash = sha256.ComputeHash(assemblyBytes);
+                return Convert.ToBase64String(hash);
             }
         }
     }

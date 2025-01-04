@@ -318,6 +318,8 @@ namespace Querier.Api.Domain.Services
             srcZipContent.Add("Services\\EntityServiceResolver.cs", entityServiceResolverContent);
             sourceFiles.Add(entityServiceResolverContent);
 
+            // Créer le zip des sources une seule fois
+            byte[] sourceZipBytes;
             using (var sourceStream = new MemoryStream())
             {
                 using (ZipArchive archive = new ZipArchive(sourceStream, ZipArchiveMode.Create))
@@ -332,19 +334,14 @@ namespace Querier.Api.Domain.Services
                         }
                     }
                 }
-                File.WriteAllBytes(sourceZipPath, sourceStream.ToArray());
+                sourceZipBytes = sourceStream.ToArray();
             }
 
             if (!Directory.Exists("Assemblies"))
                 Directory.CreateDirectory("Assemblies");
             string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
-            using (FileStream srcFileStream = new FileStream(srcPath, FileMode.Create))
-            {
-                using (FileStream zipFileStream = new FileStream(sourceZipPath, FileMode.Open))
-                {
-                    zipFileStream.CopyTo(srcFileStream);
-                }
-            }
+            File.WriteAllBytes(srcPath, sourceZipBytes);
+
             // Templating done, we are now compiling generated sources
             MemoryStream peStream = new MemoryStream();
             MemoryStream pdbStream = new MemoryStream();
@@ -373,50 +370,41 @@ namespace Querier.Api.Domain.Services
                 };
             }
 
-            // Compiling done, we load the context
-            var assemblyLoadContext = new AssemblyLoadContext("DbContext", false);
-            peStream.Seek(0, SeekOrigin.Begin);
-            var assembly = assemblyLoadContext.LoadFromStream(peStream);
-            peStream.Seek(0, SeekOrigin.Begin);
-            pdbStream.Seek(0, SeekOrigin.Begin);
-            // Store connection to database
-            QDBConnection newConnection = new QDBConnection();
-            newConnection.ContextName = connectionNamespace + "." + contextName;
-            newConnection.ApiRoute = connection.ContextApiRoute;
-
-            if (!Path.Exists("Assemblies"))
-                Directory.CreateDirectory("Assemblies");
-
-            string dllPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.dll");
-            string pdbPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.pdb");
-
-            using (FileStream dllFileStream = new FileStream(dllPath, FileMode.Create))
-            {
-                peStream.CopyTo(dllFileStream);
-            }
-            using (FileStream pdbFileStream = new FileStream(pdbPath, FileMode.Create))
-            {
-                pdbStream.CopyTo(pdbFileStream);
-            }
-
-            // Calculer et sauvegarder le hash de l'assembly
+            // Sauvegarder les bytes des assemblies
             peStream.Seek(0, SeekOrigin.Begin);
             var assemblyBytes = peStream.ToArray();
+            pdbStream.Seek(0, SeekOrigin.Begin);
+            var pdbBytes = pdbStream.ToArray();
+
+            // Calculer le hash de l'assembly
             var hash = ComputeAssemblyHash(assemblyBytes);
 
-            newConnection.Name = connection.Name;
-            newConnection.ConnectionString = connection.ConnectionString;
-            newConnection.ConnectionType = connection.ConnectionType;
-            newConnection.Description = procedureDescription;
-            newConnection.AssemblyHash = hash;  // Stockage du hash dans la base de données
+            // Créer la nouvelle connexion
+            var newConnection = new QDBConnection
+            {
+                Name = connection.Name,
+                ConnectionString = connection.ConnectionString,
+                ConnectionType = connection.ConnectionType,
+                Description = procedureDescription,
+                AssemblyHash = hash,
+                AssemblyDll = assemblyBytes,
+                AssemblyPdb = pdbBytes,
+                AssemblySourceZip = sourceZipBytes,
+                ContextName = connectionNamespace + "." + contextName,
+                ApiRoute = connection.ContextApiRoute
+            };
             
             using (var apiDbContext = _apiDbContextFactory.CreateDbContext())
             {
                 apiDbContext.QDBConnections.Add(newConnection);
                 await apiDbContext.SaveChangesAsync();
             }
+
+            // Charger l'assembly depuis une nouvelle copie des bytes
+            var assemblyLoadContext = new AssemblyLoadContext("DbContext", false);
+            var loadedAssembly = assemblyLoadContext.LoadFromStream(new MemoryStream(assemblyBytes));
+
             result.State = QDBConnectionState.Available;
-            File.Delete(sourceZipPath);
             await AssemblyLoader.LoadAssemblyFromQDBConnection(newConnection, _serviceProvider, _partManager, _logger);
 
             AssemblyLoader.RegenerateSwagger(_swaggerProvider, _logger);
@@ -1159,6 +1147,31 @@ namespace Querier.Api.Domain.Services
                 }).ToList(),
                 SummableOutputColumns = p.SummableOutputColumns
             }).ToList();
+        }
+
+        public class SourceDownload
+        {
+            public byte[] Content { get; set; }
+            public string FileName { get; set; }
+        }
+
+        public async Task<SourceDownload> GetConnectionSourcesAsync(int connectionId)
+        {
+            using (var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync())
+            {
+                var connection = await apiDbContext.QDBConnections.FindAsync(connectionId);
+                if (connection == null)
+                    throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
+
+                if (connection.AssemblySourceZip == null)
+                    throw new InvalidOperationException($"No source code available for connection {connectionId}");
+
+                return new SourceDownload
+                {
+                    Content = connection.AssemblySourceZip,
+                    FileName = $"{connection.Name}.DynamicContext.Sources.zip"
+                };
+            }
         }
     }
 }

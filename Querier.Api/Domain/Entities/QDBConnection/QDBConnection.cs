@@ -16,6 +16,11 @@ namespace Querier.Api.Domain.Entities.QDBConnection
         public string ApiRoute { get; set; }
         public string Description { get; set; }
         public string AssemblyHash { get; set; }
+        
+        // Contenu des fichiers d'assembly
+        public byte[] AssemblyDll { get; set; }
+        public byte[] AssemblyPdb { get; set; }
+        public byte[] AssemblySourceZip { get; set; }
     }
 
     public class AddDBConnectionRequest
