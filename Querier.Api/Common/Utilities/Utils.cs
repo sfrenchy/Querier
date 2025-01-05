@@ -6,6 +6,8 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Querier.Api.Infrastructure.DependencyInjection;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using Querier.Api.Infrastructure.Data.Context;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Querier.Api.Tools
 {
@@ -13,14 +15,50 @@ namespace Querier.Api.Tools
     {
         public static DbContext GetDbContextFromTypeName(string contextTypeName)
         {
-            List<Type> contextTypes = AppDomain.CurrentDomain.GetAssemblies()
+            var contextTypes = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(assembly => assembly.GetTypes())
-                .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == contextTypeName).ToList();
+                .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == contextTypeName)
+                .ToList();
 
+            if (!contextTypes.Any())
+                throw new InvalidOperationException($"No DbContext found with type name {contextTypeName}");
 
-            DbContext target = ServiceActivator.GetScope().ServiceProvider.GetService(contextTypes.First()) as DbContext ??
-                               Activator.CreateInstance(contextTypes.First()) as DbContext;
-            return target;
+            var contextType = contextTypes.First();
+            var scope = ServiceActivator.GetScope();
+            
+            // Try to get from DI first
+            var context = scope.ServiceProvider.GetService(contextType) as DbContext;
+            if (context != null)
+                return context;
+
+            // Get the connection string from the database
+            var apiDbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApiDbContext>>();
+            using var apiDbContext = apiDbContextFactory.CreateDbContext();
+            var connection = apiDbContext.QDBConnections.FirstOrDefault(c => c.ContextName == contextTypeName);
+            
+            if (connection == null)
+                throw new InvalidOperationException($"No connection found for context {contextTypeName}");
+
+            // Create options with the correct connection string
+            var optionsBuilderType = typeof(DbContextOptionsBuilder<>).MakeGenericType(contextType);
+            var optionsBuilder = (DbContextOptionsBuilder)Activator.CreateInstance(optionsBuilderType);
+
+            switch (connection.ConnectionType)
+            {
+                case Domain.Common.Enums.QDBConnectionType.SqlServer:
+                    optionsBuilder.UseSqlServer(connection.ConnectionString);
+                    break;
+                case Domain.Common.Enums.QDBConnectionType.MySQL:
+                    optionsBuilder.UseMySql(connection.ConnectionString, ServerVersion.AutoDetect(connection.ConnectionString));
+                    break;
+                case Domain.Common.Enums.QDBConnectionType.PgSQL:
+                    optionsBuilder.UseNpgsql(connection.ConnectionString);
+                    break;
+                default:
+                    throw new NotSupportedException($"Database type {connection.ConnectionType} not supported");
+            }
+
+            return (DbContext)Activator.CreateInstance(contextType, optionsBuilder.Options);
         }
         public static string RandomString(int length)
         {
