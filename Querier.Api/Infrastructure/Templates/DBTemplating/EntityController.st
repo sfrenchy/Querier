@@ -13,7 +13,7 @@ namespace $nameSpace$.Controllers
     $entityList: {entity|
     [Authorize]
     [ApiController]
-    [Route("api/v1/$contextRoute$/entity/$entity.Name$")]
+    [Route("api/v1/$contextRoute$/$entity.Name$")]
     public class $entity.Name$Controller : ControllerBase
     {
         private readonly ILogger<$entity.Name$Controller> _logger;
