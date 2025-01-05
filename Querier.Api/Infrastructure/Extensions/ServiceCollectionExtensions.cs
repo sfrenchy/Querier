@@ -306,6 +306,32 @@ namespace Querier.Api.Infrastructure.Extensions
 
                 var schemaHelper = new SwashbuckleSchemaHelper();
                 c.CustomSchemaIds(type => schemaHelper.GetSchemaId(type));
+
+                // Résoudre les conflits d'actions en préférant les contrôleurs de l'assembly principal
+                c.ResolveConflictingActions(apiDescriptions =>
+                {
+                    // Préférer les contrôleurs de l'assembly principal (Querier.Api)
+                    var mainAssemblyController = apiDescriptions
+                        .FirstOrDefault(api => api.ActionDescriptor.DisplayName?.Contains("Querier.Api") == true);
+                    
+                    if (mainAssemblyController != null)
+                        return mainAssemblyController;
+
+                    // Si pas de contrôleur de l'assembly principal, prendre le premier
+                    return apiDescriptions.First();
+                });
+
+                // Personnaliser les IDs d'opération pour éviter les conflits
+                c.CustomOperationIds(apiDesc =>
+                {
+                    var assemblyName = apiDesc.ActionDescriptor.DisplayName?.Split(',')
+                        .Skip(1)
+                        .FirstOrDefault()
+                        ?.Trim()
+                        ?? string.Empty;
+
+                    return $"{apiDesc.ActionDescriptor.RouteValues["controller"]}_{apiDesc.ActionDescriptor.RouteValues["action"]}_{assemblyName}";
+                });
             });
 
             return services;
