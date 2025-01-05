@@ -54,14 +54,12 @@ namespace Querier.Api.Domain.Services
                     // Configuration JWT
                     _logger.LogInformation("Configuring JWT settings...");
                     var jwtSecret = GenerateSecureSecret();
-                    var jwtSettings = new Dictionary<string, string>
-                    {
-                        { "JwtSecret", jwtSecret },
-                        { "JwtIssuer", "QuerierApi" },
-                        { "JwtAudience", "QuerierClient" },
-                        { "JwtExpiryInMinutes", "60" }
-                    };
-                    await _settingService.UpdateSettings(jwtSettings);
+                    
+                    // Utiliser UpdateSettingIfExists pour éviter les conflits de clés uniques
+                    await _settingService.UpdateSettingIfExists("JwtSecret", jwtSecret);
+                    await _settingService.UpdateSettingIfExists("JwtIssuer", "QuerierApi");
+                    await _settingService.UpdateSettingIfExists("JwtAudience", "QuerierClient");
+                    await _settingService.UpdateSettingIfExists("JwtExpiryInMinutes", "60");
 
                     if (!await _roleManager.RoleExistsAsync("Admin"))
                     {
@@ -113,18 +111,14 @@ namespace Querier.Api.Domain.Services
                     }
 
                     _logger.LogInformation("Configuring SMTP settings...");
-                    var smtpSettings = new Dictionary<string, string>
-                    {
-                        { "api:smtp:host", request.Smtp.Host },
-                        { "api:smtp:port", request.Smtp.Port.ToString() },
-                        { "api:smtp:username", request.Smtp.Username },
-                        { "api:smtp:password", request.Smtp.Password },
-                        { "api:smtp:useSSL", request.Smtp.useSSL.ToString() },
-                        { "api:smtp:senderEmail", request.Smtp.SenderEmail },
-                        { "api:smtp:senderName", request.Smtp.SenderName },
-                        { "api:smtp:requiresAuth", request.Smtp.RequireAuth.ToString() }
-                    };
-                    await _settingService.UpdateSettings(smtpSettings);
+                    await _settingService.UpdateSettingIfExists("smtp:host", request.Smtp.Host);
+                    await _settingService.UpdateSettingIfExists("smtp:port", request.Smtp.Port.ToString());
+                    await _settingService.UpdateSettingIfExists("smtp:username", request.Smtp.Username);
+                    await _settingService.UpdateSettingIfExists("smtp:password", request.Smtp.Password);
+                    await _settingService.UpdateSettingIfExists("smtp:useSSL", request.Smtp.useSSL.ToString());
+                    await _settingService.UpdateSettingIfExists("smtp:senderEmail", request.Smtp.SenderEmail);
+                    await _settingService.UpdateSettingIfExists("smtp:senderName", request.Smtp.SenderName);
+                    await _settingService.UpdateSettingIfExists("smtp:requiresAuth", request.Smtp.RequireAuth.ToString());
 
                     var isConfiguredSetting = await context.QSettings
                         .FirstOrDefaultAsync(s => s.Name == "api:isConfigured");

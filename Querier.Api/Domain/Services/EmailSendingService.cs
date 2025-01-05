@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using MailKit.Security;
 using MimeKit;
 using SmtpClient = MailKit.Net.Smtp.SmtpClient;
+using Querier.Api.Application.DTOs.Requests.Smtp;
 
 namespace Querier.Api.Domain.Services
 {
@@ -12,6 +13,8 @@ namespace Querier.Api.Domain.Services
     {
         Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = false);
         Task<bool> SendTemplatedEmailAsync(string to, string subject, string templateName, string language, Dictionary<string, string> parameters);
+        Task<bool> TestSmtpConfiguration(SmtpTestRequest request);
+        Task<bool> IsConfigured();
     }
 
     public class SMTPEmailSendingService : IEmailSendingService
@@ -30,17 +33,48 @@ namespace Querier.Api.Domain.Services
             _emailTemplateService = emailTemplateService;
         }
 
+        public async Task<bool> IsConfigured()
+        {
+            return bool.Parse(await _settings.GetSettingValue("api:isConfigured", "false"));
+        }
+
+        public async Task<bool> TestSmtpConfiguration(SmtpTestRequest request)
+        {
+            try
+            {
+                using var client = new SmtpClient();
+                await client.ConnectAsync(
+                    request.Host,
+                    request.Port,
+                    request.UseSSL ? SecureSocketOptions.StartTls : SecureSocketOptions.None
+                );
+
+                if (request.RequireAuth)
+                {
+                    await client.AuthenticateAsync(request.Username, request.Password);
+                }
+
+                await client.DisconnectAsync(true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SMTP test failed");
+                throw;
+            }
+        }
+
         public async Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = false)
         {
             try
             {
-                var smtpHost = await _settings.GetSettingValue("api:smtp:host");
-                var smtpPort = int.Parse(await _settings.GetSettingValue("api:smtp:port", "587"));
-                var smtpUsername = await _settings.GetSettingValue("api:smtp:username");
-                var smtpPassword = await _settings.GetSettingValue("api:smtp:password");
-                var mailFrom = await _settings.GetSettingValue("api:smtp:senderEmail");
-                var useSsl = bool.Parse(await _settings.GetSettingValue("api:smtp:useSSL", "true"));
-                var requiresAuth = bool.Parse(await _settings.GetSettingValue("api:smtp:requiresAuth", "false"));
+                var smtpHost = await _settings.GetSettingValue("smtp:host");
+                var smtpPort = int.Parse(await _settings.GetSettingValue("smtp:port", "587"));
+                var smtpUsername = await _settings.GetSettingValue("smtp:username");
+                var smtpPassword = await _settings.GetSettingValue("smtp:password");
+                var mailFrom = await _settings.GetSettingValue("smtp:senderEmail");
+                var useSsl = bool.Parse(await _settings.GetSettingValue("smtp:useSSL", "true"));
+                var requiresAuth = bool.Parse(await _settings.GetSettingValue("smtp:requiresAuth", "false"));
 
                 using var client = new SmtpClient();
                 await client.ConnectAsync(smtpHost, smtpPort, useSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
@@ -49,40 +83,47 @@ namespace Querier.Api.Domain.Services
                     await client.AuthenticateAsync(smtpUsername, smtpPassword);
                 }
 
-                var message = new MimeMessage
-                {
-                    From = { new MailboxAddress("", mailFrom) },
-                    To = { new MailboxAddress("", to) },
-                    Subject = subject,
-                    Body = new TextPart(isHtml ? "html" : "plain") { Text = body }
-                };
+                var email = new MimeMessage();
+                email.From.Add(new MailboxAddress("", mailFrom));
+                email.To.Add(new MailboxAddress("", to));
+                email.Subject = subject;
 
-                await client.SendAsync(message);
+                var bodyBuilder = new BodyBuilder();
+                if (isHtml)
+                    bodyBuilder.HtmlBody = body;
+                else
+                    bodyBuilder.TextBody = body;
+
+                email.Body = bodyBuilder.ToMessageBody();
+
+                await client.SendAsync(email);
                 await client.DisconnectAsync(true);
+
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error sending email to {to}");
+                _logger.LogError(ex, "Failed to send email");
                 return false;
             }
         }
 
-        public async Task<bool> SendTemplatedEmailAsync(
-            string to,
-            string subject,
-            string templateName,
-            string language,
-            Dictionary<string, string> parameters)
+        public async Task<bool> SendTemplatedEmailAsync(string to, string subject, string templateName, string language, Dictionary<string, string> parameters)
         {
             try
             {
-                var body = await _emailTemplateService.GetTemplateAsync(templateName, language, parameters);
-                return await SendEmailAsync(to, subject, body, isHtml: true);
+                var template = await _emailTemplateService.GetTemplateAsync(templateName, language, parameters);
+                if (template == null)
+                {
+                    _logger.LogError($"Email template {templateName} not found for language {language}");
+                    return false;
+                }
+
+                return await SendEmailAsync(to, subject, template, true);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error sending templated email to {to}");
+                _logger.LogError(ex, "Failed to send templated email");
                 return false;
             }
         }
