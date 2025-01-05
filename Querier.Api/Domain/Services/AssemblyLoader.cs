@@ -16,6 +16,8 @@ using Querier.Api.Domain.Entities.QDBConnection;
 using System.Security.Cryptography;
 using System.Security;
 using System.Runtime.Loader;
+using Querier.Api.Infrastructure.DependencyInjection;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace Querier.Api.Domain.Services
 {
@@ -143,18 +145,22 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                // Forcer un rechargement complet du document Swagger
-                var apiDescriptionGroups = swaggerProvider.GetType()
-                    .GetField("_apiDescriptionGroupCollectionProvider",
-                        BindingFlags.NonPublic | BindingFlags.Instance)?
-                    .GetValue(swaggerProvider) as IApiDescriptionGroupCollectionProvider;
-
-                if (apiDescriptionGroups != null)
+                var scope = ServiceActivator.GetScope();
+                var actionDescriptorCollectionProvider = scope.ServiceProvider.GetRequiredService<IActionDescriptorCollectionProvider>();
+                
+                // Forcer le rechargement des contrôleurs
+                var actionDescriptorField = actionDescriptorCollectionProvider.GetType()
+                    .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (actionDescriptorField != null)
                 {
-                    // Déclencher une actualisation des descriptions d'API
-                    var apiDescriptions = apiDescriptionGroups.ApiDescriptionGroups;
+                    actionDescriptorField.SetValue(actionDescriptorCollectionProvider, null);
                 }
 
+                // Déclencher la découverte des contrôleurs
+                var actions = actionDescriptorCollectionProvider.ActionDescriptors;
+                logger.LogInformation($"Controller actions reloaded with {actions.Items.Count} actions");
+
+                // Régénérer le document Swagger
                 var swagger = swaggerProvider.GetSwagger("v1", null, "/");
                 logger.LogInformation($"Swagger regenerated with {swagger.Paths.Count} paths");
             }
