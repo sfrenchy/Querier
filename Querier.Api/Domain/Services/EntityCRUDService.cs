@@ -16,6 +16,7 @@ using Querier.Api.Application.DTOs.Requests.Entity;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Common.ValueObjects;
+using Querier.Api.Infrastructure.Data.Context;
 using DataTable = System.Data.DataTable;
 
 namespace Querier.Api.Domain.Services
@@ -23,26 +24,28 @@ namespace Querier.Api.Domain.Services
     public class EntityCRUDService : IEntityCRUDService
     {
         private readonly IDynamicContextList _dynamicContextList;
+        private readonly IDbContextFactory<ApiDbContext> _apiDbContextFactory;
         private readonly ILogger<EntityCRUDService> _logger;
 
-        public EntityCRUDService(IDynamicContextList dynamicContextList, ILogger<EntityCRUDService> logger)
+        public EntityCRUDService(IDynamicContextList dynamicContextList, IDbContextFactory<ApiDbContext> apiDbContextFactory, ILogger<EntityCRUDService> logger)
         {
             _logger = logger;
             _dynamicContextList = dynamicContextList;
+            _apiDbContextFactory = apiDbContextFactory;
         }
 
         public List<string> GetContexts()
         {
             var contexts = new List<string>();
+            
             var assembliesPath = Path.Combine("Assemblies");
-
-            if (Directory.Exists(assembliesPath))
+            using (var apiDbContext = _apiDbContextFactory.CreateDbContext())
             {
-                foreach (var file in Directory.GetFiles(assembliesPath, "*.dll"))
+                foreach (var dbConnection in apiDbContext.QDBConnections)
                 {
                     try
                     {
-                        var assembly = Assembly.LoadFrom(file);
+                        var assembly = Assembly.Load(dbConnection.AssemblyDll);
                         var types = assembly.GetTypes()
                             .Where(t => t.IsAssignableTo(typeof(DbContext)));
 
@@ -50,10 +53,12 @@ namespace Querier.Api.Domain.Services
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, $"Error loading assembly {file}");
+                        _logger.LogError(ex, $"Error loading assembly for context {dbConnection.Name}: {ex.Message}");
                     }
                 }
             }
+                
+            
 
             return contexts;
         }
