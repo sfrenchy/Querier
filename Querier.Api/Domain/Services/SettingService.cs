@@ -53,16 +53,21 @@ namespace Querier.Api.Domain.Services
 
         public async Task<T> GetSettingValue<T>(string name)
         {
+            return await GetSettingValue<T>(name, default);
+        }
+
+        public async Task<T> GetSettingValue<T>(string name, T defaultValue)
+        {
             try
             {
                 var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == name);
-                if (setting == null) return default;
+                if (setting == null) return defaultValue;
                 if (typeof(T) == typeof(bool)) return (T)(object)(setting.Value.ToLower() == "true");
                 return (T)Convert.ChangeType(setting.Value, typeof(T));
             }
             catch (Exception)
             {
-                return default;
+                return defaultValue;
             }
         }
 

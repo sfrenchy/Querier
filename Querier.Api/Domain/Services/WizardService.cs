@@ -9,6 +9,7 @@ using Querier.Api.Application.DTOs.Requests.Setup;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Common.Metadata;
 using Querier.Api.Infrastructure.Data.Context;
+using System.Collections.Generic;
 
 namespace Querier.Api.Domain.Services
 {
@@ -53,14 +54,14 @@ namespace Querier.Api.Domain.Services
                     // Configuration JWT
                     _logger.LogInformation("Configuring JWT settings...");
                     var jwtSecret = GenerateSecureSecret();
-                    var jwtSettings = new[]
+                    var jwtSettings = new Dictionary<string, string>
                     {
-                        new QSetting { Name = "JwtSecret", Value = jwtSecret, Description = "JWT authentication secret key", Type = "string" },
-                        new QSetting { Name = "JwtIssuer", Value = "QuerierApi", Description = "JWT issuer", Type = "string" },
-                        new QSetting { Name = "JwtAudience", Value = "QuerierClient", Description = "JWT audience", Type = "string" },
-                        new QSetting { Name = "JwtExpiryInMinutes", Value = "60", Description = "JWT token expiry in minutes", Type = "integer" }
+                        { "JwtSecret", jwtSecret },
+                        { "JwtIssuer", "QuerierApi" },
+                        { "JwtAudience", "QuerierClient" },
+                        { "JwtExpiryInMinutes", "60" }
                     };
-                    await context.QSettings.AddRangeAsync(jwtSettings);
+                    await _settingService.UpdateSettings(jwtSettings);
 
                     if (!await _roleManager.RoleExistsAsync("Admin"))
                     {
@@ -112,19 +113,18 @@ namespace Querier.Api.Domain.Services
                     }
 
                     _logger.LogInformation("Configuring SMTP settings...");
-                    var smtpSettings = new[]
+                    var smtpSettings = new Dictionary<string, string>
                     {
-                        new QSetting { Name = "api:smtp:host", Value = request.Smtp.Host },
-                        new QSetting { Name = "api:smtp:port", Value = request.Smtp.Port.ToString() },
-                        new QSetting { Name = "api:smtp:username", Value = request.Smtp.Username },
-                        new QSetting { Name = "api:smtp:password", Value = request.Smtp.Password },
-                        new QSetting { Name = "api:smtp:useSSL", Value = request.Smtp.useSSL.ToString() },
-                        new QSetting { Name = "api:smtp:senderEmail", Value = request.Smtp.SenderEmail },
-                        new QSetting { Name = "api:smtp:senderName", Value = request.Smtp.SenderName },
-                        new QSetting { Name = "api:smtp:requiresAuth", Value = request.Smtp.RequireAuth.ToString() },
+                        { "api:smtp:host", request.Smtp.Host },
+                        { "api:smtp:port", request.Smtp.Port.ToString() },
+                        { "api:smtp:username", request.Smtp.Username },
+                        { "api:smtp:password", request.Smtp.Password },
+                        { "api:smtp:useSSL", request.Smtp.useSSL.ToString() },
+                        { "api:smtp:senderEmail", request.Smtp.SenderEmail },
+                        { "api:smtp:senderName", request.Smtp.SenderName },
+                        { "api:smtp:requiresAuth", request.Smtp.RequireAuth.ToString() }
                     };
-
-                    await context.QSettings.AddRangeAsync(smtpSettings);
+                    await _settingService.UpdateSettings(smtpSettings);
 
                     var isConfiguredSetting = await context.QSettings
                         .FirstOrDefaultAsync(s => s.Name == "api:isConfigured");

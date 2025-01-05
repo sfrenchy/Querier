@@ -2,11 +2,16 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
 using Querier.Api.Domain.Common.Metadata;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Entities.Menu;
 using Querier.Api.Domain.Entities;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Querier.Api.Infrastructure.Data.Context
 {
@@ -82,12 +87,12 @@ namespace Querier.Api.Infrastructure.Data.Context
             {
                 entity.ToTable("AspNetUserRoles");
 
-                entity.HasOne<ApiUser>()
+                entity.HasOne(ur => ur.User)
                     .WithMany(u => u.UserRoles)
                     .HasForeignKey(ur => ur.UserId)
                     .IsRequired();
 
-                entity.HasOne<ApiRole>()
+                entity.HasOne(ur => ur.Role)
                     .WithMany(r => r.UserRoles)
                     .HasForeignKey(ur => ur.RoleId)
                     .IsRequired();
@@ -292,7 +297,21 @@ namespace Querier.Api.Infrastructure.Data.Context
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            modelBuilder.ApplyConfiguration(new SQLQueryConfiguration());
+            modelBuilder.Entity<SQLQuery>(entity =>
+            {
+                var converter = new ValueConverter<Dictionary<string, object>, string>(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                    v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null));
+
+                var comparer = new ValueComparer<Dictionary<string, object>>(
+                    (c1, c2) => c1.Count == c2.Count && !c1.Except(c2).Any(),
+                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.Key.GetHashCode(), v.Value != null ? v.Value.GetHashCode() : 0)),
+                    c => new Dictionary<string, object>(c));
+
+                entity.Property(e => e.Parameters)
+                    .HasConversion(converter)
+                    .Metadata.SetValueComparer(comparer);
+            });
         }
     }
 }
