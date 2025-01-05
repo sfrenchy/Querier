@@ -41,7 +41,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public static async Task LoadAssemblyFromQDBConnection(
+        public static Task LoadAssemblyFromQDBConnection(
             QDBConnection connection,
             IServiceProvider serviceProvider,
             ApplicationPartManager partManager,
@@ -139,6 +139,8 @@ namespace Querier.Api.Domain.Services
                     logger.LogError(ex, $"Error loading assembly {assemblyName}");
                 }
             }
+
+            return Task.CompletedTask;
         }
 
         public static void RegenerateSwagger(ISwaggerProvider swaggerProvider, ILogger logger)
@@ -146,7 +148,18 @@ namespace Querier.Api.Domain.Services
             try
             {
                 var scope = ServiceActivator.GetScope();
+                if (scope == null)
+                {
+                    logger.LogInformation("Service scope not available yet, skipping Swagger regeneration");
+                    return;
+                }
+
                 var actionDescriptorCollectionProvider = scope.ServiceProvider.GetRequiredService<IActionDescriptorCollectionProvider>();
+                if (actionDescriptorCollectionProvider == null)
+                {
+                    logger.LogInformation("ActionDescriptorCollectionProvider not available, skipping Swagger regeneration");
+                    return;
+                }
                 
                 // Forcer le rechargement des contrôleurs
                 var actionDescriptorField = actionDescriptorCollectionProvider.GetType()
