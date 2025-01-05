@@ -65,6 +65,15 @@ namespace Querier.Api.Infrastructure.Extensions
                 var endpoint = context.GetEndpoint();
                 if (endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() == null)
                 {
+                    // Allow SMTP test endpoint during initial setup
+                    var path = context.Request.Path.Value?.ToLower();
+                    if (path != null && (
+                        path.EndsWith("/api/v1/smtp/test")))
+                    {
+                        await next();
+                        return;
+                    }
+
                     using var scope = context.RequestServices.CreateScope();
                     var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
                     var isConfigured = await settingService.GetIsConfigured();
