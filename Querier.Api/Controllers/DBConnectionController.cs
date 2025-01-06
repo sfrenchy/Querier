@@ -302,5 +302,31 @@ namespace Querier.Api.Controllers
                 throw;
             }
         }
+
+        /// <summary>
+        /// Obtient la liste des contrôleurs disponibles pour une connexion
+        /// </summary>
+        /// <param name="id">ID de la connexion</param>
+        /// <returns>Liste des contrôleurs avec leurs actions</returns>
+        [HttpGet("{id}/controllers")]
+        [ProducesResponseType(typeof(List<ControllerInfoResponse>), 200)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<List<ControllerInfoResponse>>> GetControllers(int id)
+        {
+            try
+            {
+                var controllers = await _dbConnectionService.GetControllersAsync(id);
+                return Ok(controllers);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound($"Connection with ID {id} not found");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting controllers for connection {ConnectionId}", id);
+                throw;
+            }
+        }
     }
 }
