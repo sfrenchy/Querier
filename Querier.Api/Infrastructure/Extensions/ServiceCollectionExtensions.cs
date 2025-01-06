@@ -30,6 +30,7 @@ using Querier.Api.Domain.Services.Identity;
 using Microsoft.OpenApi.Models;
 using System.IO;
 using Querier.Api.Infrastructure.Swagger.Helpers;
+using System.Security.Claims;
 
 namespace Querier.Api.Infrastructure.Extensions
 {
@@ -93,7 +94,15 @@ namespace Querier.Api.Infrastructure.Extensions
                         // Si l'application n'est pas configurée, on permet l'accès
                         if (!await settingService.GetIsConfigured())
                         {
-                            context.NoResult();
+                            var anonymousClaims = new[]
+                            {
+                                new Claim(ClaimTypes.Name, "Anonymous"),
+                                new Claim(ClaimTypes.Role, "Anonymous")
+                            };
+                            var anonymousIdentity = new ClaimsIdentity(anonymousClaims);
+                            var anonymousPrincipal = new ClaimsPrincipal(anonymousIdentity);
+
+                            context.Principal = anonymousPrincipal;
                             context.Success();
                             return;
                         }

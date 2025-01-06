@@ -19,7 +19,7 @@ namespace Querier.Api.Domain.Services
         private readonly RoleManager<ApiRole> _roleManager;
         private readonly ISettingService _settingService;
         private readonly IDbContextFactory<ApiDbContext> _contextFactory;
-        private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _semaphore;
         private readonly ILogger<WizardService> _logger;
         private bool _disposed = false;
 
@@ -35,6 +35,7 @@ namespace Querier.Api.Domain.Services
             _settingService = settingService;
             _contextFactory = contextFactory;
             _logger = logger;
+            _semaphore = new SemaphoreSlim(1, 1);
         }
 
         public async Task<(bool Success, string Error)> SetupAsync(SetupRequest request)
