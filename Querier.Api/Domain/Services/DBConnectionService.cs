@@ -82,7 +82,7 @@ namespace Querier.Api.Domain.Services
                         using (SqlConnection c = new SqlConnection(connection.ConnectionString))
                         {
                             c.Open();
-                            connectionNamespace = $"{c.Database}.Api.Models";
+                            connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
                             result.State = QDBConnectionState.Connected;
                         }
@@ -91,7 +91,7 @@ namespace Querier.Api.Domain.Services
                         using (MySqlConnection c = new MySqlConnection(connection.ConnectionString))
                         {
                             c.Open();
-                            connectionNamespace = $"{c.Database}.Api.Models";
+                            connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
                             result.State = QDBConnectionState.Connected;
                         }
@@ -100,7 +100,7 @@ namespace Querier.Api.Domain.Services
                         using (NpgsqlConnection c = new NpgsqlConnection(connection.ConnectionString))
                         {
                             c.Open();
-                            connectionNamespace = $"{c.Database}.Api.Models";
+                            connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
                             result.State = QDBConnectionState.Connected;
                         }
