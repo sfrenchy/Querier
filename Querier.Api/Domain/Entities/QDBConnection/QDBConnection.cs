@@ -19,6 +19,8 @@ namespace Querier.Api.Domain.Entities.QDBConnection
         public QDBConnectionType ConnectionType { get; set; }
         public string Name { get; set; }
         public string ConnectionString { get; set; }
+        
+        [Required]
         public string ContextName { get; set; }
         public string ApiRoute { get; set; }
         public string Description { get; set; }
