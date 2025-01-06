@@ -16,5 +16,6 @@ namespace Querier.Api.Domain.Services
         Task<List<DatabaseServerInfo>> EnumerateServersAsync(string databaseType);
         Task<SourceDownload> GetConnectionSourcesAsync(int connectionId);
         Task<List<EndpointInfoResponse>> GetEndpointsAsync(int connectionId);
+        Task<List<ControllerInfoResponse>> GetControllersAsync(int connectionId);
     }
 }

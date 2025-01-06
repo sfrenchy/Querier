@@ -504,6 +504,30 @@ namespace Querier.Api.Domain.Services
             }).ToList();
         }
 
+        public async Task<List<ControllerInfoResponse>> GetControllersAsync(int connectionId)
+        {
+            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
+            var connection = await apiDbContext.QDBConnections
+                .Include(c => c.Endpoints)
+                    .ThenInclude(e => e.Responses)
+                .FirstOrDefaultAsync(c => c.Id == connectionId);
+
+            if (connection == null)
+                throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
+
+            return connection.Endpoints
+                .GroupBy(e => e.Controller)
+                .Select(g => new ControllerInfoResponse
+                {
+                    Name = g.Key.Replace("Controller",""),
+                    Route = g.First().Route.Replace("Controller",""),
+                    HttpGetJsonSchema = g.FirstOrDefault(e => e.HttpMethod == "GET")
+                        ?.Responses.FirstOrDefault(r => r.StatusCode == 200)
+                        ?.JsonSchema
+                })
+                .ToList();
+        }
+
         private List<TemplateEntityMetadata> ExtractEntityMetadata(ScaffoldedModel scaffoldedModel)
         {
             var entities = new List<TemplateEntityMetadata>();
