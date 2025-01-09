@@ -17,30 +17,30 @@ namespace Querier.Api.Infrastructure.Data.Repositories.Menu
             _context = context;
         }
 
-        public async Task<DynamicCard> GetByIdAsync(int id)
+        public async Task<Card> GetByIdAsync(int id)
         {
-            return await _context.DynamicCards
+            return await _context.Cards
                 .FindAsync(id);
         }
 
-        public async Task<IEnumerable<DynamicCard>> GetByRowIdAsync(int rowId)
+        public async Task<IEnumerable<Card>> GetByRowIdAsync(int rowId)
         {
-            return await _context.DynamicCards
-                .Where(c => c.DynamicRowId == rowId)
+            return await _context.Cards
+                .Where(c => c.RowId == rowId)
                 .OrderBy(c => c.Order)
                 .ToListAsync();
         }
 
-        public async Task<DynamicCard> CreateAsync(DynamicCard card)
+        public async Task<Card> CreateAsync(Card card)
         {
-            await _context.DynamicCards.AddAsync(card);
+            await _context.Cards.AddAsync(card);
             await _context.SaveChangesAsync();
             return card;
         }
 
-        public async Task<DynamicCard> UpdateAsync(DynamicCard card)
+        public async Task<Card> UpdateAsync(Card card)
         {
-            _context.DynamicCards.Update(card);
+            _context.Cards.Update(card);
             await _context.SaveChangesAsync();
             return card;
         }
@@ -50,15 +50,15 @@ namespace Querier.Api.Infrastructure.Data.Repositories.Menu
             var card = await GetByIdAsync(id);
             if (card == null) return false;
 
-            _context.DynamicCards.Remove(card);
+            _context.Cards.Remove(card);
             await _context.SaveChangesAsync();
             return true;
         }
 
         public async Task<int> GetMaxOrderInRowAsync(int rowId)
         {
-            return await _context.DynamicCards
-                .Where(c => c.DynamicRowId == rowId)
+            return await _context.Cards
+                .Where(c => c.RowId == rowId)
                 .MaxAsync(c => (int?)c.Order) ?? 0;
         }
     }

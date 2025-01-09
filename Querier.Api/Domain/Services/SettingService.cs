@@ -20,19 +20,19 @@ namespace Querier.Api.Domain.Services
             _logger = logger;
         }
 
-        public async Task<QSetting> GetSettings()
+        public async Task<Setting> GetSettings()
         {
             return await _context.QSettings.FirstOrDefaultAsync();
         }
 
-        public async Task<QSetting> UpdateSetting(QSetting setting)
+        public async Task<Setting> UpdateSetting(Setting setting)
         {
             _context.QSettings.Update(setting);
             await _context.SaveChangesAsync();
             return setting;
         }
 
-        public async Task<QSetting> Configure(QSetting setting)
+        public async Task<Setting> Configure(Setting setting)
         {
             return await UpdateSetting(setting);
         }
@@ -71,9 +71,9 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task<QSetting> CreateSetting(string name, string value)
+        public async Task<Setting> CreateSetting(string name, string value)
         {
-            var setting = new QSetting
+            var setting = new Setting
             {
                 Name = name,
                 Value = value
@@ -109,7 +109,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task<QSetting> UpdateSettingIfExists(string name, string value)
+        public async Task<Setting> UpdateSettingIfExists(string name, string value)
         {
             var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == name);
             if (setting != null)
@@ -119,7 +119,7 @@ namespace Querier.Api.Domain.Services
             }
             else
             {
-                setting = new QSetting { Name = name, Value = value };
+                setting = new Setting { Name = name, Value = value };
                 _context.QSettings.Add(setting);
                 await _context.SaveChangesAsync();
             }

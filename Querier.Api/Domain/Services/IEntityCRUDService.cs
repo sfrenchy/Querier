@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.DTOs.Requests.Entity;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Common.ValueObjects;
@@ -47,7 +48,7 @@ namespace Querier.Api.Domain.Services
         /// <param name="filters">The data filters to be applied to the resultset</param>
         /// <param name="entityType">The Type object of the entity</param>
         /// <returns>An enumerable that hold the datas for entity of the context</returns>
-        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilter> filters, out Type entityType);
+        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<EntityCRUDDataFilterDto> filters, out Type entityType);
 
         /// <summary>
         /// Read a resultset from an SQL query
@@ -56,9 +57,9 @@ namespace Querier.Api.Domain.Services
         /// <param name="entityTypeFullname">the SQL query that return a resultset</param>
         /// <param name="Filters">The data filters to be applied to the resultset</param>
         /// <returns>An enumerable that hold the datas for dbset of the query on the context</returns>
-        public IEnumerable<object> ReadFromSql(string contextTypeFullname, string SqlQuery, List<DataFilter> Filters);
+        public IEnumerable<object> ReadFromSql(string contextTypeFullname, string SqlQuery, List<EntityCRUDDataFilterDto> Filters);
 
-        public DataTable GetDatatableFromSql(string contextTypeFullname, string SqlQuery, List<DataFilter> Filters);
+        public DataTable GetDatatableFromSql(string contextTypeFullname, string SqlQuery, List<EntityCRUDDataFilterDto> Filters);
 
         /// <summary>
         /// Read entities from repository
@@ -67,7 +68,7 @@ namespace Querier.Api.Domain.Services
         /// <param name="entityTypeFullname">The fullname of the entity in the context</param>
         /// <param name="filters">The data filters to be applied to the resultset</param>
         /// <returns>An enumerable that hold the datas for entity of the context</returns>
-        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilter> filters);
+        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<EntityCRUDDataFilterDto> filters);
 
         public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, PaginationParameters pagination, string OrderBy);
 
@@ -80,7 +81,7 @@ namespace Querier.Api.Domain.Services
         /// <returns>The modified entity</returns>
         public object Update(string contextTypeFullname, string entityFullname, object entity);
 
-        public SQLQueryResult GetSQLQueryEntityDefinition(CRUDExecuteSQLQueryRequest request);
+        public SQLQueryResult GetSQLQueryEntityDefinition(EntityCRUDExecuteSQLQueryDto request);
         public object CreateOrUpdate(string contextTypeFullname, string entityFullname, object entity);
         public void Delete(string contextTypeFullname, string entityFullname, object entityIdentifier);
     }

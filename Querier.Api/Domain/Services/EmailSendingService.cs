@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MailKit.Security;
 using MimeKit;
+using Querier.Api.Application.DTOs;
 using SmtpClient = MailKit.Net.Smtp.SmtpClient;
-using Querier.Api.Application.DTOs.Requests.Smtp;
 
 namespace Querier.Api.Domain.Services
 {
@@ -13,7 +13,7 @@ namespace Querier.Api.Domain.Services
     {
         Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = false);
         Task<bool> SendTemplatedEmailAsync(string to, string subject, string templateName, string language, Dictionary<string, string> parameters);
-        Task<bool> TestSmtpConfiguration(SmtpTestRequest request);
+        Task<bool> TestSmtpConfiguration(SmtpTestDto request);
         Task<bool> IsConfigured();
     }
 
@@ -38,7 +38,7 @@ namespace Querier.Api.Domain.Services
             return bool.Parse(await _settings.GetSettingValue("api:isConfigured", "false"));
         }
 
-        public async Task<bool> TestSmtpConfiguration(SmtpTestRequest request)
+        public async Task<bool> TestSmtpConfiguration(SmtpTestDto request)
         {
             try
             {

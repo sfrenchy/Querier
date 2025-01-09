@@ -1,21 +1,20 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Querier.Api.Application.DTOs.Requests.DBConnection;
-using Querier.Api.Application.DTOs.Responses.DBConnection;
+using Querier.Api.Application.DTOs;
 using static Querier.Api.Domain.Services.DBConnectionService;
 
 namespace Querier.Api.Domain.Services
 {
     public interface IDBConnectionService
     {
-        Task<AddDBConnectionResponse> AddConnectionAsync(AddDBConnectionRequest connection);
-        Task<DeleteDBConnectionResponse> DeleteDBConnectionAsync(DeleteDBConnectionRequest request);
-        Task<List<QDBConnectionResponse>> GetAll();
-        Task<DatabaseSchemaResponse> GetDatabaseSchema(int connectionId);
-        Task<QueryAnalysisResponse> GetQueryObjects(int connectionId, string query);
-        Task<List<DatabaseServerInfo>> EnumerateServersAsync(string databaseType);
+        Task<DBConnectionCreateResultDto> AddConnectionAsync(DBConnectionCreateDto connection);
+        Task DeleteDBConnectionAsync(int dbConnectionId);
+        Task<List<DBConnectionDto>> GetAll();
+        Task<DBConnectionDatabaseSchemaDto> GetDatabaseSchema(int connectionId);
+        Task<DBConnectionQueryAnalysisDto> GetQueryObjects(int connectionId, string query);
+        Task<List<DBConnectionDatabaseServerInfoDto>> EnumerateServersAsync(string databaseType);
         Task<SourceDownload> GetConnectionSourcesAsync(int connectionId);
-        Task<List<EndpointInfoResponse>> GetEndpointsAsync(int connectionId);
-        Task<List<ControllerInfoResponse>> GetControllersAsync(int connectionId);
+        Task<List<DBConnectionEndpointInfoDto>> GetEndpointsAsync(int connectionId);
+        Task<List<DBConnectionControllerInfoDto>> GetControllersAsync(int connectionId);
     }
 }

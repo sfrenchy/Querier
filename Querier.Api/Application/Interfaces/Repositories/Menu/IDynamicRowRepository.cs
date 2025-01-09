@@ -6,10 +6,10 @@ namespace Querier.Api.Application.Interfaces.Repositories.Menu
 {
     public interface IDynamicRowRepository
     {
-        Task<DynamicRow> GetByIdAsync(int id);
-        Task<IEnumerable<DynamicRow>> GetByPageIdAsync(int pageId);
-        Task<DynamicRow> CreateAsync(DynamicRow row);
-        Task<DynamicRow> UpdateAsync(DynamicRow row);
+        Task<Row> GetByIdAsync(int id);
+        Task<IEnumerable<Row>> GetByPageIdAsync(int pageId);
+        Task<Row> CreateAsync(Row row);
+        Task<Row> UpdateAsync(Row row);
         Task<bool> DeleteAsync(int id);
         Task<int> GetMaxOrderInPageAsync(int pageId);
     }

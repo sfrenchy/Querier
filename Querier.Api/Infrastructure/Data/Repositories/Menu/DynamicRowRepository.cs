@@ -17,32 +17,32 @@ namespace Querier.Api.Infrastructure.Data.Repositories.Menu
             _context = context;
         }
 
-        public async Task<DynamicRow> GetByIdAsync(int id)
+        public async Task<Row> GetByIdAsync(int id)
         {
-            return await _context.DynamicRows
+            return await _context.Rows
                 .Include(r => r.Cards)
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
-        public async Task<IEnumerable<DynamicRow>> GetByPageIdAsync(int pageId)
+        public async Task<IEnumerable<Row>> GetByPageIdAsync(int pageId)
         {
-            return await _context.DynamicRows
+            return await _context.Rows
                 .Include(r => r.Cards)
                 .Where(r => r.PageId == pageId)
                 .OrderBy(r => r.Order)
                 .ToListAsync();
         }
 
-        public async Task<DynamicRow> CreateAsync(DynamicRow row)
+        public async Task<Row> CreateAsync(Row row)
         {
-            await _context.DynamicRows.AddAsync(row);
+            await _context.Rows.AddAsync(row);
             await _context.SaveChangesAsync();
             return row;
         }
 
-        public async Task<DynamicRow> UpdateAsync(DynamicRow row)
+        public async Task<Row> UpdateAsync(Row row)
         {
-            _context.DynamicRows.Update(row);
+            _context.Rows.Update(row);
             await _context.SaveChangesAsync();
             return row;
         }
@@ -52,14 +52,14 @@ namespace Querier.Api.Infrastructure.Data.Repositories.Menu
             var row = await GetByIdAsync(id);
             if (row == null) return false;
 
-            _context.DynamicRows.Remove(row);
+            _context.Rows.Remove(row);
             await _context.SaveChangesAsync();
             return true;
         }
 
         public async Task<int> GetMaxOrderInPageAsync(int pageId)
         {
-            return await _context.DynamicRows
+            return await _context.Rows
                 .Where(r => r.PageId == pageId)
                 .MaxAsync(r => (int?)r.Order) ?? 0;
         }

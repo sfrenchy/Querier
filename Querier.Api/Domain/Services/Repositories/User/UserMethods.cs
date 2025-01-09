@@ -226,7 +226,7 @@ namespace Querier.Api.Services.Repositories.User
             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
             var jwtToken = jwtTokenHandler.WriteToken(token);
 
-            var refreshToken = new QRefreshToken()
+            var refreshToken = new RefreshToken()
             {
                 JwtId = token.Id,
                 IsUsed = false,

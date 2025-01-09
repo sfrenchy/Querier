@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Querier.Api.Application.DTOs.Menu.Responses;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services.Menu;
 
 namespace Querier.Api.Controllers
@@ -52,9 +52,9 @@ namespace Querier.Api.Controllers
         /// <response code="200">Returns the requested layout</response>
         /// <response code="404">If the page was not found</response>
         [HttpGet("{pageId}")]
-        [ProducesResponseType(typeof(LayoutResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<LayoutResponse>> GetLayout(int pageId)
+        public async Task<ActionResult<LayoutDto>> GetLayout(int pageId)
         {
             var layout = await _layoutService.GetLayoutAsync(pageId);
             if (layout == null) return NotFound();
@@ -98,10 +98,10 @@ namespace Querier.Api.Controllers
         /// <response code="404">If the page was not found</response>
         /// <response code="400">If the layout data is invalid</response>
         [HttpPut("{pageId}")]
-        [ProducesResponseType(typeof(LayoutResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<LayoutResponse>> UpdateLayout(int pageId, [FromBody] LayoutResponse layout)
+        public async Task<ActionResult<LayoutDto>> UpdateLayout(int pageId, [FromBody] LayoutDto layout)
         {
             var updatedLayout = await _layoutService.UpdateLayoutAsync(pageId, layout);
             return Ok(updatedLayout);

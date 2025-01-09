@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Querier.Api.Application.DTOs.Menu.Requests;
-using Querier.Api.Application.DTOs.Menu.Responses;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories.Menu;
 using Querier.Api.Application.Interfaces.Services.Menu;
 using Querier.Api.Domain.Entities.Menu;
@@ -19,30 +18,30 @@ namespace Querier.Api.Infrastructure.Services.Menu
             _repository = repository;
         }
 
-        public async Task<DynamicCardResponse> GetByIdAsync(int id)
+        public async Task<CardDto> GetByIdAsync(int id)
         {
             var card = await _repository.GetByIdAsync(id);
             return card != null ? MapToResponse(card) : null;
         }
 
-        public async Task<IEnumerable<DynamicCardResponse>> GetByRowIdAsync(int rowId)
+        public async Task<IEnumerable<CardDto>> GetByRowIdAsync(int rowId)
         {
             var cards = await _repository.GetByRowIdAsync(rowId);
             return cards.Select(MapToResponse);
         }
 
-        public async Task<DynamicCardResponse> CreateAsync(int rowId, CreateDynamicCardRequest request)
+        public async Task<CardDto> CreateAsync(int rowId, CardDto request)
         {
             var order = await _repository.GetMaxOrderInRowAsync(rowId) + 1;
             
-            var card = new DynamicCard
+            var card = new Card
             {
                 Order = order,
                 Type = request.Type,
                 Configuration = request.Configuration != null 
                     ? JsonConvert.SerializeObject(request.Configuration)
                     : null,
-                DynamicRowId = rowId,
+                RowId = rowId,
                 GridWidth = 12,
                 BackgroundColor = request.BackgroundColor ?? 0xFF000000,
                 TextColor = request.TextColor ?? 0xFFFFFFFF,
@@ -52,7 +51,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return MapToResponse(result);
         }
 
-        public async Task<DynamicCardResponse> UpdateAsync(int id, CreateDynamicCardRequest request)
+        public async Task<CardDto> UpdateAsync(int id, CardDto request)
         {
             var existingCard = await _repository.GetByIdAsync(id);
             if (existingCard == null) return null;
@@ -64,10 +63,10 @@ namespace Querier.Api.Infrastructure.Services.Menu
             existingCard.BackgroundColor = request.BackgroundColor;
             existingCard.TextColor = request.TextColor;
 
-            existingCard.Translations.Clear();
+            existingCard.CardTranslations.Clear();
             foreach (var translation in request.Titles)
             {
-                existingCard.Translations.Add(new DynamicCardTranslation
+                existingCard.CardTranslations.Add(new CardTranslation
                 {
                     LanguageCode = translation.Key,
                     Title = translation.Value,
@@ -105,12 +104,12 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return true;
         }
 
-        private static DynamicCardResponse MapToResponse(DynamicCard card)
+        private static CardDto MapToResponse(Card card)
         {
-            return new DynamicCardResponse
+            return new CardDto
             {
                 Id = card.Id,
-                Titles = card.Translations.ToDictionary(x => x.LanguageCode, x => x.Title),
+                Titles = card.CardTranslations.ToDictionary(x => x.LanguageCode, x => x.Title),
                 Order = card.Order,
                 Type = card.Type.ToString(),
                 GridWidth = card.GridWidth,

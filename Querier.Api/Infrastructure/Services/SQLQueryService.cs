@@ -21,9 +21,9 @@ using Querier.Api.Domain.Common.ValueObjects;
 public interface ISQLQueryService
 {
     Task<IEnumerable<SQLQueryDTO>> GetAllQueriesAsync(string userId);
-    Task<SQLQuery> GetQueryByIdAsync(int id);
-    Task<SQLQuery> CreateQueryAsync(SQLQuery query, Dictionary<string, object> sampleParameters = null);
-    Task<SQLQuery> UpdateQueryAsync(SQLQuery query, Dictionary<string, object> sampleParameters = null);
+    Task<SQLQueryDTO> GetQueryByIdAsync(int id);
+    Task<SQLQueryDTO> CreateQueryAsync(SQLQueryDTO query, Dictionary<string, object> sampleParameters = null);
+    Task<SQLQueryDTO> UpdateQueryAsync(SQLQueryDTO query, Dictionary<string, object> sampleParameters = null);
     Task DeleteQueryAsync(int id);
     Task<PagedResult<dynamic>> ExecuteQueryAsync(int queryId, Dictionary<string, object> parameters, int pageNumber = 1, int pageSize = 0);
 }
@@ -63,46 +63,45 @@ public class SQLQueryService : ISQLQueryService
                 LastModifiedAt = q.LastModifiedAt,
                 IsPublic = q.IsPublic,
                 Parameters = q.Parameters,
-                ConnectionId = q.ConnectionId
+                DBConnectionId = q.ConnectionId
             })
             .ToListAsync();
-
-        // Valider et obtenir la description pour chaque requête
-        foreach (var query in queries)
-        {
-            if (string.IsNullOrEmpty(query.OutputDescription))
-            {
-                var fullQuery = await GetQueryByIdAsync(query.Id);
-                if (ValidateAndDescribeQuery(fullQuery, null, out string outputDescription))
-                {
-                    query.OutputDescription = outputDescription;
-                }
-            }
-        }
 
         return queries;
     }
 
-    public async Task<SQLQuery> GetQueryByIdAsync(int id)
+    public async Task<SQLQueryDTO> GetQueryByIdAsync(int id)
     {
-        return await _context.SQLQueries
+        return SQLQueryDTO.FromEntity(await _context.SQLQueries
             .Include(q => q.Connection)
-            .FirstOrDefaultAsync(q => q.Id == id);
+            .FirstOrDefaultAsync(q => q.Id == id));
     }
 
-    public async Task<SQLQuery> CreateQueryAsync(SQLQuery query, Dictionary<string, object> sampleParameters = null)
+    public async Task<SQLQueryDTO> CreateQueryAsync(SQLQueryDTO query, Dictionary<string, object> sampleParameters = null)
     {
         var currentUser = await _userService.GetCurrentUser(_httpContextAccessor.HttpContext.User);
         query.CreatedAt = DateTime.UtcNow;
         query.CreatedBy = currentUser?.Id;
-
-        query.Connection = await _context.QDBConnections.FindAsync(query.ConnectionId);
+        query.DBConnection = DBConnectionDto.FromEntity(await _context.DBConnections.FindAsync(query.DBConnectionId));
 
         if (ValidateAndDescribeQuery(query, sampleParameters, out string outputDescription))
         {
-            query.OutputDescription = outputDescription;
-            _context.SQLQueries.Add(query);
+            _context.SQLQueries.Add(new SQLQuery()
+            {
+                ConnectionId = query.DBConnectionId,
+                Name = query.Name,
+                Description = query.Description,
+                Query = query.Query,
+                CreatedBy = query.CreatedBy,
+                CreatedAt = query.CreatedAt,
+                LastModifiedAt = query.LastModifiedAt,
+                IsPublic = query.IsPublic,
+                Parameters = query.Parameters,
+                OutputDescription = outputDescription,
+            });
             await _context.SaveChangesAsync();
+            query.OutputDescription = outputDescription;
+            query.Id = _context.SQLQueries.Last().Id;
         }
         else
         {
@@ -112,16 +111,16 @@ public class SQLQueryService : ISQLQueryService
         return query;
     }
 
-    private bool ValidateAndDescribeQuery(SQLQuery query, Dictionary<string, object> sampleParameters, out string outputDescription)
+    private bool ValidateAndDescribeQuery(SQLQueryDTO query, Dictionary<string, object> sampleParameters, out string outputDescription)
     {
         try
         {
-            if (query.Connection == null)
+            if (query.DBConnection == null)
             {
-                query.Connection = _context.QDBConnections.Find(query.ConnectionId);
+                query.DBConnection = DBConnectionDto.FromEntity(_context.DBConnections.Find(query.DBConnectionId));
             }
 
-            using (DbContext context = Utils.GetDbContextFromTypeName(query.Connection.ContextName))
+            using (DbContext context = Utils.GetDbContextFromTypeName(query.DBConnection.ContextName))
             {
                 List<DbParameter> parameters = new List<DbParameter>();
                 if (sampleParameters != null)
@@ -164,7 +163,7 @@ public class SQLQueryService : ISQLQueryService
         }
     }
 
-    public async Task<SQLQuery> UpdateQueryAsync(SQLQuery query, Dictionary<string, object> sampleParameters = null)
+    public async Task<SQLQueryDTO> UpdateQueryAsync(SQLQueryDTO query, Dictionary<string, object> sampleParameters = null)
     {
         var existingQuery = await _context.SQLQueries.FindAsync(query.Id);
         if (existingQuery == null) return null;
@@ -184,7 +183,7 @@ public class SQLQueryService : ISQLQueryService
             throw new Exception($"Unable to validate query: {outputDescription}");
         }
         
-        return existingQuery;
+        return SQLQueryDTO.FromEntity(existingQuery);
     }
 
     public async Task DeleteQueryAsync(int id)
@@ -204,7 +203,7 @@ public class SQLQueryService : ISQLQueryService
 
         try
         {
-            using (var dbContext = Utils.GetDbContextFromTypeName(query.Connection.ContextName))
+            using (var dbContext = Utils.GetDbContextFromTypeName(query.DBConnection.ContextName))
             {
                 var command = dbContext.Database.GetDbConnection().CreateCommand();
 

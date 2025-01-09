@@ -17,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.DTOs.Requests.Entity;
 using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Domain.Common.ValueObjects;
@@ -257,12 +258,12 @@ namespace Querier.Api.Tools
                    token.Type == JTokenType.Null;
         }
 
-        public static DataTable Filter(this DataTable source, List<DataFilter> Filters)
+        public static DataTable Filter(this DataTable source, List<EntityCRUDDataFilterDto> Filters)
         {
             string dateTimeFormat = "yyyy-MM-dd"; // TODO: y'a mieux à faire... Par mon lapin
             
             var predicate = PredicateBuilder.True<DataRow>();
-            foreach (DataFilter filter in Filters)
+            foreach (EntityCRUDDataFilterDto filter in Filters)
             {
                 string columnName = filter.Column.Name;
                 if (source.Columns.Contains(columnName))

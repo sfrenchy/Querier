@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using Querier.Api.Tools;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.IO;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.DTOs.Requests.Entity;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Domain.Common.Models;
@@ -41,7 +42,7 @@ namespace Querier.Api.Domain.Services
             var assembliesPath = Path.Combine("Assemblies");
             using (var apiDbContext = _apiDbContextFactory.CreateDbContext())
             {
-                foreach (var dbConnection in apiDbContext.QDBConnections)
+                foreach (var dbConnection in apiDbContext.DBConnections)
                 {
                     try
                     {
@@ -153,12 +154,12 @@ namespace Querier.Api.Domain.Services
             return new PagedResult<object>(data, totalCount);
         }
 
-        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilter> filters)
+        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<EntityCRUDDataFilterDto> filters)
         {
             return Read(contextTypeFullname, entityTypeFullname, filters, out Type type);
         }
 
-        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilter> filters, out Type entityType)
+        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<EntityCRUDDataFilterDto> filters, out Type entityType)
         {
             Type reqType = Utils.GetType(entityTypeFullname);
             if (reqType == null)
@@ -177,14 +178,14 @@ namespace Querier.Api.Domain.Services
             return JsonConvert.DeserializeObject<List<ExpandoObject>>(JsonConvert.SerializeObject(dt));
         }
 
-        public DataTable GetDatatableFromSql(string contextTypeFullname, string SqlQuery, List<DataFilter> Filters)
+        public DataTable GetDatatableFromSql(string contextTypeFullname, string SqlQuery, List<EntityCRUDDataFilterDto> Filters)
         {
             DbContext apiDbContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
             DataTable dt = apiDbContext.Database.RawSqlQuery(SqlQuery);
             return dt.Filter(Filters);
         }
 
-        public IEnumerable<object> ReadFromSql(string contextTypeFullname, string SqlQuery, List<DataFilter> Filters)
+        public IEnumerable<object> ReadFromSql(string contextTypeFullname, string SqlQuery, List<EntityCRUDDataFilterDto> Filters)
         {
             DataTable dt = GetDatatableFromSql(contextTypeFullname, SqlQuery, Filters);
             var res = JsonConvert.DeserializeObject<List<ExpandoObject>>(JsonConvert.SerializeObject(dt));
@@ -265,7 +266,7 @@ namespace Querier.Api.Domain.Services
             targetContext.SaveChanges();
         }
 
-        public SQLQueryResult GetSQLQueryEntityDefinition(CRUDExecuteSQLQueryRequest request)
+        public SQLQueryResult GetSQLQueryEntityDefinition(EntityCRUDExecuteSQLQueryDto request)
         {
             SQLQueryResult result = new SQLQueryResult();
             result.QuerySuccessful = true;

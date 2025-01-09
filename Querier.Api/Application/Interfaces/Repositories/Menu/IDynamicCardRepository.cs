@@ -6,10 +6,10 @@ namespace Querier.Api.Application.Interfaces.Repositories.Menu
 {
     public interface IDynamicCardRepository
     {
-        Task<DynamicCard> GetByIdAsync(int id);
-        Task<IEnumerable<DynamicCard>> GetByRowIdAsync(int rowId);
-        Task<DynamicCard> CreateAsync(DynamicCard card);
-        Task<DynamicCard> UpdateAsync(DynamicCard card);
+        Task<Card> GetByIdAsync(int id);
+        Task<IEnumerable<Card>> GetByRowIdAsync(int rowId);
+        Task<Card> CreateAsync(Card card);
+        Task<Card> UpdateAsync(Card card);
         Task<bool> DeleteAsync(int id);
         Task<int> GetMaxOrderInRowAsync(int rowId);
     }

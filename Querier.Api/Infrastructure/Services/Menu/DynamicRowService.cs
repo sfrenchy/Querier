@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Querier.Api.Application.DTOs.Menu.Requests;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories.Menu;
 using Querier.Api.Application.Interfaces.Services.Menu;
 using Querier.Api.Domain.Entities.Menu;
@@ -19,24 +19,24 @@ namespace Querier.Api.Infrastructure.Services.Menu
             _cardService = cardService;
         }
 
-        public async Task<DynamicRowResponse> GetByIdAsync(int id)
+        public async Task<RowDto> GetByIdAsync(int id)
         {
             var row = await _repository.GetByIdAsync(id);
             return row != null ? await MapToResponse(row) : null;
         }
 
-        public async Task<IEnumerable<DynamicRowResponse>> GetByPageIdAsync(int pageId)
+        public async Task<IEnumerable<RowDto>> GetByPageIdAsync(int pageId)
         {
             var rows = await _repository.GetByPageIdAsync(pageId);
             var tasks = rows.Select(MapToResponse);
             return await Task.WhenAll(tasks);
         }
 
-        public async Task<DynamicRowResponse> CreateAsync(int pageId, CreateDynamicRowRequest request)
+        public async Task<RowDto> CreateAsync(int pageId, RowCreateDto request)
         {
             var order = await _repository.GetMaxOrderInPageAsync(pageId) + 1;
             
-            var row = new DynamicRow
+            var row = new Row
             {
                 Order = order,
                 PageId = pageId,
@@ -47,7 +47,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return await MapToResponse(result);
         }
 
-        public async Task<DynamicRowResponse> UpdateAsync(int id, CreateDynamicRowRequest request)
+        public async Task<RowDto> UpdateAsync(int id, RowCreateDto request)
         {
             var existingRow = await _repository.GetByIdAsync(id);
             if (existingRow == null) return null;
@@ -80,11 +80,11 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return true;
         }
 
-        private async Task<DynamicRowResponse> MapToResponse(DynamicRow row)
+        private async Task<RowDto> MapToResponse(Row row)
         {
             var cards = await _cardService.GetByRowIdAsync(row.Id);
             
-            return new DynamicRowResponse
+            return new RowDto
             {
                 Id = row.Id,
                 Order = row.Order,

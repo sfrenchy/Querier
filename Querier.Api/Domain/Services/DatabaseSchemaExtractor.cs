@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
-using Querier.Api.Application.DTOs.Responses.DBConnection;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Domain.Common.Enums;
 
 namespace Querier.Api.Domain.Services
@@ -16,21 +16,21 @@ namespace Querier.Api.Domain.Services
             _logger = logger;
         }
 
-        public async Task<DatabaseSchemaResponse> ExtractSchema(QDBConnectionType connectionType, string connectionString)
+        public async Task<DBConnectionDatabaseSchemaDto> ExtractSchema(DbConnectionType connectionType, string connectionString)
         {
-            var response = new DatabaseSchemaResponse();
+            var response = new DBConnectionDatabaseSchemaDto();
 
             try
             {
                 switch (connectionType)
                 {
-                    case QDBConnectionType.SqlServer:
+                    case DbConnectionType.SqlServer:
                         await GetSqlServerSchema(connectionString, response);
                         break;
-                    case QDBConnectionType.MySQL:
+                    case DbConnectionType.MySql:
                         await GetMySqlSchema(connectionString, response);
                         break;
-                    case QDBConnectionType.PgSQL:
+                    case DbConnectionType.PgSql:
                         await GetPgSqlSchema(connectionString, response);
                         break;
                     default:
@@ -46,7 +46,7 @@ namespace Querier.Api.Domain.Services
             return response;
         }
 
-        private async Task GetSqlServerSchema(string connectionString, DatabaseSchemaResponse response)
+        private async Task GetSqlServerSchema(string connectionString, DBConnectionDatabaseSchemaDto response)
         {
             using var connection = new SqlConnection(connectionString);
             await connection.OpenAsync();
@@ -57,7 +57,7 @@ namespace Querier.Api.Domain.Services
             await ExtractUserFunctions(connection, response);
         }
 
-        private async Task ExtractTables(SqlConnection connection, DatabaseSchemaResponse response)
+        private async Task ExtractTables(SqlConnection connection, DBConnectionDatabaseSchemaDto response)
         {
             var tableQuery = @"
                 SELECT 
@@ -93,7 +93,7 @@ namespace Querier.Api.Domain.Services
             using var command = new SqlCommand(tableQuery, connection);
             using var reader = await command.ExecuteReaderAsync();
 
-            TableDescription currentTable = null;
+            DBConnectionTableDescriptionDto currentTable = null;
             string currentTableName = null;
             string currentSchema = null;
 
@@ -104,7 +104,7 @@ namespace Querier.Api.Domain.Services
 
                 if (currentTableName != tableName || currentSchema != schema)
                 {
-                    currentTable = new TableDescription
+                    currentTable = new DBConnectionTableDescriptionDto
                     {
                         Name = tableName,
                         Schema = schema
@@ -114,7 +114,7 @@ namespace Querier.Api.Domain.Services
                     currentSchema = schema;
                 }
 
-                currentTable.Columns.Add(new ColumnDescription
+                currentTable.Columns.Add(new DBConnectionColumnDescriptionDto
                 {
                     Name = reader.GetString(2),
                     DataType = reader.GetString(3),
@@ -127,7 +127,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private async Task ExtractViews(SqlConnection connection, DatabaseSchemaResponse response)
+        private async Task ExtractViews(SqlConnection connection, DBConnectionDatabaseSchemaDto response)
         {
             var viewQuery = @"
                 SELECT 
@@ -143,7 +143,7 @@ namespace Querier.Api.Domain.Services
             using var command = new SqlCommand(viewQuery, connection);
             using var reader = await command.ExecuteReaderAsync();
 
-            ViewDescription currentView = null;
+            DBConnectionViewDescriptionDto currentView = null;
             string currentViewName = null;
             string currentSchema = null;
 
@@ -154,7 +154,7 @@ namespace Querier.Api.Domain.Services
 
                 if (currentViewName != viewName || currentSchema != schema)
                 {
-                    currentView = new ViewDescription
+                    currentView = new DBConnectionViewDescriptionDto
                     {
                         Name = viewName,
                         Schema = schema
@@ -164,7 +164,7 @@ namespace Querier.Api.Domain.Services
                     currentSchema = schema;
                 }
 
-                currentView.Columns.Add(new ColumnDescription
+                currentView.Columns.Add(new DBConnectionColumnDescriptionDto
                 {
                     Name = reader.GetString(2),
                     DataType = reader.GetString(3),
@@ -173,7 +173,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private async Task ExtractStoredProcedures(SqlConnection connection, DatabaseSchemaResponse response)
+        private async Task ExtractStoredProcedures(SqlConnection connection, DBConnectionDatabaseSchemaDto response)
         {
             var spQuery = @"
                 SELECT 
@@ -189,7 +189,7 @@ namespace Querier.Api.Domain.Services
             using var command = new SqlCommand(spQuery, connection);
             using var reader = await command.ExecuteReaderAsync();
 
-            StoredProcedureDescription currentSp = null;
+            DBConnectionStoredProcedureDescriptionDto currentSp = null;
             string currentSpName = null;
             string currentSchema = null;
 
@@ -200,7 +200,7 @@ namespace Querier.Api.Domain.Services
 
                 if (currentSpName != spName || currentSchema != schema)
                 {
-                    currentSp = new StoredProcedureDescription
+                    currentSp = new DBConnectionStoredProcedureDescriptionDto
                     {
                         Name = spName,
                         Schema = schema
@@ -212,7 +212,7 @@ namespace Querier.Api.Domain.Services
 
                 if (!reader.IsDBNull(2)) // Skip return value parameter
                 {
-                    currentSp.Parameters.Add(new ParameterDescription
+                    currentSp.Parameters.Add(new DBConnectionEndpointParameterDescriptionDto
                     {
                         Name = reader.GetString(2),
                         DataType = reader.GetString(3),
@@ -222,7 +222,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private async Task ExtractUserFunctions(SqlConnection connection, DatabaseSchemaResponse response)
+        private async Task ExtractUserFunctions(SqlConnection connection, DBConnectionDatabaseSchemaDto response)
         {
             var functionQuery = @"
                 SELECT 
@@ -243,7 +243,7 @@ namespace Querier.Api.Domain.Services
             using var command = new SqlCommand(functionQuery, connection);
             using var reader = await command.ExecuteReaderAsync();
 
-            UserFunctionDescription currentFunc = null;
+            DBConnectionUserFunctionDescriptionDto currentFunc = null;
             string currentFuncName = null;
             string currentSchema = null;
 
@@ -254,7 +254,7 @@ namespace Querier.Api.Domain.Services
 
                 if (currentFuncName != funcName || currentSchema != schema)
                 {
-                    currentFunc = new UserFunctionDescription
+                    currentFunc = new DBConnectionUserFunctionDescriptionDto
                     {
                         Name = funcName,
                         Schema = schema
@@ -266,7 +266,7 @@ namespace Querier.Api.Domain.Services
 
                 if (!reader.IsDBNull(2)) // Skip return value parameter
                 {
-                    currentFunc.Parameters.Add(new ParameterDescription
+                    currentFunc.Parameters.Add(new DBConnectionEndpointParameterDescriptionDto
                     {
                         Name = reader.GetString(2),
                         DataType = reader.GetString(3),
@@ -276,13 +276,13 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private Task GetMySqlSchema(string connectionString, DatabaseSchemaResponse response)
+        private Task GetMySqlSchema(string connectionString, DBConnectionDatabaseSchemaDto response)
         {
             // TODO: Implémenter la logique spécifique à MySQL
             throw new NotImplementedException("MySQL schema extraction not yet implemented");
         }
 
-        private Task GetPgSqlSchema(string connectionString, DatabaseSchemaResponse response)
+        private Task GetPgSqlSchema(string connectionString, DBConnectionDatabaseSchemaDto response)
         {
             // TODO: Implémenter la logique spécifique à PostgreSQL
             throw new NotImplementedException("PostgreSQL schema extraction not yet implemented");

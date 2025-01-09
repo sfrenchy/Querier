@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.DTOs.Requests.Entity;
-using Querier.Api.Application.DTOs.Responses.Entity;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Services;
 
@@ -59,7 +59,7 @@ namespace Querier.Api.Controllers
         }
 
         [HttpPost("ReadFromSql")]
-        public IActionResult ReadFromSql([FromBody] CRUDReadSqlQueryRequest request)
+        public IActionResult ReadFromSql([FromBody] EntityCRUDReadSqlQueryDto request)
         {
             var datas = _entityCRUDService.ReadFromSql(request.ContextTypeName, request.SqlQuery, request.Filters);
             return new OkObjectResult(datas);
@@ -67,38 +67,32 @@ namespace Querier.Api.Controllers
 
 
         [HttpPost("Create")]
-        public IActionResult Create([FromBody] CRUDCreateOrUpdateRequest model)
+        public IActionResult Create([FromBody] Application.DTOs.EntityCRUDCreateOrUpdateDto model)
         {
-            CRUDCreateOrUpdateResponse response = new CRUDCreateOrUpdateResponse();
-            response.NewEntity = _entityCRUDService.Create(model.ContextTypeName, model.EntityType, model.Data);
-            return new OkObjectResult(response);
+            return new OkObjectResult(_entityCRUDService.Create(model.ContextTypeName, model.EntityType, model.Data));
         }
 
         [HttpPost("Update")]
-        public IActionResult Update([FromBody] CRUDCreateOrUpdateRequest model)
+        public IActionResult Update([FromBody] Application.DTOs.EntityCRUDCreateOrUpdateDto model)
         {
-            CRUDCreateOrUpdateResponse response = new CRUDCreateOrUpdateResponse();
-            response.NewEntity = _entityCRUDService.Update(model.ContextTypeName, model.EntityType, model.Data);
-            return new OkObjectResult(response);
+            return new OkObjectResult(_entityCRUDService.Update(model.ContextTypeName, model.EntityType, model.Data));
         }
 
         [HttpPost("CreateOrUpdate")]
-        public IActionResult CreateOrUpdate([FromBody] CRUDCreateOrUpdateRequest model)
+        public IActionResult CreateOrUpdate([FromBody] Application.DTOs.EntityCRUDCreateOrUpdateDto model)
         {
-            CRUDCreateOrUpdateResponse response = new CRUDCreateOrUpdateResponse();
-            response.NewEntity = _entityCRUDService.CreateOrUpdate(model.ContextTypeName, model.EntityType, model.Data);
-            return new OkObjectResult(response);
+            return new OkObjectResult(_entityCRUDService.CreateOrUpdate(model.ContextTypeName, model.EntityType, model.Data));
         }
 
         [HttpDelete("Delete")]
-        public IActionResult Delete([FromBody] CRUDDeleteRequest model)
+        public IActionResult Delete([FromBody] EntityCRUDDeleteDto model)
         {
             _entityCRUDService.Delete(model.ContextTypeName, model.EntityType, model.Key);
             return new OkResult();
         }
 
         [HttpPost("GetSQLQueryEntityDefinition")]
-        public IActionResult GetSQLQueryEntityDefinition([FromBody] CRUDExecuteSQLQueryRequest request)
+        public IActionResult GetSQLQueryEntityDefinition([FromBody] EntityCRUDExecuteSQLQueryDto request)
         {
             var res = _entityCRUDService.GetSQLQueryEntityDefinition(request);
             return new OkObjectResult(res);

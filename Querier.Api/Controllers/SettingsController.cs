@@ -8,7 +8,7 @@ using System;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using System.Collections.Generic;
-using Querier.Api.Application.DTOs.Common.ApiConfigurationDto;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Domain.Common.Metadata;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Services;
@@ -107,7 +107,7 @@ namespace Querier.Api.Controllers
         /// <response code="500">If there was an internal server error</response>
         
         [HttpPost]
-        public async Task<IActionResult> UpdateSettings([FromBody] QSetting setting)
+        public async Task<IActionResult> UpdateSettings([FromBody] Setting setting)
         {
             var updatedSetting = await _settingService.UpdateSetting(setting);
             return Ok(updatedSetting);
@@ -130,7 +130,7 @@ namespace Querier.Api.Controllers
         /// <response code="200">Returns the updated setting</response>
         /// <response code="500">If there was an internal server error</response>
         [HttpPost("configure")]
-        public async Task<IActionResult> Configure([FromBody] QSetting setting)
+        public async Task<IActionResult> Configure([FromBody] Setting setting)
         {
             var configuredSetting = await _settingService.Configure(setting);
             return Ok(configuredSetting);

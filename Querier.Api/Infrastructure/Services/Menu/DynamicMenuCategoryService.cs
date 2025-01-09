@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Querier.Api.Application.DTOs.Menu.Requests;
-using Querier.Api.Application.DTOs.Menu.Responses;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories.Menu;
 using Querier.Api.Application.Interfaces.Services.Menu;
 using Querier.Api.Domain.Entities.Menu;
@@ -21,28 +20,28 @@ namespace Querier.Api.Infrastructure.Services.Menu
             _logger = logger;
         }
 
-        public async Task<List<DynamicMenuCategoryResponse>> GetAllAsync()
+        public async Task<List<MenuDto>> GetAllAsync()
         {
             var categories = await _repository.GetAllAsync();
             return categories.Select(MapToResponse).ToList();
         }
 
-        public async Task<DynamicMenuCategoryResponse> GetByIdAsync(int id)
+        public async Task<MenuDto> GetByIdAsync(int id)
         {
             var category = await _repository.GetByIdAsync(id);
             return category != null ? MapToResponse(category) : null;
         }
 
-        public async Task<DynamicMenuCategoryResponse> CreateAsync(CreateDynamicMenuCategoryRequest request)
+        public async Task<MenuDto> CreateAsync(MenuCreateDto request)
         {
-            var category = new DynamicMenuCategory
+            var category = new Domain.Entities.Menu.Menu
             {
                 Icon = request.Icon,
                 Order = request.Order,
                 IsVisible = request.IsVisible,
                 Roles = string.Join(",", request.Roles),
                 Route = request.Route,
-                Translations = request.Names.Select(x => new DynamicMenuCategoryTranslation
+                Translations = request.Names.Select(x => new MenuTranslation
                 {
                     LanguageCode = x.Key,
                     Name = x.Value
@@ -53,7 +52,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return MapToResponse(result);
         }
 
-        public async Task<DynamicMenuCategoryResponse> UpdateAsync(int id, CreateDynamicMenuCategoryRequest request)
+        public async Task<MenuDto> UpdateAsync(int id, MenuCreateDto request)
         {
             var category = await _repository.GetByIdAsync(id);
             if (category == null) return null;
@@ -68,7 +67,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
             category.Translations.Clear();
             foreach (var translation in request.Names)
             {
-                category.Translations.Add(new DynamicMenuCategoryTranslation
+                category.Translations.Add(new MenuTranslation
                 {
                     LanguageCode = translation.Key,
                     Name = translation.Value
@@ -84,9 +83,9 @@ namespace Querier.Api.Infrastructure.Services.Menu
             return await _repository.DeleteAsync(id);
         }
 
-        private static DynamicMenuCategoryResponse MapToResponse(DynamicMenuCategory category)
+        private static MenuDto MapToResponse(Domain.Entities.Menu.Menu category)
         {
-            return new DynamicMenuCategoryResponse
+            return new MenuDto
             {
                 Id = category.Id,
                 Names = category.Translations.ToDictionary(x => x.LanguageCode, x => x.Name),

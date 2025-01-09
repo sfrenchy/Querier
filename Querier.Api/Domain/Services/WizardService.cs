@@ -10,6 +10,7 @@ using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Common.Metadata;
 using Querier.Api.Infrastructure.Data.Context;
 using System.Collections.Generic;
+using Querier.Api.Application.DTOs;
 
 namespace Querier.Api.Domain.Services
 {
@@ -38,7 +39,7 @@ namespace Querier.Api.Domain.Services
             _semaphore = new SemaphoreSlim(1, 1);
         }
 
-        public async Task<(bool Success, string Error)> SetupAsync(SetupRequest request)
+        public async Task<(bool Success, string Error)> SetupAsync(SetupDto request)
         {
             try
             {
@@ -133,7 +134,7 @@ namespace Querier.Api.Domain.Services
                     else
                     {
                         _logger.LogInformation("Creating new isConfigured setting");
-                        await context.QSettings.AddAsync(new QSetting
+                        await context.QSettings.AddAsync(new Setting
                         {
                             Name = "api:isConfigured",
                             Value = "true"

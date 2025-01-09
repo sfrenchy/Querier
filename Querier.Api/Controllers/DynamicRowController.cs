@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Querier.Api.Application.DTOs.Menu.Requests;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services.Menu;
 
 namespace Querier.Api.Controllers
@@ -21,9 +21,9 @@ namespace Querier.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(DynamicRowResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(RowDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<DynamicRowResponse>> GetById(int id)
+        public async Task<ActionResult<RowDto>> GetById(int id)
         {
             var row = await _service.GetByIdAsync(id);
             if (row == null) return NotFound();
@@ -31,26 +31,26 @@ namespace Querier.Api.Controllers
         }
 
         [HttpGet("page/{pageId}")]
-        [ProducesResponseType(typeof(IEnumerable<DynamicRowResponse>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<DynamicRowResponse>>> GetByPageId(int pageId)
+        [ProducesResponseType(typeof(IEnumerable<RowDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<RowDto>>> GetByPageId(int pageId)
         {
             var rows = await _service.GetByPageIdAsync(pageId);
             return Ok(rows);
         }
 
         [HttpPost("page/{pageId}")]
-        [ProducesResponseType(typeof(DynamicRowResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(RowDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<DynamicRowResponse>> Create(int pageId, CreateDynamicRowRequest request)
+        public async Task<ActionResult<RowDto>> Create(int pageId, RowCreateDto request)
         {
             var row = await _service.CreateAsync(pageId, request);
             return CreatedAtAction(nameof(GetById), new { id = row.Id }, row);
         }
 
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(DynamicRowResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(RowDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<DynamicRowResponse>> Update(int id, CreateDynamicRowRequest request)
+        public async Task<ActionResult<RowDto>> Update(int id, RowCreateDto request)
         {
             var row = await _service.UpdateAsync(id, request);
             if (row == null) return NotFound();

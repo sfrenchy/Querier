@@ -4,10 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Identity;
-using Querier.Api.Application.DTOs.Auth.Email;
-using Querier.Api.Application.DTOs.Auth.Password;
-using Querier.Api.Application.DTOs.Requests.Auth;
-using Querier.Api.Application.DTOs.Requests.User;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services.User;
 using Querier.Api.Domain.Entities.Auth;
 
@@ -100,7 +97,7 @@ namespace Querier.Api.Controllers
         [Route("Add")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddAsync([FromBody] UserRequest user)
+        public async Task<IActionResult> AddAsync([FromBody] UserCreateDto user)
         {
             if (!ModelState.IsValid)
                 return BadRequest("Request body is not valid");
@@ -129,7 +126,7 @@ namespace Querier.Api.Controllers
         [Route("Update")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateAsync([FromBody] UserRequest user)
+        public async Task<IActionResult> UpdateAsync([FromBody] UserUpdateDto user)
         {
             if (!ModelState.IsValid)
                 return BadRequest("Request body is not valid");
@@ -200,7 +197,7 @@ namespace Querier.Api.Controllers
         [AllowAnonymous]
         [Route("resetPassword")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> ResetPassword([FromBody] ResetPassword reset_password_infos)
+        public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto reset_password_infos)
         {
             var response = await _userService.ResetPassword(reset_password_infos);
             return Ok(response);
@@ -221,7 +218,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> EmailConfirmation(string token, string mail)
         {            
-            var response = await _userService.EmailConfirmation(new EmailConfirmation { Email = mail, Token = token });
+            var response = await _userService.EmailConfirmation(new EmailConfirmationDto { Email = mail, Token = token });
             return Ok(response);
         }
 
@@ -252,9 +249,9 @@ namespace Querier.Api.Controllers
 
         [HttpPost("resend-confirmation")]
         [Authorize]
-        public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendConfirmationEmailRequest request)
+        public async Task<IActionResult> ResendConfirmationEmail([FromQuery] string userEmail)
         {
-            var result = await _userService.ResendConfirmationEmail(request.UserId);
+            var result = await _userService.ResendConfirmationEmail(userEmail);
 
             if (result)
             {

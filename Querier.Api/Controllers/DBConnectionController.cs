@@ -5,12 +5,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Querier.Api.Application.DTOs.Requests.DBConnection;
 using Querier.Api.Domain.Services;
 using System.Collections.Generic;
 using System;
 using System.Linq;
-using Querier.Api.Application.DTOs.Responses.DBConnection;
+using Querier.Api.Application.DTOs;
 
 namespace Querier.Api.Controllers
 {
@@ -77,7 +76,7 @@ namespace Querier.Api.Controllers
         [HttpPost("AddDbConnection")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddDBConnectionAsync([FromBody] AddDBConnectionRequest connection)
+        public async Task<IActionResult> AddDBConnectionAsync([FromBody] DBConnectionCreateDto connection)
         {
             return Ok(await _dbConnectionService.AddConnectionAsync(connection));
         }
@@ -101,9 +100,10 @@ namespace Querier.Api.Controllers
         [HttpDelete("DeleteDBConnection")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteDBConnectionAsync(DeleteDBConnectionRequest request)
+        public async Task<IActionResult> DeleteDBConnectionAsync([FromQuery] int dbConnectionId)
         {
-            return Ok(await _dbConnectionService.DeleteDBConnectionAsync(request));
+            await _dbConnectionService.DeleteDBConnectionAsync(dbConnectionId);
+            return NoContent();
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<List<string>>> AnalyzeQuery(
             int connectionId, 
-            [FromBody] AnalyzeQueryRequest request)
+            [FromBody] DBConnectionAnalyzeQueryDto request)
         {
             try
             {
@@ -252,9 +252,9 @@ namespace Querier.Api.Controllers
         /// <response code="200">Returns the list of found servers</response>
         /// <response code="400">If the database type is not supported</response>
         [HttpGet("enumerate-servers/{databaseType}")]
-        [ProducesResponseType(typeof(List<DatabaseServerInfo>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<DBConnectionDatabaseServerInfoDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<List<DatabaseServerInfo>>> EnumerateServers(string databaseType)
+        public async Task<ActionResult<List<DBConnectionDatabaseServerInfoDto>>> EnumerateServers(string databaseType)
         {
             try
             {
@@ -283,9 +283,9 @@ namespace Querier.Api.Controllers
         /// <param name="id">ID de la connexion</param>
         /// <returns>Liste des endpoints avec leurs schémas JSON</returns>
         [HttpGet("{id}/endpoints")]
-        [ProducesResponseType(typeof(List<EndpointInfoResponse>), 200)]
+        [ProducesResponseType(typeof(List<DBConnectionEndpointInfoDto>), 200)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<List<EndpointInfoResponse>>> GetEndpoints(int id)
+        public async Task<ActionResult<List<DBConnectionEndpointInfoDto>>> GetEndpoints(int id)
         {
             try
             {
@@ -309,9 +309,9 @@ namespace Querier.Api.Controllers
         /// <param name="id">ID de la connexion</param>
         /// <returns>Liste des contrôleurs avec leurs actions</returns>
         [HttpGet("{id}/controllers")]
-        [ProducesResponseType(typeof(List<ControllerInfoResponse>), 200)]
+        [ProducesResponseType(typeof(List<DBConnectionControllerInfoDto>), 200)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<List<ControllerInfoResponse>>> GetControllers(int id)
+        public async Task<ActionResult<List<DBConnectionControllerInfoDto>>> GetControllers(int id)
         {
             try
             {

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Querier.Api.Application.DTOs.Requests.Auth;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services.User;
 
 namespace Querier.Api.Controllers
@@ -26,7 +26,7 @@ namespace Querier.Api.Controllers
         }
 
         [HttpPost("/email_confirmation")]
-        public async Task<IActionResult> Confirm([FromForm] EmailConfirmationRequest request)
+        public async Task<IActionResult> Confirm([FromForm] EmailConfirmationSetPasswordDto request)
         {
             _logger.LogInformation($"Attempting to confirm email for {request.Email}");
             request.ConfirmPassword = request.Password;

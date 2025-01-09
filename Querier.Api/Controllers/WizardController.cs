@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.DTOs.Requests.Setup;
 using Querier.Api.Domain.Services;
 
@@ -35,7 +36,7 @@ namespace Querier.Api.Controllers
         /// <response code="422">If the provided data is invalid</response>
         [HttpPost("setup")]
         [AllowAnonymous]
-        public async Task<IActionResult> Setup([FromBody] SetupRequest request)
+        public async Task<IActionResult> Setup([FromBody] SetupDto request)
         {
             _logger.LogInformation("Starting setup process...");
             _logger.LogInformation("Request data: {@Request}", request);

@@ -270,7 +270,7 @@ namespace Querier.Api.Infrastructure.Extensions
                 var swaggerProvider = serviceProvider.GetRequiredService<ISwaggerProvider>();
                 var mvc = services.AddControllers();
 
-                foreach(var connection in apiDbContext.QDBConnections.ToList())
+                foreach(var connection in apiDbContext.DBConnections.ToList())
                 {
                     await AssemblyLoader.LoadAssemblyFromQDBConnection(connection, serviceProvider, mvc.PartManager, logger);
                 }

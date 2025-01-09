@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 using System.Net;
-using Querier.Api.Application.DTOs.Requests.Smtp;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
@@ -36,7 +36,7 @@ namespace Querier.Api.Controllers
         /// <response code="403">If the application is already configured</response>
         [HttpPost("test")]
         [AllowAnonymous]
-        public async Task<IActionResult> TestConfiguration([FromBody] SmtpTestRequest request)
+        public async Task<IActionResult> TestConfiguration([FromBody] SmtpTestDto request)
         {
             try
             {

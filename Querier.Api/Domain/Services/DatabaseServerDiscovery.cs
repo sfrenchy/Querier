@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Querier.Api.Application.DTOs.Responses.DBConnection;
+using Querier.Api.Application.DTOs;
 
 namespace Querier.Api.Domain.Services
 {
@@ -18,7 +18,7 @@ namespace Querier.Api.Domain.Services
             _logger = logger;
         }
 
-        public async Task<List<DatabaseServerInfo>> EnumerateServersAsync(string databaseType)
+        public async Task<List<DBConnectionDatabaseServerInfoDto>> EnumerateServersAsync(string databaseType)
         {
             try
             {
@@ -37,9 +37,9 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private async Task<List<DatabaseServerInfo>> EnumerateServersWithPort(int port)
+        private async Task<List<DBConnectionDatabaseServerInfoDto>> EnumerateServersWithPort(int port)
         {
-            var servers = new List<DatabaseServerInfo>();
+            var servers = new List<DBConnectionDatabaseServerInfoDto>();
 
             try
             {
@@ -53,7 +53,7 @@ namespace Querier.Api.Domain.Services
                         var connectTask = client.ConnectAsync(ip, port);
                         if (await Task.WhenAny(connectTask, Task.Delay(200)) == connectTask)
                         {
-                            servers.Add(new DatabaseServerInfo
+                            servers.Add(new DBConnectionDatabaseServerInfoDto
                             {
                                 ServerName = ip.ToString(),
                                 NetworkProtocol = "TCP",

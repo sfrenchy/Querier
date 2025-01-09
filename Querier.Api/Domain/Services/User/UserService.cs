@@ -8,12 +8,7 @@ using Microsoft.Extensions.Logging;
 using Querier.Api.Services.Repositories.User;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using Querier.Api.Application.DTOs.Auth.Email;
-using Querier.Api.Application.DTOs.Auth.Password;
-using Querier.Api.Application.DTOs.Requests.Auth;
-using Querier.Api.Application.DTOs.Requests.User;
-using Querier.Api.Application.DTOs.Responses.Role;
-using Querier.Api.Application.DTOs.Responses.User;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services.User;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Application.Interfaces.Services.Role;
@@ -46,7 +41,7 @@ namespace Querier.Api.Domain.Services.User
             _settings = settings;
         }
 
-        public async Task<bool> Add(UserRequest user)
+        public async Task<bool> Add(UserCreateDto user)
         {
             var foundUser = await _repo.GetByEmail(user.Email);
             if (foundUser != null)
@@ -67,7 +62,7 @@ namespace Querier.Api.Domain.Services.User
             return await _repo.AddRole(newUser, selectedRoles);
         }
 
-        public async Task<bool> Edit(UserRequest user)
+        public async Task<bool> Edit(UserUpdateDto user)
         {
             var foundUser = await _repo.GetById(user.Id);
             if (foundUser == null)
@@ -91,7 +86,7 @@ namespace Querier.Api.Domain.Services.User
             return await _repo.AddRole(foundUser, selectedRoles);
         }
 
-        public async Task<bool> Update(UserRequest user)
+        public async Task<bool> Update(UserUpdateDto user)
         {
             return await Edit(user);
         }
@@ -101,7 +96,7 @@ namespace Querier.Api.Domain.Services.User
             return await _repo.Delete(id);
         }
 
-        public async Task<UserResponse> View(string id)
+        public async Task<UserDto> View(string id)
         {
             var userAndRoles = await _repo.GetWithRoles(id);
             if (userAndRoles == null)
@@ -114,9 +109,9 @@ namespace Querier.Api.Domain.Services.User
             return vm;
         }
 
-        public async Task<List<UserResponse>> GetAll()
+        public async Task<List<UserDto>> GetAll()
         {
-            List<UserResponse> result = new List<UserResponse>();
+            List<UserDto> result = new List<UserDto>();
             var userList = await _userManager.Users
                 .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
@@ -125,7 +120,7 @@ namespace Querier.Api.Domain.Services.User
             userList.ForEach(user =>
             {
                 var vm = MapToVM(user);
-                vm.Roles = user.UserRoles?.Select(ur => new RoleResponse { Name = ur.Role.Name }).ToList() ?? new List<RoleResponse>();
+                vm.Roles = user.UserRoles?.Select(ur => new RoleDto { Name = ur.Role.Name }).ToList() ?? new List<RoleDto>();
                 result.Add(vm);
             });
             return result;
@@ -140,7 +135,7 @@ namespace Querier.Api.Domain.Services.User
             return searchUser.PasswordHash;
         }
 
-        public async Task<object> ResetPassword(ResetPassword reset_password_infos)
+        public async Task<object> ResetPassword(ResetPasswordDto reset_password_infos)
         {
             var user = await _userManager.FindByEmailAsync(reset_password_infos.Email);
             object response;
@@ -176,7 +171,7 @@ namespace Querier.Api.Domain.Services.User
             }
         }
 
-        public async Task<bool> EmailConfirmation(EmailConfirmation emailConfirmation)
+        public async Task<bool> EmailConfirmation(EmailConfirmationDto emailConfirmation)
         {
             string token = Uri.UnescapeDataString(emailConfirmation.Token);
             var user = await _userManager.FindByEmailAsync(emailConfirmation.Email);
@@ -186,7 +181,7 @@ namespace Querier.Api.Domain.Services.User
             return result.Succeeded;
         }
 
-        public async Task<(bool Succeeded, string Error)> ConfirmEmailAndSetPassword(EmailConfirmationRequest request)
+        public async Task<(bool Succeeded, string Error)> ConfirmEmailAndSetPassword(EmailConfirmationSetPasswordDto request)
         {
             try
             {
@@ -272,7 +267,7 @@ namespace Querier.Api.Domain.Services.User
             }
         }
 
-        public async Task<UserResponse> GetCurrentUser(ClaimsPrincipal userClaims)
+        public async Task<UserDto> GetCurrentUser(ClaimsPrincipal userClaims)
         {
             var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
@@ -296,18 +291,18 @@ namespace Querier.Api.Domain.Services.User
             return await View(userId);
         }
 
-        public async Task<bool> ResendConfirmationEmail(string userId)
+        public async Task<bool> ResendConfirmationEmail(string userEmail)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByEmailAsync(userEmail);
             if (user == null)
             {
-                _logger.LogWarning($"User not found with ID: {userId}");
+                _logger.LogWarning($"User not found with email: {userEmail}");
                 return false;
             }
 
             if (user.EmailConfirmed)
             {
-                _logger.LogWarning($"Email already confirmed for user: {userId}");
+                _logger.LogWarning($"Email already confirmed for user: {userEmail}");
                 return false;
             }
 
@@ -315,14 +310,14 @@ namespace Querier.Api.Domain.Services.User
             return await SendConfirmationEmail(user, token);
         }
 
-        private void MapToModel(UserRequest user, ApiUser updateUser)
+        private void MapToModel(UserUpdateDto user, ApiUser updateUser)
         {
             updateUser.FirstName = user.FirstName;
             updateUser.LastName = user.LastName;
             updateUser.Email = user.Email;
         }
 
-        private ApiUser MapToModel(UserRequest user)
+        private ApiUser MapToModel(UserCreateDto user)
         {
             return new ApiUser
             {
@@ -333,9 +328,9 @@ namespace Querier.Api.Domain.Services.User
             };
         }
 
-        private UserResponse MapToVM(ApiUser user)
+        private UserDto MapToVM(ApiUser user)
         {
-            return new UserResponse
+            return new UserDto
             {
                 Id = user.Id,
                 FirstName = user.FirstName,
@@ -343,11 +338,11 @@ namespace Querier.Api.Domain.Services.User
                 Email = user.Email,
                 IsEmailConfirmed = user.EmailConfirmed,
                 UserName = user.UserName,
-                Roles = user.UserRoles?.Select(ur => new RoleResponse { Name = ur.Role.Name }).ToList() ?? new List<RoleResponse>()
+                Roles = user.UserRoles?.Select(ur => new RoleDto { Name = ur.Role.Name }).ToList() ?? new List<RoleDto>()
             };
         }
 
-        public async Task<IEnumerable<UserResponse>> GetAllAsync()
+        public async Task<IEnumerable<UserDto>> GetAllAsync()
         {
             // Charger les utilisateurs avec leurs rôles
             var users = await _userManager.Users
@@ -355,7 +350,7 @@ namespace Querier.Api.Domain.Services.User
                     .ThenInclude(ur => ur.Role)
                 .ToListAsync();
 
-            var userResponses = new List<UserResponse>();
+            var userResponses = new List<UserDto>();
 
             foreach (var user in users)
             {

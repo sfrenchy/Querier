@@ -6,15 +6,15 @@ namespace Querier.Api.Domain.Services
 {
     public interface ISettingService
     {
-        Task<QSetting> GetSettings();
-        Task<QSetting> UpdateSetting(QSetting setting);
-        Task<QSetting> Configure(QSetting setting);
+        Task<Setting> GetSettings();
+        Task<Setting> UpdateSetting(Setting setting);
+        Task<Setting> Configure(Setting setting);
         Task<bool> GetIsConfigured();
         Task<T> GetSettingValue<T>(string name);
         Task<T> GetSettingValue<T>(string name, T defaultValue);
-        Task<QSetting> CreateSetting(string name, string value);
+        Task<Setting> CreateSetting(string name, string value);
         Task<string> GetSettingValue(string name, string defaultValue = null);
-        Task<QSetting> UpdateSettingIfExists(string name, string value);
+        Task<Setting> UpdateSettingIfExists(string name, string value);
         Task UpdateSettings(Dictionary<string, string> settings);
     }
 

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Querier.Api.Application.DTOs.Menu.Responses;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories.Menu;
 using Querier.Api.Application.Interfaces.Services.Menu;
 using Querier.Api.Domain.Entities.Menu;
@@ -25,12 +25,12 @@ namespace Querier.Api.Infrastructure.Services.Menu
             _cardRepository = cardRepository;
         }
 
-        public async Task<LayoutResponse> GetLayoutAsync(int pageId)
+        public async Task<LayoutDto> GetLayoutAsync(int pageId)
         {
             var page = await _pageRepository.GetByIdAsync(pageId);
             if (page == null)
             {
-                return new LayoutResponse
+                return new LayoutDto
                 {
                     PageId = pageId,
                     Icon = "settings",
@@ -42,20 +42,20 @@ namespace Querier.Api.Infrastructure.Services.Menu
                     IsVisible = true,
                     Roles = new List<string>(),
                     Route = $"/page/{pageId}",
-                    Rows = new List<DynamicRowResponse>()
+                    Rows = new List<RowDto>()
                 };
             }
 
             var rows = await _rowRepository.GetByPageIdAsync(pageId);
-            var rowResponses = new List<DynamicRowResponse>();
+            var rowResponses = new List<RowDto>();
 
             foreach (var row in rows)
             {
                 var cards = await _cardRepository.GetByRowIdAsync(row.Id);
-                var cardResponses = cards.Select(card => new DynamicCardResponse
+                var cardResponses = cards.Select(card => new CardDto
                 {
                     Id = card.Id,
-                    Titles = card.Translations.ToDictionary(t => t.LanguageCode, t => t.Title),
+                    Titles = card.CardTranslations.ToDictionary(t => t.LanguageCode, t => t.Title),
                     Order = card.Order,
                     Type = card.Type,
                     GridWidth = card.GridWidth,
@@ -68,7 +68,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
                     HeaderTextColor = card.HeaderTextColor
                 }).ToList();
 
-                rowResponses.Add(new DynamicRowResponse
+                rowResponses.Add(new RowDto
                 {
                     Id = row.Id,
                     Order = row.Order,
@@ -77,11 +77,11 @@ namespace Querier.Api.Infrastructure.Services.Menu
                 });
             }
 
-            return new LayoutResponse
+            return new LayoutDto
             {
                 PageId = page.Id,
                 Icon = page.Icon,
-                Names = page.DynamicPageTranslations.ToDictionary(t => t.LanguageCode, t => t.Name),
+                Names = page.PageTranslations.ToDictionary(t => t.LanguageCode, t => t.Name),
                 IsVisible = page.IsVisible,
                 Roles = page.Roles?.Split(',').ToList() ?? new List<string>(),
                 Route = page.Route,
@@ -89,7 +89,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
             };
         }
 
-        public async Task<LayoutResponse> UpdateLayoutAsync(int pageId, LayoutResponse layout)
+        public async Task<LayoutDto> UpdateLayoutAsync(int pageId, LayoutDto layout)
         {
             var page = await _pageRepository.GetByIdAsync(pageId);
             if (page == null) return null;
@@ -101,10 +101,10 @@ namespace Querier.Api.Infrastructure.Services.Menu
             page.Roles = string.Join(",", layout.Roles);
 
             // Mise à jour des traductions
-            page.DynamicPageTranslations.Clear();
+            page.PageTranslations.Clear();
             foreach (var translation in layout.Names)
             {
-                page.DynamicPageTranslations.Add(new DynamicPageTranslation
+                page.PageTranslations.Add(new PageTranslation
                 {
                     DynamicPageId = pageId,
                     LanguageCode = translation.Key,
@@ -123,7 +123,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
 
             foreach (var rowResponse in layout.Rows)
             {
-                var newRow = new DynamicRow
+                var newRow = new Row
                 {
                     PageId = pageId,
                     Order = rowResponse.Order,
@@ -134,9 +134,9 @@ namespace Querier.Api.Infrastructure.Services.Menu
 
                 foreach (var cardResponse in rowResponse.Cards)
                 {
-                    var newCard = new DynamicCard
+                    var newCard = new Card
                     {
-                        DynamicRowId = savedRow.Id,
+                        RowId = savedRow.Id,
                         Order = cardResponse.Order,
                         Type = cardResponse.Type,
                         GridWidth = cardResponse.GridWidth,
@@ -151,7 +151,7 @@ namespace Querier.Api.Infrastructure.Services.Menu
 
                     foreach (var title in cardResponse.Titles)
                     {
-                        newCard.Translations.Add(new DynamicCardTranslation
+                        newCard.CardTranslations.Add(new CardTranslation
                         {
                             LanguageCode = title.Key,
                             Title = title.Value

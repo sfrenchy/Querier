@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Querier.Api.Application.DTOs.Requests.Role;
-using Querier.Api.Application.DTOs.Responses.Role;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Services.Repositories.Role;
 using Querier.Api.Application.Interfaces.Services.Role;
@@ -26,13 +25,13 @@ namespace Querier.Api.Domain.Services.Role
             _contextFactory = contextFactory;
         }
 
-        public async Task<bool> Add(RoleRequest role)
+        public async Task<bool> Add(RoleCreateDto role)
         {
             var newRole = new ApiRole(role.Name);
             return await _repoRole.Add(newRole);
         }
 
-        public async Task<bool> Edit(RoleRequest role)
+        public async Task<bool> Edit(RoleDto role)
         {
             var roleToEdit = new ApiRole();
             roleToEdit.Id = role.Id;
@@ -45,21 +44,21 @@ namespace Querier.Api.Domain.Services.Role
             return await _repoRole.Delete(id);
         }
 
-        public async Task<List<RoleResponse>> GetAll()
+        public async Task<List<RoleDto>> GetAll()
         {
-            return (await _repoRole.GetAll()).Select(ug => new RoleResponse { Id = ug.Id, Name = ug.Name }).ToList();
+            return (await _repoRole.GetAll()).Select(ug => new RoleDto { Id = ug.Id, Name = ug.Name }).ToList();
         }
 
-        public async Task<List<RoleResponse>> GetRolesForUser(string idUser)
+        public async Task<List<RoleDto>> GetRolesForUser(string idUser)
         {
-            var responses = new List<RoleResponse>();
+            var responses = new List<RoleDto>();
             using (var apidbContext = _contextFactory.CreateDbContext())
             {
                 var listUserRoles = apidbContext.UserRoles.Where(ur => ur.UserId == idUser).ToList();
                 foreach (var role in listUserRoles)
                 {
                     var elementToAdd = apidbContext.Roles.FirstOrDefault(r => r.Id == role.RoleId);
-                    RoleResponse ElementVM = new RoleResponse
+                    RoleDto ElementVM = new RoleDto
                     {
                         Id = elementToAdd.Id,
                         Name = elementToAdd.Name

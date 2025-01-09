@@ -18,6 +18,7 @@ using System.Security;
 using System.Runtime.Loader;
 using Querier.Api.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Querier.Api.Domain.Entities.DBConnection;
 
 namespace Querier.Api.Domain.Services
 {
@@ -42,7 +43,7 @@ namespace Querier.Api.Domain.Services
         }
 
         public static Task LoadAssemblyFromQDBConnection(
-            QDBConnection connection,
+            DBConnection connection,
             IServiceProvider serviceProvider,
             ApplicationPartManager partManager,
             ILogger logger)

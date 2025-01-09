@@ -16,40 +16,40 @@ namespace Querier.Api.Infrastructure.Data.Repositories.Menu
             _context = context;
         }
 
-        public async Task<List<DynamicMenuCategory>> GetAllAsync()
+        public async Task<List<Domain.Entities.Menu.Menu>> GetAllAsync()
         {
-            return await _context.DynamicMenuCategories
+            return await _context.Menus
                 .Include(x => x.Translations)
                 .ToListAsync();
         }
 
-        public async Task<DynamicMenuCategory> GetByIdAsync(int id)
+        public async Task<Domain.Entities.Menu.Menu> GetByIdAsync(int id)
         {
-            return await _context.DynamicMenuCategories
+            return await _context.Menus
                 .Include(x => x.Translations)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<DynamicMenuCategory> CreateAsync(DynamicMenuCategory category)
+        public async Task<Domain.Entities.Menu.Menu> CreateAsync(Domain.Entities.Menu.Menu category)
         {
-            await _context.DynamicMenuCategories.AddAsync(category);
+            await _context.Menus.AddAsync(category);
             await _context.SaveChangesAsync();
             return category;
         }
 
-        public async Task<DynamicMenuCategory> UpdateAsync(DynamicMenuCategory category)
+        public async Task<Domain.Entities.Menu.Menu> UpdateAsync(Domain.Entities.Menu.Menu category)
         {
-            _context.DynamicMenuCategories.Update(category);
+            _context.Menus.Update(category);
             await _context.SaveChangesAsync();
             return category;
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var category = await _context.DynamicMenuCategories.FindAsync(id);
+            var category = await _context.Menus.FindAsync(id);
             if (category == null) return false;
 
-            _context.DynamicMenuCategories.Remove(category);
+            _context.Menus.Remove(category);
             await _context.SaveChangesAsync();
             return true;
         }

@@ -3,8 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Querier.Api.Application.DTOs.Menu.Requests;
-using Querier.Api.Application.DTOs.Menu.Responses;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services.Menu;
 
 namespace Querier.Api.Controllers
@@ -22,9 +21,9 @@ namespace Querier.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(DynamicCardResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CardDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<DynamicCardResponse>> GetById(int id)
+        public async Task<ActionResult<CardDto>> GetById(int id)
         {
             var card = await _service.GetByIdAsync(id);
             if (card == null) return NotFound();
@@ -32,26 +31,26 @@ namespace Querier.Api.Controllers
         }
 
         [HttpGet("row/{rowId}")]
-        [ProducesResponseType(typeof(IEnumerable<DynamicCardResponse>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<DynamicCardResponse>>> GetByRowId(int rowId)
+        [ProducesResponseType(typeof(IEnumerable<CardDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<CardDto>>> GetByRowId(int rowId)
         {
             var cards = await _service.GetByRowIdAsync(rowId);
             return Ok(cards);
         }
 
         [HttpPost("row/{rowId}")]
-        [ProducesResponseType(typeof(DynamicCardResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(CardDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<DynamicCardResponse>> Create(int rowId, CreateDynamicCardRequest request)
+        public async Task<ActionResult<CardDto>> Create(int rowId, CardDto request)
         {
             var card = await _service.CreateAsync(rowId, request);
             return CreatedAtAction(nameof(GetById), new { id = card.Id }, card);
         }
 
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(DynamicCardResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CardDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<DynamicCardResponse>> Update(int id, CreateDynamicCardRequest request)
+        public async Task<ActionResult<CardDto>> Update(int id, CardDto request)
         {
             var card = await _service.UpdateAsync(id, request);
             if (card == null) return NotFound();

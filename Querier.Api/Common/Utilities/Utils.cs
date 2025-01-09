@@ -34,7 +34,7 @@ namespace Querier.Api.Tools
             // Get the connection string from the database
             var apiDbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApiDbContext>>();
             using var apiDbContext = apiDbContextFactory.CreateDbContext();
-            var connection = apiDbContext.QDBConnections.FirstOrDefault(c => c.ContextName == contextTypeName);
+            var connection = apiDbContext.DBConnections.FirstOrDefault(c => c.ContextName == contextTypeName);
             
             if (connection == null)
                 throw new InvalidOperationException($"No connection found for context {contextTypeName}");
@@ -45,13 +45,13 @@ namespace Querier.Api.Tools
 
             switch (connection.ConnectionType)
             {
-                case Domain.Common.Enums.QDBConnectionType.SqlServer:
+                case Domain.Common.Enums.DbConnectionType.SqlServer:
                     optionsBuilder.UseSqlServer(connection.ConnectionString);
                     break;
-                case Domain.Common.Enums.QDBConnectionType.MySQL:
+                case Domain.Common.Enums.DbConnectionType.MySql:
                     optionsBuilder.UseMySql(connection.ConnectionString, ServerVersion.AutoDetect(connection.ConnectionString));
                     break;
-                case Domain.Common.Enums.QDBConnectionType.PgSQL:
+                case Domain.Common.Enums.DbConnectionType.PgSql:
                     optionsBuilder.UseNpgsql(connection.ConnectionString);
                     break;
                 default:

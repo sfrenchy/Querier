@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Querier.Api.Infrastructure.Data.Context;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Infrastructure.Data.Repositories.Menu
 {
@@ -14,27 +15,27 @@ namespace Querier.Api.Infrastructure.Data.Repositories.Menu
             _context = context;
         }
 
-        public async Task<DynamicPage> GetByIdAsync(int id)
+        public async Task<Page> GetByIdAsync(int id)
         {
-            return await _context.DynamicPages.FindAsync(id);
+            return await _context.Pages.FindAsync(id);
         }
 
-        public async Task<IEnumerable<DynamicPage>> GetAllAsync()
+        public async Task<IEnumerable<Page>> GetAllAsync()
         {
-            return await _context.DynamicPages.ToListAsync();
+            return await _context.Pages.ToListAsync();
         }
 
-        public async Task<DynamicPage> CreateAsync(DynamicPage page)
+        public async Task<Page> CreateAsync(Page page)
         {
-            _context.DynamicPages.Add(page);
+            _context.Pages.Add(page);
             await _context.SaveChangesAsync();
             return page;
         }
 
-        public async Task<DynamicPage> UpdateAsync(int id, DynamicPage page)
+        public async Task<Page> UpdateAsync(int id, Page page)
         {
-            var existingPage = await _context.DynamicPages
-                .Include(p => p.DynamicPageTranslations)
+            var existingPage = await _context.Pages
+                .Include(p => p.PageTranslations)
                 .FirstOrDefaultAsync(p => p.Id == id);
             
             if (existingPage == null) return null;
@@ -48,10 +49,10 @@ namespace Querier.Api.Infrastructure.Data.Repositories.Menu
             existingPage.DynamicMenuCategoryId = page.DynamicMenuCategoryId;
 
             // Mise à jour des traductions
-            existingPage.DynamicPageTranslations.Clear();
-            foreach (var translation in page.DynamicPageTranslations)
+            existingPage.PageTranslations.Clear();
+            foreach (var translation in page.PageTranslations)
             {
-                existingPage.DynamicPageTranslations.Add(new DynamicPageTranslation
+                existingPage.PageTranslations.Add(new PageTranslation
                 {
                     LanguageCode = translation.LanguageCode,
                     Name = translation.Name
@@ -67,7 +68,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories.Menu
             var page = await GetByIdAsync(id);
             if (page == null) return false;
 
-            _context.DynamicPages.Remove(page);
+            _context.Pages.Remove(page);
             await _context.SaveChangesAsync();
             return true;
         }

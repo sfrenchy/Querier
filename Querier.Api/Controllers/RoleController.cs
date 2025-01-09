@@ -4,8 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Querier.Api.Application.DTOs.Requests.Role;
-using Querier.Api.Application.DTOs.Responses.Role;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services.Role;
 
 namespace Querier.Api.Controllers
@@ -59,7 +58,7 @@ namespace Querier.Api.Controllers
         /// <returns>List of all roles</returns>
         /// <response code="200">Returns the list of roles</response>
         [HttpGet("GetAll")]
-        [ProducesResponseType(typeof(List<RoleResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllAsync()
         {
             return Ok(await _svc.GetAll());
@@ -82,7 +81,7 @@ namespace Querier.Api.Controllers
         /// <response code="400">If the request data is invalid</response>
         [HttpPost("AddRole")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> AddRoleAsync(RoleRequest role)
+        public async Task<IActionResult> AddRoleAsync(RoleCreateDto role)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
@@ -105,7 +104,7 @@ namespace Querier.Api.Controllers
         /// <returns>Success indicator</returns>
         [HttpPost("UpdateRole")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateRoleAsync(RoleRequest role)
+        public async Task<IActionResult> UpdateRoleAsync(RoleDto role)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
@@ -140,7 +139,7 @@ namespace Querier.Api.Controllers
         /// <param name="idUser">The user's ID</param>
         /// <returns>List of roles assigned to the user</returns>
         [HttpGet("GetRolesForUser/{idUser}")]
-        [ProducesResponseType(typeof(List<RoleResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetRolesForUser(string idUser)
         {
             return Ok(await _svc.GetRolesForUser(idUser));
@@ -155,7 +154,7 @@ namespace Querier.Api.Controllers
         /// </remarks>
         /// <returns>List of roles for the current user</returns>
         [HttpGet("GetCurrentUserRoles")]
-        [ProducesResponseType(typeof(List<RoleResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCurrentUserRole()
         {
             var userId = this.User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value;

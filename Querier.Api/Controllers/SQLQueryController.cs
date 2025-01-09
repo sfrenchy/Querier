@@ -66,7 +66,7 @@ namespace Querier.Api.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(SQLQuery), 201)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<SQLQuery>> CreateQuery(CreateUpdateSQLQueryDTO createUpdateSqlQueryDto)
+        public async Task<ActionResult<SQLQuery>> CreateQuery(SQLQueryCreateDto createUpdateSqlQueryDto)
         {
             var createdQuery = await _sqlQueryService.CreateQueryAsync(createUpdateSqlQueryDto.Query, createUpdateSqlQueryDto.SampleParameters);
             return CreatedAtAction(nameof(GetQuery), new { id = createdQuery.Id }, createdQuery);
@@ -85,9 +85,8 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(SQLQuery), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<SQLQuery>> UpdateQuery(int id, CreateUpdateSQLQueryDTO createUpdateSqlQueryDto)
+        public async Task<ActionResult<SQLQuery>> UpdateQuery(SQLQueryUpdateDto createUpdateSqlQueryDto)
         {
-            if (id != createUpdateSqlQueryDto.Query.Id) return BadRequest();
             var updatedQuery = await _sqlQueryService.UpdateQueryAsync(createUpdateSqlQueryDto.Query, createUpdateSqlQueryDto.SampleParameters);
             if (updatedQuery == null) return NotFound();
             return Ok(updatedQuery);
