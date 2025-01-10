@@ -11,28 +11,14 @@ using Querier.Api.Domain.Entities.Auth;
 namespace Querier.Api.Controllers
 {
     /// <summary>
-    /// Controller for managing user accounts and operations
+    /// Controller for managing user accounts and profiles
     /// </summary>
     /// <remarks>
     /// This controller provides endpoints for:
-    /// - User CRUD operations (Create, Read, Update, Delete)
-    /// - Password management
-    /// - Email confirmation
-    /// - User listing and search
-    /// 
-    /// ## Authentication
-    /// Most endpoints in this controller require authentication except for password reset and email confirmation.
-    /// Use a valid JWT token in the Authorization header:
-    /// ```
-    /// Authorization: Bearer {your-jwt-token}
-    /// ```
-    /// 
-    /// ## Common Responses
-    /// - 200 OK: Operation completed successfully
-    /// - 400 Bad Request: Invalid input data
-    /// - 401 Unauthorized: Authentication required
-    /// - 403 Forbidden: User lacks required permissions
-    /// - 500 Internal Server Error: Unexpected server error
+    /// - User account management
+    /// - Profile updates and settings
+    /// - User preferences
+    /// - Account status management
     /// </remarks>
     [Authorize]
     [Route("api/v1/[controller]")]

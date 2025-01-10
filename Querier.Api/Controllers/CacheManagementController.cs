@@ -9,26 +9,14 @@ using Querier.Api.Domain.Services;
 namespace Querier.Api.Controllers
 {
     /// <summary>
-    /// Controller for managing application cache operations
+    /// Controller for managing application cache
     /// </summary>
     /// <remarks>
     /// This controller provides endpoints for:
-    /// - Clearing all cached data
-    /// - Clearing specific cache entries by key
-    /// - Clearing cache entries by substring matching
-    /// 
-    /// ## Authentication
-    /// All endpoints in this controller require authentication.
-    /// Use a valid JWT token in the Authorization header:
-    /// ```
-    /// Authorization: Bearer {your-jwt-token}
-    /// ```
-    /// 
-    /// ## Common Responses
-    /// - 200 OK: Cache operation completed successfully
-    /// - 401 Unauthorized: Authentication required
-    /// - 403 Forbidden: User lacks required permissions
-    /// - 500 Internal Server Error: Unexpected server error
+    /// - Managing cache entries
+    /// - Clearing cache data
+    /// - Monitoring cache status
+    /// - Handling cache invalidation
     /// </remarks>
     [Route("api/v1/[controller]")]
     [ApiController]
@@ -36,12 +24,12 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public class CacheController : ControllerBase
+    public class CacheManagementController : ControllerBase
     {
         private readonly ICacheManagementService _cacheManagementService;
         private readonly ILogger<CacheManagementService> _logger;
 
-        public CacheController(ICacheManagementService cacheManagementService, ILogger<CacheManagementService> logger)
+        public CacheManagementController(ICacheManagementService cacheManagementService, ILogger<CacheManagementService> logger)
         {
             _cacheManagementService = cacheManagementService;
             _logger = logger;

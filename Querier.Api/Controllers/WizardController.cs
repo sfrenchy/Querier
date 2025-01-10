@@ -9,6 +9,15 @@ using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
 {
+    /// <summary>
+    /// Controller for managing setup wizard functionality
+    /// </summary>
+    /// <remarks>
+    /// This controller provides endpoints for:
+    /// - Checking wizard completion status
+    /// - Managing setup wizard steps
+    /// - Handling initial application configuration
+    /// </remarks>
     [Route("api/v1/[controller]")]
     [ApiController]
     public class WizardController : ControllerBase

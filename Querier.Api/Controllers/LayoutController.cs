@@ -8,20 +8,14 @@ using Querier.Api.Application.Interfaces.Services;
 namespace Querier.Api.Controllers
 {
     /// <summary>
-    /// Controller for managing page layouts
+    /// Controller for managing application layouts
     /// </summary>
     /// <remarks>
     /// This controller provides endpoints for:
-    /// - Retrieving complete page layouts with rows and cards
-    /// - Updating entire page layouts
-    /// - Deleting page layouts
-    /// 
-    /// ## Authentication
-    /// All endpoints in this controller require authentication.
-    /// Use a valid JWT token in the Authorization header:
-    /// ```
-    /// Authorization: Bearer {your-jwt-token}
-    /// ```
+    /// - Managing page layouts
+    /// - Handling layout templates
+    /// - Customizing layout settings
+    /// - Layout persistence
     /// </remarks>
     [ApiController]
     [Route("api/v1/[controller]")]

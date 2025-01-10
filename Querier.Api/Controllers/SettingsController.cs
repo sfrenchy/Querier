@@ -17,26 +17,14 @@ using Querier.Api.Domain.Services;
 namespace Querier.Api.Controllers
 {
     /// <summary>
-    /// Settings controller for managing application configuration
+    /// Settings controller for managing application configuration and API settings
     /// </summary>
     /// <remarks>
     /// This controller provides endpoints for:
-    /// - Retrieving application settings
-    /// - Updating application settings
-    /// - Checking application configuration status
-    /// 
-    /// ## Authentication
-    /// Most endpoints in this controller require authentication except for the `/configured` endpoint.
-    /// Use a valid JWT token in the Authorization header:
-    /// ```
-    /// Authorization: Bearer {your-jwt-token}
-    /// ```
-    /// 
-    /// ## Common Responses
-    /// - 200 OK: Operation completed successfully
-    /// - 401 Unauthorized: Authentication required or token invalid
-    /// - 403 Forbidden: User lacks required permissions
-    /// - 500 Internal Server Error: Unexpected server error
+    /// - Managing global application settings
+    /// - Configuring API-specific settings
+    /// - Handling user-specific configurations
+    /// - Managing system-wide settings for authenticated users
     /// </remarks>
     /// <response code="401">If the user is not authenticated</response>
     /// <response code="403">If the user is not authorized</response>

@@ -8,6 +8,16 @@ using Querier.Api.Application.Interfaces.Services;
 
 namespace Querier.Api.Controllers
 {
+    /// <summary>
+    /// Controller for managing data rows and records
+    /// </summary>
+    /// <remarks>
+    /// This controller provides endpoints for:
+    /// - Managing data rows
+    /// - Handling row operations
+    /// - Processing row data
+    /// - Row-level security
+    /// </remarks>
     [ApiController]
     [Route("api/v1/[controller]")]
     [Authorize]
@@ -20,6 +30,13 @@ namespace Querier.Api.Controllers
             _service = service;
         }
 
+        /// <summary>
+        /// Gets a row by its ID
+        /// </summary>
+        /// <param name="id">The ID of the row to retrieve</param>
+        /// <returns>The requested row</returns>
+        /// <response code="200">Returns the requested row</response>
+        /// <response code="404">If the row is not found</response>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(RowDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -30,6 +47,12 @@ namespace Querier.Api.Controllers
             return Ok(row);
         }
 
+        /// <summary>
+        /// Gets all rows for a specific page
+        /// </summary>
+        /// <param name="pageId">The ID of the page</param>
+        /// <returns>List of rows in the page</returns>
+        /// <response code="200">Returns the list of rows</response>
         [HttpGet("page/{pageId}")]
         [ProducesResponseType(typeof(IEnumerable<RowDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<RowDto>>> GetByPageId(int pageId)
@@ -38,6 +61,14 @@ namespace Querier.Api.Controllers
             return Ok(rows);
         }
 
+        /// <summary>
+        /// Creates a new row in a specific page
+        /// </summary>
+        /// <param name="pageId">The ID of the page to create the row in</param>
+        /// <param name="request">The row data</param>
+        /// <returns>The created row</returns>
+        /// <response code="201">Returns the newly created row</response>
+        /// <response code="400">If the request is invalid</response>
         [HttpPost("page/{pageId}")]
         [ProducesResponseType(typeof(RowDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -47,6 +78,14 @@ namespace Querier.Api.Controllers
             return CreatedAtAction(nameof(GetById), new { id = row.Id }, row);
         }
 
+        /// <summary>
+        /// Updates an existing row
+        /// </summary>
+        /// <param name="id">The ID of the row to update</param>
+        /// <param name="request">The updated row data</param>
+        /// <returns>The updated row</returns>
+        /// <response code="200">Returns the updated row</response>
+        /// <response code="404">If the row is not found</response>
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(RowDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -57,6 +96,13 @@ namespace Querier.Api.Controllers
             return Ok(row);
         }
 
+        /// <summary>
+        /// Deletes a row
+        /// </summary>
+        /// <param name="id">The ID of the row to delete</param>
+        /// <returns>No content if successful</returns>
+        /// <response code="204">If the row was successfully deleted</response>
+        /// <response code="404">If the row is not found</response>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -67,6 +113,14 @@ namespace Querier.Api.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Reorders rows within a page
+        /// </summary>
+        /// <param name="pageId">The ID of the page containing the rows</param>
+        /// <param name="rowIds">Ordered list of row IDs representing the new order</param>
+        /// <returns>Success indicator</returns>
+        /// <response code="200">If the reordering was successful</response>
+        /// <response code="400">If the request is invalid</response>
         [HttpPost("page/{pageId}/reorder")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

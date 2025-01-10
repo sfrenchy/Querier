@@ -15,26 +15,15 @@ using Querier.Api.Application.Interfaces.Services;
 namespace Querier.Api.Controllers
 {
     /// <summary>
-    /// Controller for managing database connections
+    /// Controller for managing database connections and operations
     /// </summary>
     /// <remarks>
     /// This controller provides endpoints for:
-    /// - Adding new database connections
-    /// - Reading existing database connections
-    /// - Deleting database connections
-    /// 
-    /// ## Authentication
-    /// All endpoints in this controller require authentication.
-    /// Use a valid JWT token in the Authorization header:
-    /// ```
-    /// Authorization: Bearer {your-jwt-token}
-    /// ```
-    /// 
-    /// ## Common Responses
-    /// - 200 OK: Operation completed successfully
-    /// - 401 Unauthorized: Authentication required
-    /// - 403 Forbidden: User lacks required permissions
-    /// - 500 Internal Server Error: Unexpected server error
+    /// - Managing database connections
+    /// - Analyzing and executing queries
+    /// - Retrieving database metadata
+    /// - Managing stored procedures and views
+    /// - Handling connection parameters
     /// </remarks>
     [Authorize]
     [Route("api/v1/[controller]")]
@@ -111,6 +100,7 @@ namespace Querier.Api.Controllers
         /// Gets all database connections
         /// </summary>
         /// <returns>List of database connections</returns>
+        /// <response code="200">Returns the list of database connections</response>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
@@ -279,10 +269,12 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Obtient la liste des endpoints disponibles pour une connexion
+        /// Gets endpoints available for a database connection
         /// </summary>
-        /// <param name="id">ID de la connexion</param>
-        /// <returns>Liste des endpoints avec leurs schémas JSON</returns>
+        /// <param name="id">ID of the connection</param>
+        /// <returns>List of endpoints with their JSON schemas</returns>
+        /// <response code="200">Returns the list of endpoints</response>
+        /// <response code="404">If the connection is not found</response>
         [HttpGet("{id}/endpoints")]
         [ProducesResponseType(typeof(List<DBConnectionEndpointInfoDto>), 200)]
         [ProducesResponseType(404)]
@@ -305,10 +297,12 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Obtient la liste des contrôleurs disponibles pour une connexion
+        /// Gets controllers available for a database connection
         /// </summary>
-        /// <param name="id">ID de la connexion</param>
-        /// <returns>Liste des contrôleurs avec leurs actions</returns>
+        /// <param name="id">ID of the connection</param>
+        /// <returns>List of controllers with their actions</returns>
+        /// <response code="200">Returns the list of controllers</response>
+        /// <response code="404">If the connection is not found</response>
         [HttpGet("{id}/controllers")]
         [ProducesResponseType(typeof(List<DBConnectionControllerInfoDto>), 200)]
         [ProducesResponseType(404)]

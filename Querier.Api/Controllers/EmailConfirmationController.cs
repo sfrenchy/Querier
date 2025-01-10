@@ -6,6 +6,17 @@ using Querier.Api.Application.Interfaces.Services;
 
 namespace Querier.Api.Controllers
 {
+    /// <summary>
+    /// Controller for managing email confirmation processes
+    /// </summary>
+    /// <remarks>
+    /// This controller provides endpoints for:
+    /// - Handling email verification
+    /// - Managing confirmation tokens
+    /// - Processing email confirmations
+    /// - Resending confirmation emails
+    /// </remarks>
+    [Route("api/v1/[controller]")]
     public class EmailConfirmationController : Controller
     {
         private readonly IUserService _userService;

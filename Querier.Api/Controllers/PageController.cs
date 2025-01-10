@@ -3,9 +3,21 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Querier.Api.Controllers
 {
+    /// <summary>
+    /// Controller for managing application pages
+    /// </summary>
+    /// <remarks>
+    /// This controller provides endpoints for:
+    /// - Managing page content
+    /// - Handling page layouts
+    /// - Page permissions
+    /// - Page customization
+    /// </remarks>
+    [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
     public class PageController : ControllerBase
@@ -18,12 +30,12 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Récupère toutes les pages d'une catégorie de menu
+        /// Gets all pages in a menu category
         /// </summary>
-        /// <param name="categoryId">ID de la catégorie</param>
-        /// <returns>Liste des pages</returns>
-        /// <response code="200">Retourne la liste des pages</response>
-        /// <response code="404">Catégorie non trouvée</response>
+        /// <param name="categoryId">ID of the category</param>
+        /// <returns>List of pages</returns>
+        /// <response code="200">Returns the list of pages</response>
+        /// <response code="404">If the category is not found</response>
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<PageDto>), 200)]
         [ProducesResponseType(404)]
@@ -33,12 +45,12 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Récupère une page par son ID
+        /// Gets a page by its ID
         /// </summary>
-        /// <param name="id">ID de la page</param>
-        /// <returns>La page demandée</returns>
-        /// <response code="200">Retourne la page demandée</response>
-        /// <response code="404">Page non trouvée</response>
+        /// <param name="id">ID of the page</param>
+        /// <returns>The requested page</returns>
+        /// <response code="200">Returns the requested page</response>
+        /// <response code="404">If the page is not found</response>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(PageDto), 200)]
         [ProducesResponseType(404)]
@@ -50,12 +62,12 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Crée une nouvelle page
+        /// Creates a new page
         /// </summary>
-        /// <param name="request">Données de la page à créer</param>
-        /// <returns>La page créée</returns>
-        /// <response code="201">Retourne la page créée</response>
-        /// <response code="400">Requête invalide</response>
+        /// <param name="request">The page data to create</param>
+        /// <returns>The created page</returns>
+        /// <response code="201">Returns the newly created page</response>
+        /// <response code="400">If the request is invalid</response>
         [HttpPost]
         [ProducesResponseType(typeof(PageDto), 201)]
         [ProducesResponseType(400)]
@@ -66,14 +78,14 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Met à jour une page existante
+        /// Updates an existing page
         /// </summary>
-        /// <param name="id">ID de la page</param>
-        /// <param name="request">Nouvelles données de la page</param>
-        /// <returns>La page mise à jour</returns>
-        /// <response code="200">Retourne la page mise à jour</response>
-        /// <response code="404">Page non trouvée</response>
-        /// <response code="400">Requête invalide</response>
+        /// <param name="id">ID of the page to update</param>
+        /// <param name="request">The updated page data</param>
+        /// <returns>The updated page</returns>
+        /// <response code="200">Returns the updated page</response>
+        /// <response code="404">If the page is not found</response>
+        /// <response code="400">If the request is invalid</response>
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(PageDto), 200)]
         [ProducesResponseType(404)]
@@ -86,12 +98,12 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Supprime une page
+        /// Deletes a page
         /// </summary>
-        /// <param name="id">ID de la page à supprimer</param>
-        /// <returns>Aucun contenu</returns>
-        /// <response code="204">Page supprimée avec succès</response>
-        /// <response code="404">Page non trouvée</response>
+        /// <param name="id">ID of the page to delete</param>
+        /// <returns>No content if successful</returns>
+        /// <response code="204">If the page was successfully deleted</response>
+        /// <response code="404">If the page is not found</response>
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]

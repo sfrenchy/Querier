@@ -10,6 +10,17 @@ using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
 {
+    /// <summary>
+    /// Controller for managing SMTP email configuration
+    /// </summary>
+    /// <remarks>
+    /// This controller provides endpoints for:
+    /// - Configuring SMTP server settings
+    /// - Testing email connectivity
+    /// - Managing email server configuration
+    /// - Validating SMTP settings
+    /// </remarks>
+    [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
     public class SmtpController : ControllerBase

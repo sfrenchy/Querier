@@ -13,8 +13,15 @@ using Querier.Api.Infrastructure.Services;
 namespace Querier.Api.Controllers
 {
     /// <summary>
-    /// Controller for managing SQL queries
+    /// Controller for executing and managing SQL queries
     /// </summary>
+    /// <remarks>
+    /// This controller provides endpoints for:
+    /// - Executing SQL queries
+    /// - Managing query parameters
+    /// - Analyzing query performance
+    /// - Handling query results
+    /// </remarks>
     [ApiController]
     [Route("api/v1/[controller]")]
     [Authorize]

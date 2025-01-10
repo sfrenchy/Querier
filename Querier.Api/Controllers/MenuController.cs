@@ -10,19 +10,14 @@ using Querier.Api.Application.Interfaces.Services;
 namespace Querier.Api.Controllers
 {
     /// <summary>
-    /// Controller for managing menu categories
+    /// Controller for managing application menus
     /// </summary>
     /// <remarks>
     /// This controller provides endpoints for:
-    /// - Creating, reading, updating and deleting menu categories
-    /// - Managing menu category translations
-    /// 
-    /// ## Authentication
-    /// All endpoints in this controller require authentication.
-    /// Use a valid JWT token in the Authorization header:
-    /// ```
-    /// Authorization: Bearer {your-jwt-token}
-    /// ```
+    /// - Managing menu items
+    /// - Handling menu structure
+    /// - Customizing menu settings
+    /// - Menu permissions
     /// </remarks>
     [Authorize]
     [Route("api/v1/[controller]")]

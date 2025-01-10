@@ -11,26 +11,14 @@ using Querier.Api.Domain.Services;
 namespace Querier.Api.Controllers
 {
     /// <summary>
-    /// Controller for handling authentication operations
+    /// Controller for handling user authentication
     /// </summary>
     /// <remarks>
     /// This controller provides endpoints for:
-    /// - User registration (SignUp)
-    /// - User authentication (SignIn)
-    /// - Token management (RefreshToken)
-    /// 
-    /// ## Authentication
-    /// Most endpoints in this controller do not require authentication as they are used to obtain authentication tokens.
-    /// For endpoints that return tokens, use the token in subsequent requests:
-    /// ```
-    /// Authorization: Bearer {your-jwt-token}
-    /// ```
-    /// 
-    /// ## Common Responses
-    /// - 200 OK: Operation completed successfully
-    /// - 400 Bad Request: Invalid payload or request
-    /// - 401 Unauthorized: Invalid credentials
-    /// - 500 Internal Server Error: Unexpected server error
+    /// - User login and authentication
+    /// - Token management
+    /// - Password reset functionality
+    /// - Session management
     /// </remarks>
     [Route("api/v1/[controller]")] // api/authmanagement
     [ApiController]
