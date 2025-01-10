@@ -51,7 +51,7 @@ namespace Querier.Api.Controllers
             _logger.LogInformation("Starting setup process...");
             _logger.LogInformation("Request data: {@Request}", request);
             
-            var isConfigured = await _settingService.GetIsConfigured();
+            var isConfigured = await _settingService.GetApiIsConfiguredAsync();
             if (isConfigured)
             {
                 _logger.LogWarning("Setup attempted but application is already configured");

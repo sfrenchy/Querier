@@ -215,11 +215,11 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                string tokenValidity = await settings.GetSettingValue("api:email:confirmationTokenValidityLifeSpanDays", "2");
+                string tokenValidity = await settings.GetSettingValueAsync("api:email:confirmationTokenValidityLifeSpanDays", "2");
                 string baseUrl = string.Concat(
-                    await settings.GetSettingValue("api:scheme", "https"), "://",
-                    await settings.GetSettingValue("api:host", "localhost"), ":",
-                    await settings.GetSettingValue("api:port", "5001")
+                    await settings.GetSettingValueAsync("api:scheme", "https"), "://",
+                    await settings.GetSettingValueAsync("api:host", "localhost"), ":",
+                    await settings.GetSettingValueAsync("api:port", 5001)
                 );
 
                 var encodedToken = Uri.EscapeDataString(token);

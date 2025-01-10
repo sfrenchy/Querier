@@ -12,7 +12,6 @@ using Querier.Api.Infrastructure.Security.TokenProviders;
 using Querier.Api.Domain.Services;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Domain.Services.Role;
-using Querier.Api.Domain.Services.Repositories.Role;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -88,7 +87,7 @@ namespace Querier.Api.Infrastructure.Extensions
                             .GetRequiredService<ISettingService>();
                         
                         // Si l'application n'est pas configurée, on permet l'accès
-                        if (!await settingService.GetIsConfigured())
+                        if (!await settingService.GetApiIsConfiguredAsync())
                         {
                             var anonymousClaims = new[]
                             {
@@ -106,12 +105,12 @@ namespace Querier.Api.Infrastructure.Extensions
                     OnMessageReceived = async context =>
                     {
                         var settingService = context.HttpContext.RequestServices.GetRequiredService<ISettingService>();
-                        var secret = await settingService.GetSettingValue("JwtSecret", "DefaultDevSecretKey_12345678901234567890123456789012");
+                        var secret = await settingService.GetSettingValueIfExistsAsync("jwt:secret", "DefaultDevSecretKey_12345678901234567890123456789012", "JWT secret");
                         var key = Encoding.ASCII.GetBytes(secret);
                         var signingKey = new SymmetricSecurityKey(key) { KeyId = "default_signing_key" };
 
-                        var issuer = await settingService.GetSettingValue("JwtIssuer", "QuerierApi");
-                        var audience = await settingService.GetSettingValue("JwtAudience", "QuerierClient");
+                        var issuer = await settingService.GetSettingValueIfExistsAsync("jwt:issuer", "QuerierApi", "JWT issuer");
+                        var audience = await settingService.GetSettingValueIfExistsAsync("jwt:audience", "QuerierClient", "JWT Audience");
 
                         // Mettre à jour les paramètres de validation du token de manière dynamique
                         context.Options.TokenValidationParameters = new TokenValidationParameters

@@ -54,10 +54,10 @@ namespace Querier.Api.Domain.Services
                     var jwtSecret = GenerateSecureSecret();
                     
                     // Utiliser UpdateSettingIfExists pour éviter les conflits de clés uniques
-                    await _settingService.UpdateSettingIfExists("JwtSecret", jwtSecret);
-                    await _settingService.UpdateSettingIfExists("JwtIssuer", "QuerierApi");
-                    await _settingService.UpdateSettingIfExists("JwtAudience", "QuerierClient");
-                    await _settingService.UpdateSettingIfExists("JwtExpiryInMinutes", "60");
+                    await _settingService.UpdateSettingIfExistsAsync("jwt:secret", jwtSecret, "");
+                    await _settingService.UpdateSettingIfExistsAsync("jwt:issuer", "QuerierApi", "");
+                    await _settingService.UpdateSettingIfExistsAsync("jwt:audience", "QuerierClient", "");
+                    await _settingService.UpdateSettingIfExistsAsync("jwt:expiry", 60, "");
 
                     if (!await _roleManager.RoleExistsAsync("Admin"))
                     {
@@ -109,14 +109,14 @@ namespace Querier.Api.Domain.Services
                     }
 
                     _logger.LogInformation("Configuring SMTP settings...");
-                    await _settingService.UpdateSettingIfExists("smtp:host", request.Smtp.Host);
-                    await _settingService.UpdateSettingIfExists("smtp:port", request.Smtp.Port.ToString());
-                    await _settingService.UpdateSettingIfExists("smtp:username", request.Smtp.Username);
-                    await _settingService.UpdateSettingIfExists("smtp:password", request.Smtp.Password);
-                    await _settingService.UpdateSettingIfExists("smtp:useSSL", request.Smtp.useSSL.ToString());
-                    await _settingService.UpdateSettingIfExists("smtp:senderEmail", request.Smtp.SenderEmail);
-                    await _settingService.UpdateSettingIfExists("smtp:senderName", request.Smtp.SenderName);
-                    await _settingService.UpdateSettingIfExists("smtp:requiresAuth", request.Smtp.RequireAuth.ToString());
+                    await _settingService.UpdateSettingIfExistsAsync("smtp:host", request.Smtp.Host, "");
+                    await _settingService.UpdateSettingIfExistsAsync("smtp:port", request.Smtp.Port, "");
+                    await _settingService.UpdateSettingIfExistsAsync("smtp:username", request.Smtp.Username, "");
+                    await _settingService.UpdateSettingIfExistsAsync("smtp:password", request.Smtp.Password, "");
+                    await _settingService.UpdateSettingIfExistsAsync("smtp:useSSL", request.Smtp.useSSL, "");
+                    await _settingService.UpdateSettingIfExistsAsync("smtp:senderEmail", request.Smtp.SenderEmail, "");
+                    await _settingService.UpdateSettingIfExistsAsync("smtp:senderName", request.Smtp.SenderName, "");
+                    await _settingService.UpdateSettingIfExistsAsync("smtp:requiresAuth", request.Smtp.RequireAuth, "");
 
                     var isConfiguredSetting = await context.Settings
                         .FirstOrDefaultAsync(s => s.Name == "api:isConfigured");

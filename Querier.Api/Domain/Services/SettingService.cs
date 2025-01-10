@@ -1,48 +1,37 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Application.DTOs;
+using Querier.Api.Application.Interfaces.Repositories;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Common.Metadata;
-using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api.Domain.Services
 {
 
-    public class SettingService : ISettingService
+    public class SettingService(ISettingRepository settingRepository, ILogger<SettingService> logger)
+        : ISettingService
     {
-        private readonly ApiDbContext _context;
-        private readonly ILogger<SettingService> _logger;
+        private readonly ISettingRepository _settingRepository = settingRepository;
 
-        public SettingService(ApiDbContext context, ILogger<SettingService> logger)
+        public async Task<IEnumerable<SettingDto>> GetSettingsAsync()
         {
-            _context = context;
-            _logger = logger;
+            return (await _settingRepository.ListAsync()).Select(SettingDto.FromEntity);
         }
 
-        public async Task<Setting> GetSettings()
+        public async Task<SettingDto> UpdateSettingAsync(SettingDto setting)
         {
-            return await _context.Settings.FirstOrDefaultAsync();
+            Setting entity = await _settingRepository.GetByIdAsync(setting.Id);
+            return SettingDto.FromEntity(await _settingRepository.UpdateAsync(entity));
         }
 
-        public async Task<Setting> UpdateSetting(Setting setting)
-        {
-            _context.Settings.Update(setting);
-            await _context.SaveChangesAsync();
-            return setting;
-        }
-
-        public async Task<Setting> Configure(Setting setting)
-        {
-            return await UpdateSetting(setting);
-        }
-
-        public async Task<bool> GetIsConfigured()
+        public async Task<bool> GetApiIsConfiguredAsync()
         {
             try
             {
-                var setting = await _context.Settings.FirstOrDefaultAsync(s => s.Name == "api:isConfigured");
+                var setting = (await _settingRepository.ListAsync()).FirstOrDefault(s => s.Name == "api:isConfigured");
                 if (setting == null) return false;
                 return setting.Value.ToLower() == "true";
             }
@@ -52,16 +41,16 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task<T> GetSettingValue<T>(string name)
+        public async Task<T> GetSettingValueAsync<T>(string name)
         {
-            return await GetSettingValue<T>(name, default);
+            return await GetSettingValueAsync<T>(name, default);
         }
 
-        public async Task<T> GetSettingValue<T>(string name, T defaultValue)
+        public async Task<T> GetSettingValueAsync<T>(string name, T defaultValue)
         {
             try
             {
-                var setting = await _context.Settings.FirstOrDefaultAsync(s => s.Name == name);
+                var setting = (await _settingRepository.ListAsync()).FirstOrDefault(s => s.Name == name);
                 if (setting == null) return defaultValue;
                 if (typeof(T) == typeof(bool)) return (T)(object)(setting.Value.ToLower() == "true");
                 return (T)Convert.ChangeType(setting.Value, typeof(T));
@@ -72,66 +61,68 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task<Setting> CreateSetting(string name, string value)
+        public async Task<SettingDto> CreateSettingAsync(SettingDto dto)
         {
-            var setting = new Setting
-            {
-                Name = name,
-                Value = value
-            };
+            Setting newSetting = new Setting();
+            newSetting.Name = dto.Name;
+            newSetting.Value = dto.Value;
+            newSetting.Description = dto.Description;
+            newSetting.Type = dto.Type.ToString();
+            newSetting.Description = dto.Description;
 
-            _context.Settings.Add(setting);
-            await _context.SaveChangesAsync();
+            await _settingRepository.AddAsync(newSetting);
 
-            return setting;
+            return SettingDto.FromEntity(newSetting);
         }
 
-        public async Task<string> GetSettingValue(string name, string defaultValue = null)
+        public async Task<T> GetSettingValueIfExistsAsync<T>(string name, T defaultValue, string description = "")
         {
-            try
-            {
-                var setting = await _context.Settings
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(s => s.Name == name);
+            var setting = (await _settingRepository.ListAsync()).FirstOrDefault(s => s.Name == name);
 
-                if (setting == null && defaultValue != null)
-                {
-                    // Créer le paramètre avec la valeur par défaut
-                    setting = await CreateSetting(name, defaultValue);
-                    return setting.Value;
-                }
-
-                return setting?.Value;
-            }
-            catch (Exception ex)
+            if (setting == null)
             {
-                _logger.LogError(ex, $"Error getting setting value for {name}");
-                return null;
+                Setting newSetting = new Setting();
+                newSetting.Name = name;
+                newSetting.Value = defaultValue != null ? defaultValue.ToString() : null;
+                newSetting.Description = description;
+                newSetting.Type = typeof(T).ToString();
+                
+                await _settingRepository.AddAsync(newSetting);
+                return (T)Convert.ChangeType(newSetting.Value, typeof(T));
             }
+
+            return (T)Convert.ChangeType(setting.Value, typeof(T));
         }
 
-        public async Task<Setting> UpdateSettingIfExists(string name, string value)
+        public async Task UpdateSettingIfExistsAsync<T>(string name, T value, string description = "")
         {
-            var setting = await _context.Settings.FirstOrDefaultAsync(s => s.Name == name);
+            var setting = (await _settingRepository.ListAsync()).FirstOrDefault(s => s.Name == name);
             if (setting != null)
             {
-                setting.Value = value;
-                await _context.SaveChangesAsync();
+                if (typeof(T).ToString() != setting.Type)
+                    throw new Exception($"Type mismatch, the setting exists with type {setting.Type}");
+                
+                setting.Value = value.ToString();
+                await _settingRepository.UpdateAsync(setting);
             }
             else
             {
-                setting = new Setting { Name = name, Value = value };
-                _context.Settings.Add(setting);
-                await _context.SaveChangesAsync();
+                setting = new Setting
+                {
+                    Name = name, 
+                    Value = value.ToString(),
+                    Description = description,
+                    Type = typeof(T).ToString()
+                };
+                await _settingRepository.AddAsync(setting);
             }
-            return setting;
         }
 
         public async Task UpdateSettings(Dictionary<string, string> settings)
         {
             foreach (var (name, value) in settings)
             {
-                await UpdateSettingIfExists(name, value);
+                await UpdateSettingIfExistsAsync(name, value);
             }
         }
     }

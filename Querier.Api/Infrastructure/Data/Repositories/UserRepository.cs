@@ -110,11 +110,11 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 }
 
                 string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                string tokenValidity = await _settings.GetSettingValue("api:email:confirmationTokenValidityLifeSpanDays", "2");
+                string tokenValidity = await _settings.GetSettingValueAsync("api:email:confirmationTokenValidityLifeSpanDays", "2");
                 string baseUrl = string.Concat(
-                    await _settings.GetSettingValue("api:scheme", "https"), "://",
-                    await _settings.GetSettingValue("api:host", "localhost"), ":",
-                    await _settings.GetSettingValue("api:port", "5001")
+                    await _settings.GetSettingValueAsync("api:scheme", "https"), "://",
+                    await _settings.GetSettingValueAsync("api:host", "localhost"), ":",
+                    await _settings.GetSettingValueAsync("api:port", 5001)
                 );
                 
                 await _emailSending.SendTemplatedEmailAsync(
@@ -241,12 +241,12 @@ namespace Querier.Api.Infrastructure.Data.Repositories
         {
             var opts = new PasswordOptions()
             {
-                RequireDigit = bool.Parse(await _settings.GetSettingValue("api:password:requireDigit", "true")),
-                RequireLowercase = bool.Parse(await _settings.GetSettingValue("api:password:requireLowercase", "true")),
-                RequireNonAlphanumeric = bool.Parse(await _settings.GetSettingValue("api:password:requireNonAlphanumeric", "true")),
-                RequireUppercase = bool.Parse(await _settings.GetSettingValue("api:password:requireUppercase", "true")),
-                RequiredLength = int.Parse(await _settings.GetSettingValue("api:password:requiredLength", "12")),
-                RequiredUniqueChars = int.Parse(await _settings.GetSettingValue("api:password:requiredUniqueChars", "1"))
+                RequireDigit = await _settings.GetSettingValueAsync("api:password:requireDigit", true),
+                RequireLowercase = await _settings.GetSettingValueAsync("api:password:requireLowercase", true),
+                RequireNonAlphanumeric = await _settings.GetSettingValueAsync("api:password:requireNonAlphanumeric", true),
+                RequireUppercase = await _settings.GetSettingValueAsync("api:password:requireUppercase", true),
+                RequiredLength = await _settings.GetSettingValueAsync("api:password:requiredLength", 12),
+                RequiredUniqueChars = await _settings.GetSettingValueAsync("api:password:requiredUniqueChars", 1)
             };
 
             string[] randomChars = new[] {

@@ -2,10 +2,8 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Entities.DBConnection;
-using Querier.Api.Domain.Entities.QDBConnection.Endpoints;
 using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api.Infrastructure.Data.Repositories

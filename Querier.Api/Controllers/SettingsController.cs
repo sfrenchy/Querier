@@ -71,7 +71,7 @@ namespace Querier.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSettings()
         {
-            var settings = await _settingService.GetSettings();
+            var settings = await _settingService.GetSettingsAsync();
             return Ok(settings);
         }
 
@@ -96,9 +96,9 @@ namespace Querier.Api.Controllers
         /// <response code="500">If there was an internal server error</response>
         
         [HttpPost]
-        public async Task<IActionResult> UpdateSettings([FromBody] Setting setting)
+        public async Task<IActionResult> UpdateSettings([FromBody] SettingDto setting)
         {
-            var updatedSetting = await _settingService.UpdateSetting(setting);
+            var updatedSetting = await _settingService.UpdateSettingAsync(setting);
             return Ok(updatedSetting);
         }
         /// <summary>
@@ -119,9 +119,9 @@ namespace Querier.Api.Controllers
         /// <response code="200">Returns the updated setting</response>
         /// <response code="500">If there was an internal server error</response>
         [HttpPost("configure")]
-        public async Task<IActionResult> Configure([FromBody] Setting setting)
+        public async Task<IActionResult> Configure([FromBody] SettingDto setting)
         {
-            var configuredSetting = await _settingService.Configure(setting);
+            var configuredSetting = await _settingService.CreateSettingAsync(setting);
             return Ok(configuredSetting);
         }   
 
@@ -189,32 +189,32 @@ namespace Querier.Api.Controllers
 
                 var config = new ApiConfigurationDto
                 {
-                    Scheme = await _settingService.GetSettingValue("api:scheme", "https"),
-                    Host = await _settingService.GetSettingValue("api:host", "localhost"),
-                    Port = int.Parse(await _settingService.GetSettingValue("api:port", "5001")),
-                    AllowedHosts = await _settingService.GetSettingValue("api:allowedHosts", "*"),
-                    AllowedOrigins = await _settingService.GetSettingValue("api:allowedOrigins", "*"),
-                    AllowedMethods = await _settingService.GetSettingValue("api:allowedMethods", "GET,POST,DELETE,OPTIONS"),
-                    AllowedHeaders = await _settingService.GetSettingValue("api:allowedHeaders", "X-Request-Token,Accept,Content-Type,Authorization"),
-                    ResetPasswordTokenValidity = int.Parse(await _settingService.GetSettingValue("api:email:ResetPasswordTokenValidityLifeSpanMinutes", "15")),
-                    EmailConfirmationTokenValidity = int.Parse(await _settingService.GetSettingValue("api:email:confirmationTokenValidityLifeSpanDays", "2")),
-                    RequireDigit = bool.Parse(await _settingService.GetSettingValue("api:password:requireDigit", "true")),
-                    RequireLowercase = bool.Parse(await _settingService.GetSettingValue("api:password:requireLowercase", "true")),
-                    RequireNonAlphanumeric = bool.Parse(await _settingService.GetSettingValue("api:password:requireNonAlphanumeric", "true")),
-                    RequireUppercase = bool.Parse(await _settingService.GetSettingValue("api:password:requireUppercase", "true")),
-                    RequiredLength = int.Parse(await _settingService.GetSettingValue("api:password:requiredLength", "12")),
-                    RequiredUniqueChars = int.Parse(await _settingService.GetSettingValue("api:password:requiredUniqueChars", "1")),
-                    SmtpHost = await _settingService.GetSettingValue("smtp:host", ""),
-                    SmtpPort = int.Parse(await _settingService.GetSettingValue("smtp:port", "587")),
-                    SmtpUsername = await _settingService.GetSettingValue("smtp:username", ""),
-                    SmtpPassword = await _settingService.GetSettingValue("smtp:password", ""),
-                    SmtpUseSSL = bool.Parse(await _settingService.GetSettingValue("smtp:useSSL", "true")),
-                    SmtpSenderEmail = await _settingService.GetSettingValue("smtp:senderEmail", ""),
-                    SmtpSenderName = await _settingService.GetSettingValue("smtp:senderName", ""),
-                    SmtpRequireAuth = bool.Parse(await _settingService.GetSettingValue("smtp:requiresAuth", "true")),
-                    RedisEnabled = bool.Parse(await _settingService.GetSettingValue("api:redis:enabled", "false")),
-                    RedisHost = await _settingService.GetSettingValue("api:redis:host", "localhost"),
-                    RedisPort = int.Parse(await _settingService.GetSettingValue("api:redis:port", "6379")),
+                    Scheme = await _settingService.GetSettingValueIfExistsAsync("api:scheme", "https", "The scheme of the URL to target API"),
+                    Host = await _settingService.GetSettingValueIfExistsAsync("api:host", "localhost", "The IP/DNS of the URL to target API"),
+                    Port = await _settingService.GetSettingValueIfExistsAsync("api:port", 5001, "The port of the URL to target API"),
+                    AllowedHosts = await _settingService.GetSettingValueIfExistsAsync("api:allowedHosts", "*", "Semicolon-separated list of allowed host names"),
+                    AllowedOrigins = await _settingService.GetSettingValueIfExistsAsync("api:allowedOrigins", "*", "Semicolon-separated list of allowed CORS origins"),
+                    AllowedMethods = await _settingService.GetSettingValueIfExistsAsync("api:allowedMethods", "GET,POST,DELETE,OPTIONS", "Semicolon-separated list of allowed HTTP methods for CORS"),
+                    AllowedHeaders = await _settingService.GetSettingValueIfExistsAsync("api:allowedHeaders", "X-Request-Token,Accept,Content-Type,Authorization", "Semicolon-separated list of allowed HTTP headers for CORS"),
+                    ResetPasswordTokenValidity = await _settingService.GetSettingValueIfExistsAsync("api:email:ResetPasswordTokenValidityLifeSpanMinutes", 15, "Validity period in minutes for password reset tokens"),
+                    EmailConfirmationTokenValidity = await _settingService.GetSettingValueIfExistsAsync("api:email:confirmationTokenValidityLifeSpanDays", 2, "Validity period in minutes for email confirmation tokens"),
+                    RequireDigit = await _settingService.GetSettingValueIfExistsAsync("api:password:requireDigit", true, "Whether passwords must contain at least one digit"),
+                    RequireLowercase = await _settingService.GetSettingValueIfExistsAsync("api:password:requireLowercase", true, "Whether passwords must contain at least one lowercase"),
+                    RequireNonAlphanumeric = await _settingService.GetSettingValueIfExistsAsync("api:password:requireNonAlphanumeric", true,"Whether passwords must contain at least one non-alphanumeric character"),
+                    RequireUppercase = await _settingService.GetSettingValueIfExistsAsync("api:password:requireUppercase", true, "Whether passwords must contain at least one uppercase letter"),
+                    RequiredLength = await _settingService.GetSettingValueIfExistsAsync("api:password:requiredLength", 12, "Minimum required length for passwords"),
+                    RequiredUniqueChars = await _settingService.GetSettingValueIfExistsAsync("api:password:requiredUniqueChars", 1, "Minimum number of unique characters required in passwords"),
+                    SmtpHost = await _settingService.GetSettingValueIfExistsAsync("smtp:host", "", "SMTP server hostname or IP address for sending emails"),
+                    SmtpPort = await _settingService.GetSettingValueIfExistsAsync("smtp:port", 587, "SMTP server port number"),
+                    SmtpUsername = await _settingService.GetSettingValueIfExistsAsync("smtp:username", "", "Username for SMTP authentication"),
+                    SmtpPassword = await _settingService.GetSettingValueIfExistsAsync("smtp:password", "", "Password for SMTP authentication"),
+                    SmtpUseSSL = await _settingService.GetSettingValueIfExistsAsync("smtp:useSSL", true, "Whether to use SSL/TLS for SMTP connections"),
+                    SmtpSenderEmail = await _settingService.GetSettingValueIfExistsAsync("smtp:senderEmail", "", "Email address to use as the sender address"),
+                    SmtpSenderName = await _settingService.GetSettingValueIfExistsAsync("smtp:senderName", "", "Display name to use for the sender"),
+                    SmtpRequireAuth = await _settingService.GetSettingValueIfExistsAsync("smtp:requiresAuth", true, "Whether SMTP authentication is required"),
+                    RedisEnabled = await _settingService.GetSettingValueIfExistsAsync("redis:enabled", false, "Whether Redis caching is enabled"),
+                    RedisHost = await _settingService.GetSettingValueIfExistsAsync("redis:host", "localhost", "Redis server hostname or IP address"),
+                    RedisPort = await _settingService.GetSettingValueIfExistsAsync("redis:port", 6379, "Redis server port number"),
                 };
 
                 return Ok(config);

@@ -17,11 +17,11 @@ namespace Querier.Api.Infrastructure.Extensions
             {
                 var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
 
-                var allowedHosts = settingService.GetSettingValue("api:allowedHosts", "*").Result?.Split(',');
-                var allowedOrigins = settingService.GetSettingValue("api:allowedOrigins", "*").Result?.Split(',');
-                var allowedMethods = settingService.GetSettingValue("api:allowedMethods", "GET,POST,DELETE,OPTIONS,PUT").Result?.Split(',');
-                var allowedHeaders = settingService.GetSettingValue("api:allowedHeaders", "X-Request-Token,Accept,Content-Type,Authorization").Result?.Split(',');
-                var preflightMaxAge = settingService.GetSettingValue("api:PreflightMaxAge", "10").Result;
+                var allowedHosts = settingService.GetSettingValueAsync("api:allowedHosts", "*").Result?.Split(',');
+                var allowedOrigins = settingService.GetSettingValueAsync("api:allowedOrigins", "*").Result?.Split(',');
+                var allowedMethods = settingService.GetSettingValueAsync("api:allowedMethods", "GET,POST,DELETE,OPTIONS,PUT").Result?.Split(',');
+                var allowedHeaders = settingService.GetSettingValueAsync("api:allowedHeaders", "X-Request-Token,Accept,Content-Type,Authorization").Result?.Split(',');
+                var preflightMaxAge = settingService.GetSettingValueAsync("api:PreflightMaxAge", 10).Result;
 
                 app.UseCors(builder =>
                 {
@@ -52,7 +52,7 @@ namespace Querier.Api.Infrastructure.Extensions
                         builder.WithMethods(allowedMethods);
                     }
 
-                    builder.SetPreflightMaxAge(TimeSpan.FromMinutes(Convert.ToInt32(preflightMaxAge)));
+                    builder.SetPreflightMaxAge(TimeSpan.FromMinutes(preflightMaxAge));
                 });
             }
 
@@ -77,7 +77,7 @@ namespace Querier.Api.Infrastructure.Extensions
 
                     using var scope = context.RequestServices.CreateScope();
                     var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
-                    var isConfigured = await settingService.GetIsConfigured();
+                    var isConfigured = await settingService.GetApiIsConfiguredAsync();
                     
                     if (!isConfigured)
                     {

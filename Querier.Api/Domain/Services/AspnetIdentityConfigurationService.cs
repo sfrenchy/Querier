@@ -18,25 +18,25 @@ namespace Querier.Api.Domain.Services
         {
             var options = identityOptions.CurrentValue;
 
-            options.SignIn.RequireConfirmedAccount = await settingService.GetSettingValue("RequireConfirmedAccount", true);
-            options.SignIn.RequireConfirmedEmail = await settingService.GetSettingValue("RequireConfirmedEmail", true);
+            options.SignIn.RequireConfirmedAccount = await settingService.GetSettingValueAsync("RequireConfirmedAccount", true);
+            options.SignIn.RequireConfirmedEmail = await settingService.GetSettingValueAsync("RequireConfirmedEmail", true);
             
-            options.Password.RequireDigit = await settingService.GetSettingValue("PasswordRequireDigit", true);
-            options.Password.RequireLowercase = await settingService.GetSettingValue("PasswordRequireLowercase", true);
-            options.Password.RequireNonAlphanumeric = await settingService.GetSettingValue("PasswordRequireNonAlphanumeric", true);
-            options.Password.RequireUppercase = await settingService.GetSettingValue("PasswordRequireUppercase", true);
-            options.Password.RequiredLength = await settingService.GetSettingValue("PasswordRequiredLength", 12);
-            options.Password.RequiredUniqueChars = await settingService.GetSettingValue("PasswordRequiredUniqueChars", 1);
+            options.Password.RequireDigit = await settingService.GetSettingValueAsync("PasswordRequireDigit", true);
+            options.Password.RequireLowercase = await settingService.GetSettingValueAsync("PasswordRequireLowercase", true);
+            options.Password.RequireNonAlphanumeric = await settingService.GetSettingValueAsync("PasswordRequireNonAlphanumeric", true);
+            options.Password.RequireUppercase = await settingService.GetSettingValueAsync("PasswordRequireUppercase", true);
+            options.Password.RequiredLength = await settingService.GetSettingValueAsync("PasswordRequiredLength", 12);
+            options.Password.RequiredUniqueChars = await settingService.GetSettingValueAsync("PasswordRequiredUniqueChars", 1);
         }
 
         public async Task ConfigureTokenProviderOptions()
         {
             var emailConfirmationOptions = confirmationOptions.CurrentValue;
-            var days = await settingService.GetSettingValue("EmailConfirmationTokenLifespanDays", 2);
+            var days = await settingService.GetSettingValueAsync("EmailConfirmationTokenLifespanDays", 2);
             emailConfirmationOptions.TokenLifespan = TimeSpan.FromDays(days);
 
             var dataProtectionOptions = protectionOptions.CurrentValue;
-            var minutes = await settingService.GetSettingValue("DataProtectionTokenLifespanMinutes", 15);
+            var minutes = await settingService.GetSettingValueAsync("DataProtectionTokenLifespanMinutes", 15);
             dataProtectionOptions.TokenLifespan = TimeSpan.FromMinutes(minutes);
         }
     }

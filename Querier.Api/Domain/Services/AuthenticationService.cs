@@ -28,10 +28,10 @@ namespace Querier.Api.Domain.Services
     {
         public async Task<AuthResultDto> GenerateJwtToken(ApiUser user)
         {
-            var jwtSecret = await settingService.GetSettingValue("JwtSecret");
-            var jwtIssuer = await settingService.GetSettingValue("JwtIssuer");
-            var jwtAudience = await settingService.GetSettingValue("JwtAudience");
-            var jwtExpiryInMinutes = await settingService.GetSettingValue("JwtExpiryInMinutes");
+            var jwtSecret = await settingService.GetSettingValueAsync<string>("jwt:secret");
+            var jwtIssuer = await settingService.GetSettingValueAsync<string>("jwt:issuer");
+            var jwtAudience = await settingService.GetSettingValueAsync<string>("jwt:audience");
+            var jwtExpiryInMinutes = await settingService.GetSettingValueAsync<int>("jwt:expiry");
 
             if (string.IsNullOrEmpty(jwtSecret))
                 throw new InvalidOperationException("JWT secret is not configured");
@@ -56,7 +56,7 @@ namespace Querier.Api.Domain.Services
                 }
 
                 var key = Encoding.ASCII.GetBytes(jwtSecret);
-                var expiryInMinutes = int.Parse(jwtExpiryInMinutes);
+                var expiryInMinutes = jwtExpiryInMinutes;
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),

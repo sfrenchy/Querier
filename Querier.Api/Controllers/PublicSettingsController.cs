@@ -31,8 +31,8 @@ public class PublicSettingsController : ControllerBase
     /// <returns>Boolean indicating if the application is configured</returns>
     /// <response code="200">Returns the configuration status</response>
     [HttpGet("configured")]
-    public async Task<ActionResult<bool>> GetIsConfigured()
+    public async Task<ActionResult<bool>> GetApiIsConfigured()
     {
-        return await _settingService.GetIsConfigured();
+        return await _settingService.GetApiIsConfiguredAsync();
     }
 } 

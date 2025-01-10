@@ -6,10 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Domain.Entities.Auth;
-using Querier.Api.Infrastructure.Data.Context;
-using Querier.Api.Infrastructure.Data.Repositories;
 
-namespace Querier.Api.Domain.Services.Repositories.Role
+namespace Querier.Api.Infrastructure.Data.Repositories
 {
     public interface IRoleRepository
     {

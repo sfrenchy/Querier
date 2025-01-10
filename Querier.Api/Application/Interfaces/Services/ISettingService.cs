@@ -1,20 +1,20 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Domain.Common.Metadata;
 
 namespace Querier.Api.Application.Interfaces.Services
 {
     public interface ISettingService
     {
-        Task<Setting> GetSettings();
-        Task<Setting> UpdateSetting(Setting setting);
-        Task<Setting> Configure(Setting setting);
-        Task<bool> GetIsConfigured();
-        Task<T> GetSettingValue<T>(string name);
-        Task<T> GetSettingValue<T>(string name, T defaultValue);
-        Task<Setting> CreateSetting(string name, string value);
-        Task<string> GetSettingValue(string name, string defaultValue = null);
-        Task<Setting> UpdateSettingIfExists(string name, string value);
+        Task<IEnumerable<SettingDto>> GetSettingsAsync();
+        Task<SettingDto> CreateSettingAsync(SettingDto dto);
+        Task<SettingDto> UpdateSettingAsync(SettingDto setting);
+        Task<bool> GetApiIsConfiguredAsync();
+        Task<T> GetSettingValueAsync<T>(string name);
+        Task<T> GetSettingValueAsync<T>(string name, T defaultValue);
+        Task<T> GetSettingValueIfExistsAsync<T>(string name, T defaultValue, string description);
+        Task UpdateSettingIfExistsAsync<T>(string name, T value, string description);
         Task UpdateSettings(Dictionary<string, string> settings);
     }
 

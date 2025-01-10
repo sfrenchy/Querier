@@ -7,8 +7,8 @@ using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Entities.Auth;
-using Querier.Api.Domain.Services.Repositories.Role;
 using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Infrastructure.Data.Repositories;
 
 namespace Querier.Api.Domain.Services.Role
 {

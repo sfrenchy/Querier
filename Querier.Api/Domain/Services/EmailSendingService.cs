@@ -18,7 +18,7 @@ namespace Querier.Api.Domain.Services
     {
         public async Task<bool> IsConfigured()
         {
-            return bool.Parse(await settings.GetSettingValue("api:isConfigured", "false"));
+            return await settings.GetSettingValueAsync("api:isConfigured", false);
         }
 
         public async Task<bool> TestSmtpConfiguration(SmtpTestDto request)
@@ -51,13 +51,13 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                var smtpHost = await settings.GetSettingValue("smtp:host");
-                var smtpPort = int.Parse(await settings.GetSettingValue("smtp:port", "587"));
-                var smtpUsername = await settings.GetSettingValue("smtp:username");
-                var smtpPassword = await settings.GetSettingValue("smtp:password");
-                var mailFrom = await settings.GetSettingValue("smtp:senderEmail");
-                var useSsl = bool.Parse(await settings.GetSettingValue("smtp:useSSL", "true"));
-                var requiresAuth = bool.Parse(await settings.GetSettingValue("smtp:requiresAuth", "false"));
+                var smtpHost = await settings.GetSettingValueAsync<string>("smtp:host");
+                var smtpPort = await settings.GetSettingValueAsync("smtp:port", 587);
+                var smtpUsername = await settings.GetSettingValueAsync<string>("smtp:username");
+                var smtpPassword = await settings.GetSettingValueAsync<string>("smtp:password");
+                var mailFrom = await settings.GetSettingValueAsync<string>("smtp:senderEmail");
+                var useSsl = await settings.GetSettingValueAsync("smtp:useSSL", true);
+                var requiresAuth = await settings.GetSettingValueAsync("smtp:requiresAuth", false);
 
                 using var client = new SmtpClient();
                 await client.ConnectAsync(smtpHost, smtpPort, useSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
