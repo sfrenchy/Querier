@@ -4,10 +4,10 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
-using Querier.Api.Infrastructure.DependencyInjection;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using Querier.Api.Infrastructure.Data.Context;
 using Microsoft.Extensions.DependencyInjection;
+using Querier.Api.Common.Utilities;
 
 namespace Querier.Api.Tools
 {
@@ -111,6 +111,14 @@ namespace Querier.Api.Tools
         public static byte[] ObjectToByteArray(Object objectToSerialize)
         {
             return ASCIIEncoding.ASCII.GetBytes(JsonSerializer.Serialize(objectToSerialize));
+        }
+        
+        public static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
+        {
+            // Unix timestamp is seconds past epoch
+            DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToUniversalTime();
+            return dtDateTime;
         }
     }
 }

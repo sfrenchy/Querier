@@ -29,6 +29,8 @@ using Querier.Api.Infrastructure.Database.Templates;
 using Swashbuckle.AspNetCore.Swagger;
 using System.Security.Cryptography;
 using Querier.Api.Application.DTOs;
+using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Entities.DBConnection;
 using Querier.Api.Domain.Entities.QDBConnection;
 
@@ -36,7 +38,7 @@ namespace Querier.Api.Domain.Services
 {
     public class DBConnectionService : IDBConnectionService
     {
-        private readonly IDbContextFactory<ApiDbContext> _apiDbContextFactory;
+        private readonly IDbConnectionRepository _dbConnectionRepository;
         private readonly IDynamicContextList _dynamicContextList;
         private readonly ILogger<DBConnectionService> _logger;
         private readonly IServiceProvider _serviceProvider;
@@ -48,7 +50,7 @@ namespace Querier.Api.Domain.Services
 
         public DBConnectionService(
             IDynamicContextList dynamicContextList,
-            IDbContextFactory<ApiDbContext> apiDbContextFactory,
+            IDbConnectionRepository dbConnectionRepository,
             IServiceProvider serviceProvider,
             ILogger<DBConnectionService> logger,
             ApplicationPartManager partManager,
@@ -56,7 +58,6 @@ namespace Querier.Api.Domain.Services
             ILogger<DatabaseSchemaExtractor> schemaExtractorLogger)
         {
             _logger = logger;
-            _apiDbContextFactory = apiDbContextFactory;
             _serviceProvider = serviceProvider;
             _dynamicContextList = dynamicContextList;
             _partManager = partManager;
@@ -83,7 +84,7 @@ namespace Querier.Api.Domain.Services
                             c.Open();
                             connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
-                            result.State = QDBConnectionState.Connected;
+                            result.State = DBConnectionState.Connected;
                         }
                         break;
                     case DbConnectionType.MySql:
@@ -92,7 +93,7 @@ namespace Querier.Api.Domain.Services
                             c.Open();
                             connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
-                            result.State = QDBConnectionState.Connected;
+                            result.State = DBConnectionState.Connected;
                         }
                         break;
                     case DbConnectionType.PgSql:
@@ -101,14 +102,14 @@ namespace Querier.Api.Domain.Services
                             c.Open();
                             connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
-                            result.State = QDBConnectionState.Connected;
+                            result.State = DBConnectionState.Connected;
                         }
                         break;
                 }
             }
             catch (Exception ex)
             {
-                result.State = QDBConnectionState.ConnectionError;
+                result.State = DBConnectionState.ConnectionError;
                 result.Messages.Add(ex.Message);
                 return result;
             }
@@ -194,7 +195,7 @@ namespace Querier.Api.Domain.Services
             var (assemblyBytes, pdbBytes) = await CompileAssembly(connection.Name, sourceFiles);
             if (assemblyBytes == null)
             {
-                result.State = QDBConnectionState.CompilationError;
+                result.State = DBConnectionState.CompilationError;
                 return result;
             }
 
@@ -222,13 +223,9 @@ namespace Querier.Api.Domain.Services
                 Endpoints = endpoints
             };
 
-            using (var apiDbContext = _apiDbContextFactory.CreateDbContext())
-            {
-                apiDbContext.DBConnections.Add(newConnection);
-                await apiDbContext.SaveChangesAsync();
-            }
+            await _dbConnectionRepository.AddDbConnectionAsync(new DBConnection());
 
-            result.State = QDBConnectionState.Available;
+            result.State = DBConnectionState.Available;
             await AssemblyLoader.LoadAssemblyFromQDBConnection(newConnection, _serviceProvider, _partManager, _logger);
             
             // Regenerate Swagger documentation
@@ -403,39 +400,18 @@ namespace Querier.Api.Domain.Services
 
         public async Task DeleteDBConnectionAsync(int dbConnectionId)
         {
-            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-            var toDelete = apiDbContext.DBConnections.Find(dbConnectionId);
-            if (toDelete == null)
-                throw new KeyNotFoundException($"Connection with ID {dbConnectionId} not found");
-
-            int toDeleteId = toDelete.Id;
-            apiDbContext.DBConnections.Remove(toDelete);
-            await apiDbContext.SaveChangesAsync();
+            await _dbConnectionRepository.DeleteDbConnectionAsync(dbConnectionId);
         }
 
-        public async Task<List<DBConnectionDto>> GetAll()
+        public async Task<List<DBConnectionDto>> GetAllAsync()
         {
-            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-            return await apiDbContext.DBConnections
-                .Select(c => new DBConnectionDto
-                {
-                    ApiRoute = c.ApiRoute,
-                    ConnectionString = c.ConnectionString,
-                    ConnectionType = c.ConnectionType.ToString(),
-                    Id = c.Id,
-                    Name = c.Name
-                })
-                .ToListAsync();
+            var list = await _dbConnectionRepository.GetAllDbConnectionsAsync();
+            return list.Select(DBConnectionDto.FromEntity).ToList();
         }
 
-        public async Task<DBConnectionDatabaseSchemaDto> GetDatabaseSchema(int connectionId)
+        public async Task<DBConnectionDatabaseSchemaDto> GetDatabaseSchemaAsync(int connectionId)
         {
-            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-            var connection = await apiDbContext.DBConnections.FindAsync(connectionId);
-            
-            if (connection == null)
-                throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
-
+            var connection = await _dbConnectionRepository.FindByIdAsync(connectionId);
             return await _schemaExtractor.ExtractSchema(connection.ConnectionType, connection.ConnectionString);
         }
 
@@ -446,8 +422,7 @@ namespace Querier.Api.Domain.Services
 
         public async Task<SourceDownload> GetConnectionSourcesAsync(int connectionId)
         {
-            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-            var connection = await apiDbContext.DBConnections.FindAsync(connectionId);
+            var connection = await _dbConnectionRepository.FindByIdAsync(connectionId);
             
             if (connection == null)
                 throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
@@ -464,6 +439,7 @@ namespace Querier.Api.Domain.Services
 
         public async Task<List<DBConnectionEndpointInfoDto>> GetEndpointsAsync(int connectionId)
         {
+            /*
             using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
             var connection = await apiDbContext.DBConnections
                 .Include(c => c.Endpoints)
@@ -474,7 +450,8 @@ namespace Querier.Api.Domain.Services
 
             if (connection == null)
                 throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
-
+            */
+            var connection = await _dbConnectionRepository.FindByIdAsync(connectionId);
             return connection.Endpoints.Select(e => new DBConnectionEndpointInfoDto
             {
                 Controller = e.Controller,
@@ -503,6 +480,7 @@ namespace Querier.Api.Domain.Services
 
         public async Task<List<DBConnectionControllerInfoDto>> GetControllersAsync(int connectionId)
         {
+            /*
             using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
             var connection = await apiDbContext.DBConnections
                 .Include(c => c.Endpoints)
@@ -511,7 +489,8 @@ namespace Querier.Api.Domain.Services
 
             if (connection == null)
                 throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
-
+            */
+            var connection = await _dbConnectionRepository.FindByIdAsync(connectionId);
             return connection.Endpoints
                 .GroupBy(e => e.Controller)
                 .Select(g => new DBConnectionControllerInfoDto
@@ -643,16 +622,11 @@ namespace Querier.Api.Domain.Services
             public string FileName { get; set; }
         }
 
-        public async Task<DBConnectionQueryAnalysisDto> GetQueryObjects(int connectionId, string objectType)
+        public async Task<DBConnectionQueryAnalysisDto> GetQueryObjectsAsync(int connectionId, string objectType)
         {
             try
             {
-                using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-                var connection = await apiDbContext.DBConnections.FindAsync(connectionId);
-                
-                if (connection == null)
-                    throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
-
+                var connection = await _dbConnectionRepository.FindByIdAsync(connectionId);
                 var schema = await _schemaExtractor.ExtractSchema(connection.ConnectionType, connection.ConnectionString);
 
                 var response = new DBConnectionQueryAnalysisDto();

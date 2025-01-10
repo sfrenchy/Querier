@@ -5,12 +5,11 @@ using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Linq;
-using Querier.Api.Application.DTOs.Requests.Setup;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Common.Metadata;
 using Querier.Api.Infrastructure.Data.Context;
-using System.Collections.Generic;
 using Querier.Api.Application.DTOs;
+using Querier.Api.Application.Interfaces.Services;
 
 namespace Querier.Api.Domain.Services
 {
@@ -23,18 +22,15 @@ namespace Querier.Api.Domain.Services
         private readonly SemaphoreSlim _semaphore;
         private readonly ILogger<WizardService> _logger;
         private bool _disposed = false;
-
         public WizardService(
             UserManager<ApiUser> userManager,
             RoleManager<ApiRole> roleManager,
             ISettingService settingService,
-            IDbContextFactory<ApiDbContext> contextFactory,
             ILogger<WizardService> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _settingService = settingService;
-            _contextFactory = contextFactory;
             _logger = logger;
             _semaphore = new SemaphoreSlim(1, 1);
         }
@@ -122,19 +118,19 @@ namespace Querier.Api.Domain.Services
                     await _settingService.UpdateSettingIfExists("smtp:senderName", request.Smtp.SenderName);
                     await _settingService.UpdateSettingIfExists("smtp:requiresAuth", request.Smtp.RequireAuth.ToString());
 
-                    var isConfiguredSetting = await context.QSettings
+                    var isConfiguredSetting = await context.Settings
                         .FirstOrDefaultAsync(s => s.Name == "api:isConfigured");
 
                     if (isConfiguredSetting != null)
                     {
                         _logger.LogInformation("Updating existing isConfigured setting");
                         isConfiguredSetting.Value = "true";
-                        context.QSettings.Update(isConfiguredSetting);
+                        context.Settings.Update(isConfiguredSetting);
                     }
                     else
                     {
                         _logger.LogInformation("Creating new isConfigured setting");
-                        await context.QSettings.AddAsync(new Setting
+                        await context.Settings.AddAsync(new Setting
                         {
                             Name = "api:isConfigured",
                             Value = "true"

@@ -12,9 +12,10 @@ using Newtonsoft.Json;
 using Querier.Api.Tools;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.IO;
+using System.Threading.Tasks;
 using Querier.Api.Application.DTOs;
-using Querier.Api.Application.DTOs.Requests.Entity;
 using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Common.ValueObjects;
 using Querier.Api.Infrastructure.Data.Context;
@@ -22,44 +23,28 @@ using DataTable = System.Data.DataTable;
 
 namespace Querier.Api.Domain.Services
 {
-    public class EntityCRUDService : IEntityCRUDService
+    public class EntityCRUDService(IDbConnectionRepository dbConnectionRepository, ILogger<EntityCRUDService> logger)
+        : IEntityCRUDService
     {
-        private readonly IDynamicContextList _dynamicContextList;
-        private readonly IDbContextFactory<ApiDbContext> _apiDbContextFactory;
-        private readonly ILogger<EntityCRUDService> _logger;
-
-        public EntityCRUDService(IDynamicContextList dynamicContextList, IDbContextFactory<ApiDbContext> apiDbContextFactory, ILogger<EntityCRUDService> logger)
-        {
-            _logger = logger;
-            _dynamicContextList = dynamicContextList;
-            _apiDbContextFactory = apiDbContextFactory;
-        }
-
-        public List<string> GetContexts()
+        public async Task<List<string>> GetContextsAsync()
         {
             var contexts = new List<string>();
             
-            var assembliesPath = Path.Combine("Assemblies");
-            using (var apiDbContext = _apiDbContextFactory.CreateDbContext())
+            foreach (var dbConnection in await dbConnectionRepository.GetAllDbConnectionsAsync())
             {
-                foreach (var dbConnection in apiDbContext.DBConnections)
+                try
                 {
-                    try
-                    {
-                        var assembly = Assembly.Load(dbConnection.AssemblyDll);
-                        var types = assembly.GetTypes()
-                            .Where(t => t.IsAssignableTo(typeof(DbContext)));
+                    var assembly = Assembly.Load(dbConnection.AssemblyDll);
+                    var types = assembly.GetTypes()
+                        .Where(t => t.IsAssignableTo(typeof(DbContext)));
 
-                        contexts.AddRange(types.Select(t => t.FullName));
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, $"Error loading assembly for context {dbConnection.Name}: {ex.Message}");
-                    }
+                    contexts.AddRange(types.Select(t => t.FullName));
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, $"Error loading assembly for context {dbConnection.Name}: {ex.Message}");
                 }
             }
-                
-            
 
             return contexts;
         }

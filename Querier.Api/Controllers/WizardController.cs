@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.DTOs.Requests.Setup;
+using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers

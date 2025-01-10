@@ -12,25 +12,21 @@ using Querier.Api.Infrastructure.Security.TokenProviders;
 using Querier.Api.Domain.Services;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Domain.Services.Role;
-using Querier.Api.Domain.Services.User;
 using Querier.Api.Domain.Services.Repositories.Role;
-using Querier.Api.Infrastructure.Services.Menu;
-using Querier.Api.Infrastructure.Data.Repositories.Menu;
-using Querier.Api.Application.Interfaces.Repositories.Menu;
-using Querier.Api.Application.Interfaces.Services.Menu;
-using Querier.Api.Application.Interfaces.Services.Role;
-using Querier.Api.Application.Interfaces.Services.User;
-using Querier.Api.Services.Repositories.User;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
-using Querier.Api.Domain.Services.Identity;
 using Microsoft.OpenApi.Models;
 using System.IO;
 using Querier.Api.Infrastructure.Swagger.Helpers;
 using System.Security.Claims;
+using Querier.Api.Application.Interfaces.Repositories;
+using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Common.Utilities;
+using Querier.Api.Infrastructure.Data.Repositories;
+using Querier.Api.Infrastructure.Services;
 
 namespace Querier.Api.Infrastructure.Extensions
 {
@@ -186,7 +182,7 @@ namespace Querier.Api.Infrastructure.Extensions
 
         public static IServiceCollection AddIdentityConfiguration(this IServiceCollection services)
         {
-            services.AddScoped<IIdentityConfigurationService, IdentityConfigurationService>();
+            services.AddScoped<IAspnetIdentityConfigurationService, AspnetIdentityConfigurationService>();
             return services;
         }
 
@@ -197,7 +193,7 @@ namespace Querier.Api.Infrastructure.Extensions
             services.AddMemoryCache();
             services.AddDistributedMemoryCache();
             services.AddScoped<ISettingService, SettingService>();
-            services.AddScoped<IIdentityConfigurationService, IdentityConfigurationService>();
+            services.AddScoped<IAspnetIdentityConfigurationService, AspnetIdentityConfigurationService>();
             return services;
         }
 
@@ -210,30 +206,29 @@ namespace Querier.Api.Infrastructure.Extensions
             services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 
             // User and Auth services
-            services.AddScoped<IUserManagerService, UserManagerService>();
-            services.AddScoped<IEmailSendingService, SMTPEmailSendingService>();
-            services.AddScoped<IAuthManagementService, AuthManagementService>();
+            services.AddScoped<IEmailSendingService, SmtpEmailSendingService>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
 
             // Repositories
+            services.AddScoped<ICardRepository, CardRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IDynamicRowRepository, DynamicRowRepository>();
-            services.AddScoped<IDynamicCardRepository, DynamicCardRepository>();
+            services.AddScoped<IRowRepository, RowRepository>();
 
             // Menu and Layout services
-            services.AddScoped<IDynamicMenuCategoryService, DynamicMenuCategoryService>();
-            services.AddScoped<IDynamicPageService, DynamicPageService>();
-            services.AddScoped<IDynamicRowService, DynamicRowService>();
-            services.AddScoped<IDynamicCardService, DynamicCardService>();
+            services.AddScoped<IMenuService, MenuService>();
+            services.AddScoped<IPageService, PageService>();
+            services.AddScoped<IRowService, RowService>();
+            services.AddScoped<ICardService, CardService>();
             services.AddScoped<ILayoutService, LayoutService>();
-            services.AddScoped<ISQLQueryService, SQLQueryService>();
+            services.AddScoped<ISqlQueryService, SqlQueryService>();
 
             // Menu repositories
-            services.AddScoped<IDynamicMenuCategoryRepository, DynamicMenuCategoryRepository>();
-            services.AddScoped<IDynamicPageRepository, DynamicPageRepository>();
+            services.AddScoped<IMenuRepository, MenuRepository>();
+            services.AddScoped<IPageRepository, PageRepository>();
 
             return services;
         }

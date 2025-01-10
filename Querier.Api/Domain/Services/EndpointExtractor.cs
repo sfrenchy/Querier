@@ -7,15 +7,8 @@ using Querier.Api.Domain.Entities.QDBConnection.Endpoints;
 
 namespace Querier.Api.Domain.Services
 {
-    public class EndpointExtractor
+    public class EndpointExtractor(JsonSchemaGenerator schemaGenerator)
     {
-        private readonly JsonSchemaGenerator _schemaGenerator;
-
-        public EndpointExtractor(JsonSchemaGenerator schemaGenerator)
-        {
-            _schemaGenerator = schemaGenerator;
-        }
-
         public List<EndpointDescription> ExtractFromAssembly(Assembly assembly)
         {
             var endpoints = new List<EndpointDescription>();
@@ -82,7 +75,7 @@ namespace Querier.Api.Domain.Services
                     Description = param.GetCustomAttribute<SummaryAttribute>()?.Summary ?? string.Empty,
                     IsRequired = required != null || !param.IsOptional,
                     Source = GetParameterSource(fromBody, fromQuery, fromRoute),
-                    JsonSchema = _schemaGenerator.GenerateSchema(param.ParameterType)
+                    JsonSchema = schemaGenerator.GenerateSchema(param.ParameterType)
                 };
             }
         }
@@ -109,7 +102,7 @@ namespace Querier.Api.Domain.Services
                     Type = response.Type?.Name ?? "void",
                     Description = "Success",
                     JsonSchema = response.Type != null 
-                        ? _schemaGenerator.GenerateSchema(response.Type) 
+                        ? schemaGenerator.GenerateSchema(response.Type) 
                         : GenerateErrorSchema()
                 };
             }

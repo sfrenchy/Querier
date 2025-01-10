@@ -6,7 +6,9 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Querier.Api.Domain.Entities;
 using Querier.Api.Application.DTOs;
+using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Common.Models;
+using Querier.Api.Infrastructure.Services;
 
 namespace Querier.Api.Controllers
 {
@@ -18,9 +20,9 @@ namespace Querier.Api.Controllers
     [Authorize]
     public class SQLQueryController : ControllerBase
     {
-        private readonly ISQLQueryService _sqlQueryService;
+        private readonly ISqlQueryService _sqlQueryService;
 
-        public SQLQueryController(ISQLQueryService sqlQueryService)
+        public SQLQueryController(ISqlQueryService sqlQueryService)
         {
             _sqlQueryService = sqlQueryService;
         }

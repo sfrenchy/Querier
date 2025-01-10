@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Identity.Client;
 using Querier.Api.Application.DTOs;
-using Querier.Api.Application.Interfaces.Services.Role;
+using Querier.Api.Application.Interfaces.Services;
 
 namespace Querier.Api.Controllers
 {
@@ -41,11 +42,13 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public class RoleController : ControllerBase
     {
-        private readonly IRoleService _svc;
+        private readonly IRoleService _roleService;
+        private readonly IUserService _userService;
 
-        public RoleController(IRoleService svc)
+        public RoleController(IRoleService roleService, IUserService userService)
         {
-            _svc = svc;
+            _roleService = roleService;
+            _userService = userService;
         }
 
         /// <summary>
@@ -61,7 +64,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllAsync()
         {
-            return Ok(await _svc.GetAll());
+            return Ok(await _roleService.GetAll());
         }
 
         /// <summary>
@@ -85,7 +88,7 @@ namespace Querier.Api.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            return Ok(await _svc.Add(role));
+            return Ok(await _roleService.Add(role));
         }
 
         /// <summary>
@@ -108,7 +111,7 @@ namespace Querier.Api.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            return Ok(await _svc.Edit(role));
+            return Ok(await _roleService.Edit(role));
         }
 
         /// <summary>
@@ -126,7 +129,7 @@ namespace Querier.Api.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            return Ok(await _svc.Delete(id));
+            return Ok(await _roleService.Delete(id));
         }
 
         /// <summary>
@@ -142,7 +145,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetRolesForUser(string idUser)
         {
-            return Ok(await _svc.GetRolesForUser(idUser));
+            return Ok(await _roleService.GetRolesForUser(idUser));
         }
 
         /// <summary>
@@ -157,8 +160,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCurrentUserRole()
         {
-            var userId = this.User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value;
-            return Ok(await _svc.GetRolesForUser(userId));
+            return Ok((await _userService.GetCurrentUser(User)).Roles);
         }
     }
 }

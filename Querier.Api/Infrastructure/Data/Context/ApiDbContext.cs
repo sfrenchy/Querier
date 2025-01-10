@@ -12,6 +12,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Linq;
 using System.Collections.Generic;
+using Querier.Api.Domain.Entities.DBConnection;
 
 namespace Querier.Api.Infrastructure.Data.Context
 {
@@ -23,11 +24,11 @@ namespace Querier.Api.Infrastructure.Data.Context
         }
 
         public IConfiguration _configuration { get; }
-        public virtual DbSet<RefreshToken> QRefreshTokens { get; set; }
-        public virtual DbSet<Setting> QSettings { get; set; }
-        public virtual DbSet<Domain.Entities.DBConnection.DBConnection> DBConnections { get; set; }
-        public DbSet<ApiRole> ApiRoles { get; set; }
-        public DbSet<ApiUserRole> ApiUserRoles { get; set; }
+        public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+        public virtual DbSet<Setting> Settings { get; set; }
+        public virtual DbSet<DBConnection> DBConnections { get; set; }
+        public virtual DbSet<ApiRole> ApiRoles { get; set; }
+        public virtual DbSet<ApiUserRole> ApiUserRoles { get; set; }
         public virtual DbSet<Menu> Menus { get; set; }
         public virtual DbSet<MenuTranslation> MenuTranslations { get; set; }
         public virtual DbSet<Page> Pages { get; set; }
@@ -115,11 +116,11 @@ namespace Querier.Api.Infrastructure.Data.Context
 
 
 
-            modelBuilder.Entity<Domain.Entities.DBConnection.DBConnection>()
+            modelBuilder.Entity<DBConnection>()
                 .HasIndex(d => d.Name)
                 .IsUnique();
 
-            modelBuilder.Entity<Domain.Entities.DBConnection.DBConnection>()
+            modelBuilder.Entity<DBConnection>()
                 .HasIndex(d => d.ApiRoute)
                 .IsUnique();
 
@@ -132,7 +133,7 @@ namespace Querier.Api.Infrastructure.Data.Context
             // Configuration des entités de menu
             modelBuilder.Entity<Menu>(entity =>
             {
-                entity.ToTable("DynamicMenuCategories");
+                entity.ToTable("Menus");
                 
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Icon).HasMaxLength(100);
@@ -145,12 +146,12 @@ namespace Querier.Api.Infrastructure.Data.Context
 
             modelBuilder.Entity<MenuTranslation>(entity =>
             {
-                entity.ToTable("DynamicMenuCategoryTranslations");
+                entity.ToTable("MenuTranslations");
                 
                 entity.HasKey(e => e.Id);
                 
                 // Contrainte d'unicité sur la combinaison MenuCategoryId et LanguageCode
-                entity.HasIndex(e => new { DynamicMenuCategoryId = e.DynamicMenuCategoryId, e.LanguageCode }).IsUnique();
+                entity.HasIndex(e => new { MenuId = e.MenuId, e.LanguageCode }).IsUnique();
                 
                 entity.Property(e => e.LanguageCode).HasMaxLength(5);
                 entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
@@ -158,7 +159,7 @@ namespace Querier.Api.Infrastructure.Data.Context
                 // Configuration de la relation
                 entity.HasOne(d => d.Menu)
                     .WithMany(p => p.Translations)
-                    .HasForeignKey(d => d.DynamicMenuCategoryId)
+                    .HasForeignKey(d => d.MenuId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -179,14 +180,14 @@ namespace Querier.Api.Infrastructure.Data.Context
                 new MenuTranslation
                 {
                     Id = 1,
-                    DynamicMenuCategoryId = 1,
+                    MenuId = 1,
                     LanguageCode = "en",
                     Name = "Home"
                 },
                 new MenuTranslation
                 {
                     Id = 2,
-                    DynamicMenuCategoryId = 1,
+                    MenuId = 1,
                     LanguageCode = "fr",
                     Name = "Accueil"
                 }
@@ -194,7 +195,7 @@ namespace Querier.Api.Infrastructure.Data.Context
 
             modelBuilder.Entity<Page>(entity =>
             {
-                entity.ToTable("DynamicPages");
+                entity.ToTable("Pages");
                 
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Icon).HasMaxLength(100);
@@ -203,7 +204,7 @@ namespace Querier.Api.Infrastructure.Data.Context
                 
                 entity.HasOne(e => e.Menu)
                       .WithMany(e => e.Pages)
-                      .HasForeignKey(e => e.DynamicMenuCategoryId)
+                      .HasForeignKey(e => e.MenuId)
                       .OnDelete(DeleteBehavior.Cascade);
                 
                 entity.HasIndex(e => e.Order);
@@ -211,18 +212,18 @@ namespace Querier.Api.Infrastructure.Data.Context
 
             modelBuilder.Entity<PageTranslation>(entity =>
             {
-                entity.ToTable("DynamicPageTranslations");
+                entity.ToTable("PageTranslations");
                 
                 entity.HasKey(e => e.Id);
                 
-                entity.HasIndex(e => new { e.DynamicPageId, e.LanguageCode }).IsUnique();
+                entity.HasIndex(e => new { e.PageId, e.LanguageCode }).IsUnique();
                 
                 entity.Property(e => e.LanguageCode).HasMaxLength(5);
                 entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
 
                 entity.HasOne(d => d.Page)
                       .WithMany(p => p.PageTranslations)
-                      .HasForeignKey(d => d.DynamicPageId)
+                      .HasForeignKey(d => d.PageId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -236,7 +237,7 @@ namespace Querier.Api.Infrastructure.Data.Context
                     IsVisible = true,
                     Roles = "Admin,User",
                     Route = "/northwind/home",
-                    DynamicMenuCategoryId = 1
+                    MenuId = 1
                 }
             );
 
@@ -244,14 +245,14 @@ namespace Querier.Api.Infrastructure.Data.Context
                 new PageTranslation
                 {
                     Id = 1,
-                    DynamicPageId = 1,
+                    PageId = 1,
                     LanguageCode = "fr",
                     Name = "Northwind - Accueil"
                 },
                 new PageTranslation
                 {
                     Id = 2,
-                    DynamicPageId = 1,
+                    PageId = 1,
                     LanguageCode = "en",
                     Name = "Northwind - Home"
                 }
@@ -285,8 +286,8 @@ namespace Querier.Api.Infrastructure.Data.Context
             {
                 entity.HasKey(e => e.Id);
                 
-                // Contrainte d'unicité sur la combinaison DynamicCardId et LanguageCode
-                entity.HasIndex(e => new { e.DynamicCardId, e.LanguageCode }).IsUnique();
+                // Contrainte d'unicité sur la combinaison CardId et LanguageCode
+                entity.HasIndex(e => new { e.CardId, e.LanguageCode }).IsUnique();
                 
                 entity.Property(e => e.LanguageCode).HasMaxLength(5);
                 entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
@@ -294,7 +295,7 @@ namespace Querier.Api.Infrastructure.Data.Context
                 // Configuration de la relation
                 entity.HasOne(d => d.Card)
                     .WithMany(p => p.CardTranslations)
-                    .HasForeignKey(d => d.DynamicCardId)
+                    .HasForeignKey(d => d.CardId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 

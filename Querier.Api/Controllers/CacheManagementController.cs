@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
@@ -35,12 +36,12 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public class CacheManagementController : ControllerBase
+    public class CacheController : ControllerBase
     {
         private readonly ICacheManagementService _cacheManagementService;
         private readonly ILogger<CacheManagementService> _logger;
 
-        public CacheManagementController(ICacheManagementService cacheManagementService, ILogger<CacheManagementService> logger)
+        public CacheController(ICacheManagementService cacheManagementService, ILogger<CacheManagementService> logger)
         {
             _cacheManagementService = cacheManagementService;
             _logger = logger;

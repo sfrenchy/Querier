@@ -18,7 +18,6 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using Querier.Api.Application.DTOs;
-using Querier.Api.Application.DTOs.Requests.Entity;
 using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Domain.Common.ValueObjects;
 

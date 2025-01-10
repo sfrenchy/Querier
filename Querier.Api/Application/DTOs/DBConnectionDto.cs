@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using Querier.Api.Domain.Common.Enums;
+using Querier.Api.Domain.Entities.DBConnection;
+using Querier.Api.Domain.Entities.QDBConnection.Endpoints;
+
 namespace Querier.Api.Application.DTOs
 {
     /// <summary>
@@ -13,7 +19,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// Type of database connection (e.g., SQL Server, PostgreSQL)
         /// </summary>
-        public string ConnectionType { get; set; }
+        public DbConnectionType ConnectionType { get; set; }
 
         /// <summary>
         /// Display name of the database connection
@@ -35,6 +41,8 @@ namespace Querier.Api.Application.DTOs
         /// </summary>
         public string ContextName { get; set; }
         
+        public string Description { get; set; }
+        
         /// <summary>
         /// Creates a DBConnectionDto from a domain entity
         /// </summary>
@@ -46,9 +54,10 @@ namespace Querier.Api.Application.DTOs
             {
                 Name = connection.Name,
                 ConnectionString = connection.ConnectionString,
-                ConnectionType = connection.ConnectionType.ToString(),
+                ConnectionType = Enum.Parse<DbConnectionType>(connection.ConnectionType.ToString()),
                 ApiRoute = connection.ApiRoute,
-                ContextName = connection.ContextName
+                ContextName = connection.ContextName,
+                Description = connection.Description
             };
         }
     }

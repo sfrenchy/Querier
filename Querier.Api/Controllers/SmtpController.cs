@@ -5,6 +5,7 @@ using System;
 using System.Threading.Tasks;
 using System.Net;
 using Querier.Api.Application.DTOs;
+using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers

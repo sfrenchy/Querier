@@ -16,7 +16,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// Current state of the database connection
         /// </summary>
-        public QDBConnectionState State { get; set; } = QDBConnectionState.None;
+        public DBConnectionState State { get; set; } = DBConnectionState.None;
 
         /// <summary>
         /// List of messages describing the connection creation process or any errors encountered

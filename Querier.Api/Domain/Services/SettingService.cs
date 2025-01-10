@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Common.Metadata;
 using Querier.Api.Infrastructure.Data.Context;
 
@@ -22,12 +23,12 @@ namespace Querier.Api.Domain.Services
 
         public async Task<Setting> GetSettings()
         {
-            return await _context.QSettings.FirstOrDefaultAsync();
+            return await _context.Settings.FirstOrDefaultAsync();
         }
 
         public async Task<Setting> UpdateSetting(Setting setting)
         {
-            _context.QSettings.Update(setting);
+            _context.Settings.Update(setting);
             await _context.SaveChangesAsync();
             return setting;
         }
@@ -41,7 +42,7 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == "api:isConfigured");
+                var setting = await _context.Settings.FirstOrDefaultAsync(s => s.Name == "api:isConfigured");
                 if (setting == null) return false;
                 return setting.Value.ToLower() == "true";
             }
@@ -60,7 +61,7 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == name);
+                var setting = await _context.Settings.FirstOrDefaultAsync(s => s.Name == name);
                 if (setting == null) return defaultValue;
                 if (typeof(T) == typeof(bool)) return (T)(object)(setting.Value.ToLower() == "true");
                 return (T)Convert.ChangeType(setting.Value, typeof(T));
@@ -79,7 +80,7 @@ namespace Querier.Api.Domain.Services
                 Value = value
             };
 
-            _context.QSettings.Add(setting);
+            _context.Settings.Add(setting);
             await _context.SaveChangesAsync();
 
             return setting;
@@ -89,7 +90,7 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                var setting = await _context.QSettings
+                var setting = await _context.Settings
                     .AsNoTracking()
                     .FirstOrDefaultAsync(s => s.Name == name);
 
@@ -111,7 +112,7 @@ namespace Querier.Api.Domain.Services
 
         public async Task<Setting> UpdateSettingIfExists(string name, string value)
         {
-            var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == name);
+            var setting = await _context.Settings.FirstOrDefaultAsync(s => s.Name == name);
             if (setting != null)
             {
                 setting.Value = value;
@@ -120,7 +121,7 @@ namespace Querier.Api.Domain.Services
             else
             {
                 setting = new Setting { Name = name, Value = value };
-                _context.QSettings.Add(setting);
+                _context.Settings.Add(setting);
                 await _context.SaveChangesAsync();
             }
             return setting;

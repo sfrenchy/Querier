@@ -10,7 +10,7 @@ public class Page
     public bool IsVisible { get; set; }
     public string Roles { get; set; }
     public string Route { get; set; }
-    public int DynamicMenuCategoryId { get; set; }
+    public int MenuId { get; set; }
     public virtual Menu Menu { get; set; }
     public virtual ICollection<PageTranslation> PageTranslations { get; set; }
     public virtual ICollection<Row> Rows { get; set; }

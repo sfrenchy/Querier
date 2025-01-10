@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Infrastructure.Extensions

@@ -1,4 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json;
+using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Application.DTOs
 {
@@ -15,7 +19,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// Dictionary of localized titles for the card, where key is the language code
         /// </summary>
-        public Dictionary<string, string> Titles { get; set; }
+        public IEnumerable<CardTranslationDto> Titles { get; set; }
 
         /// <summary>
         /// Display order of the card within its row
@@ -56,5 +60,46 @@ namespace Querier.Api.Application.DTOs
         /// Optional text color of the card header (in RGBA format)
         /// </summary>
         public uint? HeaderTextColor { get; set; }
+
+        public int RowId { get; set; }
+        public static CardDto FromEntity(Card entity)
+        {
+            return new CardDto()
+            {
+                Configuration = entity.Configuration != null 
+                    ? JsonConvert.DeserializeObject(entity.Configuration)
+                    : null,
+                GridWidth = entity.GridWidth,
+                TextColor = entity.TextColor,
+                BackgroundColor = entity.TextColor,
+                HeaderTextColor = entity.HeaderTextColor,
+                HeaderBackgroundColor = entity.HeaderBackgroundColor,
+                Order = entity.Order,
+                Type = entity.Type,
+                Titles = entity.CardTranslations.Select(CardTranslationDto.FromEntity),
+                Id = entity.Id,
+                RowId = entity.RowId
+            };
+        }
+
+        public static Card ToEntity(CardDto dto)
+        {
+            return new Card()
+            {
+                Id = dto.Id,
+                Configuration = dto.Configuration != null 
+                    ? JsonConvert.SerializeObject(dto.Configuration)
+                    : null,
+                GridWidth = dto.GridWidth,
+                TextColor = dto.TextColor,
+                BackgroundColor = dto.BackgroundColor,
+                HeaderTextColor = dto.HeaderTextColor,
+                HeaderBackgroundColor = dto.HeaderBackgroundColor,
+                Order = dto.Order,
+                Type = dto.Type,
+                CardTranslations = dto.Titles.Select(CardTranslationDto.ToEntity).ToList(),
+                RowId = dto.RowId
+            };
+        }
     }
 } 

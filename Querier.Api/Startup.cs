@@ -8,12 +8,12 @@ using System.IO;
 using Microsoft.AspNetCore.Authorization;
 using Querier.Api.Infrastructure.Extensions;
 using Querier.Api.Infrastructure.Swagger.Helpers;
-using Querier.Api.Infrastructure.DependencyInjection;
 using Querier.Api.Infrastructure.Data.Context;
-using Querier.Api.Domain.Services.Identity;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Threading.Tasks;
+using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Common.Utilities;
 using Querier.Api.Infrastructure.Data;
 using Querier.Api.Domain.Services;
 
@@ -90,7 +90,7 @@ namespace Querier.Api
             // Configuration de l'identité après l'initialisation des services
             using (var scope = app.ApplicationServices.CreateScope())
             {
-                var identityConfig = scope.ServiceProvider.GetRequiredService<IIdentityConfigurationService>();
+                var identityConfig = scope.ServiceProvider.GetRequiredService<IAspnetIdentityConfigurationService>();
                 // On attend explicitement la configuration pour s'assurer qu'elle est terminée avant de continuer
                 identityConfig.ConfigureIdentityOptions().Wait();
                 identityConfig.ConfigureTokenProviderOptions().Wait();

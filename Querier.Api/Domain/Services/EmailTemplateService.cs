@@ -5,24 +5,14 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Antlr4.StringTemplate;
+using Querier.Api.Application.Interfaces.Services;
 
 namespace Querier.Api.Domain.Services
 {
-    public interface IEmailTemplateService
+    public class EmailTemplateService(ILogger<EmailTemplateService> logger, IWebHostEnvironment env)
+        : IEmailTemplateService
     {
-        Task<string> GetTemplateAsync(string templateName, string language, Dictionary<string, string> parameters);
-    }
-
-    public class EmailTemplateService : IEmailTemplateService
-    {
-        private readonly ILogger<EmailTemplateService> _logger;
-        private readonly string _templateBasePath;
-
-        public EmailTemplateService(ILogger<EmailTemplateService> logger, IWebHostEnvironment env)
-        {
-            _logger = logger;
-            _templateBasePath = Path.Combine(env.ContentRootPath, "Infrastructure", "Templates", "Email", "Templates");
-        }
+        private readonly string _templateBasePath = Path.Combine(env.ContentRootPath, "Infrastructure", "Templates", "Email", "Templates");
 
         public async Task<string> GetTemplateAsync(string templateName, string language, Dictionary<string, string> parameters)
         {
@@ -49,7 +39,7 @@ namespace Querier.Api.Domain.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error loading email template {templateName}");
+                logger.LogError(ex, $"Error loading email template {templateName}");
                 throw;
             }
         }

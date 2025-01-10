@@ -25,6 +25,6 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// List of cards contained in this row
         /// </summary>
-        public List<CardDto> Cards { get; set; }
+        public IEnumerable<CardDto> Cards { get; set; }
     }
 }

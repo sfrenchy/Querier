@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using Querier.Api.Application.DTOs;
+using Querier.Api.Application.Interfaces.Services;
 
 namespace Querier.Api.Controllers
 {
@@ -114,7 +115,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
         {
-            return Ok(await _dbConnectionService.GetAll());
+            return Ok(await _dbConnectionService.GetAllAsync());
         }
 
         /// <summary>
@@ -143,7 +144,7 @@ namespace Querier.Api.Controllers
         {
             try
             {
-                var schema = await _dbConnectionService.GetDatabaseSchema(connectionId);
+                var schema = await _dbConnectionService.GetDatabaseSchemaAsync(connectionId);
                 return Ok(schema);
             }
             catch (KeyNotFoundException)
@@ -188,7 +189,7 @@ namespace Querier.Api.Controllers
         {
             try
             {
-                var objects = await _dbConnectionService.GetQueryObjects(connectionId, request.Query);
+                var objects = await _dbConnectionService.GetQueryObjectsAsync(connectionId, request.Query);
                 return Ok(objects);
             }
             catch (KeyNotFoundException)

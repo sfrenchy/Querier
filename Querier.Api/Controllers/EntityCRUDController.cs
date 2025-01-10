@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.DTOs.Requests.Entity;
+using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Services;
 
@@ -23,9 +25,9 @@ namespace Querier.Api.Controllers
         }
 
         [HttpGet("GetContexts")]
-        public IActionResult GetContexts()
+        public async Task<IActionResult> GetContexts()
         {
-            return new OkObjectResult(_entityCRUDService.GetContexts());
+            return new OkObjectResult(await _entityCRUDService.GetContextsAsync());
         }
 
         [HttpGet("GetEntities")]

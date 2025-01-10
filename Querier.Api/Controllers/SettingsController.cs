@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using System.Collections.Generic;
 using Querier.Api.Application.DTOs;
+using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Common.Metadata;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Services;

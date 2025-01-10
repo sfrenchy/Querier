@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
-using Querier.Api.Application.Interfaces.Services.User;
+using Querier.Api.Application.Interfaces.Services;
 
 namespace Querier.Api.Controllers
 {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Entities;
 
 namespace Querier.Api.Application.DTOs
@@ -91,7 +92,7 @@ namespace Querier.Api.Application.DTOs
                 {
                     Name = sqlQuery.Connection.Name,
                     ConnectionString = sqlQuery.Connection.ConnectionString,
-                    ConnectionType = sqlQuery.Connection.ConnectionType.ToString(),
+                    ConnectionType = Enum.Parse<DbConnectionType>(sqlQuery.Connection.ConnectionType.ToString()),
                     ApiRoute = sqlQuery.Connection.ApiRoute
                 },
                 OutputDescription = sqlQuery.OutputDescription
