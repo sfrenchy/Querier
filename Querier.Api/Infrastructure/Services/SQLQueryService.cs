@@ -41,26 +41,26 @@ namespace Querier.Api.Infrastructure.Services
                     throw new ArgumentException("User ID is required", nameof(userId));
                 }
 
-                var queries = await context.SQLQueries
-                    .Where(q => q.IsPublic || q.CreatedBy == userId)
-                    .OrderByDescending(q => q.CreatedAt)
-                    .Select(q => new SQLQueryDTO
-                    {
-                        Id = q.Id,
-                        Name = q.Name,
-                        Description = q.Description,
-                        Query = q.Query,
-                        CreatedBy = q.CreatedBy,
-                        CreatedAt = q.CreatedAt,
-                        LastModifiedAt = q.LastModifiedAt,
-                        IsPublic = q.IsPublic,
-                        Parameters = q.Parameters,
-                        DBConnectionId = q.ConnectionId
-                    })
-                    .ToListAsync();
+            var queries = await context.SQLQueries
+                .Where(q => q.IsPublic || q.CreatedBy == userId)
+                .OrderByDescending(q => q.CreatedAt)
+                .Select(q => new SQLQueryDTO
+                {
+                    Id = q.Id,
+                    Name = q.Name,
+                    Description = q.Description,
+                    Query = q.Query,
+                    CreatedBy = q.CreatedBy,
+                    CreatedAt = q.CreatedAt,
+                    LastModifiedAt = q.LastModifiedAt,
+                    IsPublic = q.IsPublic,
+                    Parameters = q.Parameters,
+                    DBConnectionId = q.ConnectionId
+                })
+                .ToListAsync();
 
                 logger.LogInformation("Retrieved {Count} queries for user {UserId}", queries.Count, userId);
-                return queries;
+            return queries;
             }
             catch (Exception ex)
             {
@@ -76,7 +76,7 @@ namespace Querier.Api.Infrastructure.Services
                 logger.LogDebug("Getting SQL query with ID {QueryId}", id);
 
                 var query = await context.SQLQueries
-                    .Include(q => q.Connection)
+                .Include(q => q.Connection)
                     .FirstOrDefaultAsync(q => q.Id == id);
 
                 if (query == null)
@@ -109,10 +109,10 @@ namespace Querier.Api.Infrastructure.Services
                 }
 
                 if (httpContextAccessor.HttpContext != null)
-                {
-                    var currentUser = await userService.GetCurrentUserAsync(httpContextAccessor.HttpContext.User);
-                    query.CreatedAt = DateTime.UtcNow;
-                    query.CreatedBy = currentUser?.Id;
+        {
+            var currentUser = await userService.GetCurrentUserAsync(httpContextAccessor.HttpContext.User);
+            query.CreatedAt = DateTime.UtcNow;
+            query.CreatedBy = currentUser?.Id;
                 }
 
                 query.DBConnection = DBConnectionDto.FromEntity(await context.DBConnections.FindAsync(query.DBConnectionId));
@@ -124,26 +124,26 @@ namespace Querier.Api.Infrastructure.Services
                 }
 
                 logger.LogDebug("Validating query with sample parameters");
-                if (ValidateAndDescribeQuery(query, sampleParameters, out string outputDescription))
+            if (ValidateAndDescribeQuery(query, sampleParameters, out string outputDescription))
                 {
                     var entity = new SQLQuery
-                    {
-                        ConnectionId = query.DBConnectionId,
-                        Name = query.Name,
-                        Description = query.Description,
-                        Query = query.Query,
-                        CreatedBy = query.CreatedBy,
-                        CreatedAt = query.CreatedAt,
-                        LastModifiedAt = query.LastModifiedAt,
-                        IsPublic = query.IsPublic,
-                        Parameters = query.Parameters,
-                        OutputDescription = outputDescription,
+                {
+                    ConnectionId = query.DBConnectionId,
+                    Name = query.Name,
+                    Description = query.Description,
+                    Query = query.Query,
+                    CreatedBy = query.CreatedBy,
+                    CreatedAt = query.CreatedAt,
+                    LastModifiedAt = query.LastModifiedAt,
+                    IsPublic = query.IsPublic,
+                    Parameters = query.Parameters,
+                    OutputDescription = outputDescription,
                     };
 
                     context.SQLQueries.Add(entity);
-                    await context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                     
-                    query.OutputDescription = outputDescription;
+                query.OutputDescription = outputDescription;
                     query.Id = entity.Id;
 
                     logger.LogInformation("Successfully created SQL query with ID {QueryId}", query.Id);
@@ -183,35 +183,35 @@ namespace Querier.Api.Infrastructure.Services
                     foreach (var p in sampleParameters)
                     {
                         var command = dbcontext.Database.GetDbConnection().CreateCommand();
-                        var parameter = command.CreateParameter();
-                        parameter.ParameterName = p.Key;
-                        parameter.Value = p.Value ?? DBNull.Value;
-                        parameters.Add(parameter);
-                    }
+                            var parameter = command.CreateParameter();
+                            parameter.ParameterName = p.Key;
+                            parameter.Value = p.Value ?? DBNull.Value;
+                            parameters.Add(parameter);
+                        }
                     logger.LogDebug("Created {Count} parameters for query validation", parameters.Count);
-                }
+                    }
 
                 DataTable dt = dbcontext.Database.RawSqlQuery(query.Query, parameters);
                 logger.LogDebug("Query execution successful, creating entity definition");
 
-                var entityDefinition = new EntityDefinition
-                {
-                    Name = query.Name,
-                    Properties = dt.Columns.Cast<DataColumn>()
-                        .Select(column => new PropertyDefinition
-                        {
-                            Name = column.ColumnName,
-                            Type = column.AllowDBNull ? $"{column.DataType.Name}?" : column.DataType.Name,
-                            Options = column.AllowDBNull
+                    var entityDefinition = new EntityDefinition
+                    {
+                        Name = query.Name,
+                        Properties = dt.Columns.Cast<DataColumn>()
+                            .Select(column => new PropertyDefinition
+                            {
+                                Name = column.ColumnName,
+                                Type = column.AllowDBNull ? $"{column.DataType.Name}?" : column.DataType.Name,
+                                Options = column.AllowDBNull
                                 ? [PropertyOption.IsNullable]
                                 : []
-                        })
-                        .ToList()
-                };
+                            })
+                            .ToList()
+                    };
 
-                outputDescription = JsonSerializer.Serialize(entityDefinition);
+                    outputDescription = JsonSerializer.Serialize(entityDefinition);
                 logger.LogInformation("Successfully validated and described query for {QueryName}", query.Name);
-                return true;
+                    return true;
             }
             catch (Exception ex)
             {
@@ -233,7 +233,7 @@ namespace Querier.Api.Infrastructure.Services
                     throw new ArgumentNullException(nameof(query));
                 }
 
-                var existingQuery = await context.SQLQueries.FindAsync(query.Id);
+            var existingQuery = await context.SQLQueries.FindAsync(query.Id);
                 if (existingQuery == null)
                 {
                     logger.LogWarning("SQL query with ID {QueryId} not found", query.Id);
@@ -241,17 +241,17 @@ namespace Querier.Api.Infrastructure.Services
                 }
 
                 logger.LogDebug("Validating updated query");
-                if (ValidateAndDescribeQuery(query, sampleParameters, out string outputDescription))
-                {
-                    existingQuery.Name = query.Name;
-                    existingQuery.Description = query.Description;
-                    existingQuery.Query = query.Query;
-                    existingQuery.IsPublic = query.IsPublic;
-                    existingQuery.Parameters = query.Parameters;
-                    existingQuery.LastModifiedAt = DateTime.UtcNow;
-                    existingQuery.OutputDescription = outputDescription;
+            if (ValidateAndDescribeQuery(query, sampleParameters, out string outputDescription))
+            {
+                existingQuery.Name = query.Name;
+                existingQuery.Description = query.Description;
+                existingQuery.Query = query.Query;
+                existingQuery.IsPublic = query.IsPublic;
+                existingQuery.Parameters = query.Parameters;
+                existingQuery.LastModifiedAt = DateTime.UtcNow;
+                existingQuery.OutputDescription = outputDescription;
                     
-                    await context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                     logger.LogInformation("Successfully updated SQL query with ID {QueryId}", query.Id);
                     return SQLQueryDTO.FromEntity(existingQuery);
                 }
@@ -305,74 +305,74 @@ namespace Querier.Api.Infrastructure.Services
                 }
 
                 await using var dbContext = Utils.GetDbContextFromTypeName(query.DBConnection.ContextName);
-                var command = dbContext.Database.GetDbConnection().CreateCommand();
-                string sqlQuery = query.Query.TrimEnd(';');
+                    var command = dbContext.Database.GetDbConnection().CreateCommand();
+                    string sqlQuery = query.Query.TrimEnd(';');
 
-                if (pageSize > 0)
-                {
+                    if (pageSize > 0)
+                    {
                     logger.LogDebug("Applying pagination to query");
                     sqlQuery = BuildPaginatedQuery(sqlQuery);
 
-                    var skipParameter = command.CreateParameter();
-                    skipParameter.ParameterName = "@Skip";
-                    skipParameter.Value = (pageNumber - 1) * pageSize;
-                    command.Parameters.Add(skipParameter);
+                        var skipParameter = command.CreateParameter();
+                        skipParameter.ParameterName = "@Skip";
+                        skipParameter.Value = (pageNumber - 1) * pageSize;
+                        command.Parameters.Add(skipParameter);
 
-                    var takeParameter = command.CreateParameter();
-                    takeParameter.ParameterName = "@Take";
-                    takeParameter.Value = pageSize;
-                    command.Parameters.Add(takeParameter);
-                }
+                        var takeParameter = command.CreateParameter();
+                        takeParameter.ParameterName = "@Take";
+                        takeParameter.Value = pageSize;
+                        command.Parameters.Add(takeParameter);
+                    }
 
-                command.CommandText = sqlQuery;
-                command.CommandType = CommandType.Text;
+                    command.CommandText = sqlQuery;
+                    command.CommandType = CommandType.Text;
 
-                foreach (var param in parameters)
-                {
-                    var parameter = command.CreateParameter();
-                    parameter.ParameterName = param.Key;
-                    parameter.Value = param.Value ?? DBNull.Value;
-                    command.Parameters.Add(parameter);
-                }
+                    foreach (var param in parameters)
+                    {
+                        var parameter = command.CreateParameter();
+                        parameter.ParameterName = param.Key;
+                        parameter.Value = param.Value ?? DBNull.Value;
+                        command.Parameters.Add(parameter);
+                    }
 
                 logger.LogDebug("Opening database connection");
-                await dbContext.Database.OpenConnectionAsync();
+                    await dbContext.Database.OpenConnectionAsync();
 
                 await using var result = await command.ExecuteReaderAsync();
-                var data = new List<dynamic>();
-                int totalCount = 0;
+                        var data = new List<dynamic>();
+                        int totalCount = 0;
 
-                while (await result.ReadAsync())
-                {
-                    var row = new ExpandoObject() as IDictionary<string, object>;
-
-                    if (pageSize > 0 && totalCount == 0)
-                    {
-                        totalCount = Convert.ToInt32(result.GetValue(result.GetOrdinal("TotalCount")));
-                    }
-
-                    for (var i = 0; i < result.FieldCount; i++)
-                    {
-                        var columnName = result.GetName(i);
-                        if (pageSize == 0 || (columnName != "RowNum" && columnName != "TotalCount"))
+                        while (await result.ReadAsync())
                         {
-                            row.Add(columnName, result.GetValue(i));
+                            var row = new ExpandoObject() as IDictionary<string, object>;
+
+                            if (pageSize > 0 && totalCount == 0)
+                            {
+                                totalCount = Convert.ToInt32(result.GetValue(result.GetOrdinal("TotalCount")));
+                            }
+
+                            for (var i = 0; i < result.FieldCount; i++)
+                            {
+                                var columnName = result.GetName(i);
+                                if (pageSize == 0 || (columnName != "RowNum" && columnName != "TotalCount"))
+                                {
+                                    row.Add(columnName, result.GetValue(i));
+                                }
+                            }
+
+                            data.Add(row);
                         }
-                    }
 
-                    data.Add(row);
-                }
-
-                if (pageSize == 0)
-                {
-                    totalCount = data.Count;
-                }
+                        if (pageSize == 0)
+                        {
+                            totalCount = data.Count;
+                        }
 
                 logger.LogInformation(
                     "Successfully executed SQL query with ID {QueryId}. Retrieved {Count} rows, Total {Total}", 
                     id, data.Count, totalCount);
 
-                return new PagedResult<dynamic>(data, totalCount);
+                        return new PagedResult<dynamic>(data, totalCount);
             }
             catch (Exception ex)
             {

@@ -110,29 +110,29 @@ namespace Querier.Api.Common.Extensions
                 LOGGER.LogDebug("Converting list to DataTable, type: {Type}, count: {Count}", typeof(T).Name, data.Count);
                 var table = new DataTable();
 
-                if (data.Count > 0)
-                {
+            if (data.Count > 0)
+            {
                     var properties = TypeDescriptor.GetProperties(data[0].GetType());
-                    foreach (PropertyDescriptor prop in properties)
+                foreach (PropertyDescriptor prop in properties)
                     {
                         var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
                         table.Columns.Add(prop.Name, type);
                     }
 
-                    foreach (T item in data)
-                    {
+                foreach (T item in data)
+                {
                         var row = table.NewRow();
-                        foreach (PropertyDescriptor prop in properties)
+                    foreach (PropertyDescriptor prop in properties)
                         {
-                            row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
+                        row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
                         }
-                        table.Rows.Add(row);
-                    }
+                    table.Rows.Add(row);
                 }
-
+            }
+            
                 LOGGER.LogInformation("Successfully converted list to DataTable with {ColumnCount} columns and {RowCount} rows", 
                     table.Columns.Count, table.Rows.Count);
-                return table;
+            return table;
             }
             catch (Exception ex)
             {
@@ -142,16 +142,16 @@ namespace Querier.Api.Common.Extensions
         }
 
         public static object ExecuteScalar(this DbContext context, string sql,
-            List<DbParameter> parameters = null,
-            CommandType commandType = CommandType.Text,
-            int? commandTimeOutInSeconds = null)
+        List<DbParameter> parameters = null,
+        CommandType commandType = CommandType.Text,
+        int? commandTimeOutInSeconds = null)
         {
             try
             {
                 LOGGER.LogDebug("Executing scalar SQL: {Sql}", sql);
                 var value = ExecuteScalar(context.Database, sql, parameters, commandType, commandTimeOutInSeconds);
                 LOGGER.LogInformation("Successfully executed scalar SQL");
-                return value;
+            return value;
             }
             catch (Exception ex)
             {
@@ -168,15 +168,15 @@ namespace Querier.Api.Common.Extensions
             try
             {
                 LOGGER.LogDebug("Executing raw SQL query: {Sql}", sql);
-                var dt = new DataTable();
-                using (var command = database.GetDbConnection().CreateCommand())
-                {
+            var dt = new DataTable();
+            using (var command = database.GetDbConnection().CreateCommand())
+            {
                     command.Connection!.Open();
-                    command.CommandText = sql;
+                command.CommandText = sql;
                     command.CommandType = commandType;
 
                     if (commandTimeOutInSeconds.HasValue)
-                    {
+                {
                         command.CommandTimeout = commandTimeOutInSeconds.Value;
                     }
 
@@ -185,15 +185,15 @@ namespace Querier.Api.Common.Extensions
                         command.Parameters.AddRange(parameters.ToArray());
                         LOGGER.LogDebug("Added {Count} parameters to SQL query", parameters.Count);
                     }
-
+                    
                     using (var reader = command.ExecuteReader())
                     {
-                        dt.Load(reader);
-                    }
+                    dt.Load(reader);
                 }
+            }
 
                 LOGGER.LogInformation("Successfully executed raw SQL query. Returned {RowCount} rows", dt.Rows.Count);
-                return dt;
+            return dt;
             }
             catch (Exception ex)
             {
@@ -203,9 +203,9 @@ namespace Querier.Api.Common.Extensions
         }
 
         public static object ExecuteScalar(this DatabaseFacade database,
-            string sql, List<DbParameter> parameters = null,
-            CommandType commandType = CommandType.Text,
-            int? commandTimeOutInSeconds = null)
+        string sql, List<DbParameter> parameters = null,
+        CommandType commandType = CommandType.Text,
+        int? commandTimeOutInSeconds = null)
         {
             Object value;
             using (var cmd = database.GetDbConnection().CreateCommand())
@@ -236,32 +236,32 @@ namespace Querier.Api.Common.Extensions
                 LOGGER.LogDebug("Converting object enumerable to DataTable");
                 var table = new DataTable();
 
-                if (objects.Any())
-                {
-                    var properties = objects.First().GetType().GetProperties();
+            if (objects.Any())
+            {
+                var properties = objects.First().GetType().GetProperties();
                     LOGGER.LogDebug("Adding {Count} columns based on object properties", properties.Length);
                     
-                    foreach (var property in properties)
-                    {
+                foreach (var property in properties)
+                {
                         var type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
                         table.Columns.Add(property.Name, type);
-                    }
+                }
 
                     LOGGER.LogDebug("Adding rows to DataTable");
-                    foreach (var obj in objects)
-                    {
+                foreach (var obj in objects)
+                {
                         var row = table.NewRow();
-                        foreach (var property in properties)
-                        {
-                            row[property.Name] = property.GetValue(obj) ?? DBNull.Value;
-                        }
-                        table.Rows.Add(row);
+                    foreach (var property in properties)
+                    {
+                        row[property.Name] = property.GetValue(obj) ?? DBNull.Value;
                     }
+                    table.Rows.Add(row);
                 }
+            }
 
                 LOGGER.LogInformation("Successfully converted objects to DataTable with {ColumnCount} columns and {RowCount} rows",
                     table.Columns.Count, table.Rows.Count);
-                return table;
+            return table;
             }
             catch (Exception ex)
             {
@@ -350,12 +350,12 @@ namespace Querier.Api.Common.Extensions
             {
                 LOGGER.LogDebug("Converting List<{Type}> to List<dynamic>, count: {Count}", typeof(T).Name, source.Count);
                 var result = new List<dynamic>();
-                foreach (var item in source)
-                {
-                    result.Add(item);
-                }
+            foreach (var item in source)
+            {
+                result.Add(item);
+            }
                 LOGGER.LogInformation("Successfully converted {Count} items to dynamic list", result.Count);
-                return result;
+            return result;
             }
             catch (Exception ex)
             {
@@ -370,12 +370,12 @@ namespace Querier.Api.Common.Extensions
             {
                 LOGGER.LogDebug("Converting IEnumerable to List<dynamic>");
                 var result = new List<dynamic>();
-                foreach (var item in source)
-                {
-                    result.Add((dynamic)item);
-                }
+            foreach (var item in source)
+            {
+                result.Add((dynamic)item);
+            }
                 LOGGER.LogInformation("Successfully converted {Count} items to dynamic list", result.Count);
-                return result;
+            return result;
             }
             catch (Exception ex)
             {
@@ -405,9 +405,9 @@ namespace Querier.Api.Common.Extensions
             try
             {
                 LOGGER.LogDebug("Invoking async method {MethodName} on type {TypeName}", @this.Name, obj.GetType().Name);
-                var task = (Task)@this.Invoke(obj, parameters);
-                await task.ConfigureAwait(false);
-                var resultProperty = task.GetType().GetProperty("Result");
+            var task = (Task)@this.Invoke(obj, parameters);
+            await task.ConfigureAwait(false);
+            var resultProperty = task.GetType().GetProperty("Result");
                 var result = resultProperty.GetValue(task);
                 LOGGER.LogInformation("Successfully invoked async method {MethodName}", @this.Name);
                 return result;
@@ -444,31 +444,31 @@ namespace Querier.Api.Common.Extensions
                         Type = pi.IsNullableProperty() ? Nullable.GetUnderlyingType(pi.PropertyType).Name + "?" : pi.PropertyType.Name,
                         Options = []
                     };
-
-                    if (pi.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.KeyAttribute)).Any())
+                
+                if (pi.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.KeyAttribute)).Any())
                     {
-                        pd.Options.Add(PropertyOption.IsKey);
+                    pd.Options.Add(PropertyOption.IsKey);
                         LOGGER.LogDebug("Property {PropertyName} marked as Key", pi.Name);
                     }
-
-                    if (pi.IsNullableProperty())
+                
+                if (pi.IsNullableProperty())
                     {
-                        pd.Options.Add(PropertyOption.IsNullable);
+                    pd.Options.Add(PropertyOption.IsNullable);
                         LOGGER.LogDebug("Property {PropertyName} marked as Nullable", pi.Name);
                     }
 
-                    if (pi.GetCustomAttributes(typeof(JsonStringAttribute)).Any())
+                if (pi.GetCustomAttributes(typeof(JsonStringAttribute)).Any())
                     {
-                        pd.Type = "JsonString";
+                    pd.Type = "JsonString";
                         LOGGER.LogDebug("Property {PropertyName} marked as JsonString", pi.Name);
                     }
 
-                    result.Properties.Add(pd);
-                }
+                result.Properties.Add(pd);
+            }
 
                 LOGGER.LogInformation("Successfully converted type {TypeName} to EntityDefinition with {PropertyCount} properties",
                     type.Name, result.Properties.Count);
-                return result;
+            return result;
             }
             catch (Exception ex)
             {
@@ -483,10 +483,10 @@ namespace Querier.Api.Common.Extensions
             {
                 LOGGER.LogDebug("Checking if JToken is null or empty");
                 var result = token == null ||
-                            token.Type == JTokenType.Array && !token.HasValues ||
-                            token.Type == JTokenType.Object && !token.HasValues ||
-                            token.Type == JTokenType.String && token.ToString() == string.Empty ||
-                            token.Type == JTokenType.Null;
+                   token.Type == JTokenType.Array && !token.HasValues ||
+                   token.Type == JTokenType.Object && !token.HasValues ||
+                   token.Type == JTokenType.String && token.ToString() == string.Empty ||
+                   token.Type == JTokenType.Null;
                 LOGGER.LogDebug("JToken null or empty check result: {Result}", result);
                 return result;
             }
@@ -861,17 +861,17 @@ namespace Querier.Api.Common.Extensions
                 }
 
                 LOGGER.LogDebug("Removing diacritics from text of length {Length}", text.Length);
-                var normalizedString = text.Normalize(NormalizationForm.FormD);
-                var stringBuilder = new StringBuilder(capacity: normalizedString.Length);
+            var normalizedString = text.Normalize(NormalizationForm.FormD);
+            var stringBuilder = new StringBuilder(capacity: normalizedString.Length);
 
-                for (int i = 0; i < normalizedString.Length; i++)
-                {
-                    char c = normalizedString[i];
+            for (int i = 0; i < normalizedString.Length; i++)
+            {
+                char c = normalizedString[i];
                     if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                    {
-                        stringBuilder.Append(c);
-                    }
+                {
+                    stringBuilder.Append(c);
                 }
+            }
 
                 var result = stringBuilder.ToString().Normalize(NormalizationForm.FormC);
                 LOGGER.LogInformation("Successfully removed diacritics from text");
@@ -902,103 +902,103 @@ namespace Querier.Api.Common.Extensions
                     return "application/octet-stream";
                 }
 
-                if (string.IsNullOrWhiteSpace(fileName))
-                {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
                     LOGGER.LogWarning("Empty filename provided for MIME type detection");
                     return "application/octet-stream";
-                }
+            }
 
-                //Get the file extension
+            //Get the file extension
                 string extension = Path.GetExtension(fileName)?.ToUpper() ?? string.Empty;
                 LOGGER.LogDebug("File extension: {Extension}", extension);
 
-                //Get the MIME Type
+            //Get the MIME Type
                 string mime = "application/octet-stream"; //DEFAULT UNKNOWN MIME TYPE
 
                 try
                 {
-                    if (file.Take(2).SequenceEqual(BMP))
-                    {
-                        mime = "image/bmp";
-                    }
-                    else if (file.Take(8).SequenceEqual(DOC))
-                    {
-                        mime = "application/msword";
-                    }
-                    else if (file.Take(2).SequenceEqual(EXE_DLL))
-                    {
+            if (file.Take(2).SequenceEqual(BMP))
+            {
+                mime = "image/bmp";
+            }
+            else if (file.Take(8).SequenceEqual(DOC))
+            {
+                mime = "application/msword";
+            }
+            else if (file.Take(2).SequenceEqual(EXE_DLL))
+            {
                         mime = "application/x-msdownload";
-                    }
-                    else if (file.Take(4).SequenceEqual(GIF))
-                    {
-                        mime = "image/gif";
-                    }
-                    else if (file.Take(4).SequenceEqual(ICO))
-                    {
-                        mime = "image/x-icon";
-                    }
-                    else if (file.Take(3).SequenceEqual(JPG))
-                    {
-                        mime = "image/jpeg";
-                    }
-                    else if (file.Take(3).SequenceEqual(MP3))
-                    {
-                        mime = "audio/mpeg";
-                    }
-                    else if (file.Take(14).SequenceEqual(OGG))
-                    {
+            }
+            else if (file.Take(4).SequenceEqual(GIF))
+            {
+                mime = "image/gif";
+            }
+            else if (file.Take(4).SequenceEqual(ICO))
+            {
+                mime = "image/x-icon";
+            }
+            else if (file.Take(3).SequenceEqual(JPG))
+            {
+                mime = "image/jpeg";
+            }
+            else if (file.Take(3).SequenceEqual(MP3))
+            {
+                mime = "audio/mpeg";
+            }
+            else if (file.Take(14).SequenceEqual(OGG))
+            {
                         mime = extension switch
                         {
                             ".OGX" => "application/ogg",
                             ".OGA" => "audio/ogg",
                             _ => "video/ogg"
                         };
-                    }
-                    else if (file.Take(7).SequenceEqual(PDF))
-                    {
-                        mime = "application/pdf";
-                    }
-                    else if (file.Take(16).SequenceEqual(PNG))
-                    {
-                        mime = "image/png";
-                    }
-                    else if (file.Take(7).SequenceEqual(RAR))
-                    {
-                        mime = "application/x-rar-compressed";
-                    }
-                    else if (file.Take(3).SequenceEqual(SWF))
-                    {
-                        mime = "application/x-shockwave-flash";
-                    }
-                    else if (file.Take(4).SequenceEqual(TIFF))
-                    {
-                        mime = "image/tiff";
-                    }
-                    else if (file.Take(11).SequenceEqual(TORRENT))
-                    {
-                        mime = "application/x-bittorrent";
-                    }
-                    else if (file.Take(5).SequenceEqual(TTF))
-                    {
-                        mime = "application/x-font-ttf";
-                    }
-                    else if (file.Take(4).SequenceEqual(WAV_AVI))
-                    {
-                        mime = extension == ".AVI" ? "video/x-msvideo" : "audio/x-wav";
-                    }
-                    else if (file.Take(16).SequenceEqual(WMV_WMA))
-                    {
-                        mime = extension == ".WMA" ? "audio/x-ms-wma" : "video/x-ms-wmv";
-                    }
-                    else if (file.Take(4).SequenceEqual(ZIP_DOCX))
-                    {
+            }
+            else if (file.Take(7).SequenceEqual(PDF))
+            {
+                mime = "application/pdf";
+            }
+            else if (file.Take(16).SequenceEqual(PNG))
+            {
+                mime = "image/png";
+            }
+            else if (file.Take(7).SequenceEqual(RAR))
+            {
+                mime = "application/x-rar-compressed";
+            }
+            else if (file.Take(3).SequenceEqual(SWF))
+            {
+                mime = "application/x-shockwave-flash";
+            }
+            else if (file.Take(4).SequenceEqual(TIFF))
+            {
+                mime = "image/tiff";
+            }
+            else if (file.Take(11).SequenceEqual(TORRENT))
+            {
+                mime = "application/x-bittorrent";
+            }
+            else if (file.Take(5).SequenceEqual(TTF))
+            {
+                mime = "application/x-font-ttf";
+            }
+            else if (file.Take(4).SequenceEqual(WAV_AVI))
+            {
+                mime = extension == ".AVI" ? "video/x-msvideo" : "audio/x-wav";
+            }
+            else if (file.Take(16).SequenceEqual(WMV_WMA))
+            {
+                mime = extension == ".WMA" ? "audio/x-ms-wma" : "video/x-ms-wmv";
+            }
+            else if (file.Take(4).SequenceEqual(ZIP_DOCX))
+            {
                         mime = extension == ".DOCX" ? 
                             "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : 
                             "application/x-zip-compressed";
-                    }
+            }
 
                     LOGGER.LogInformation("Detected MIME type {MimeType} for file {FileName}", mime, fileName);
-                    return mime;
+            return mime;
                 }
                 catch (Exception ex)
                 {
@@ -1036,7 +1036,7 @@ namespace Querier.Api.Common.Extensions
                     return 0;
                 }
 
-                string unit = input.Substring(input.Length - 2);
+            string unit = input.Substring(input.Length - 2);
                 if (!int.TryParse(input.Substring(0, input.Length - 2), out int value))
                 {
                     LOGGER.LogWarning("Failed to parse numeric value from input: {Input}", input);
@@ -1051,7 +1051,7 @@ namespace Querier.Api.Common.Extensions
 
                 long result = value * 1073741824L;
                 LOGGER.LogInformation("Successfully converted {Input} to {Bytes} bytes", input, result);
-                return result;
+            return result;
             }
             catch (Exception ex)
             {
