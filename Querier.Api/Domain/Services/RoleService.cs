@@ -26,33 +26,33 @@ namespace Querier.Api.Domain.Services.Role
             _userRepository = userRepository;
         }
 
-        public async Task<bool> Add(RoleCreateDto role)
+        public async Task<bool> AddAsync(RoleCreateDto role)
         {
             var newRole = new ApiRole(role.Name);
-            return await _roleRepository.Add(newRole);
+            return await _roleRepository.AddAsync(newRole);
         }
 
-        public async Task<bool> Edit(RoleDto role)
+        public async Task<bool> UpdateAsync(RoleDto role)
         {
             var roleToEdit = new ApiRole();
             roleToEdit.Id = role.Id;
             roleToEdit.Name = role.Name;
-            return await _roleRepository.Edit(roleToEdit);
+            return await _roleRepository.UpdateAsync(roleToEdit);
         }
 
-        public async Task<bool> Delete(string id)
+        public async Task<bool> DeleteByIdAsync(string id)
         {
-            return await _roleRepository.Delete(id);
+            return await _roleRepository.DeleteByIdAsync(id);
         }
 
-        public async Task<List<RoleDto>> GetAll()
+        public List<RoleDto> GetAll()
         {
-            return (await _roleRepository.GetAll()).Select(ug => new RoleDto { Id = ug.Id, Name = ug.Name }).ToList();
+            return _roleRepository.GetAll().Select(ug => new RoleDto { Id = ug.Id, Name = ug.Name }).ToList();
         }
 
-        public async Task<List<RoleDto>> GetRolesForUser(string idUser)
+        public async Task<List<RoleDto>> GetRolesForUserAsync(string idUser)
         {
-            return (await _userRepository.GetById(idUser))
+            return (await _userRepository.GetByIdAsync(idUser))
                 .UserRoles.Select(ur => ur.Role).
                 Select(ur => new RoleDto { Id = ur.Id, Name = ur.Name })
                 .ToList();

@@ -33,6 +33,7 @@ public class PublicSettingsController : ControllerBase
     [HttpGet("configured")]
     public async Task<ActionResult<bool>> GetApiIsConfigured()
     {
-        return await _settingService.GetApiIsConfiguredAsync();
+        var result = await _settingService.GetApiIsConfiguredAsync();
+        return Ok(result);
     }
 } 

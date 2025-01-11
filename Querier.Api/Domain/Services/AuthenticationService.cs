@@ -14,19 +14,19 @@ using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Infrastructure.Data.Repositories;
 using Querier.Api.Tools;
 
 namespace Querier.Api.Domain.Services
 {
     public class AuthenticationService(
-        IUserManagerService userManagerService,
+        IUserRepository userRepository,
         ISettingService settingService,
         IAuthenticationRepository authenticationRepository,
-        TokenValidationParameters tokenValidationParameters,
-        UserManager<ApiUser> userManager)
+        TokenValidationParameters tokenValidationParameters)
         : IAuthenticationService
     {
-        public async Task<AuthResultDto> GenerateJwtToken(ApiUser user)
+        private async Task<AuthResultDto> GenerateJwtToken(ApiUser user)
         {
             var jwtSecret = await settingService.GetSettingValueAsync<string>("jwt:secret");
             var jwtIssuer = await settingService.GetSettingValueAsync<string>("jwt:issuer");
@@ -37,7 +37,7 @@ namespace Querier.Api.Domain.Services
                 throw new InvalidOperationException("JWT secret is not configured");
 
             // Récupérer les rôles de l'utilisateur
-            var userRoles = await userManager.GetRolesAsync(user);
+            var userRoles = await userRepository.GetRolesAsync(user);
 
             if (user.Email != null)
             {
@@ -52,7 +52,8 @@ namespace Querier.Api.Domain.Services
                 // Ajouter les rôles aux claims
                 foreach (var role in userRoles)
                 {
-                    claims.Add(new Claim(ClaimTypes.Role, role));
+                    if (role.Name != null) 
+                        claims.Add(new Claim(ClaimTypes.Role, role.Name));
                 }
 
                 var key = Encoding.ASCII.GetBytes(jwtSecret);
@@ -101,7 +102,7 @@ namespace Querier.Api.Domain.Services
         public async Task<SignUpResultDto> SignUp(SignUpDto user)
         {
             // check if the user with the same email exist
-            var existingUser = await userManagerService.FindByEmailAsync(user.Email);
+            var existingUser = await userRepository.GetByEmailAsync(user.Email);
 
             if (existingUser != null)
             {
@@ -116,36 +117,34 @@ namespace Querier.Api.Domain.Services
             }
 
             var newUser = new ApiUser() { Email = user.Email, UserName = user.Email, FirstName = user.FirstName, LastName = user.LastName };
-            var isCreated = await userManagerService.CreateAsync(newUser, user.Password);
+            var isCreated = await userRepository.AddAsync(newUser);
 
-            if (isCreated.Succeeded)
-            {
-                var authResult = await GenerateJwtToken(newUser);
-
+            if (!isCreated.Succeeded)
                 return new SignUpResultDto()
                 {
-                    Success = true,
-                    Errors = isCreated.Errors.Select(x => x.Description).ToList(),
-                    Email = user.Email,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    RefreshToken = authResult.RefreshToken,
-                    Token = authResult.Token,
-                    UserName = user.UserName,
-                    Roles = user.Roles,
+                    Success = false,
+                    Errors = isCreated.Errors.Select(x => x.Description).ToList()
                 };
-            }
             
+            var authResult = await GenerateJwtToken(newUser);
+
             return new SignUpResultDto()
             {
-                Success = false,
-                Errors = isCreated.Errors.Select(x => x.Description).ToList()
+                Success = true,
+                Errors = isCreated.Errors.Select(x => x.Description).ToList(),
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                RefreshToken = authResult.RefreshToken,
+                Token = authResult.Token,
+                UserName = user.UserName,
+                Roles = user.Roles,
             };
         }
 
         public async Task<SignUpResultDto> SignIn(SignInDto user)
         {
-            var existingUser = await userManagerService.FindByEmailAsync(user.Email);
+            var existingUser = await userRepository.GetByEmailAsync(user.Email);
             if (existingUser == null)
             {
                 return new SignUpResultDto()
@@ -157,20 +156,20 @@ namespace Querier.Api.Domain.Services
                 };
             }
 
-            var PasswordisCorrect = await userManagerService.Instance.CheckPasswordAsync(existingUser, user.Password);
-            var EmailConfirmed = await userManagerService.Instance.IsEmailConfirmedAsync(existingUser);
+            bool passwordIsCorrect = await userRepository.CheckPasswordAsync(existingUser, user.Password);
+            bool emailConfirmed = await userRepository.IsEmailConfirmedAsync(existingUser);
 
-            if (PasswordisCorrect && EmailConfirmed)
+            if (passwordIsCorrect && emailConfirmed)
             {
                 AuthResultDto r = await GenerateJwtToken(existingUser);
-                var roles = await userManagerService.GetRolesAsync(existingUser);
+                var roles = await userRepository.GetRolesAsync(existingUser);
 
                 return new SignUpResultDto()
                 {
                     Id = existingUser.Id,
                     FirstName = existingUser.FirstName,
                     LastName = existingUser.LastName,
-                    Roles = roles.ToList(),
+                    Roles = roles.Select(role => role.Name).ToList(),
                     RefreshToken = r.RefreshToken,
                     Success = r.Success,
                     Token = r.Token,
@@ -283,7 +282,7 @@ namespace Querier.Api.Domain.Services
                 storedRefreshToken.IsUsed = true;
                 authenticationRepository.UpdateRefreshTokenAsync(storedRefreshToken);
 
-                var dbUser = await userManager.FindByIdAsync(storedRefreshToken.UserId);
+                var dbUser = await userRepository.GetByIdAsync(storedRefreshToken.UserId);
                 return await GenerateJwtToken(dbUser);
             }
             catch (Exception ex)

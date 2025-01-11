@@ -4,7 +4,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories;
@@ -16,110 +15,101 @@ namespace Querier.Api.Domain.Services
 {
     public class UserService(
         ISettingService settings,
-        IUserRepository repo,
-        ILogger<UserRepository> logger,
-        UserManager<ApiUser> userManager,
+        ILogger<UserService> logger,
+        IUserRepository userRepository,
         IEmailSendingService emailSending,
-        IRoleService roleService)
+        IRoleRepository roleRepository)
         : IUserService
     {
-        public async Task<bool> Add(UserCreateDto user)
+        public async Task<bool> SetUserRolesAsync(string id, List<RoleDto> roles)
         {
-            var foundUser = await repo.GetByEmail(user.Email);
+            var foundUser = await userRepository.GetByIdAsync(id);
+            if (foundUser == null)
+            {
+                logger.LogError($"User with id {id} does not exist");
+                return false;
+            }
+            
+            await userRepository.RemoveRolesAsync(foundUser);
+            ApiRole[] apiRoles = roles.Select(RoleDto.ToEntity).ToArray();
+            return await userRepository.AddRoleAsync(foundUser, apiRoles);
+        }
+
+        public async Task<bool> AddAsync(ApiUserCreateDto user)
+        {
+            var foundUser = await userRepository.GetByEmailAsync(user.Email);
             if (foundUser != null)
             {
                 logger.LogError($"User with email {user.Email} already exists");
                 return false;
             }
-            var newUser = MapToModel(user);
-            if (!await repo.Add(newUser))
+            ApiUser newUser = ApiUserDto.ToEntity(user);
+            if (await userRepository.AddAsync(newUser) != IdentityResult.Success)
             {
                 return false;
             }
-
-            var roles = await roleService.GetAll();
-            var selectedRoles = roles.Where(r => user.Roles.Contains(r.Name))
-                .Select(r => new ApiRole { Id = r.Id, Name = r.Name })
-                .ToArray();
-            return await repo.AddRole(newUser, selectedRoles);
+            var roles = roleRepository.GetAll().Where(r => user.Roles.Contains(r.Name)).ToArray();
+            return await userRepository.AddRoleAsync(newUser, roles);
         }
 
-        public async Task<bool> Edit(UserUpdateDto user)
+        public async Task<bool> UpdateAsync(ApiUserUpdateDto user)
         {
-            var foundUser = await repo.GetById(user.Id);
+            var foundUser = await userRepository.GetByIdAsync(user.Id);
             if (foundUser == null)
             {
                 return false;
             }
-
-            MapToModel(user, foundUser);
-            if (!await repo.Edit(foundUser))
+            
+            foundUser.Email = user.Email;
+            foundUser.FirstName = user.FirstName;
+            foundUser.LastName = user.LastName;
+            foundUser.UserName = user.Email;
+            
+            if (!await userRepository.UpdateAsync(foundUser))
             {
                 return false;
             }
 
-            var roles = await roleService.GetAll();
-            var selectedRoles = roles.Where(r => user.Roles.Contains(r.Name))
-                .Select(r => new ApiRole { Id = r.Id, Name = r.Name })
-                .ToArray();
-
-            await repo.RemoveRoles(foundUser);
-
-            return await repo.AddRole(foundUser, selectedRoles);
+            await userRepository.RemoveRolesAsync(foundUser);
+            
+            ApiRole[] apiRoles = user.Roles.Select(RoleDto.ToEntity).ToArray();
+            return await userRepository.AddRoleAsync(foundUser, apiRoles);
         }
 
-        public async Task<bool> Update(UserUpdateDto user)
+        public async Task<bool> DeleteByIdAsync(string id)
         {
-            return await Edit(user);
+            return await userRepository.DeleteAsync(id);
         }
 
-        public async Task<bool> Delete(string id)
+        public async Task<ApiUserDto> GetByIdAsync(string id)
         {
-            return await repo.Delete(id);
-        }
-
-        public async Task<UserDto> View(string id)
-        {
-            var userAndRoles = await repo.GetWithRoles(id);
-            if (userAndRoles == null)
+            var user = await userRepository.GetByIdAsync(id);
+            if (user == null)
             {
                 logger.LogError($"User with id {id} not found");
                 return null;
             }
-            var vm = MapToVM(userAndRoles.Value.user);
-            vm.Roles = await roleService.GetRolesForUser(id);
-            return vm;
+            
+            return ApiUserDto.FromEntity(user);
         }
 
-        public async Task<List<UserDto>> GetAll()
+        public async Task<IEnumerable<ApiUserDto>> GetAllAsync()
         {
-            List<UserDto> result = new List<UserDto>();
-            var userList = await userManager.Users
-                .Include(u => u.UserRoles)
-                .ThenInclude(ur => ur.Role)
-                .ToListAsync();
-
-            userList.ForEach(user =>
-            {
-                var vm = MapToVM(user);
-                vm.Roles = user.UserRoles?.Select(ur => new RoleDto { Name = ur.Role.Name }).ToList() ?? new List<RoleDto>();
-                result.Add(vm);
-            });
-            return result;
+            return (await userRepository.GetAllAsync()).Select(ApiUserDto.FromEntity);
         }
 
-        public async Task<string> GetPasswordHash(string idUser)
+        public async Task<string> GetPasswordHashAsync(string idUser)
         {
-            ApiUser searchUser = await repo.GetById(idUser);
+            ApiUser searchUser = await userRepository.GetByIdAsync(idUser);
             if (searchUser == null)
                 return string.Empty;
 
             return searchUser.PasswordHash;
         }
 
-        public async Task<object> ResetPassword(ResetPasswordDto reset_password_infos)
+        public async Task<object> ResetPasswordAsync(ResetPasswordDto resetPasswordInfos)
         {
-            var user = await userManager.FindByEmailAsync(reset_password_infos.Email);
+            var user = await userRepository.GetByEmailAsync(resetPasswordInfos.Email);
             object response;
 
             //check if the user exist or not
@@ -130,40 +120,37 @@ namespace Querier.Api.Domain.Services
             }
 
             //reset password
-            var resetPassResult = await userManager.ResetPasswordAsync(user, reset_password_infos.Token, reset_password_infos.Password);
+            var resetPassResult = await userRepository.ResetPasswordAsync(user, resetPasswordInfos.Token, resetPasswordInfos.Password);
 
             if (resetPassResult.Succeeded)
             {
                 response = new { success = true, message = "Password has been changed" };
                 return response;
             }
-            else
+
+            var errorsArray = resetPassResult.Errors.ToArray();
+            string[] arrayErrorsStringResult = new string[errorsArray.Length];
+            for (int i = 0; i < errorsArray.Length; i++)
             {
-
-                var errorsArray = resetPassResult.Errors.ToArray();
-                string[] ArrayErrorsStringResult = new string[errorsArray.Length];
-                for (int i = 0; i < errorsArray.Length; i++)
-                {
-                    ArrayErrorsStringResult[i] = errorsArray[i].Code;
-                }
-
-
-                response = new { success = false, errors = ArrayErrorsStringResult };
-                return response;
+                arrayErrorsStringResult[i] = errorsArray[i].Code;
             }
+
+
+            response = new { success = false, errors = arrayErrorsStringResult };
+            return response;
         }
 
-        public async Task<bool> EmailConfirmation(EmailConfirmationDto emailConfirmation)
+        public async Task<bool> EmailConfirmationAsync(EmailConfirmationDto emailConfirmation)
         {
             string token = Uri.UnescapeDataString(emailConfirmation.Token);
-            var user = await userManager.FindByEmailAsync(emailConfirmation.Email);
+            var user = await userRepository.GetByEmailAsync(emailConfirmation.Email);
             if (user == null)
                 return false;
-            var result = await userManager.ConfirmEmailAsync(user, token);
+            IdentityResult result = await userRepository.ConfirmEmailAsync(user, token);
             return result.Succeeded;
         }
 
-        public async Task<(bool Succeeded, string Error)> ConfirmEmailAndSetPassword(EmailConfirmationSetPasswordDto request)
+        public async Task<(bool Succeeded, string Error)> ConfirmEmailAndSetPasswordAsync(EmailConfirmationSetPasswordDto request)
         {
             try
             {
@@ -172,7 +159,7 @@ namespace Querier.Api.Domain.Services
                     return (false, "Les mots de passe ne correspondent pas.");
                 }
 
-                var user = await userManager.FindByEmailAsync(request.Email);
+                var user = await userRepository.GetByEmailAsync(request.Email);
                 if (user == null)
                 {
                     return (false, "Utilisateur non trouvé.");
@@ -186,15 +173,15 @@ namespace Querier.Api.Domain.Services
                 var decodedToken = Uri.UnescapeDataString(request.Token)
                     .Replace(" ", "+");
 
-                var confirmResult = await userManager.ConfirmEmailAsync(user, decodedToken);
+                var confirmResult = await userRepository.ConfirmEmailAsync(user, decodedToken);
                 if (!confirmResult.Succeeded)
                 {
                     logger.LogError($"Email confirmation failed for user {user.Id}. Errors: {string.Join(", ", confirmResult.Errors.Select(e => e.Description))}");
                     return (false, "Le lien de confirmation n'est plus valide.");
                 }
 
-                var token = await userManager.GeneratePasswordResetTokenAsync(user);
-                var passwordResult = await userManager.ResetPasswordAsync(user, token, request.Password);
+                var token = await userRepository.GeneratePasswordResetTokenAsync(user);
+                var passwordResult = await userRepository.ResetPasswordAsync(user, token, request.Password);
 
                 if (!passwordResult.Succeeded)
                 {
@@ -211,7 +198,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task<bool> SendConfirmationEmail(ApiUser user, string token)
+        public async Task<bool> SendConfirmationEmailAsync(ApiUser user, string token)
         {
             try
             {
@@ -249,7 +236,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task<UserDto> GetCurrentUser(ClaimsPrincipal userClaims)
+        public async Task<ApiUserDto> GetCurrentUserAsync(ClaimsPrincipal userClaims)
         {
             var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
@@ -261,7 +248,7 @@ namespace Querier.Api.Domain.Services
                     return null;
                 }
 
-                var userByEmail = await userManager.FindByEmailAsync(userEmail);
+                var userByEmail = await userRepository.GetByEmailAsync(userEmail);
                 if (userByEmail == null)
                 {
                     logger.LogWarning($"No user found with email: {userEmail}");
@@ -270,12 +257,12 @@ namespace Querier.Api.Domain.Services
                 userId = userByEmail.Id;
             }
 
-            return await View(userId);
+            return await GetByIdAsync(userId);
         }
 
-        public async Task<bool> ResendConfirmationEmail(string userEmail)
+        public async Task<bool> ResendConfirmationEmailAsync(string userEmail)
         {
-            var user = await userManager.FindByEmailAsync(userEmail);
+            var user = await userRepository.GetByEmailAsync(userEmail);
             if (user == null)
             {
                 logger.LogWarning($"User not found with email: {userEmail}");
@@ -288,62 +275,8 @@ namespace Querier.Api.Domain.Services
                 return false;
             }
 
-            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-            return await SendConfirmationEmail(user, token);
-        }
-
-        private void MapToModel(UserUpdateDto user, ApiUser updateUser)
-        {
-            updateUser.FirstName = user.FirstName;
-            updateUser.LastName = user.LastName;
-            updateUser.Email = user.Email;
-        }
-
-        private ApiUser MapToModel(UserCreateDto user)
-        {
-            return new ApiUser
-            {
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email,
-                UserName = user.UserName
-            };
-        }
-
-        private UserDto MapToVM(ApiUser user)
-        {
-            return new UserDto
-            {
-                Id = user.Id,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email,
-                IsEmailConfirmed = user.EmailConfirmed,
-                UserName = user.UserName,
-                Roles = user.UserRoles?.Select(ur => new RoleDto { Name = ur.Role.Name }).ToList() ?? new List<RoleDto>()
-            };
-        }
-
-        public async Task<IEnumerable<UserDto>> GetAllAsync()
-        {
-            // Charger les utilisateurs avec leurs rôles
-            var users = await userManager.Users
-                .Include(u => u.UserRoles)
-                    .ThenInclude(ur => ur.Role)
-                .ToListAsync();
-
-            var userResponses = new List<UserDto>();
-
-            foreach (var user in users)
-            {
-                // Récupérer explicitement les rôles pour chaque utilisateur
-                var roles = await roleService.GetRolesForUser(user.Id);
-                var userResponse = MapToVM(user);
-                userResponse.Roles = roles; // Utiliser les rôles récupérés via le roleService
-                userResponses.Add(userResponse);
-            }
-
-            return userResponses;
+            var token = await userRepository.GenerateEmailConfirmationTokenAsync(user);
+            return await SendConfirmationEmailAsync(user, token);
         }
     }
 }

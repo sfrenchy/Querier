@@ -64,7 +64,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllAsync()
         {
-            return Ok(await _roleService.GetAll());
+            return Ok(_roleService.GetAll());
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace Querier.Api.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            return Ok(await _roleService.Add(role));
+            return Ok(await _roleService.AddAsync(role));
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace Querier.Api.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            return Ok(await _roleService.Edit(role));
+            return Ok(await _roleService.UpdateAsync(role));
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace Querier.Api.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            return Ok(await _roleService.Delete(id));
+            return Ok(await _roleService.DeleteByIdAsync(id));
         }
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetRolesForUser(string idUser)
         {
-            return Ok(await _roleService.GetRolesForUser(idUser));
+            return Ok(await _roleService.GetRolesForUserAsync(idUser));
         }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCurrentUserRole()
         {
-            return Ok((await _userService.GetCurrentUser(User)).Roles);
+            return Ok((await _userService.GetCurrentUserAsync(User)).Roles);
         }
     }
 }

@@ -1,11 +1,14 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using Microsoft.ReportingServices.ReportProcessing.ReportObjectModel;
+using Querier.Api.Domain.Entities.Auth;
 
 namespace Querier.Api.Application.DTOs
 {
     /// <summary>
     /// Represents a user's data in the system
     /// </summary>
-    public class UserDto
+    public class ApiUserDto
     {
         /// <summary>
         /// Unique identifier of the user
@@ -38,43 +41,39 @@ namespace Querier.Api.Application.DTOs
         public List<RoleDto> Roles { get; set; }
 
         /// <summary>
-        /// User's preferred language code
-        /// </summary>
-        public string LanguageCode { get; set; }
-
-        /// <summary>
-        /// URL or path to the user's profile image
-        /// </summary>
-        public string Img { get; set; }
-
-        /// <summary>
-        /// User's position or job title
-        /// </summary>
-        public string Poste { get; set; }
-
-        /// <summary>
         /// Username for login
         /// </summary>
         public string UserName { get; set; }
 
         /// <summary>
-        /// User's preferred date format
-        /// </summary>
-        public string DateFormat { get; set; }
-
-        /// <summary>
-        /// User's preferred currency
-        /// </summary>
-        public string Currency { get; set; }
-
-        /// <summary>
-        /// User's preferred area unit
-        /// </summary>
-        public string AreaUnit { get; set; }
-
-        /// <summary>
         /// Indicates whether the user's email has been confirmed
         /// </summary>
         public bool IsEmailConfirmed { get; set; }
+
+        public static ApiUserDto FromEntity(ApiUser user)
+        {
+            return new()
+            { 
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Phone = user.PhoneNumber,
+                UserName = user.UserName,
+                Roles = user.UserRoles.Select(u => u.Role).Select(RoleDto.FromEntity).ToList(),
+                IsEmailConfirmed = user.EmailConfirmed
+            };
+        }
+
+        public static ApiUser ToEntity(ApiUserCreateDto user)
+        {
+            return new ApiUser()
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                UserName = user.Email
+            };
+        }
     }
 }

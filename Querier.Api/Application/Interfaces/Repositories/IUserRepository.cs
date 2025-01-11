@@ -1,19 +1,27 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Querier.Api.Domain.Entities.Auth;
 
 namespace Querier.Api.Application.Interfaces.Repositories
 {
     public interface IUserRepository
     {
-        Task<ApiUser> GetById(string id);
-        Task<(ApiUser user, List<string> roles)?> GetWithRoles(string id);
-        Task<ApiUser> GetByEmail(string email);
-        Task<bool> Add(ApiUser user);
-        Task<bool> Edit(ApiUser user);
-        Task<bool> Delete(string id);
-        Task<List<ApiUser>> GetAll();
-        Task<bool> AddRole(ApiUser user, ApiRole[] role);
-        Task<bool> RemoveRoles(ApiUser user);
+        Task<ApiUser> GetByIdAsync(string id);
+        Task<(ApiUser user, List<string> roles)?> GetWithRolesAsync(string id);
+        Task<ApiUser> GetByEmailAsync(string email);
+        Task<IdentityResult> AddAsync(ApiUser user);
+        Task<bool> UpdateAsync(ApiUser user);
+        Task<bool> DeleteAsync(string id);
+        Task<List<ApiUser>> GetAllAsync();
+        Task<bool> AddRoleAsync(ApiUser user, ApiRole[] role);
+        Task<bool> RemoveRolesAsync(ApiUser user);
+        Task<IdentityResult> ResetPasswordAsync(ApiUser user, string token, string password);
+        Task<IdentityResult> ConfirmEmailAsync(ApiUser user, string token);
+        Task<string> GeneratePasswordResetTokenAsync(ApiUser user);
+        Task<string> GenerateEmailConfirmationTokenAsync(ApiUser user);
+        Task<List<ApiRole>> GetRolesAsync(ApiUser user);
+        Task<bool> CheckPasswordAsync(ApiUser user, string userPassword);
+        Task<bool> IsEmailConfirmedAsync(ApiUser user);
     }
 }

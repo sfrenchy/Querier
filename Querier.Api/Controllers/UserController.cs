@@ -60,7 +60,7 @@ namespace Querier.Api.Controllers
             if (string.IsNullOrEmpty(id))
                 return BadRequest("Request parameter is not valid");
 
-            return Ok(await _userService.View(id));
+            return Ok(await _userService.GetByIdAsync(id));
         }
 
         /// <summary>
@@ -83,12 +83,12 @@ namespace Querier.Api.Controllers
         [Route("Add")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddAsync([FromBody] UserCreateDto user)
+        public async Task<IActionResult> AddAsync([FromBody] ApiUserCreateDto user)
         {
             if (!ModelState.IsValid)
                 return BadRequest("Request body is not valid");
 
-            if (await _userService.Add(user))
+            if (await _userService.AddAsync(user))
                 return Ok(true);
             else
                 return StatusCode(500);
@@ -112,12 +112,12 @@ namespace Querier.Api.Controllers
         [Route("Update")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateAsync([FromBody] UserUpdateDto user)
+        public async Task<IActionResult> UpdateAsync([FromBody] ApiUserUpdateDto user)
         {
             if (!ModelState.IsValid)
                 return BadRequest("Request body is not valid");
 
-            if (await _userService.Update(user))
+            if (await _userService.UpdateAsync(user))
                 return Ok(true);
             else
                 return StatusCode(500);
@@ -141,7 +141,7 @@ namespace Querier.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest("Request is not valid");
 
-            var res = await _userService.Delete(id);
+            var res = await _userService.DeleteByIdAsync(id);
             if (res)
                 return Ok(res);
 
@@ -185,7 +185,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto reset_password_infos)
         {
-            var response = await _userService.ResetPassword(reset_password_infos);
+            var response = await _userService.ResetPasswordAsync(reset_password_infos);
             return Ok(response);
         }
 
@@ -204,7 +204,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> EmailConfirmation(string token, string mail)
         {            
-            var response = await _userService.EmailConfirmation(new EmailConfirmationDto { Email = mail, Token = token });
+            var response = await _userService.EmailConfirmationAsync(new EmailConfirmationDto { Email = mail, Token = token });
             return Ok(response);
         }
 
@@ -224,7 +224,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Me()
         {
-            var user = await _userService.GetCurrentUser(User);
+            var user = await _userService.GetCurrentUserAsync(User);
             if (user == null)
             {
                 return NotFound();
@@ -237,7 +237,7 @@ namespace Querier.Api.Controllers
         [Authorize]
         public async Task<IActionResult> ResendConfirmationEmail([FromQuery] string userEmail)
         {
-            var result = await _userService.ResendConfirmationEmail(userEmail);
+            var result = await _userService.ResendConfirmationEmailAsync(userEmail);
 
             if (result)
             {

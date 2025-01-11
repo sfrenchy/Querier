@@ -62,7 +62,7 @@ namespace Querier.Api.Infrastructure.Services
         public async Task<SQLQueryDTO> CreateQueryAsync(SQLQueryDTO query,
             Dictionary<string, object> sampleParameters = null)
         {
-            var currentUser = await userService.GetCurrentUser(httpContextAccessor.HttpContext.User);
+            var currentUser = await userService.GetCurrentUserAsync(httpContextAccessor.HttpContext.User);
             query.CreatedAt = DateTime.UtcNow;
             query.CreatedBy = currentUser?.Id;
             query.DBConnection =

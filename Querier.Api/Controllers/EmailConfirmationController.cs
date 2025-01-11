@@ -42,7 +42,7 @@ namespace Querier.Api.Controllers
             _logger.LogInformation($"Attempting to confirm email for {request.Email}");
             request.ConfirmPassword = request.Password;
             
-            var result = await _userService.ConfirmEmailAndSetPassword(request);
+            var result = await _userService.ConfirmEmailAndSetPasswordAsync(request);
             if (result.Succeeded)
             {
                 ViewData["Success"] = true;

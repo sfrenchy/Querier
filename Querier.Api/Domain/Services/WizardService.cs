@@ -47,8 +47,6 @@ namespace Querier.Api.Domain.Services
 
                 try
                 {
-                    using var context = await _contextFactory.CreateDbContextAsync();
-
                     // Configuration JWT
                     _logger.LogInformation("Configuring JWT settings...");
                     var jwtSecret = GenerateSecureSecret();
@@ -118,26 +116,12 @@ namespace Querier.Api.Domain.Services
                     await _settingService.UpdateSettingIfExistsAsync("smtp:senderName", request.Smtp.SenderName, "");
                     await _settingService.UpdateSettingIfExistsAsync("smtp:requiresAuth", request.Smtp.RequireAuth, "");
 
-                    var isConfiguredSetting = await context.Settings
-                        .FirstOrDefaultAsync(s => s.Name == "api:isConfigured");
+                    var isConfiguredSetting = await _settingService.GetSettingValueIfExistsAsync("api:isConfigured", false, "");
 
-                    if (isConfiguredSetting != null)
+                    if (!isConfiguredSetting)
                     {
-                        _logger.LogInformation("Updating existing isConfigured setting");
-                        isConfiguredSetting.Value = "true";
-                        context.Settings.Update(isConfiguredSetting);
+                        await _settingService.UpdateSettingIfExistsAsync("api:isConfigured", true, "");
                     }
-                    else
-                    {
-                        _logger.LogInformation("Creating new isConfigured setting");
-                        await context.Settings.AddAsync(new Setting
-                        {
-                            Name = "api:isConfigured",
-                            Value = "true"
-                        });
-                    }
-
-                    await context.SaveChangesAsync();
                     _logger.LogInformation("Setup completed successfully");
                     return (true, null);
                 }

@@ -5,7 +5,7 @@ namespace Querier.Api.Application.DTOs
     /// <summary>
     /// Data transfer object for updating an existing user
     /// </summary>
-    public class UserUpdateDto
+    public class ApiUserUpdateDto
     {
         /// <summary>
         /// Unique identifier of the user to update
@@ -28,13 +28,8 @@ namespace Querier.Api.Application.DTOs
         public string LastName { get; set; }
 
         /// <summary>
-        /// Updated username for the user's login
-        /// </summary>
-        public string UserName { get; set; }
-
-        /// <summary>
         /// Updated list of role names assigned to the user
         /// </summary>
-        public List<string> Roles { get; set; }
+        public List<RoleDto> Roles { get; set; }
     }
 }

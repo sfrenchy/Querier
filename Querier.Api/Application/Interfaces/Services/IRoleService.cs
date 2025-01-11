@@ -8,10 +8,10 @@ namespace Querier.Api.Application.Interfaces.Services
 {
     public interface IRoleService
     {
-        Task<List<RoleDto>> GetAll();
-        Task<bool> Add(RoleCreateDto role);
-        Task<bool> Edit(RoleDto role);
-        Task<bool> Delete(string id);
-        Task<List<RoleDto>> GetRolesForUser(string idUser);
+        List<RoleDto> GetAll();
+        Task<bool> AddAsync(RoleCreateDto role);
+        Task<bool> UpdateAsync(RoleDto role);
+        Task<bool> DeleteByIdAsync(string id);
+        Task<List<RoleDto>> GetRolesForUserAsync(string idUser);
     }
 }

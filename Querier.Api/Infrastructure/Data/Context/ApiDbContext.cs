@@ -12,6 +12,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.CodeAnalysis.Operations;
 using Querier.Api.Domain.Entities.DBConnection;
 
 namespace Querier.Api.Infrastructure.Data.Context
@@ -82,7 +83,7 @@ namespace Querier.Api.Infrastructure.Data.Context
                 Name = "api:isConfigured",
                 Value = "false",
                 Description = "Indicate if the application is configured",
-                Type = "boolean"
+                Type = typeof(bool).ToString()
             });
 
             modelBuilder.Entity<ApiUserRole>(entity =>

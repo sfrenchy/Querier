@@ -216,7 +216,13 @@ namespace Querier.Api.Infrastructure.Extensions
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRowRepository, RowRepository>();
-
+            services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
+            services.AddScoped<IMenuRepository, MenuRepository>();
+            services.AddScoped<IPageRepository, PageRepository>();
+            services.AddScoped<ISettingRepository, SettingRepository>();
+            services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            
             // Menu and Layout services
             services.AddScoped<IMenuService, MenuService>();
             services.AddScoped<IPageService, PageService>();

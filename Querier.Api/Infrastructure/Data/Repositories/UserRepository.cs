@@ -17,18 +17,20 @@ namespace Querier.Api.Infrastructure.Data.Repositories
         private readonly IEmailSendingService _emailSending;
         private readonly ILogger<UserRepository> _logger;
         private readonly UserManager<ApiUser> _userManager;
+        private readonly RoleManager<ApiRole> _roleManager;
         private readonly ISettingService _settings;
         private readonly IAuthenticationRepository _authenticationRepository;
-        public UserRepository(IAuthenticationRepository authenticationRepository, UserManager<ApiUser> userManager, ISettingService settings, ILogger<UserRepository> logger, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory)
+        public UserRepository(IAuthenticationRepository authenticationRepository, UserManager<ApiUser> userManager, RoleManager<ApiRole> roleManager, ISettingService settings, ILogger<UserRepository> logger, IEmailSendingService emailSending, IDbContextFactory<ApiDbContext> contextFactory)
         {
             _logger = logger;
             _userManager = userManager;
             _emailSending = emailSending;
             _settings = settings;
             _authenticationRepository = authenticationRepository;
+            _roleManager = roleManager;
         }
 
-        public async Task<(ApiUser user, List<string> roles)?> GetWithRoles(string id)
+        public async Task<(ApiUser user, List<string> roles)?> GetWithRolesAsync(string id)
         {
             try
             {
@@ -55,7 +57,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<ApiUser> GetById(string id)
+        public async Task<ApiUser> GetByIdAsync(string id)
         {
             try
             {
@@ -64,7 +66,8 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                     _logger.LogError("UserId is null");
                     return null;
                 }
-                return await _userManager.FindByIdAsync(id);
+                var user = await _userManager.FindByIdAsync(id);
+                return user;
             }
             catch (Exception ex)
             {
@@ -73,7 +76,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<ApiUser> GetByEmail(string email)
+        public async Task<ApiUser> GetByEmailAsync(string email)
         {
             try
             {
@@ -91,56 +94,49 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<bool> Add(ApiUser user)
+        public async Task<IdentityResult> AddAsync(ApiUser user)
         {
-            try
+            if (user == null)
             {
-                if (user == null)
-                {
-                    _logger.LogError("User cannot be null");
-                    return false;
-                }
-
-                string generatedPassword = await GenerateRandomPassword();
-                var res = await _userManager.CreateAsync(user, generatedPassword);
-                if (!res.Succeeded)
-                {
-                    _logger.LogError($"Erreur lors de l'ajout de l'utilisateur {user.Email}");
-                    return false;
-                }
-
-                string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                string tokenValidity = await _settings.GetSettingValueAsync("api:email:confirmationTokenValidityLifeSpanDays", "2");
-                string baseUrl = string.Concat(
-                    await _settings.GetSettingValueAsync("api:scheme", "https"), "://",
-                    await _settings.GetSettingValueAsync("api:host", "localhost"), ":",
-                    await _settings.GetSettingValueAsync("api:port", 5001)
-                );
-                
-                await _emailSending.SendTemplatedEmailAsync(
-                    user.Email,
-                    "Confirmation de votre email",
-                    "EmailConfirmation",
-                    "en",
-                    new Dictionary<string, string> { 
-                        { "Token", token }, 
-                        { "TokenValidity", tokenValidity }, 
-                        { "BaseUrl", baseUrl },
-                        { "FirstName", user.FirstName },
-                        { "LastName", user.LastName },
-                        { "Email", user.Email }
-                    }
-                );
-                return true;
+                _logger.LogError("User cannot be null");
+                return IdentityResult.Failed();
             }
-            catch (Exception ex)
+
+            string generatedPassword = await GenerateRandomPassword();
+            IdentityResult result = await _userManager.CreateAsync(user, generatedPassword);
+            if (!result.Succeeded)
             {
-                _logger.LogError(ex, ex.Message, null);
-                return false;
+                _logger.LogError($"Erreur lors de l'ajout de l'utilisateur {user.Email}");
+                return result;
             }
+
+            string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            string tokenValidity = await _settings.GetSettingValueAsync("api:email:confirmationTokenValidityLifeSpanDays", "2");
+            string baseUrl = string.Concat(
+                await _settings.GetSettingValueAsync("api:scheme", "https"), "://",
+                await _settings.GetSettingValueAsync("api:host", "localhost"), ":",
+                await _settings.GetSettingValueAsync("api:port", 5001)
+            );
+            
+            await _emailSending.SendTemplatedEmailAsync(
+                user.Email,
+                "Confirmation de votre email",
+                "EmailConfirmation",
+                "en",
+                new Dictionary<string, string> { 
+                    { "Token", token }, 
+                    { "TokenValidity", tokenValidity }, 
+                    { "BaseUrl", baseUrl },
+                    { "FirstName", user.FirstName },
+                    { "LastName", user.LastName },
+                    { "Email", user.Email }
+                }
+            );
+            return result;
+            
         }
 
-        public async Task<bool> Edit(ApiUser user)
+        public async Task<bool> UpdateAsync(ApiUser user)
         {
             try
             {
@@ -165,7 +161,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<bool> Delete(string id)
+        public async Task<bool> DeleteAsync(string id)
         {
             try
             {
@@ -193,12 +189,12 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<List<ApiUser>> GetAll()
+        public async Task<List<ApiUser>> GetAllAsync()
         {
             return await _userManager.Users.ToListAsync();
         }
 
-        public async Task<bool> AddRole(ApiUser user, ApiRole[] role)
+        public async Task<bool> AddRoleAsync(ApiUser user, ApiRole[] role)
         {
             try
             {
@@ -222,7 +218,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<bool> RemoveRoles(ApiUser user)
+        public async Task<bool> RemoveRolesAsync(ApiUser user)
         {
             try
             {
@@ -235,6 +231,42 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 _logger.LogError(ex, $"Error removing roles for user {user.Id}");
                 return false;
             }
+        }
+
+        public async Task<IdentityResult> ResetPasswordAsync(ApiUser user, string token, string password)
+        {
+            return await _userManager.ResetPasswordAsync(user, token, password);
+        }
+
+        public async Task<IdentityResult> ConfirmEmailAsync(ApiUser user, string token)
+        {
+            return await _userManager.ConfirmEmailAsync(user, token);
+        }
+
+        public async Task<string> GeneratePasswordResetTokenAsync(ApiUser user)
+        {
+            return await _userManager.GeneratePasswordResetTokenAsync(user);
+        }
+
+        public async Task<string> GenerateEmailConfirmationTokenAsync(ApiUser user)
+        {
+            return await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        }
+
+        public async Task<List<ApiRole>> GetRolesAsync(ApiUser user)
+        {
+            IEnumerable<string> roles = await _userManager.GetRolesAsync(user);
+            return _roleManager.Roles.Where(r => roles.Contains(r.Name)).ToList();
+        }
+
+        public async Task<bool> CheckPasswordAsync(ApiUser user, string userPassword)
+        {
+            return await _userManager.CheckPasswordAsync(user, userPassword);
+        }
+
+        public async Task<bool> IsEmailConfirmedAsync(ApiUser user)
+        {
+            return await _userManager.IsEmailConfirmedAsync(user);
         }
 
         private async Task<string> GenerateRandomPassword()

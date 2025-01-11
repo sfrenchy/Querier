@@ -98,8 +98,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Assemblies\" />
-    <Folder Include="Domain\Services\Role\" />
-    <Folder Include="Domain\Services\User\" />
     <Folder Include="wwwroot\uploadManager\" />
   </ItemGroup>
   <ItemGroup>

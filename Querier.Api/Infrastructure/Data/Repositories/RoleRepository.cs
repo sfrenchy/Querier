@@ -9,14 +9,6 @@ using Querier.Api.Domain.Entities.Auth;
 
 namespace Querier.Api.Infrastructure.Data.Repositories
 {
-    public interface IRoleRepository
-    {
-        Task<List<ApiRole>> GetAll();
-        Task<bool> Add(ApiRole role);
-        Task<bool> Edit(ApiRole role);
-        Task<bool> Delete(string id);
-    }
-
     public class RoleRepository : IRoleRepository
     {
         private readonly ILogger<UserRepository> _logger;
@@ -28,7 +20,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             _roleManager = roleManager;
         }
 
-        public async Task<List<ApiRole>> GetAll()
+        public List<ApiRole> GetAll()
         {
             try
             {
@@ -41,7 +33,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<bool> Add(ApiRole role)
+        public async Task<bool> AddAsync(ApiRole role)
         {
             try
             {
@@ -62,7 +54,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<bool> Edit(ApiRole role)
+        public async Task<bool> UpdateAsync(ApiRole role)
         {
             try
             {
@@ -82,7 +74,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<bool> Delete(string id)
+        public async Task<bool> DeleteByIdAsync(string id)
         {
             try
             {
