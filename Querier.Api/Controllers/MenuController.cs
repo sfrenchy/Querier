@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -25,17 +26,8 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public class MenuController : ControllerBase
+    public class MenuController(IMenuService service, ILogger<MenuController> logger) : ControllerBase
     {
-        private readonly IMenuService _service;
-        private readonly ILogger<MenuController> _logger;
-
-        public MenuController(IMenuService service, ILogger<MenuController> logger)
-        {
-            _service = service;
-            _logger = logger;
-        }
-
         /// <summary>
         /// Gets all menu categories
         /// </summary>
@@ -44,7 +36,18 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<List<MenuDto>>> GetAll()
         {
-            return Ok(await _service.GetAllAsync());
+            logger.LogInformation("Getting all menu categories");
+            try
+            {
+                var categories = await service.GetAllAsync();
+                logger.LogInformation("Successfully retrieved {Count} menu categories", categories.Count);
+                return Ok(categories);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving all menu categories");
+                return StatusCode(500, new { message = "An error occurred while retrieving menu categories" });
+            }
         }
 
         /// <summary>
@@ -57,11 +60,24 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<MenuDto>> GetById(int id)
         {
-            var category = await _service.GetByIdAsync(id);
-            if (category == null)
-                return NotFound();
+            logger.LogInformation("Getting menu category {CategoryId}", id);
+            try
+            {
+                var category = await service.GetByIdAsync(id);
+                if (category == null)
+                {
+                    logger.LogWarning("Menu category {CategoryId} not found", id);
+                    return NotFound(new { message = $"Menu category {id} not found" });
+                }
 
-            return Ok(category);
+                logger.LogInformation("Successfully retrieved menu category {CategoryId}", id);
+                return Ok(category);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving menu category {CategoryId}", id);
+                return StatusCode(500, new { message = "An error occurred while retrieving the menu category" });
+            }
         }
 
         /// <summary>
@@ -75,8 +91,24 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<MenuDto>> Create([FromBody] MenuCreateDto request)
         {
-            var category = await _service.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
+            if (request == null)
+            {
+                logger.LogWarning("Attempted to create menu category with null data");
+                return BadRequest(new { message = "Menu category data cannot be null" });
+            }
+
+            logger.LogInformation("Creating new menu category");
+            try
+            {
+                var category = await service.CreateAsync(request);
+                logger.LogInformation("Successfully created menu category {CategoryId}", category.Id);
+                return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error creating menu category");
+                return StatusCode(500, new { message = "An error occurred while creating the menu category" });
+            }
         }
 
         /// <summary>
@@ -91,11 +123,30 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<MenuDto>> Update(int id, [FromBody] MenuCreateDto request)
         {
-            var category = await _service.UpdateAsync(id, request);
-            if (category == null)
-                return NotFound();
+            if (request == null)
+            {
+                logger.LogWarning("Attempted to update menu category {CategoryId} with null data", id);
+                return BadRequest(new { message = "Menu category data cannot be null" });
+            }
 
-            return Ok(category);
+            logger.LogInformation("Updating menu category {CategoryId}", id);
+            try
+            {
+                var category = await service.UpdateAsync(id, request);
+                if (category == null)
+                {
+                    logger.LogWarning("Menu category {CategoryId} not found for update", id);
+                    return NotFound(new { message = $"Menu category {id} not found" });
+                }
+
+                logger.LogInformation("Successfully updated menu category {CategoryId}", id);
+                return Ok(category);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating menu category {CategoryId}", id);
+                return StatusCode(500, new { message = "An error occurred while updating the menu category" });
+            }
         }
 
         /// <summary>
@@ -109,11 +160,24 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _service.DeleteAsync(id);
-            if (!result)
-                return NotFound();
+            logger.LogInformation("Deleting menu category {CategoryId}", id);
+            try
+            {
+                var result = await service.DeleteAsync(id);
+                if (!result)
+                {
+                    logger.LogWarning("Menu category {CategoryId} not found for deletion", id);
+                    return NotFound(new { message = $"Menu category {id} not found" });
+                }
 
-            return NoContent();
+                logger.LogInformation("Successfully deleted menu category {CategoryId}", id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error deleting menu category {CategoryId}", id);
+                return StatusCode(500, new { message = "An error occurred while deleting the menu category" });
+            }
         }
     }
 } 
