@@ -1,21 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories;
 using Querier.Api.Application.Interfaces.Services;
-using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Entities.Auth;
-using Querier.Api.Infrastructure.Data.Context;
-using Querier.Api.Infrastructure.Data.Repositories;
 using Querier.Api.Tools;
 
 namespace Querier.Api.Domain.Services
@@ -24,24 +19,30 @@ namespace Querier.Api.Domain.Services
         IUserRepository userRepository,
         ISettingService settingService,
         IAuthenticationRepository authenticationRepository,
-        TokenValidationParameters tokenValidationParameters)
+        TokenValidationParameters tokenValidationParameters,
+        ILogger<AuthenticationService> logger)
         : IAuthenticationService
     {
         private async Task<AuthResultDto> GenerateJwtToken(ApiUser user)
         {
-            var jwtSecret = await settingService.GetSettingValueAsync<string>("jwt:secret");
-            var jwtIssuer = await settingService.GetSettingValueAsync<string>("jwt:issuer");
-            var jwtAudience = await settingService.GetSettingValueAsync<string>("jwt:audience");
-            var jwtExpiryInMinutes = await settingService.GetSettingValueAsync<int>("jwt:expiry");
-
-            if (string.IsNullOrEmpty(jwtSecret))
-                throw new InvalidOperationException("JWT secret is not configured");
-
-            // Récupérer les rôles de l'utilisateur
-            var userRoles = await userRepository.GetRolesAsync(user);
-
-            if (user.Email != null)
+            try
             {
+                var jwtSecret = await settingService.GetSettingValueAsync<string>("jwt:secret");
+                var jwtIssuer = await settingService.GetSettingValueAsync<string>("jwt:issuer");
+                var jwtAudience = await settingService.GetSettingValueAsync<string>("jwt:audience");
+                var jwtExpiryInMinutes = await settingService.GetSettingValueAsync<int>("jwt:expiry");
+                var refreshTokenExpiryInDays = await settingService.GetSettingValueAsync<int>("jwt:refreshTokenExpiry");
+                if (refreshTokenExpiryInDays == 0) refreshTokenExpiryInDays = 180; // 6 mois par défaut
+
+                if (string.IsNullOrEmpty(jwtSecret))
+                    throw new InvalidOperationException("JWT secret is not configured");
+
+                if (user.Email == null)
+                    throw new InvalidOperationException("User email cannot be null");
+
+                logger.LogInformation("Generating JWT token for user: {Email}", user.Email);
+
+                var userRoles = await userRepository.GetRolesAsync(user);
                 var claims = new List<Claim>
                 {
                     new Claim("Id", user.Id),
@@ -50,19 +51,17 @@ namespace Querier.Api.Domain.Services
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 };
 
-                // Ajouter les rôles aux claims
-                foreach (var role in userRoles)
+                foreach (var role in userRoles.Where(r => r.Name != null))
                 {
                     if (role.Name != null) 
                         claims.Add(new Claim(ClaimTypes.Role, role.Name));
                 }
 
                 var key = Encoding.ASCII.GetBytes(jwtSecret);
-                var expiryInMinutes = jwtExpiryInMinutes;
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    Expires = DateTime.UtcNow.AddMinutes(expiryInMinutes),
+                    Expires = DateTime.UtcNow.AddMinutes(jwtExpiryInMinutes),
                     SigningCredentials = new SigningCredentials(
                         new SymmetricSecurityKey(key),
                         SecurityAlgorithms.HmacSha256Signature
@@ -81,12 +80,13 @@ namespace Querier.Api.Domain.Services
                     IsUsed = false,
                     UserId = user.Id,
                     AddedDate = DateTime.UtcNow,
-                    ExpiryDate = DateTime.UtcNow.AddMonths(6),
+                    ExpiryDate = DateTime.UtcNow.AddDays(refreshTokenExpiryInDays),
                     IsRevoked = false,
                     Token = Utils.RandomString(25) + Guid.NewGuid()
                 };
 
-                authenticationRepository.AddRefreshTokenAsync(refreshToken);
+                await authenticationRepository.AddRefreshTokenAsync(refreshToken);
+                logger.LogInformation("Successfully generated JWT token for user: {Email}", user.Email);
 
                 return new AuthResultDto()
                 {
@@ -95,75 +95,116 @@ namespace Querier.Api.Domain.Services
                     RefreshToken = refreshToken.Token
                 };
             }
-            else
+            catch (Exception ex)
             {
-                throw new InvalidOperationException("user email is null");
+                logger.LogError(ex, "Error generating JWT token for user: {Email}", user.Email);
+                throw;
             }
         }
+
         public async Task<SignUpResultDto> SignUp(SignUpDto user)
         {
-            // check if the user with the same email exist
-            var existingUser = await userRepository.GetByEmailAsync(user.Email);
-
-            if (existingUser != null)
+            try
             {
+                logger.LogInformation("Attempting to sign up user: {Email}", user.Email);
+
+                var existingUser = await userRepository.GetByEmailAsync(user.Email);
+                if (existingUser != null)
+                {
+                    logger.LogWarning("Sign up failed - Email already exists: {Email}", user.Email);
+                    return new SignUpResultDto()
+                    {
+                        Success = false,
+                        Errors = ["Email already exists"]
+                    };
+                }
+
+                var newUser = new ApiUser() 
+                { 
+                    Email = user.Email, 
+                    UserName = user.Email, 
+                    FirstName = user.FirstName, 
+                    LastName = user.LastName 
+                };
+
+                var isCreated = await userRepository.AddAsync(newUser);
+                if (!isCreated.Succeeded)
+                {
+                    logger.LogWarning("Failed to create user: {Email}. Errors: {@Errors}", 
+                        user.Email, isCreated.Errors);
+                    return new SignUpResultDto()
+                    {
+                        Success = false,
+                        Errors = isCreated.Errors.Select(x => x.Description).ToList()
+                    };
+                }
+
+                var authResult = await GenerateJwtToken(newUser);
+                logger.LogInformation("Successfully signed up user: {Email}", user.Email);
+
                 return new SignUpResultDto()
                 {
-                    Success = false,
-                    Errors = new List<string>()
-                    {
-                        "Email already exist"
-                    }
+                    Success = true,
+                    Email = user.Email,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    RefreshToken = authResult.RefreshToken,
+                    Token = authResult.Token,
+                    UserName = user.UserName,
+                    Roles = user.Roles
                 };
             }
-
-            var newUser = new ApiUser() { Email = user.Email, UserName = user.Email, FirstName = user.FirstName, LastName = user.LastName };
-            var isCreated = await userRepository.AddAsync(newUser);
-
-            if (!isCreated.Succeeded)
-                return new SignUpResultDto()
-                {
-                    Success = false,
-                    Errors = isCreated.Errors.Select(x => x.Description).ToList()
-                };
-            
-            var authResult = await GenerateJwtToken(newUser);
-
-            return new SignUpResultDto()
+            catch (Exception ex)
             {
-                Success = true,
-                Errors = isCreated.Errors.Select(x => x.Description).ToList(),
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                RefreshToken = authResult.RefreshToken,
-                Token = authResult.Token,
-                UserName = user.UserName,
-                Roles = user.Roles,
-            };
+                logger.LogError(ex, "Unexpected error during sign up for user: {Email}", user.Email);
+                throw;
+            }
         }
 
         public async Task<SignUpResultDto> SignIn(SignInDto user)
         {
-            var existingUser = await userRepository.GetByEmailAsync(user.Email);
-            if (existingUser == null)
+            try
             {
-                return new SignUpResultDto()
+                logger.LogInformation("Attempting to sign in user: {Email}", user.Email);
+
+                var existingUser = await userRepository.GetByEmailAsync(user.Email);
+                if (existingUser == null)
                 {
-                    Success = false,
-                    Errors = new List<string>(){
-                        "Invalid authentication request"
-                    }
-                };
-            }
+                    logger.LogWarning("Sign in failed - User not found: {Email}", user.Email);
+                    return new SignUpResultDto()
+                    {
+                        Success = false,
+                        Errors = ["Invalid credentials"]
+                    };
+                }
 
-            bool passwordIsCorrect = await userRepository.CheckPasswordAsync(existingUser, user.Password);
-            bool emailConfirmed = await userRepository.IsEmailConfirmedAsync(existingUser);
+                bool passwordIsCorrect = await userRepository.CheckPasswordAsync(existingUser, user.Password);
+                bool emailConfirmed = await userRepository.IsEmailConfirmedAsync(existingUser);
 
-            if (passwordIsCorrect && emailConfirmed)
-            {
-                AuthResultDto r = await GenerateJwtToken(existingUser);
+                if (!emailConfirmed)
+                {
+                    logger.LogWarning("Sign in failed - Email not confirmed: {Email}", user.Email);
+                    return new SignUpResultDto()
+                    {
+                        Success = false,
+                        Errors = ["Email not confirmed"]
+                    };
+                }
+
+                if (!passwordIsCorrect)
+                {
+                    logger.LogWarning("Sign in failed - Invalid password: {Email}", user.Email);
+                    return new SignUpResultDto()
+                    {
+                        Success = false,
+                        Errors = ["Invalid credentials"]
+                    };
+                }
+
+                var authResult = await GenerateJwtToken(existingUser);
                 var roles = await userRepository.GetRolesAsync(existingUser);
+
+                logger.LogInformation("Successfully signed in user: {Email}", user.Email);
 
                 return new SignUpResultDto()
                 {
@@ -171,133 +212,156 @@ namespace Querier.Api.Domain.Services
                     FirstName = existingUser.FirstName,
                     LastName = existingUser.LastName,
                     Roles = roles.Select(role => role.Name).ToList(),
-                    RefreshToken = r.RefreshToken,
-                    Success = r.Success,
-                    Token = r.Token,
+                    RefreshToken = authResult.RefreshToken,
+                    Success = true,
+                    Token = authResult.Token,
                     Email = existingUser.Email,
-                    UserName = existingUser.UserName,
+                    UserName = existingUser.UserName
                 };
             }
-            else
+            catch (Exception ex)
             {
-                return new SignUpResultDto()
-                {
-                    Success = false,
-                    Errors = new List<string>(){
-                        "Invalid authentication request"
-                    }
-                };
+                logger.LogError(ex, "Unexpected error during sign in for user: {Email}", user.Email);
+                throw;
             }
         }
 
         public async Task<AuthResultDto> RefreshToken(TokenRequest tokenRequest)
         {
-            var jwtTokenHandler = new JwtSecurityTokenHandler();
             try
             {
-                // Get the JWT secret and set up validation parameters
+                logger.LogInformation("Attempting to refresh token");
+
                 var jwtSecret = await settingService.GetSettingValueAsync<string>("jwt:secret");
                 if (string.IsNullOrEmpty(jwtSecret))
+                {
+                    logger.LogError("JWT secret is not configured");
                     throw new InvalidOperationException("JWT secret is not configured");
+                }
 
                 var key = Encoding.ASCII.GetBytes(jwtSecret);
                 var signingKey = new SymmetricSecurityKey(key);
 
-                // Configure validation parameters with the signing key
                 tokenValidationParameters.ValidateLifetime = false;
                 tokenValidationParameters.IssuerSigningKey = signingKey;
 
-                var principal = jwtTokenHandler.ValidateToken(tokenRequest.Token, tokenValidationParameters, out var validatedToken);
+                var jwtTokenHandler = new JwtSecurityTokenHandler();
+                ClaimsPrincipal principal;
 
-                // Now we need to check if the token has a valid security algorithm
-                if (validatedToken is JwtSecurityToken jwtSecurityToken)
+                try
                 {
-                    var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
+                    principal = jwtTokenHandler.ValidateToken(tokenRequest.Token, tokenValidationParameters, out var validatedToken);
 
-                    if (result == false)
+                    if (validatedToken is not JwtSecurityToken jwtSecurityToken || 
+                        !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
                     {
-                        return null;
+                        logger.LogWarning("Invalid token algorithm");
+                        return new AuthResultDto
+                        {
+                            Success = false,
+                            Errors = ["Invalid token"]
+                        };
                     }
                 }
-
-                // Will get the time stamp in unix time
-                var utcExpiryDate = long.Parse(principal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
-
-                // we convert the expiry date from seconds to the date
-                var expDate = Utils.UnixTimeStampToDateTime(utcExpiryDate);
-
-                if (expDate > DateTime.UtcNow)
+                catch (SecurityTokenException ex)
                 {
-                    return new AuthResultDto()
+                    logger.LogWarning(ex, "Token validation failed");
+                    return new AuthResultDto
                     {
-                        Errors = new List<string>() { $"We cannot refresh this since the token has not expired. Expire in {(expDate - DateTime.UtcNow).TotalMinutes} minutes" },
-                        Success = false
+                        Success = false,
+                        Errors = ["Invalid token"]
                     };
                 }
 
-                // Check the token we got if its saved in the db
+                var expiryDateUnix = long.Parse(principal.Claims.First(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
+                var expiryDateUtc = Utils.UnixTimeStampToDateTime(expiryDateUnix);
+
+                if (expiryDateUtc > DateTime.UtcNow)
+                {
+                    logger.LogWarning("Token has not expired yet");
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        Errors =
+                        [
+                            $"Token is still valid for {(expiryDateUtc - DateTime.UtcNow).TotalMinutes:F1} minutes"
+                        ]
+                    };
+                }
+
                 var storedRefreshToken = await authenticationRepository.GetRefreshTokenAsync(tokenRequest.RefreshToken);
                 if (storedRefreshToken == null)
                 {
-                    return new AuthResultDto()
+                    logger.LogWarning("Refresh token not found");
+                    return new AuthResultDto
                     {
-                        Errors = new List<string>() { "refresh token doesnt exist" },
-                        Success = false
+                        Success = false,
+                        Errors = ["Invalid refresh token"]
                     };
                 }
 
-                // Check the date of the saved token if it has expired
                 if (DateTime.UtcNow > storedRefreshToken.ExpiryDate)
                 {
-                    return new AuthResultDto()
+                    logger.LogWarning("Refresh token has expired");
+                    return new AuthResultDto
                     {
-                        Errors = new List<string>() { "token has expired, user needs to relogin" },
-                        Success = false
+                        Success = false,
+                        Errors = ["Refresh token has expired"]
                     };
                 }
 
-                // check if the refresh token has been used
                 if (storedRefreshToken.IsUsed)
                 {
-                    return new AuthResultDto()
+                    logger.LogWarning("Refresh token has already been used");
+                    return new AuthResultDto
                     {
-                        Errors = new List<string>() { "token has been used" },
-                        Success = false
+                        Success = false,
+                        Errors = ["Refresh token has already been used"]
                     };
                 }
 
-                // Check if the token is revoked
                 if (storedRefreshToken.IsRevoked)
                 {
-                    return new AuthResultDto()
+                    logger.LogWarning("Refresh token has been revoked");
+                    return new AuthResultDto
                     {
-                        Errors = new List<string>() { "token has been revoked" },
-                        Success = false
+                        Success = false,
+                        Errors = ["Refresh token has been revoked"]
                     };
                 }
 
-                // we are getting here the jwt token id
-                var jti = principal.Claims.SingleOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
-
-                // check the id that the recieved token has against the id saved in the db
+                var jti = principal.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
                 if (storedRefreshToken.JwtId != jti)
                 {
-                    return new AuthResultDto()
+                    logger.LogWarning("Refresh token does not match JWT");
+                    return new AuthResultDto
                     {
-                        Errors = new List<string>() { "the token doesn't matched the saved token" },
-                        Success = false
+                        Success = false,
+                        Errors = ["Invalid refresh token"]
                     };
                 }
 
                 storedRefreshToken.IsUsed = true;
-                authenticationRepository.UpdateRefreshTokenAsync(storedRefreshToken);
+                await authenticationRepository.UpdateRefreshTokenAsync(storedRefreshToken);
 
-                var dbUser = await userRepository.GetByIdAsync(storedRefreshToken.UserId);
-                return await GenerateJwtToken(dbUser);
+                var user = await userRepository.GetByIdAsync(storedRefreshToken.UserId);
+                if (user == null)
+                {
+                    logger.LogError("User not found for refresh token");
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        Errors = ["User not found"]
+                    };
+                }
+
+                logger.LogInformation("Successfully refreshed token for user: {Email}", user.Email);
+                return await GenerateJwtToken(user);
             }
             catch (Exception ex)
             {
-                return null;
+                logger.LogError(ex, "Unexpected error during token refresh");
+                throw;
             }
         }
     }

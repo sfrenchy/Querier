@@ -1,7 +1,7 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Querier.Api.Domain.Common.Enums;
-using System.Collections.Generic;
 using Querier.Api.Domain.Entities.QDBConnection.Endpoints;
 
 namespace Querier.Api.Domain.Entities.DBConnection

@@ -1,19 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.CodeAnalysis.Operations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
 using Querier.Api.Domain.Common.Metadata;
-using Querier.Api.Domain.Entities.Auth;
-using Querier.Api.Domain.Entities.Menu;
 using Querier.Api.Domain.Entities;
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using System.Linq;
-using System.Collections.Generic;
-using Microsoft.CodeAnalysis.Operations;
+using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Entities.DBConnection;
+using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Infrastructure.Data.Context
 {

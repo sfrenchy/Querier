@@ -1,16 +1,16 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Querier.Api.Domain.Services;
-using System.Collections.Generic;
-using System;
-using System.Linq;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
 {

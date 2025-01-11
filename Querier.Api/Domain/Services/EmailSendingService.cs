@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using MailKit.Security;
+using Microsoft.Extensions.Logging;
 using MimeKit;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;

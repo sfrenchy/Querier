@@ -1,21 +1,21 @@
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using System.IO;
-using Microsoft.AspNetCore.Authorization;
-using Querier.Api.Infrastructure.Extensions;
-using Querier.Api.Infrastructure.Swagger.Helpers;
-using Querier.Api.Infrastructure.Data.Context;
 using Querier.Api.Application.Interfaces.Infrastructure;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Threading.Tasks;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Common.Utilities;
-using Querier.Api.Infrastructure.Data;
 using Querier.Api.Domain.Services;
+using Querier.Api.Infrastructure.Data;
+using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Infrastructure.Extensions;
+using Querier.Api.Infrastructure.Swagger.Helpers;
 
 namespace Querier.Api
 {

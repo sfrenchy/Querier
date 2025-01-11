@@ -4,22 +4,22 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Dynamic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Querier.Api.Tools;
-using JsonSerializer = System.Text.Json.JsonSerializer;
-using System.IO;
-using System.Threading.Tasks;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Common.ValueObjects;
 using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Tools;
 using DataTable = System.Data.DataTable;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Querier.Api.Domain.Services
 {

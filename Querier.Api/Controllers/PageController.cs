@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Querier.Api.Controllers
 {

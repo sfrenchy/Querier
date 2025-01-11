@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Entities.Auth;
@@ -26,8 +27,8 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public class AuthenticationController : ControllerBase
     {
-        private readonly ILogger _logger;
-        private IAuthenticationService _authManagementService;
+        private readonly ILogger<AuthenticationController> _logger;
+        private readonly IAuthenticationService _authManagementService;
 
         public AuthenticationController(IAuthenticationService authManagementService, ILogger<AuthenticationController> logger)
         {
@@ -57,18 +58,39 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(SignUpResultDto), StatusCodes.Status200OK)]
         public async Task<IActionResult> SignUp([FromBody] SignUpDto user)
         {
-            if (ModelState.IsValid)
+            _logger.LogInformation("Attempting to sign up user with email: {Email}", user.Email);
+
+            if (!ModelState.IsValid)
             {
-                return Ok(await _authManagementService.SignUp(user));
-            }
-            return BadRequest(new SignUpResultDto()
-            {
-                Success = false,
-                Errors = new List<string>()
+                _logger.LogWarning("Invalid signup model state for email: {Email}", user.Email);
+                return BadRequest(new SignUpResultDto
                 {
-                    "Invalid payload"
+                    Success = false,
+                    Errors = new List<string> { "Invalid registration details" }
+                });
+            }
+
+            try
+            {
+                var result = await _authManagementService.SignUp(user);
+                if (result.Success)
+                {
+                    _logger.LogInformation("User successfully signed up: {Email}", user.Email);
+                    return Ok(result);
                 }
-            });
+
+                _logger.LogWarning("Failed to sign up user: {Email}. Errors: {@Errors}", user.Email, result.Errors);
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during signup for email: {Email}", user.Email);
+                return StatusCode(StatusCodes.Status500InternalServerError, new SignUpResultDto
+                {
+                    Success = false,
+                    Errors = new List<string> { "An unexpected error occurred during registration" }
+                });
+            }
         }
 
         /// <summary>
@@ -93,18 +115,39 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(SignUpResultDto), StatusCodes.Status200OK)]
         public async Task<IActionResult> SignIn([FromBody] SignInDto user)
         {
-            if (ModelState.IsValid)
+            _logger.LogInformation("Attempting to sign in user: {Email}", user.Email);
+
+            if (!ModelState.IsValid)
             {
-                return Ok(await _authManagementService.SignIn(user));
-            }
-            return BadRequest(new SignUpResultDto()
-            {
-                Success = false,
-                Errors = new List<string>()
+                _logger.LogWarning("Invalid signin model state for email: {Email}", user.Email);
+                return BadRequest(new SignUpResultDto
                 {
-                    "Invalid payload"
+                    Success = false,
+                    Errors = new List<string> { "Invalid login details" }
+                });
+            }
+
+            try
+            {
+                var result = await _authManagementService.SignIn(user);
+                if (result.Success)
+                {
+                    _logger.LogInformation("User successfully signed in: {Email}", user.Email);
+                    return Ok(result);
                 }
-            });
+
+                _logger.LogWarning("Failed login attempt for user: {Email}", user.Email);
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during signin for email: {Email}", user.Email);
+                return StatusCode(StatusCodes.Status500InternalServerError, new SignUpResultDto
+                {
+                    Success = false,
+                    Errors = new List<string> { "An unexpected error occurred during login" }
+                });
+            }
         }
 
         /// <summary>
@@ -129,18 +172,47 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(SignUpResultDto), StatusCodes.Status200OK)]
         public async Task<IActionResult> RefreshToken([FromBody] TokenRequest tokenRequest)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                return Ok(await _authManagementService.RefreshToken(tokenRequest));
+                _logger.LogWarning("Invalid refresh token request");
+                return BadRequest(new SignUpResultDto
+                {
+                    Success = false,
+                    Errors = new List<string> { "Invalid token request" }
+                });
             }
 
-            return BadRequest(new SignUpResultDto()
+            try
             {
-                Errors = new List<string>() {
-                    "Invalid payload"
-                },
-                Success = false
-            });
+                var result = await _authManagementService.RefreshToken(tokenRequest);
+                if (result == null)
+                {
+                    _logger.LogWarning("Token refresh failed - invalid or expired token");
+                    return BadRequest(new SignUpResultDto
+                    {
+                        Success = false,
+                        Errors = new List<string> { "Invalid token" }
+                    });
+                }
+
+                if (result.Success)
+                {
+                    _logger.LogInformation("Token successfully refreshed");
+                    return Ok(result);
+                }
+
+                _logger.LogWarning("Token refresh failed. Errors: {@Errors}", result.Errors);
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during token refresh");
+                return StatusCode(StatusCodes.Status500InternalServerError, new SignUpResultDto
+                {
+                    Success = false,
+                    Errors = new List<string> { "An unexpected error occurred during token refresh" }
+                });
+            }
         }
     }
 }

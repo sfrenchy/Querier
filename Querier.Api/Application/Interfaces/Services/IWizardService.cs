@@ -1,6 +1,6 @@
-using Querier.Api.Application.DTOs.Requests.Setup;
 using System.Threading.Tasks;
 using Querier.Api.Application.DTOs;
+using Querier.Api.Application.DTOs.Requests.Setup;
 
 namespace Querier.Api.Domain.Services
 {

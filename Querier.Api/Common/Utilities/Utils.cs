@@ -4,10 +4,10 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
-using JsonSerializer = System.Text.Json.JsonSerializer;
-using Querier.Api.Infrastructure.Data.Context;
 using Microsoft.Extensions.DependencyInjection;
 using Querier.Api.Common.Utilities;
+using Querier.Api.Infrastructure.Data.Context;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Querier.Api.Tools
 {

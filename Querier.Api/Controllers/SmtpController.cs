@@ -1,9 +1,9 @@
+using System;
+using System.Net;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
-using System.Net;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Services;

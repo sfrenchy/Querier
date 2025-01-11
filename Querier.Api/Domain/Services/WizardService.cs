@@ -1,15 +1,15 @@
-using Microsoft.AspNetCore.Identity;
 using System;
-using System.Threading.Tasks;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Linq;
-using Querier.Api.Domain.Entities.Auth;
-using Querier.Api.Domain.Common.Metadata;
-using Querier.Api.Infrastructure.Data.Context;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Domain.Common.Metadata;
+using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api.Domain.Services
 {

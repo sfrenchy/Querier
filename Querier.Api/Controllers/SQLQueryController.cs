@@ -1,13 +1,13 @@
 using System;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Querier.Api.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Common.Models;
+using Querier.Api.Domain.Entities;
 using Querier.Api.Infrastructure.Services;
 
 namespace Querier.Api.Controllers

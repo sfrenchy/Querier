@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
 using System;
-using Microsoft.Extensions.Configuration;
 using System.IO;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api
