@@ -38,8 +38,8 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogInformation("Setting roles for user {UserId}", id);
-                var foundUser = await userRepository.GetByIdAsync(id);
-                if (foundUser == null)
+            var foundUser = await userRepository.GetByIdAsync(id);
+            if (foundUser == null)
                 {
                     logger.LogWarning("User with ID {UserId} not found", id);
                     return false;
@@ -81,9 +81,9 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogInformation("Adding new user with email {Email}", user.Email);
-                var foundUser = await userRepository.GetByEmailAsync(user.Email);
-                if (foundUser != null)
-                {
+            var foundUser = await userRepository.GetByEmailAsync(user.Email);
+            if (foundUser != null)
+            {
                     logger.LogWarning("User with email {Email} already exists", user.Email);
                     return false;
                 }
@@ -94,7 +94,7 @@ namespace Querier.Api.Domain.Services
                 {
                     logger.LogError("Failed to create user {Email}. Errors: {Errors}", 
                         user.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
-                    return false;
+                return false;
                 }
 
                 logger.LogDebug("Adding roles to new user {Email}", user.Email);
@@ -130,18 +130,18 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogInformation("Updating user {UserId}", user.Id);
-                var foundUser = await userRepository.GetByIdAsync(user.Id);
-                if (foundUser == null)
-                {
+            var foundUser = await userRepository.GetByIdAsync(user.Id);
+            if (foundUser == null)
+            {
                     logger.LogWarning("User with ID {UserId} not found", user.Id);
-                    return false;
-                }
-                
-                foundUser.Email = user.Email;
-                foundUser.FirstName = user.FirstName;
-                foundUser.LastName = user.LastName;
-                foundUser.UserName = user.Email;
-                
+                return false;
+            }
+            
+            foundUser.Email = user.Email;
+            foundUser.FirstName = user.FirstName;
+            foundUser.LastName = user.LastName;
+            foundUser.UserName = user.Email;
+            
                 var updateResult = await userRepository.UpdateAsync(foundUser);
                 if (!updateResult)
                 {
@@ -215,8 +215,8 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogDebug("Retrieving user {UserId}", id);
-                var user = await userRepository.GetByIdAsync(id);
-                if (user == null)
+            var user = await userRepository.GetByIdAsync(id);
+            if (user == null)
                 {
                     logger.LogWarning("User with ID {UserId} not found", id);
                     return null;
@@ -288,10 +288,10 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogInformation("Resetting password for user {Email}", resetPasswordInfos.Email);
-                var user = await userRepository.GetByEmailAsync(resetPasswordInfos.Email);
+            var user = await userRepository.GetByEmailAsync(resetPasswordInfos.Email);
 
-                if (user == null)
-                {
+            if (user == null)
+            {
                     logger.LogWarning("User not found for password reset: {Email}", resetPasswordInfos.Email);
                     return new { success = false, message = "User not found, try again" };
                 }
@@ -331,10 +331,10 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogInformation("Processing email confirmation for {Email}", emailConfirmation.Email);
-                string token = Uri.UnescapeDataString(emailConfirmation.Token);
-                var user = await userRepository.GetByEmailAsync(emailConfirmation.Email);
+            string token = Uri.UnescapeDataString(emailConfirmation.Token);
+            var user = await userRepository.GetByEmailAsync(emailConfirmation.Email);
                 
-                if (user == null)
+            if (user == null)
                 {
                     logger.LogWarning("User not found for email confirmation: {Email}", emailConfirmation.Email);
                     return false;
@@ -495,28 +495,28 @@ namespace Querier.Api.Domain.Services
                     return null;
                 }
 
-                var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId))
+            var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                var userEmail = userClaims.FindFirst(ClaimTypes.Email)?.Value;
+                if (string.IsNullOrEmpty(userEmail))
                 {
-                    var userEmail = userClaims.FindFirst(ClaimTypes.Email)?.Value;
-                    if (string.IsNullOrEmpty(userEmail))
-                    {
-                        logger.LogWarning("No user identifier found in token");
-                        return null;
-                    }
-
-                    logger.LogDebug("Looking up user by email: {Email}", userEmail);
-                    var userByEmail = await userRepository.GetByEmailAsync(userEmail);
-                    if (userByEmail == null)
-                    {
-                        logger.LogWarning("No user found with email: {Email}", userEmail);
-                        return null;
-                    }
-                    userId = userByEmail.Id;
+                    logger.LogWarning("No user identifier found in token");
+                    return null;
                 }
 
+                    logger.LogDebug("Looking up user by email: {Email}", userEmail);
+                var userByEmail = await userRepository.GetByEmailAsync(userEmail);
+                if (userByEmail == null)
+                {
+                        logger.LogWarning("No user found with email: {Email}", userEmail);
+                    return null;
+                }
+                userId = userByEmail.Id;
+            }
+
                 logger.LogDebug("Retrieving current user with ID: {UserId}", userId);
-                return await GetByIdAsync(userId);
+            return await GetByIdAsync(userId);
             }
             catch (Exception ex)
             {
@@ -536,20 +536,20 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogInformation("Resending confirmation email to {Email}", userEmail);
-                var user = await userRepository.GetByEmailAsync(userEmail);
-                if (user == null)
-                {
+            var user = await userRepository.GetByEmailAsync(userEmail);
+            if (user == null)
+            {
                     logger.LogWarning("User not found with email: {Email}", userEmail);
-                    return false;
-                }
+                return false;
+            }
 
-                if (user.EmailConfirmed)
-                {
+            if (user.EmailConfirmed)
+            {
                     logger.LogWarning("Email already confirmed for user: {Email}", userEmail);
-                    return false;
-                }
+                return false;
+            }
 
-                var token = await userRepository.GenerateEmailConfirmationTokenAsync(user);
+            var token = await userRepository.GenerateEmailConfirmationTokenAsync(user);
                 var result = await SendConfirmationEmailAsync(user, token);
 
                 if (result)

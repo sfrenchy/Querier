@@ -33,31 +33,31 @@ namespace Querier.Api.Domain.Services
 
                 _logger.LogDebug("Generating JSON schema for type: {TypeName}", type.FullName);
 
-                if (type.IsGenericType)
-                {
+            if (type.IsGenericType)
+            {
                     _logger.LogTrace("Processing generic type: {TypeName}", type.FullName);
-                    var schema = HandleGenericType(type);
-                    if (schema != null)
+                var schema = HandleGenericType(type);
+                if (schema != null)
                     {
                         _logger.LogDebug("Generated schema for generic type: {TypeName}", type.FullName);
-                        return schema;
+                    return schema;
                     }
-                }
+            }
 
-                var baseSchema = new
-                {
-                    type = GetJsonType(type),
-                    format = GetJsonFormat(type),
-                    description = type.GetCustomAttribute<SummaryAttribute>()?.Summary,
-                    required = GetRequiredProperties(type),
-                    properties = GetJsonProperties(type),
-                    @enum = type.IsEnum ? Enum.GetNames(type) : null,
-                    minimum = GetMinValue(type),
-                    maximum = GetMaxValue(type),
-                    minLength = GetMinLength(type),
-                    maxLength = GetMaxLength(type),
-                    pattern = GetPattern(type)
-                };
+            var baseSchema = new
+            {
+                type = GetJsonType(type),
+                format = GetJsonFormat(type),
+                description = type.GetCustomAttribute<SummaryAttribute>()?.Summary,
+                required = GetRequiredProperties(type),
+                properties = GetJsonProperties(type),
+                @enum = type.IsEnum ? Enum.GetNames(type) : null,
+                minimum = GetMinValue(type),
+                maximum = GetMaxValue(type),
+                minLength = GetMinLength(type),
+                maxLength = GetMaxLength(type),
+                pattern = GetPattern(type)
+            };
 
                 var result = JsonSerializer.Serialize(baseSchema, _serializerOptions);
                 _logger.LogDebug("Successfully generated schema for type: {TypeName}", type.FullName);
@@ -73,39 +73,39 @@ namespace Querier.Api.Domain.Services
         private string HandleGenericType(Type type)
         {
             try
-            {
-                var genericTypeDef = type.GetGenericTypeDefinition();
-                var genericArgs = type.GetGenericArguments();
+        {
+            var genericTypeDef = type.GetGenericTypeDefinition();
+            var genericArgs = type.GetGenericArguments();
 
                 _logger.LogTrace("Handling generic type: {TypeName} with {ArgCount} arguments", 
                     type.FullName, genericArgs.Length);
 
-                if (genericTypeDef == typeof(PagedResult<>))
+            if (genericTypeDef == typeof(PagedResult<>))
                 {
                     _logger.LogTrace("Processing PagedResult<T> for type: {TypeName}", genericArgs[0].FullName);
-                    return HandlePagedResult(genericArgs[0]);
+                return HandlePagedResult(genericArgs[0]);
                 }
 
-                if (typeof(IEnumerable).IsAssignableFrom(type))
+            if (typeof(IEnumerable).IsAssignableFrom(type))
                 {
                     _logger.LogTrace("Processing IEnumerable<T> for type: {TypeName}", genericArgs[0].FullName);
-                    return HandleEnumerable(genericArgs[0]);
+                return HandleEnumerable(genericArgs[0]);
                 }
 
-                if (genericTypeDef == typeof(Task<>))
+            if (genericTypeDef == typeof(Task<>))
                 {
                     _logger.LogTrace("Processing Task<T> for type: {TypeName}", genericArgs[0].FullName);
-                    return GenerateSchema(genericArgs[0]);
+                return GenerateSchema(genericArgs[0]);
                 }
 
-                if (genericTypeDef == typeof(Nullable<>))
+            if (genericTypeDef == typeof(Nullable<>))
                 {
                     _logger.LogTrace("Processing Nullable<T> for type: {TypeName}", genericArgs[0].FullName);
-                    return HandleNullable(genericArgs[0]);
+                return HandleNullable(genericArgs[0]);
                 }
 
                 _logger.LogTrace("No specific handler for generic type: {TypeName}", type.FullName);
-                return null;
+            return null;
             }
             catch (Exception ex)
             {
@@ -120,26 +120,26 @@ namespace Querier.Api.Domain.Services
             {
                 _logger.LogTrace("Creating schema for PagedResult<{TypeName}>", itemType.FullName);
                 var schema = new
+            {
+                type = "object",
+                description = "Paginated result list",
+                properties = new
                 {
-                    type = "object",
-                    description = "Paginated result list",
-                    properties = new
+                    items = new
                     {
-                        items = new
-                        {
-                            type = "array",
-                            description = "List of items",
-                            items = JsonSerializer.Deserialize<object>(GenerateSchema(itemType))
-                        },
-                        total = new
-                        {
-                            type = "integer",
-                            format = "int32",
-                            description = "Total number of items"
-                        }
+                        type = "array",
+                        description = "List of items",
+                        items = JsonSerializer.Deserialize<object>(GenerateSchema(itemType))
+                    },
+                    total = new
+                    {
+                        type = "integer",
+                        format = "int32",
+                        description = "Total number of items"
                     }
-                };
-                return JsonSerializer.Serialize(schema, _serializerOptions);
+                }
+            };
+            return JsonSerializer.Serialize(schema, _serializerOptions);
             }
             catch (Exception ex)
             {
@@ -154,12 +154,12 @@ namespace Querier.Api.Domain.Services
             {
                 _logger.LogTrace("Creating schema for IEnumerable<{TypeName}>", itemType.FullName);
                 var schema = new
-                {
-                    type = "array",
-                    description = $"List of {itemType.Name}",
-                    items = JsonSerializer.Deserialize<object>(GenerateSchema(itemType))
-                };
-                return JsonSerializer.Serialize(schema, _serializerOptions);
+            {
+                type = "array",
+                description = $"List of {itemType.Name}",
+                items = JsonSerializer.Deserialize<object>(GenerateSchema(itemType))
+            };
+            return JsonSerializer.Serialize(schema, _serializerOptions);
             }
             catch (Exception ex)
             {
@@ -173,10 +173,10 @@ namespace Querier.Api.Domain.Services
             try
             {
                 _logger.LogTrace("Creating schema for Nullable<{TypeName}>", underlyingType.FullName);
-                var schema = JsonSerializer.Deserialize<object>(GenerateSchema(underlyingType));
-                var schemaDict = JsonSerializer.Deserialize<Dictionary<string, object>>(JsonSerializer.Serialize(schema));
-                schemaDict["nullable"] = true;
-                return JsonSerializer.Serialize(schemaDict, _serializerOptions);
+            var schema = JsonSerializer.Deserialize<object>(GenerateSchema(underlyingType));
+            var schemaDict = JsonSerializer.Deserialize<Dictionary<string, object>>(JsonSerializer.Serialize(schema));
+            schemaDict["nullable"] = true;
+            return JsonSerializer.Serialize(schemaDict, _serializerOptions);
             }
             catch (Exception ex)
             {
@@ -196,9 +196,9 @@ namespace Querier.Api.Domain.Services
                 }
 
                 var required = type.GetProperties()
-                    .Where(p => p.GetCustomAttribute<RequiredAttribute>() != null)
-                    .Select(p => p.Name)
-                    .ToArray();
+                .Where(p => p.GetCustomAttribute<RequiredAttribute>() != null)
+                .Select(p => p.Name)
+                .ToArray();
 
                 _logger.LogTrace("Found {Count} required properties for type: {TypeName}", 
                     required.Length, type.FullName);
@@ -373,28 +373,28 @@ namespace Querier.Api.Domain.Services
                 }
 
                 _logger.LogTrace("Mapping properties for type: {TypeName}", type.FullName);
-                var properties = type.GetProperties()
-                    .Where(p => p.CanRead && p.CanWrite)
-                    .ToDictionary(
-                        p => p.Name,
-                        p => new
-                        {
-                            type = GetJsonType(p.PropertyType),
-                            format = GetJsonFormat(p.PropertyType),
-                            description = p.GetCustomAttribute<SummaryAttribute>()?.Summary,
-                            required = p.GetCustomAttribute<RequiredAttribute>() != null,
-                            @enum = p.PropertyType.IsEnum ? Enum.GetNames(p.PropertyType) : null,
-                            minimum = GetMinValue(p.PropertyType),
-                            maximum = GetMaxValue(p.PropertyType),
-                            minLength = GetMinLength(p.PropertyType),
-                            maxLength = GetMaxLength(p.PropertyType),
-                            pattern = GetPattern(p.PropertyType)
-                        }
-                    );
+            var properties = type.GetProperties()
+                .Where(p => p.CanRead && p.CanWrite)
+                .ToDictionary(
+                    p => p.Name,
+                    p => new
+                    {
+                        type = GetJsonType(p.PropertyType),
+                        format = GetJsonFormat(p.PropertyType),
+                        description = p.GetCustomAttribute<SummaryAttribute>()?.Summary,
+                        required = p.GetCustomAttribute<RequiredAttribute>() != null,
+                        @enum = p.PropertyType.IsEnum ? Enum.GetNames(p.PropertyType) : null,
+                        minimum = GetMinValue(p.PropertyType),
+                        maximum = GetMaxValue(p.PropertyType),
+                        minLength = GetMinLength(p.PropertyType),
+                        maxLength = GetMaxLength(p.PropertyType),
+                        pattern = GetPattern(p.PropertyType)
+                    }
+                );
 
                 _logger.LogTrace("Mapped {Count} properties for type: {TypeName}", 
                     properties.Count, type.FullName);
-                return properties.Count > 0 ? properties : null;
+            return properties.Count > 0 ? properties : null;
             }
             catch (Exception ex)
             {

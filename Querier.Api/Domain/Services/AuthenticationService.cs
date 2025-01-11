@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories;
 using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Tools;
 

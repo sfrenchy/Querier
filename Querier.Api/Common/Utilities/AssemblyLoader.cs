@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Security;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -15,7 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Domain.Entities.DBConnection;
-using Querier.Api.Domain.Services;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace Querier.Api.Common.Utilities
@@ -24,49 +22,98 @@ namespace Querier.Api.Common.Utilities
     {
         private static bool VerifyAssemblyIntegrity(string assemblyPath, string expectedHash, ILogger logger)
         {
+            if (string.IsNullOrEmpty(assemblyPath))
+            {
+                logger.LogError("Assembly path is null or empty");
+                throw new ArgumentException("Assembly path cannot be null or empty", nameof(assemblyPath));
+            }
+
+            if (string.IsNullOrEmpty(expectedHash))
+            {
+                logger.LogError("Expected hash is null or empty");
+                throw new ArgumentException("Expected hash cannot be null or empty", nameof(expectedHash));
+            }
+
             try
             {
+                logger.LogDebug("Verifying integrity of assembly: {AssemblyPath}", assemblyPath);
                 var assemblyBytes = File.ReadAllBytes(assemblyPath);
-                using (var sha256 = SHA256.Create())
+                using var sha256 = SHA256.Create();
+                var actualHash = Convert.ToBase64String(sha256.ComputeHash(assemblyBytes));
+                var isValid = expectedHash == actualHash;
+                    
+                if (!isValid)
                 {
-                    var actualHash = Convert.ToBase64String(sha256.ComputeHash(assemblyBytes));
-                    return expectedHash == actualHash;
+                    logger.LogWarning("Assembly integrity check failed. Expected hash: {ExpectedHash}, Actual hash: {ActualHash}",
+                        expectedHash, actualHash);
                 }
+                else
+                {
+                    logger.LogDebug("Assembly integrity verified successfully");
+                }
+                    
+                return isValid;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error verifying assembly integrity for {assemblyPath}");
+                logger.LogError(ex, "Error verifying assembly integrity for {AssemblyPath}", assemblyPath);
                 return false;
             }
         }
 
-        public static Task LoadAssemblyFromQDBConnection(
+        public static void LoadAssemblyFromDbConnection(
             DBConnection connection,
             IServiceProvider serviceProvider,
             ApplicationPartManager partManager,
             ILogger logger)
         {
-            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies()
-                .Select(a => Path.GetFileName(a.Location))
-                .ToList();
-
-            var assemblyName = $"{connection.Name}.DynamicContext.dll";
-            if (!loadedAssemblies.Contains(assemblyName))
+            try
             {
-                try
+                if (connection == null)
                 {
+                    logger.LogError("Connection parameter is null");
+                    throw new ArgumentNullException(nameof(connection));
+                }
+
+                if (serviceProvider == null)
+                {
+                    logger.LogError("ServiceProvider parameter is null");
+                    throw new ArgumentNullException(nameof(serviceProvider));
+                }
+
+                if (partManager == null)
+                {
+                    logger.LogError("PartManager parameter is null");
+                    throw new ArgumentNullException(nameof(partManager));
+                }
+
+                logger.LogInformation("Loading assembly for connection: {ConnectionName}", connection.Name);
+
+                var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies()
+                    .Select(a => Path.GetFileName(a.Location))
+                    .ToList();
+
+                var assemblyName = $"{connection.Name}.DynamicContext.dll";
+                if (!loadedAssemblies.Contains(assemblyName))
+                {
+                    logger.LogDebug("Assembly {AssemblyName} not yet loaded", assemblyName);
+
                     // Vérifier l'intégrité de l'assembly
                     if (string.IsNullOrEmpty(connection.AssemblyHash) || 
                         connection.AssemblyDll == null ||
                         ComputeHash(connection.AssemblyDll) != connection.AssemblyHash)
                     {
-                        logger.LogError($"Assembly integrity verification failed for {assemblyName}");
+                        logger.LogError("Assembly integrity verification failed for {AssemblyName}", assemblyName);
                         throw new SecurityException($"Invalid assembly integrity for {assemblyName}");
                     }
 
-                    // Charger l'assembly depuis la mémoire
-                    var assemblyLoadContext = new AssemblyLoadContext(connection.Name, false);
-                    var assembly = assemblyLoadContext.LoadFromStream(new MemoryStream(connection.AssemblyDll));
+                    try
+                    {
+                        // Charger l'assembly depuis la mémoire
+                        logger.LogDebug("Creating assembly load context for {AssemblyName}", assemblyName);
+                        var assemblyLoadContext = new AssemblyLoadContext(connection.Name);
+                        var assembly = assemblyLoadContext.LoadFromStream(new MemoryStream(connection.AssemblyDll));
+                        logger.LogInformation("Successfully loaded assembly {AssemblyName}", assemblyName);
 
                         // Load procedure services
                         var procedureServicesResolverType = assembly.GetTypes()
@@ -74,20 +121,25 @@ namespace Querier.Api.Common.Utilities
 
                         if (procedureServicesResolverType != null)
                         {
+                            logger.LogDebug("Found procedure services resolver type");
                             var resolver = (IDynamicContextProceduresServicesResolver)Activator.CreateInstance(procedureServicesResolverType);
 
-                            // Ajouter au DynamicContextList
-                            var dynamicContextList = DynamicContextList.Instance;
-
-                            resolver.ConfigureServices((IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)), connection.ConnectionString);
-                            var dynamicContextListService = serviceProvider.GetRequiredService<IDynamicContextList>();
-                            logger.LogInformation($"Adding DynamicContext {connection.Name} for procedures");
-                            dynamicContextListService.DynamicContexts.Add(connection.Name, resolver);
-
-                            foreach (KeyValuePair<Type, Type> service in resolver.ProceduresServices)
+                            if (resolver != null)
                             {
-                                logger.LogInformation($"Registering procedure service {service.Key}");
-                                serviceProvider.GetRequiredService<IServiceCollection>().AddSingleton(service.Key, service.Value);
+                                resolver.ConfigureServices(
+                                    (IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)),
+                                    connection.ConnectionString);
+                                var dynamicContextListService =
+                                    serviceProvider.GetRequiredService<IDynamicContextList>();
+                                logger.LogInformation("Adding DynamicContext {Name} for procedures", connection.Name);
+                                dynamicContextListService.DynamicContexts.Add(connection.Name, resolver);
+
+                                foreach (KeyValuePair<Type, Type> service in resolver.ProceduresServices)
+                                {
+                                    logger.LogInformation("Registering procedure service {ServiceType}", service.Key);
+                                    serviceProvider.GetRequiredService<IServiceCollection>()
+                                        .AddSingleton(service.Key, service.Value);
+                                }
                             }
                         }
 
@@ -97,19 +149,27 @@ namespace Querier.Api.Common.Utilities
 
                         if (entityServicesResolverType != null)
                         {
+                            logger.LogDebug("Found entity services resolver type");
                             var resolver = (IDynamicContextEntityServicesResolver)Activator.CreateInstance(entityServicesResolverType);
 
-                            resolver.ConfigureServices((IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)), connection.ConnectionString);
-                            logger.LogInformation($"Adding DynamicContext {connection.Name} for entities");
-
-                            foreach (KeyValuePair<Type, Type> service in resolver.EntityServices)
+                            if (resolver != null)
                             {
-                                logger.LogInformation($"Registering entity service {service.Key}");
-                                serviceProvider.GetRequiredService<IServiceCollection>().AddScoped(service.Key, service.Value);
+                                resolver.ConfigureServices(
+                                    (IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)),
+                                    connection.ConnectionString);
+                                logger.LogInformation("Adding DynamicContext {Name} for entities", connection.Name);
+
+                                foreach (KeyValuePair<Type, Type> service in resolver.EntityServices)
+                                {
+                                    logger.LogInformation("Registering entity service {ServiceType}", service.Key);
+                                    serviceProvider.GetRequiredService<IServiceCollection>()
+                                        .AddScoped(service.Key, service.Value);
+                                }
                             }
                         }
 
                         // Ajouter les contrôleurs dynamiquement
+                        logger.LogDebug("Adding assembly part to part manager");
                         partManager.ApplicationParts.Add(new AssemblyPart(assembly));
                         var feature = new ControllerFeature();
                         partManager.PopulateFeature(feature);
@@ -117,7 +177,7 @@ namespace Querier.Api.Common.Utilities
                         // Log des contrôleurs trouvés
                         foreach (var controller in feature.Controllers)
                         {
-                            logger.LogInformation($"Found controller: {controller.FullName}");
+                            logger.LogInformation("Found controller: {ControllerName}", controller.FullName);
                             foreach (var method in controller.GetMethods())
                             {
                                 var attributes = method.GetCustomAttributes(typeof(HttpGetAttribute), true)
@@ -126,26 +186,42 @@ namespace Querier.Api.Common.Utilities
                                     .Concat(method.GetCustomAttributes(typeof(HttpDeleteAttribute), true));
                                 if (attributes.Any())
                                 {
-                                    logger.LogInformation($"  - Route: {method.Name}");
+                                    logger.LogDebug("Route found: {MethodName}", method.Name);
                                 }
                             }
                         }
 
-                    logger.LogInformation($"Successfully loaded assembly {assemblyName} for context {connection.Name}");
+                        logger.LogInformation("Successfully loaded assembly {AssemblyName} for context {ConnectionName}",
+                            assemblyName, connection.Name);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error loading assembly {AssemblyName}", assemblyName);
+                        throw;
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    logger.LogError(ex, $"Error loading assembly {assemblyName}");
+                    logger.LogInformation("Assembly {AssemblyName} already loaded", assemblyName);
                 }
             }
-
-            return Task.CompletedTask;
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in LoadAssemblyFromQDBConnection");
+                throw;
+            }
         }
 
         public static void RegenerateSwagger(ISwaggerProvider swaggerProvider, ILogger logger)
         {
             try
             {
+                if (swaggerProvider == null)
+                {
+                    logger.LogError("SwaggerProvider parameter is null");
+                    throw new ArgumentNullException(nameof(swaggerProvider));
+                }
+
                 var scope = ServiceActivator.GetScope();
                 if (scope == null)
                 {
@@ -161,6 +237,7 @@ namespace Querier.Api.Common.Utilities
                 }
                 
                 // Forcer le rechargement des contrôleurs
+                logger.LogDebug("Forcing controller reload");
                 var actionDescriptorField = actionDescriptorCollectionProvider.GetType()
                     .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance);
                 if (actionDescriptorField != null)
@@ -170,20 +247,27 @@ namespace Querier.Api.Common.Utilities
 
                 // Déclencher la découverte des contrôleurs
                 var actions = actionDescriptorCollectionProvider.ActionDescriptors;
-                logger.LogInformation($"Controller actions reloaded with {actions.Items.Count} actions");
+                logger.LogInformation("Controller actions reloaded with {Count} actions", actions.Items.Count);
 
                 // Régénérer le document Swagger
+                logger.LogDebug("Regenerating Swagger document");
                 var swagger = swaggerProvider.GetSwagger("v1", null, "/");
-                logger.LogInformation($"Swagger regenerated with {swagger.Paths.Count} paths");
+                logger.LogInformation("Swagger regenerated with {Count} paths", swagger.Paths.Count);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error regenerating Swagger");
+                throw;
             }
         }
 
         private static string ComputeHash(byte[] assemblyBytes)
         {
+            if (assemblyBytes == null)
+            {
+                throw new ArgumentNullException(nameof(assemblyBytes));
+            }
+
             using (var sha256 = SHA256.Create())
             {
                 var hash = sha256.ComputeHash(assemblyBytes);

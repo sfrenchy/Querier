@@ -204,7 +204,7 @@ namespace Querier.Api.Infrastructure.Extensions
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             // Core services
-            services.AddScoped<IEntityCRUDService, EntityCRUDService>();
+            services.AddScoped<IEntityCrudService, EntityCrudService>();
             services.AddScoped<IWizardService, WizardService>();
             services.AddScoped<IDBConnectionService, DbConnectionService>();
             services.AddScoped<IEmailTemplateService, EmailTemplateService>();
@@ -278,7 +278,7 @@ namespace Querier.Api.Infrastructure.Extensions
 
                 foreach(var connection in apiDbContext.DBConnections.ToList())
                 {
-                    await AssemblyLoader.LoadAssemblyFromQDBConnection(connection, serviceProvider, mvc.PartManager, logger);
+                    await AssemblyLoader.LoadAssemblyFromDbConnection(connection, serviceProvider, mvc.PartManager, logger);
                 }
                 AssemblyLoader.RegenerateSwagger(swaggerProvider, logger);
             }

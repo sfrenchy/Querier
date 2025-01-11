@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Common.ValueObjects;
 using Querier.Api.Domain.Entities;
@@ -23,11 +24,11 @@ namespace Querier.Api.Infrastructure.Services
     public class SqlQueryService(
         ApiDbContext context,
         IUserService userService,
-        IEntityCRUDService crudService,
+        IEntityCrudService crudService,
         IHttpContextAccessor httpContextAccessor)
         : ISqlQueryService
     {
-        private readonly IEntityCRUDService _crudService = crudService;
+        private readonly IEntityCrudService _crudService = crudService;
 
         public async Task<IEnumerable<SQLQueryDTO>> GetAllQueriesAsync(string userId)
         {

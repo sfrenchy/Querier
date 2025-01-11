@@ -127,7 +127,7 @@ namespace Querier.Api.Controllers
                 }
 
                 logger.LogInformation("Successfully deleted database connection with ID: {Id}", dbConnectionId);
-                return NoContent();
+            return NoContent();
             }
             catch (Exception ex)
             {

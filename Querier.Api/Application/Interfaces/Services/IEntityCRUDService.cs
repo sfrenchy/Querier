@@ -8,7 +8,7 @@ using Querier.Api.Domain.Common.ValueObjects;
 
 namespace Querier.Api.Application.Interfaces.Services
 {
-    public interface IEntityCRUDService
+    public interface IEntityCrudService
     {
         /// <summary>
         /// Get the list of available EntityFrameworkCore contexts
@@ -37,8 +37,8 @@ namespace Querier.Api.Application.Interfaces.Services
         /// <param name="contextTypeFullname">The fullname of the context</param>
         /// <param name="entityTypeFullname">The fullname of the entity in the context</param>
         /// <param name="newEntity">The type wished to be created</param>
-        /// <returns>The new entity</returns>
-        public object Create(string contextTypeFullname, string entityTypeFullname, object newEntity);
+        /// <returns>the number of added entities</returns>
+        public int Create(string contextTypeFullname, string entityTypeFullname, object newEntity);
 
         /// <summary>
         /// Read entities from repository
@@ -54,12 +54,12 @@ namespace Querier.Api.Application.Interfaces.Services
         /// Read a resultset from an SQL query
         /// </summary>
         /// <param name="contextTypeFullname">The fullname of the context</param>
-        /// <param name="entityTypeFullname">the SQL query that return a resultset</param>
-        /// <param name="Filters">The data filters to be applied to the resultset</param>
+        /// <param name="sqlQuery">the SQL query that return a resultset</param>
+        /// <param name="filters">The data filters to be applied to the resultset</param>
         /// <returns>An enumerable that hold the datas for dbset of the query on the context</returns>
-        public IEnumerable<object> ReadFromSql(string contextTypeFullname, string SqlQuery, List<EntityCRUDDataFilterDto> Filters);
+        public IEnumerable<object> ReadFromSql(string contextTypeFullname, string sqlQuery, List<EntityCRUDDataFilterDto> filters);
 
-        public DataTable GetDatatableFromSql(string contextTypeFullname, string SqlQuery, List<EntityCRUDDataFilterDto> Filters);
+        public DataTable GetDatatableFromSql(string contextTypeFullname, string sqlQuery, List<EntityCRUDDataFilterDto> filters);
 
         /// <summary>
         /// Read entities from repository
@@ -70,19 +70,19 @@ namespace Querier.Api.Application.Interfaces.Services
         /// <returns>An enumerable that hold the datas for entity of the context</returns>
         public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<EntityCRUDDataFilterDto> filters);
 
-        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, PaginationParameters pagination, string OrderBy);
+        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, PaginationParameters pagination, string orderBy);
 
         /// <summary>
         /// Update an entity in a specific context
         /// </summary>
         /// <param name="contextTypeFullname">The fullname of the context</param>
-        /// <param name="entityTypeFullname">The fullname of the entity in the context</param>
+        /// <param name="entityFullname"></param>
         /// <param name="entity">The type wished to be updated</param>
         /// <returns>The modified entity</returns>
-        public object Update(string contextTypeFullname, string entityFullname, object entity);
+        public int Update(string contextTypeFullname, string entityFullname, object entity);
 
-        public SQLQueryResult GetSQLQueryEntityDefinition(EntityCRUDExecuteSQLQueryDto request);
-        public object CreateOrUpdate(string contextTypeFullname, string entityFullname, object entity);
+        public SQLQueryResult GetSqlQueryEntityDefinition(EntityCRUDExecuteSQLQueryDto request);
+        public int CreateOrUpdate(string contextTypeFullname, string entityFullname, object entity);
         public void Delete(string contextTypeFullname, string entityFullname, object entityIdentifier);
     }
 }
