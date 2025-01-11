@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Common.Extensions;
 using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Common.ValueObjects;

@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
 
@@ -21,15 +23,13 @@ namespace Querier.Api.Controllers
     [ApiController]
     [Route("api/v1/[controller]")]
     [Authorize]
-    public class RowController : ControllerBase
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public class RowController(
+        IRowService service,
+        ILogger<RowController> logger) : ControllerBase
     {
-        private readonly IRowService _service;
-
-        public RowController(IRowService service)
-        {
-            _service = service;
-        }
-
         /// <summary>
         /// Gets a row by its ID
         /// </summary>
@@ -42,9 +42,29 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<RowDto>> GetById(int id)
         {
-            var row = await _service.GetByIdAsync(id);
-            if (row == null) return NotFound();
-            return Ok(row);
+            try
+            {
+                logger.LogDebug("Retrieving row with ID: {RowId}", id);
+                var row = await service.GetByIdAsync(id);
+                
+                if (row == null)
+                {
+                    logger.LogWarning("Row not found with ID: {RowId}", id);
+                    return NotFound(new { message = $"Row with ID {id} not found" });
+                }
+
+                logger.LogInformation("Successfully retrieved row: {RowId}", id);
+                return Ok(row);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while retrieving row: {RowId}", id);
+                return Problem(
+                    title: "Error retrieving row",
+                    detail: "An unexpected error occurred while retrieving the row",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -57,8 +77,22 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(IEnumerable<RowDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<RowDto>>> GetByPageId(int pageId)
         {
-            var rows = await _service.GetByPageIdAsync(pageId);
-            return Ok(rows);
+            try
+            {
+                logger.LogDebug("Retrieving rows for page: {PageId}", pageId);
+                var rows = await service.GetByPageIdAsync(pageId);
+                logger.LogInformation("Successfully retrieved rows for page {PageId}. Count: {RowCount}", pageId, rows);
+                return Ok(rows);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while retrieving rows for page: {PageId}", pageId);
+                return Problem(
+                    title: "Error retrieving rows",
+                    detail: "An unexpected error occurred while retrieving the rows for the page",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -74,8 +108,30 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<RowDto>> Create(int pageId, RowCreateDto request)
         {
-            var row = await _service.CreateAsync(pageId, request);
-            return CreatedAtAction(nameof(GetById), new { id = row.Id }, row);
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    logger.LogWarning("Invalid row creation request for page {PageId}. Errors: {Errors}", 
+                        pageId, string.Join(", ", ModelState.Values));
+                    return BadRequest(ModelState);
+                }
+
+                logger.LogDebug("Creating new row in page: {PageId}", pageId);
+                var row = await service.CreateAsync(pageId, request);
+                logger.LogInformation("Successfully created row {RowId} in page {PageId}", row.Id, pageId);
+                
+                return CreatedAtAction(nameof(GetById), new { id = row.Id }, row);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while creating row in page: {PageId}", pageId);
+                return Problem(
+                    title: "Error creating row",
+                    detail: "An unexpected error occurred while creating the row",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -91,9 +147,36 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<RowDto>> Update(int id, RowCreateDto request)
         {
-            var row = await _service.UpdateAsync(id, request);
-            if (row == null) return NotFound();
-            return Ok(row);
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    logger.LogWarning("Invalid row update request for ID {RowId}. Errors: {Errors}", 
+                        id, string.Join(", ", ModelState.Values));
+                    return BadRequest(ModelState);
+                }
+
+                logger.LogDebug("Updating row: {RowId}", id);
+                var row = await service.UpdateAsync(id, request);
+                
+                if (row == null)
+                {
+                    logger.LogWarning("Row not found for update: {RowId}", id);
+                    return NotFound(new { message = $"Row with ID {id} not found" });
+                }
+
+                logger.LogInformation("Successfully updated row: {RowId}", id);
+                return Ok(row);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while updating row: {RowId}", id);
+                return Problem(
+                    title: "Error updating row",
+                    detail: "An unexpected error occurred while updating the row",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -108,9 +191,29 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _service.DeleteAsync(id);
-            if (!result) return NotFound();
-            return NoContent();
+            try
+            {
+                logger.LogDebug("Attempting to delete row: {RowId}", id);
+                var result = await service.DeleteAsync(id);
+                
+                if (!result)
+                {
+                    logger.LogWarning("Row not found for deletion: {RowId}", id);
+                    return NotFound(new { message = $"Row with ID {id} not found" });
+                }
+
+                logger.LogInformation("Successfully deleted row: {RowId}", id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while deleting row: {RowId}", id);
+                return Problem(
+                    title: "Error deleting row",
+                    detail: "An unexpected error occurred while deleting the row",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -126,9 +229,35 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Reorder(int pageId, [FromBody] List<int> rowIds)
         {
-            var result = await _service.ReorderAsync(pageId, rowIds);
-            if (!result) return BadRequest();
-            return Ok();
+            try
+            {
+                if (rowIds == null || rowIds.Count == 0)
+                {
+                    logger.LogWarning("Invalid reorder request for page {PageId}: Empty or null row IDs", pageId);
+                    return BadRequest(new { message = "Row IDs list cannot be empty" });
+                }
+
+                logger.LogDebug("Reordering {Count} rows in page {PageId}", rowIds.Count, pageId);
+                var result = await service.ReorderAsync(pageId, rowIds);
+                
+                if (!result)
+                {
+                    logger.LogWarning("Failed to reorder rows in page {PageId}", pageId);
+                    return BadRequest(new { message = "Failed to reorder rows" });
+                }
+
+                logger.LogInformation("Successfully reordered rows in page {PageId}", pageId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while reordering rows in page: {PageId}", pageId);
+                return Problem(
+                    title: "Error reordering rows",
+                    detail: "An unexpected error occurred while reordering the rows",
+                    statusCode: 500
+                );
+            }
         }
     }
 } 

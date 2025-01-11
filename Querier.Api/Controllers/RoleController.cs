@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Identity.Client;
+using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
 
@@ -40,17 +41,12 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public class RoleController : ControllerBase
+    public class RoleController(
+        IRoleService roleService,
+        IUserService userService,
+        ILogger<RoleController> logger)
+        : ControllerBase
     {
-        private readonly IRoleService _roleService;
-        private readonly IUserService _userService;
-
-        public RoleController(IRoleService roleService, IUserService userService)
-        {
-            _roleService = roleService;
-            _userService = userService;
-        }
-
         /// <summary>
         /// Retrieves all roles in the system
         /// </summary>
@@ -62,9 +58,24 @@ namespace Querier.Api.Controllers
         /// <response code="200">Returns the list of roles</response>
         [HttpGet("GetAll")]
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAllAsync()
+        public IActionResult GetAllAsync()
         {
-            return Ok(_roleService.GetAll());
+            try
+            {
+                logger.LogDebug("Retrieving all roles");
+                var roles = roleService.GetAll();
+                logger.LogInformation("Successfully retrieved {Count} roles", roles.Count());
+                return Ok(roles);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while retrieving all roles");
+                return Problem(
+                    title: "Error retrieving roles",
+                    detail: "An unexpected error occurred while retrieving the roles",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -84,11 +95,32 @@ namespace Querier.Api.Controllers
         /// <response code="400">If the request data is invalid</response>
         [HttpPost("AddRole")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AddRoleAsync(RoleCreateDto role)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            return Ok(await _roleService.AddAsync(role));
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    logger.LogWarning("Invalid role creation request. Validation errors: {Errors}", 
+                        string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                    return BadRequest(ModelState);
+                }
+
+                logger.LogDebug("Creating new role with name: {RoleName}", role.Name);
+                var result = await roleService.AddAsync(role);
+                logger.LogInformation("Role created successfully: {RoleName}", role.Name);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while creating role: {RoleName}", role?.Name);
+                return Problem(
+                    title: "Error creating role",
+                    detail: "An unexpected error occurred while creating the role",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -107,11 +139,39 @@ namespace Querier.Api.Controllers
         /// <returns>Success indicator</returns>
         [HttpPost("UpdateRole")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateRoleAsync(RoleDto role)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            return Ok(await _roleService.UpdateAsync(role));
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    logger.LogWarning("Invalid role update request. Validation errors: {Errors}", 
+                        string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                    return BadRequest(ModelState);
+                }
+
+                logger.LogDebug("Updating role: {RoleId} - {RoleName}", role.Id, role.Name);
+                var result = await roleService.UpdateAsync(role);
+                if (!result)
+                {
+                    logger.LogWarning("Role not found for update: {RoleId}", role.Id);
+                    return NotFound(new { message = $"Role with ID {role.Id} not found" });
+                }
+
+                logger.LogInformation("Role updated successfully: {RoleId} - {RoleName}", role.Id, role.Name);
+                return Ok(true);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while updating role: {RoleId} - {RoleName}", role?.Id, role?.Name);
+                return Problem(
+                    title: "Error updating role",
+                    detail: "An unexpected error occurred while updating the role",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -125,11 +185,31 @@ namespace Querier.Api.Controllers
         /// <returns>Success indicator</returns>
         [HttpDelete("DeleteRole/{id}")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteRoleAsync(string id)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            return Ok(await _roleService.DeleteByIdAsync(id));
+            try
+            {
+                logger.LogDebug("Attempting to delete role: {RoleId}", id);
+                var result = await roleService.DeleteByIdAsync(id);
+                if (!result)
+                {
+                    logger.LogWarning("Role not found for deletion: {RoleId}", id);
+                    return NotFound(new { message = $"Role with ID {id} not found" });
+                }
+
+                logger.LogInformation("Role deleted successfully: {RoleId}", id);
+                return Ok(true);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while deleting role: {RoleId}", id);
+                return Problem(
+                    title: "Error deleting role",
+                    detail: "An unexpected error occurred while deleting the role",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -143,9 +223,25 @@ namespace Querier.Api.Controllers
         /// <returns>List of roles assigned to the user</returns>
         [HttpGet("GetRolesForUser/{idUser}")]
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetRolesForUser(string idUser)
         {
-            return Ok(await _roleService.GetRolesForUserAsync(idUser));
+            try
+            {
+                logger.LogDebug("Retrieving roles for user: {UserId}", idUser);
+                var roles = await roleService.GetRolesForUserAsync(idUser);
+                logger.LogInformation("Successfully retrieved {Count} roles for user: {UserId}", roles.Count(), idUser);
+                return Ok(roles);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while retrieving roles for user: {UserId}", idUser);
+                return Problem(
+                    title: "Error retrieving user roles",
+                    detail: "An unexpected error occurred while retrieving the user's roles",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -158,9 +254,31 @@ namespace Querier.Api.Controllers
         /// <returns>List of roles for the current user</returns>
         [HttpGet("GetCurrentUserRoles")]
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetCurrentUserRole()
         {
-            return Ok((await _userService.GetCurrentUserAsync(User)).Roles);
+            try
+            {
+                logger.LogDebug("Retrieving roles for current user");
+                var user = await userService.GetCurrentUserAsync(User);
+                if (user == null)
+                {
+                    logger.LogWarning("Current user not found");
+                    return NotFound(new { message = "Current user not found" });
+                }
+
+                logger.LogInformation("Successfully retrieved roles for current user: {UserEmail}", user.Email);
+                return Ok(user.Roles);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while retrieving roles for current user");
+                return Problem(
+                    title: "Error retrieving current user roles",
+                    detail: "An unexpected error occurred while retrieving the current user's roles",
+                    statusCode: 500
+                );
+            }
         }
     }
 }
