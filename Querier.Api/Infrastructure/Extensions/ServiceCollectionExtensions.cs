@@ -271,17 +271,15 @@ namespace Querier.Api.Infrastructure.Extensions
             var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger<ApiDbContext>();
 
-            using (var apiDbContext = new ApiDbContext(optionsBuilder.Options, configuration, logger))
-            {
-                var swaggerProvider = serviceProvider.GetRequiredService<ISwaggerProvider>();
-                var mvc = services.AddControllers();
+            await using var apiDbContext = new ApiDbContext(optionsBuilder.Options, configuration, logger);
+            var swaggerProvider = serviceProvider.GetRequiredService<ISwaggerProvider>();
+            var mvc = services.AddControllers();
 
-                foreach(var connection in apiDbContext.DBConnections.ToList())
-                {
-                    await AssemblyLoader.LoadAssemblyFromDbConnection(connection, serviceProvider, mvc.PartManager, logger);
-                }
-                AssemblyLoader.RegenerateSwagger(swaggerProvider, logger);
+            foreach(var connection in apiDbContext.DBConnections.ToList())
+            {
+                AssemblyLoader.LoadAssemblyFromDbConnection(connection, serviceProvider, mvc.PartManager, logger);
             }
+            AssemblyLoader.RegenerateSwagger(swaggerProvider, logger);
         }
 
         public static IServiceCollection AddCustomSwagger(this IServiceCollection services)

@@ -218,7 +218,7 @@ namespace Querier.Api.Domain.Services
             await _dbConnectionRepository.AddDbConnectionAsync(new DBConnection());
 
             result.State = DBConnectionState.Available;
-            await AssemblyLoader.LoadAssemblyFromDbConnection(newConnection, _serviceProvider, _partManager, _logger);
+            AssemblyLoader.LoadAssemblyFromDbConnection(newConnection, _serviceProvider, _partManager, _logger);
             
             // Regenerate Swagger documentation
             var swaggerProvider = _serviceProvider.GetRequiredService<ISwaggerProvider>();
