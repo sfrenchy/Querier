@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
 
@@ -21,15 +24,11 @@ namespace Querier.Api.Controllers
     [ApiController]
     [Route("api/v1/[controller]")]
     [Authorize]
-    public class CardController : ControllerBase
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public class CardController(ICardService service, ILogger<CardController> logger) : ControllerBase
     {
-        private readonly ICardService _service;
-
-        public CardController(ICardService service)
-        {
-            _service = service;
-        }
-
         /// <summary>
         /// Gets a card by its ID
         /// </summary>
@@ -40,11 +39,27 @@ namespace Querier.Api.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(CardDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<CardDto>> GetById(int id)
+        public async Task<ActionResult<CardDto>> GetById([FromRoute] int id)
         {
-            var card = await _service.GetByIdAsync(id);
-            if (card == null) return NotFound();
-            return Ok(card);
+            try
+            {
+                logger.LogInformation("Retrieving card with ID: {Id}", id);
+                var card = await service.GetByIdAsync(id);
+
+                if (card == null)
+                {
+                    logger.LogWarning("Card not found with ID: {Id}", id);
+                    return NotFound(new { error = $"Card with ID {id} not found" });
+                }
+
+                logger.LogInformation("Successfully retrieved card with ID: {Id}", id);
+                return Ok(card);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving card with ID: {Id}", id);
+                throw;
+            }
         }
 
         /// <summary>
@@ -55,10 +70,20 @@ namespace Querier.Api.Controllers
         /// <response code="200">Returns the list of cards</response>
         [HttpGet("row/{rowId}")]
         [ProducesResponseType(typeof(IEnumerable<CardDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<CardDto>>> GetByRowId(int rowId)
+        public async Task<ActionResult<IEnumerable<CardDto>>> GetByRowId([FromRoute] int rowId)
         {
-            var cards = await _service.GetByRowIdAsync(rowId);
-            return Ok(cards);
+            try
+            {
+                logger.LogInformation("Retrieving cards for row ID: {RowId}", rowId);
+                var cards = await service.GetByRowIdAsync(rowId);
+                logger.LogInformation("Successfully retrieved cards for row ID: {RowId}", rowId);
+                return Ok(cards);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving cards for row ID: {RowId}", rowId);
+                throw;
+            }
         }
 
         /// <summary>
@@ -69,13 +94,41 @@ namespace Querier.Api.Controllers
         /// <returns>The created card</returns>
         /// <response code="201">Returns the newly created card</response>
         /// <response code="400">If the request is invalid</response>
+        /// <response code="404">If the row is not found</response>
         [HttpPost("row/{rowId}")]
         [ProducesResponseType(typeof(CardDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<CardDto>> Create(int rowId, CardDto request)
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<CardDto>> Create([FromRoute] int rowId, [FromBody] CardDto request)
         {
-            var card = await _service.CreateAsync(rowId, request);
-            return CreatedAtAction(nameof(GetById), new { id = card.Id }, card);
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    logger.LogWarning("Invalid model state for card creation in row ID: {RowId}", rowId);
+                    return BadRequest(ModelState);
+                }
+
+                logger.LogInformation("Creating new card in row ID: {RowId}", rowId);
+                
+                try
+                {
+                    var card = await service.CreateAsync(rowId, request);
+                    logger.LogInformation("Successfully created card with ID: {Id} in row: {RowId}", 
+                        card.Id, rowId);
+                    return CreatedAtAction(nameof(GetById), new { id = card.Id }, card);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    logger.LogWarning(ex, "Row not found for card creation. Row ID: {RowId}", rowId);
+                    return NotFound(new { error = $"Row with ID {rowId} not found" });
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error creating card in row ID: {RowId}", rowId);
+                throw;
+            }
         }
 
         /// <summary>
@@ -85,15 +138,39 @@ namespace Querier.Api.Controllers
         /// <param name="request">The updated card data</param>
         /// <returns>The updated card</returns>
         /// <response code="200">Returns the updated card</response>
+        /// <response code="400">If the request is invalid</response>
         /// <response code="404">If the card is not found</response>
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(CardDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<CardDto>> Update(int id, CardDto request)
+        public async Task<ActionResult<CardDto>> Update([FromRoute] int id, [FromBody] CardDto request)
         {
-            var card = await _service.UpdateAsync(id, request);
-            if (card == null) return NotFound();
-            return Ok(card);
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    logger.LogWarning("Invalid model state for updating card ID: {Id}", id);
+                    return BadRequest(ModelState);
+                }
+
+                logger.LogInformation("Updating card with ID: {Id}", id);
+                var card = await service.UpdateAsync(id, request);
+
+                if (card == null)
+                {
+                    logger.LogWarning("Card not found for update with ID: {Id}", id);
+                    return NotFound(new { error = $"Card with ID {id} not found" });
+                }
+
+                logger.LogInformation("Successfully updated card with ID: {Id}", id);
+                return Ok(card);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating card with ID: {Id}", id);
+                throw;
+            }
         }
 
         /// <summary>
@@ -106,11 +183,27 @@ namespace Querier.Api.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            var result = await _service.DeleteAsync(id);
-            if (!result) return NotFound();
-            return NoContent();
+            try
+            {
+                logger.LogInformation("Deleting card with ID: {Id}", id);
+                var result = await service.DeleteAsync(id);
+
+                if (!result)
+                {
+                    logger.LogWarning("Card not found for deletion with ID: {Id}", id);
+                    return NotFound(new { error = $"Card with ID {id} not found" });
+                }
+
+                logger.LogInformation("Successfully deleted card with ID: {Id}", id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error deleting card with ID: {Id}", id);
+                throw;
+            }
         }
 
         /// <summary>
@@ -120,15 +213,37 @@ namespace Querier.Api.Controllers
         /// <param name="cardIds">Ordered list of card IDs representing the new order</param>
         /// <returns>Success indicator</returns>
         /// <response code="200">If the reordering was successful</response>
-        /// <response code="400">If the request is invalid</response>
+        /// <response code="400">If the request is invalid or some cards were not found</response>
         [HttpPost("row/{rowId}/reorder")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Reorder(int rowId, [FromBody] List<int> cardIds)
+        public async Task<IActionResult> Reorder([FromRoute] int rowId, [FromBody][Required] List<int> cardIds)
         {
-            var result = await _service.ReorderAsync(rowId, cardIds);
-            if (!result) return BadRequest();
-            return Ok();
+            try
+            {
+                if (cardIds == null || cardIds.Count == 0)
+                {
+                    logger.LogWarning("Invalid card IDs list for reordering in row ID: {RowId}", rowId);
+                    return BadRequest(new { error = "Card IDs list cannot be empty" });
+                }
+
+                logger.LogInformation("Reordering {Count} cards in row ID: {RowId}", cardIds.Count, rowId);
+                var result = await service.ReorderAsync(rowId, cardIds);
+
+                if (!result)
+                {
+                    logger.LogWarning("Some cards were not found during reordering in row ID: {RowId}", rowId);
+                    return BadRequest(new { error = "Some cards were not found" });
+                }
+
+                logger.LogInformation("Successfully reordered cards in row ID: {RowId}", rowId);
+                return Ok(new { message = "Cards reordered successfully" });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error reordering cards in row ID: {RowId}", rowId);
+                throw;
+            }
         }
     }
 } 

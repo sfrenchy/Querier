@@ -132,7 +132,7 @@ namespace Querier.Api.Domain.Services
                 {
                     logger.LogWarning("Failed to create user: {Email}. Errors: {@Errors}", 
                         user.Email, isCreated.Errors);
-                    return new SignUpResultDto()
+                return new SignUpResultDto()
                 {
                     Success = false,
                     Errors = isCreated.Errors.Select(x => x.Description).ToList()

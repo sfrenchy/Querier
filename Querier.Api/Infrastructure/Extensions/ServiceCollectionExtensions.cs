@@ -267,11 +267,12 @@ namespace Querier.Api.Infrastructure.Extensions
         public static async Task AddDynamicAssemblies(this IServiceCollection services, IConfiguration configuration)
         {
             var optionsBuilder = new DbContextOptionsBuilder<ApiDbContext>();
-            using (var apiDbContext = new ApiDbContext(optionsBuilder.Options, configuration))
+            var serviceProvider = services.BuildServiceProvider();
+            var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger<ApiDbContext>();
+
+            using (var apiDbContext = new ApiDbContext(optionsBuilder.Options, configuration, logger))
             {
-                var serviceProvider = services.BuildServiceProvider();
-                var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
-                var logger = loggerFactory.CreateLogger<Startup>();
                 var swaggerProvider = serviceProvider.GetRequiredService<ISwaggerProvider>();
                 var mvc = services.AddControllers();
 
