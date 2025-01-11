@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Application.DTOs
 {
@@ -51,5 +53,20 @@ namespace Querier.Api.Application.DTOs
         /// List of rows that make up the page's layout
         /// </summary>
         public List<RowDto> Rows { get; set; }
+
+        public static PageDto FromEntity(Page entity)
+        {
+            return new PageDto
+            {
+                Id = entity.Id,
+                Names = entity.PageTranslations.ToDictionary(x => x.LanguageCode, x => x.Name),
+                Icon = entity.Icon,
+                Order = entity.Order,
+                IsVisible = entity.IsVisible,
+                Roles = entity.Roles == null ? new List<string>() : entity.Roles.Split(',').Where(r => !string.IsNullOrWhiteSpace(r)).ToList(),
+                Route = entity.Route,
+                DynamicMenuCategoryId = entity.MenuId
+            };
+        }
     }
 } 

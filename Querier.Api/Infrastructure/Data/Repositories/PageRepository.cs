@@ -40,7 +40,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             try
             {
                 var pages = await context.Pages.ToListAsync();
-                logger.LogDebug("Retrieved {PageCount} pages", pages.Count);
+                logger.LogDebug("Retrieved {Count} pages", pages.Count);
                 return pages;
             }
             catch (Exception ex)

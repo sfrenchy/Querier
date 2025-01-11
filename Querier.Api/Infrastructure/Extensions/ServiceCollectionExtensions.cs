@@ -38,101 +38,142 @@ namespace Querier.Api.Infrastructure.Extensions
     {
         public static IServiceCollection AddCustomDatabase(this IServiceCollection services, IConfiguration configuration)
         {
-            var sqlEngine = configuration.GetSection("SQLEngine").Get<string>();
-            switch (sqlEngine?.ToUpper())
+            var logger = services.BuildServiceProvider().GetRequiredService<ILogger<Startup>>();
+            logger.LogInformation("Configuring database connection");
+
+            try
             {
-                case "MSSQL":
-                    services.AddDbContext<ApiDbContext>(options => 
-                        options.UseSqlServer(configuration.GetConnectionString("ApiDBConnection")));
-                    break;
-                case "MYSQL":
-                    var serverVersion = new MariaDbServerVersion(new Version(10, 3, 9));
-                    services.AddDbContext<ApiDbContext>(options => 
-                        options.UseMySql(configuration.GetConnectionString("ApiDBConnection"), serverVersion));
-                    break;
-                case "PGSQL":
-                    services.AddDbContext<ApiDbContext>(options => 
-                        options.UseNpgsql(configuration.GetConnectionString("ApiDBConnection")));
-                    break;
-                default: // SQLite
-                    services.AddDbContext<ApiDbContext>(options => 
-                        options.UseSqlite(configuration.GetConnectionString("ApiDBConnection")));
-                    break;
+                var sqlEngine = configuration.GetSection("SQLEngine").Get<string>();
+                logger.LogInformation("Using SQL engine: {Engine}", sqlEngine?.ToUpper() ?? "SQLite");
+
+                switch (sqlEngine?.ToUpper())
+                {
+                    case "MSSQL":
+                        logger.LogDebug("Configuring SQL Server connection");
+                        services.AddDbContext<ApiDbContext>(options => 
+                            options.UseSqlServer(configuration.GetConnectionString("ApiDBConnection")));
+                        break;
+                    case "MYSQL":
+                        logger.LogDebug("Configuring MySQL connection");
+                        var serverVersion = new MariaDbServerVersion(new Version(10, 3, 9));
+                        services.AddDbContext<ApiDbContext>(options => 
+                            options.UseMySql(configuration.GetConnectionString("ApiDBConnection"), serverVersion));
+                        break;
+                    case "PGSQL":
+                        logger.LogDebug("Configuring PostgreSQL connection");
+                        services.AddDbContext<ApiDbContext>(options => 
+                            options.UseNpgsql(configuration.GetConnectionString("ApiDBConnection")));
+                        break;
+                    default:
+                        logger.LogDebug("Configuring SQLite connection");
+                        services.AddDbContext<ApiDbContext>(options => 
+                            options.UseSqlite(configuration.GetConnectionString("ApiDBConnection")));
+                        break;
+                }
+
+                services.AddDbContextFactory<ApiDbContext>();
+                logger.LogInformation("Database configuration completed successfully");
             }
-            services.AddDbContextFactory<ApiDbContext>();
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to configure database connection");
+                throw;
+            }
+
             return services;
         }
 
         public static IServiceCollection AddCustomAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            var logger = services.BuildServiceProvider().GetRequiredService<ILogger<Startup>>();
+            logger.LogInformation("Configuring authentication");
 
-            services.AddAuthentication(options =>
+            try
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.SaveToken = true;
-                options.RequireHttpsMetadata = false;
+                services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-                options.Events = new JwtBearerEvents
+                services.AddAuthentication(options =>
                 {
-                    OnTokenValidated = async context =>
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.SaveToken = true;
+                    options.RequireHttpsMetadata = false;
+
+                    options.Events = new JwtBearerEvents
                     {
-                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
-                        logger.LogInformation("Token validated successfully");
-                        await Task.CompletedTask;
-                    },
-                    OnAuthenticationFailed = async context =>
-                    {
-                        var settingService = context.HttpContext.RequestServices
-                            .GetRequiredService<ISettingService>();
-                        
-                        // Si l'application n'est pas configurée, on permet l'accès
-                        if (!await settingService.GetApiIsConfiguredAsync())
+                        OnTokenValidated = async context =>
                         {
-                            var anonymousClaims = new[]
+                            var tokenLogger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
+                            tokenLogger.LogInformation("Token validated successfully");
+                            await Task.CompletedTask;
+                        },
+                        OnAuthenticationFailed = async context =>
+                        {
+                            var tokenLogger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
+                            var settingService = context.HttpContext.RequestServices
+                                .GetRequiredService<ISettingService>();
+                            
+                            // Si l'application n'est pas configurée, on permet l'accès
+                            if (!await settingService.GetApiIsConfiguredAsync())
                             {
-                                new Claim(ClaimTypes.Name, "Anonymous"),
-                                new Claim(ClaimTypes.Role, "Anonymous")
-                            };
-                            var anonymousIdentity = new ClaimsIdentity(anonymousClaims);
-                            var anonymousPrincipal = new ClaimsPrincipal(anonymousIdentity);
+                                tokenLogger.LogWarning("Application not configured, allowing anonymous access");
+                                var anonymousClaims = new[]
+                                {
+                                    new Claim(ClaimTypes.Name, "Anonymous"),
+                                    new Claim(ClaimTypes.Role, "Anonymous")
+                                };
+                                var anonymousIdentity = new ClaimsIdentity(anonymousClaims);
+                                var anonymousPrincipal = new ClaimsPrincipal(anonymousIdentity);
 
-                            context.Principal = anonymousPrincipal;
-                            context.Success();
-                            return;
-                        }
-                    },
-                    OnMessageReceived = async context =>
-                    {
-                        var settingService = context.HttpContext.RequestServices.GetRequiredService<ISettingService>();
-                        var secret = await settingService.GetSettingValueIfExistsAsync("jwt:secret", "DefaultDevSecretKey_12345678901234567890123456789012", "JWT secret");
-                        var key = Encoding.ASCII.GetBytes(secret);
-                        var signingKey = new SymmetricSecurityKey(key) { KeyId = "default_signing_key" };
-
-                        var issuer = await settingService.GetSettingValueIfExistsAsync("jwt:issuer", "QuerierApi", "JWT issuer");
-                        var audience = await settingService.GetSettingValueIfExistsAsync("jwt:audience", "QuerierClient", "JWT Audience");
-
-                        // Mettre à jour les paramètres de validation du token de manière dynamique
-                        context.Options.TokenValidationParameters = new TokenValidationParameters
+                                context.Principal = anonymousPrincipal;
+                                context.Success();
+                                return;
+                            }
+                            tokenLogger.LogWarning("Authentication failed");
+                        },
+                        OnMessageReceived = async context =>
                         {
-                            ValidateIssuerSigningKey = true,
-                            IssuerSigningKey = signingKey,
-                            ValidateIssuer = true,
-                            ValidateAudience = true,
-                            ValidateLifetime = true,
-                            RequireExpirationTime = true,
-                            ClockSkew = TimeSpan.Zero,
-                            ValidIssuer = issuer,
-                            ValidAudience = audience
-                        };
-                    }
-                };
-            });
+                            var tokenLogger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
+                            tokenLogger.LogDebug("Configuring token validation parameters");
+
+                            var settingService = context.HttpContext.RequestServices.GetRequiredService<ISettingService>();
+                            var secret = await settingService.GetSettingValueIfExistsAsync("jwt:secret", "DefaultDevSecretKey_12345678901234567890123456789012", "JWT secret");
+                            var key = Encoding.ASCII.GetBytes(secret);
+                            var signingKey = new SymmetricSecurityKey(key) { KeyId = "default_signing_key" };
+
+                            var issuer = await settingService.GetSettingValueIfExistsAsync("jwt:issuer", "QuerierApi", "JWT issuer");
+                            var audience = await settingService.GetSettingValueIfExistsAsync("jwt:audience", "QuerierClient", "JWT Audience");
+
+                            // Mettre à jour les paramètres de validation du token de manière dynamique
+                            context.Options.TokenValidationParameters = new TokenValidationParameters
+                            {
+                                ValidateIssuerSigningKey = true,
+                                IssuerSigningKey = signingKey,
+                                ValidateIssuer = true,
+                                ValidateAudience = true,
+                                ValidateLifetime = true,
+                                RequireExpirationTime = true,
+                                ClockSkew = TimeSpan.Zero,
+                                ValidIssuer = issuer,
+                                ValidAudience = audience
+                            };
+
+                            tokenLogger.LogDebug("Token validation parameters configured successfully");
+                        }
+                    };
+                });
+
+                logger.LogInformation("Authentication configuration completed successfully");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to configure authentication");
+                throw;
+            }
 
             return services;
         }
@@ -245,41 +286,68 @@ namespace Querier.Api.Infrastructure.Extensions
 
         public static IServiceCollection AddCustomLogging(this IServiceCollection services)
         {
-            services.AddLogging(builder =>
+            try
             {
-                builder.ClearProviders();
-                builder.AddSimpleConsole(options =>
+                services.AddLogging(builder =>
                 {
-                    options.SingleLine = true;
-                    options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] ";
+                    builder.ClearProviders();
+                    builder.AddSimpleConsole(options =>
+                    {
+                        options.SingleLine = true;
+                        options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] ";
+                    });
+                    builder.AddDebug();
+                    
+                    builder.SetMinimumLevel(LogLevel.Debug);
+                    builder.AddFilter("Microsoft", LogLevel.Warning)
+                           .AddFilter("System", LogLevel.Warning)
+                           .AddFilter("Querier.Api", LogLevel.Debug);
                 });
-                builder.AddDebug();
-                
-                builder.SetMinimumLevel(LogLevel.Debug);
-                builder.AddFilter("Microsoft", LogLevel.Warning)
-                       .AddFilter("System", LogLevel.Warning)
-                       .AddFilter("Querier.Api", LogLevel.Debug);
-            });
+
+                var logger = services.BuildServiceProvider().GetRequiredService<ILogger<Startup>>();
+                logger.LogInformation("Logging configuration completed successfully");
+            }
+            catch (Exception ex)
+            {
+                // Ici nous ne pouvons pas logger l'erreur car le logging n'est pas encore configuré
+                Console.Error.WriteLine($"Failed to configure logging: {ex.Message}");
+                throw;
+            }
 
             return services;
         }
 
         public static async Task AddDynamicAssemblies(this IServiceCollection services, IConfiguration configuration)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<ApiDbContext>();
-            var serviceProvider = services.BuildServiceProvider();
-            var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger<ApiDbContext>();
+            var logger = services.BuildServiceProvider().GetRequiredService<ILogger<Startup>>();
+            logger.LogInformation("Loading dynamic assemblies");
 
-            await using var apiDbContext = new ApiDbContext(optionsBuilder.Options, configuration, logger);
-            var swaggerProvider = serviceProvider.GetRequiredService<ISwaggerProvider>();
-            var mvc = services.AddControllers();
-
-            foreach(var connection in apiDbContext.DBConnections.ToList())
+            try
             {
-                AssemblyLoader.LoadAssemblyFromDbConnection(connection, serviceProvider, mvc.PartManager, logger);
+                var optionsBuilder = new DbContextOptionsBuilder<ApiDbContext>();
+                var serviceProvider = services.BuildServiceProvider();
+                var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
+                var dbLogger = loggerFactory.CreateLogger<ApiDbContext>();
+
+                await using var apiDbContext = new ApiDbContext(optionsBuilder.Options, configuration, dbLogger);
+                var swaggerProvider = serviceProvider.GetRequiredService<ISwaggerProvider>();
+                var mvc = services.AddControllers();
+
+                foreach(var connection in apiDbContext.DBConnections.ToList())
+                {
+                    logger.LogDebug("Loading assembly for connection: {ConnectionName}", connection.Name);
+                    AssemblyLoader.LoadAssemblyFromDbConnection(connection, serviceProvider, mvc.PartManager, logger);
+                }
+
+                logger.LogDebug("Regenerating Swagger documentation");
+                AssemblyLoader.RegenerateSwagger(swaggerProvider, logger);
+                logger.LogInformation("Dynamic assemblies loaded successfully");
             }
-            AssemblyLoader.RegenerateSwagger(swaggerProvider, logger);
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to load dynamic assemblies");
+                throw;
+            }
         }
 
         public static IServiceCollection AddCustomSwagger(this IServiceCollection services)
