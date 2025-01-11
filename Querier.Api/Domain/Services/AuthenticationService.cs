@@ -26,23 +26,23 @@ namespace Querier.Api.Domain.Services
         private async Task<AuthResultDto> GenerateJwtToken(ApiUser user)
         {
             try
-            {
-                var jwtSecret = await settingService.GetSettingValueAsync<string>("jwt:secret");
-                var jwtIssuer = await settingService.GetSettingValueAsync<string>("jwt:issuer");
-                var jwtAudience = await settingService.GetSettingValueAsync<string>("jwt:audience");
-                var jwtExpiryInMinutes = await settingService.GetSettingValueAsync<int>("jwt:expiry");
+        {
+            var jwtSecret = await settingService.GetSettingValueAsync<string>("jwt:secret");
+            var jwtIssuer = await settingService.GetSettingValueAsync<string>("jwt:issuer");
+            var jwtAudience = await settingService.GetSettingValueAsync<string>("jwt:audience");
+            var jwtExpiryInMinutes = await settingService.GetSettingValueAsync<int>("jwt:expiry");
                 var refreshTokenExpiryInDays = await settingService.GetSettingValueAsync<int>("jwt:refreshTokenExpiry");
                 if (refreshTokenExpiryInDays == 0) refreshTokenExpiryInDays = 180; // 6 mois par défaut
 
-                if (string.IsNullOrEmpty(jwtSecret))
-                    throw new InvalidOperationException("JWT secret is not configured");
+            if (string.IsNullOrEmpty(jwtSecret))
+                throw new InvalidOperationException("JWT secret is not configured");
 
                 if (user.Email == null)
                     throw new InvalidOperationException("User email cannot be null");
 
                 logger.LogInformation("Generating JWT token for user: {Email}", user.Email);
 
-                var userRoles = await userRepository.GetRolesAsync(user);
+            var userRoles = await userRepository.GetRolesAsync(user);
                 var claims = new List<Claim>
                 {
                     new Claim("Id", user.Id),
@@ -127,30 +127,30 @@ namespace Querier.Api.Domain.Services
                     LastName = user.LastName 
                 };
 
-                var isCreated = await userRepository.AddAsync(newUser);
-                if (!isCreated.Succeeded)
+            var isCreated = await userRepository.AddAsync(newUser);
+            if (!isCreated.Succeeded)
                 {
                     logger.LogWarning("Failed to create user: {Email}. Errors: {@Errors}", 
                         user.Email, isCreated.Errors);
                     return new SignUpResultDto()
-                    {
-                        Success = false,
-                        Errors = isCreated.Errors.Select(x => x.Description).ToList()
-                    };
+                {
+                    Success = false,
+                    Errors = isCreated.Errors.Select(x => x.Description).ToList()
+                };
                 }
-
-                var authResult = await GenerateJwtToken(newUser);
+            
+            var authResult = await GenerateJwtToken(newUser);
                 logger.LogInformation("Successfully signed up user: {Email}", user.Email);
 
-                return new SignUpResultDto()
-                {
-                    Success = true,
-                    Email = user.Email,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    RefreshToken = authResult.RefreshToken,
-                    Token = authResult.Token,
-                    UserName = user.UserName,
+            return new SignUpResultDto()
+            {
+                Success = true,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                RefreshToken = authResult.RefreshToken,
+                Token = authResult.Token,
+                UserName = user.UserName,
                     Roles = user.Roles
                 };
             }
@@ -167,19 +167,19 @@ namespace Querier.Api.Domain.Services
             {
                 logger.LogInformation("Attempting to sign in user: {Email}", user.Email);
 
-                var existingUser = await userRepository.GetByEmailAsync(user.Email);
-                if (existingUser == null)
-                {
+            var existingUser = await userRepository.GetByEmailAsync(user.Email);
+            if (existingUser == null)
+            {
                     logger.LogWarning("Sign in failed - User not found: {Email}", user.Email);
-                    return new SignUpResultDto()
-                    {
-                        Success = false,
+                return new SignUpResultDto()
+                {
+                    Success = false,
                         Errors = ["Invalid credentials"]
-                    };
-                }
+                };
+            }
 
-                bool passwordIsCorrect = await userRepository.CheckPasswordAsync(existingUser, user.Password);
-                bool emailConfirmed = await userRepository.IsEmailConfirmedAsync(existingUser);
+            bool passwordIsCorrect = await userRepository.CheckPasswordAsync(existingUser, user.Password);
+            bool emailConfirmed = await userRepository.IsEmailConfirmedAsync(existingUser);
 
                 if (!emailConfirmed)
                 {
