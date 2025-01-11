@@ -1,19 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <UserSecretsId>c5d02b20-9317-400b-9128-dbe330a0bd56</UserSecretsId>
+    <UserSecretsId>aspnet-Querier.Api-12345678-1234-1234-1234-123456789012</UserSecretsId>
     <Configurations>Debug;Release</Configurations>
     <StartupObject>Querier.Api.Program</StartupObject>
     <AssemblyVersion>1.0.154.297</AssemblyVersion>
     <FileVersion>1.0.154.297</FileVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'Api' " />
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <Optimize>false</Optimize>
   </PropertyGroup>
   <PropertyGroup>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);1591</NoWarn>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Querier.Api.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
@@ -83,6 +85,7 @@
     <PackageReference Include="MySql.Data.EntityFrameworkCore" Version="8.0.22" />
     <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="CsvHelper.Excel.Core" Version="27.2.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="7.2.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
     <PackageReference Include="Microsoft.SqlServer.Server" Version="1.0.0" />
     <PackageReference Include="Azure.Core" Version="1.43.0" />

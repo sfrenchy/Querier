@@ -78,8 +78,7 @@ namespace Querier.Api
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseSwagger()
-               .UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
+            app.UseCustomSwagger();
 
             app.UseRouting()
                .UseCustomCors()

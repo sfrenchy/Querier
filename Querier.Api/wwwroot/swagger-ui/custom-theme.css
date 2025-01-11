@@ -1,0 +1,257 @@
+/* Querier Custom Theme for Swagger UI */
+:root {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #242424;
+    --text-primary: #ffffff;
+    --text-secondary: #e0e0e0;
+    --border-color: #404040;
+    --accent-color: #4CAF50;
+    --accent-light: #81C784;
+    --accent-dark: #388E3C;
+    --method-get: #2196F3;
+    --method-post: #4CAF50;
+    --method-put: #FF9800;
+    --method-delete: #F44336;
+    --code-bg: #2d2d2d;
+}
+
+/* Base */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.swagger-ui {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Logo */
+.swagger-ui .topbar {
+    background-color: var(--bg-secondary);
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.swagger-ui .topbar-wrapper img {
+    height: 40px;
+}
+
+/* Headers */
+.swagger-ui .info .title,
+.swagger-ui .info h1,
+.swagger-ui .info h2,
+.swagger-ui .info h3,
+.swagger-ui .info h4,
+.swagger-ui .info h5,
+.swagger-ui .info h6 {
+    color: var(--text-primary);
+}
+
+/* Operation blocks */
+.swagger-ui .opblock {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin-bottom: 1rem;
+}
+
+.swagger-ui .opblock .opblock-summary {
+    border-color: var(--border-color);
+}
+
+/* Methods */
+.swagger-ui .opblock.opblock-get {
+    border-color: var(--method-get);
+}
+
+.swagger-ui .opblock.opblock-get .opblock-summary-method {
+    background-color: var(--method-get);
+}
+
+.swagger-ui .opblock.opblock-post {
+    border-color: var(--method-post);
+}
+
+.swagger-ui .opblock.opblock-post .opblock-summary-method {
+    background-color: var(--method-post);
+}
+
+.swagger-ui .opblock.opblock-put {
+    border-color: var(--method-put);
+}
+
+.swagger-ui .opblock.opblock-put .opblock-summary-method {
+    background-color: var(--method-put);
+}
+
+.swagger-ui .opblock.opblock-delete {
+    border-color: var(--method-delete);
+}
+
+.swagger-ui .opblock.opblock-delete .opblock-summary-method {
+    background-color: var(--method-delete);
+}
+
+/* Parameters */
+.swagger-ui .parameters-col_description {
+    color: var(--text-secondary);
+}
+
+.swagger-ui table tbody tr td {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Models */
+.swagger-ui section.models {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.swagger-ui section.models h4 {
+    color: var(--text-primary);
+}
+
+/* Buttons */
+.swagger-ui .btn {
+    background-color: var(--accent-color);
+    color: var(--text-primary);
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.swagger-ui .btn:hover {
+    background-color: var(--accent-light);
+}
+
+.swagger-ui .btn.cancel {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.swagger-ui .btn.execute {
+    background-color: var(--accent-color);
+}
+
+/* Links */
+.swagger-ui a {
+    color: var(--accent-light);
+    text-decoration: none;
+}
+
+.swagger-ui a:hover {
+    color: var(--accent-color);
+}
+
+/* Code blocks */
+.swagger-ui .highlight-code {
+    background-color: var(--code-bg);
+    color: var(--text-primary);
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+/* Response section */
+.swagger-ui .responses-inner {
+    background-color: var(--bg-secondary);
+}
+
+.swagger-ui .response-col_status {
+    color: var(--text-primary);
+}
+
+/* Scheme selection */
+.swagger-ui .scheme-container {
+    background-color: var(--bg-secondary);
+    box-shadow: none;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Authorization modal */
+.swagger-ui .dialog-ux .modal-ux {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.swagger-ui .dialog-ux .modal-ux-header {
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.swagger-ui .dialog-ux .modal-ux-content {
+    background-color: var(--bg-secondary);
+}
+
+/* Input fields */
+.swagger-ui input[type=text],
+.swagger-ui input[type=password],
+.swagger-ui input[type=search],
+.swagger-ui input[type=number],
+.swagger-ui textarea {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.5rem;
+}
+
+.swagger-ui input[type=text]:focus,
+.swagger-ui input[type=password]:focus,
+.swagger-ui input[type=search]:focus,
+.swagger-ui input[type=number]:focus,
+.swagger-ui textarea:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+
+/* Select boxes */
+.swagger-ui select {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.5rem;
+}
+
+/* Description fields */
+.swagger-ui .markdown p,
+.swagger-ui .markdown pre,
+.swagger-ui .renderedMarkdown p,
+.swagger-ui .renderedMarkdown pre {
+    color: var(--text-secondary);
+}
+
+/* Try it out section */
+.swagger-ui .try-out {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+/* Response examples */
+.swagger-ui .example {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.swagger-ui .example pre {
+    color: var(--text-primary);
+    background-color: var(--code-bg);
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+/* Tabs */
+.swagger-ui .tab {
+    color: var(--text-secondary);
+}
+
+.swagger-ui .tab.active {
+    color: var(--text-primary);
+} 

@@ -20,12 +20,17 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.OpenApi.Models;
 using System.IO;
 using Querier.Api.Infrastructure.Swagger.Helpers;
+using Querier.Api.Infrastructure.Swagger.Filters;
+using Querier.Api.Infrastructure.Swagger.Extensions;
 using System.Security.Claims;
 using Querier.Api.Application.Interfaces.Repositories;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Common.Utilities;
 using Querier.Api.Infrastructure.Data.Repositories;
 using Querier.Api.Infrastructure.Services;
+using Microsoft.AspNetCore.Builder;
+using Swashbuckle.AspNetCore.SwaggerUI;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Querier.Api.Infrastructure.Extensions
 {
@@ -282,12 +287,32 @@ namespace Querier.Api.Infrastructure.Extensions
         {
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { 
+                    Title = "Querier API", 
+                    Version = "v1",
+                    Description = "API de gestion des requêtes et des données pour Querier"
+                });
                 
-                var xmlFile = "Querier.Api.xml";
-                var xmlPath = Path.Combine(System.AppContext.BaseDirectory, xmlFile);
-                c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+                // Inclusion des fichiers XML de documentation
+                var xmlFiles = Directory.GetFiles(AppContext.BaseDirectory, "*.xml");
+                foreach (var xmlFile in xmlFiles)
+                {
+                    c.IncludeXmlComments(xmlFile, includeControllerXmlComments: true);
+                }
+
+                // Configuration pour inclure les DTOs et leurs descriptions
+                c.EnableAnnotations();
+                c.SchemaFilter<EnumSchemaFilter>();
+                c.UseInlineDefinitionsForEnums();
+                c.DescribeAllParametersInCamelCase();
+                c.UseAllOfForInheritance();
+                c.UseOneOfForPolymorphism();
+                c.CustomSchemaIds(type => type.FullName);
                 
+                // Afficher les modèles même s'ils ne sont pas directement référencés
+                c.DocumentFilter<ShowAllModelsDocumentFilter>();
+                
+                // Configuration de la sécurité
                 c.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
@@ -319,14 +344,12 @@ namespace Querier.Api.Infrastructure.Extensions
                 // Résoudre les conflits d'actions en préférant les contrôleurs de l'assembly principal
                 c.ResolveConflictingActions(apiDescriptions =>
                 {
-                    // Préférer les contrôleurs de l'assembly principal (Querier.Api)
                     var mainAssemblyController = apiDescriptions
                         .FirstOrDefault(api => api.ActionDescriptor.DisplayName?.Contains("Querier.Api") == true);
                     
                     if (mainAssemblyController != null)
                         return mainAssemblyController;
 
-                    // Si pas de contrôleur de l'assembly principal, prendre le premier
                     return apiDescriptions.First();
                 });
 
@@ -341,9 +364,250 @@ namespace Querier.Api.Infrastructure.Extensions
 
                     return $"{apiDesc.ActionDescriptor.RouteValues["controller"]}_{apiDesc.ActionDescriptor.RouteValues["action"]}_{assemblyName}";
                 });
+
+                // Ordonner les contrôleurs alphabétiquement
+                c.OrderActionsBy(apiDesc => $"{apiDesc.ActionDescriptor.RouteValues["controller"]}_{apiDesc.RelativePath}");
+                c.TagActionsBy(api => new[] { api.GroupName ?? api.ActionDescriptor.RouteValues["controller"] });
+                c.DocInclusionPredicate((name, api) => true);
             });
 
             return services;
+        }
+
+        public static void UseCustomSwagger(this IApplicationBuilder app)
+        {
+            app.UseStaticFiles();
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
+                c.DocExpansion(DocExpansion.None);
+                c.DefaultModelsExpandDepth(-1);
+                c.EnableDeepLinking();
+                c.DisplayRequestDuration();
+                c.DefaultModelExpandDepth(2);
+                c.DefaultModelRendering(ModelRendering.Model);
+                c.DisplayOperationId();
+                c.ShowCommonExtensions();
+                c.EnableFilter();
+                
+                // Police Roboto pour la cohérence
+                c.InjectStylesheet("https://fonts.googleapis.com/css?family=Roboto:300,400,500,700");
+                c.InjectStylesheet("https://fonts.googleapis.com/css?family=Roboto+Mono:400,500,700");
+                
+                // Utilisation du thème personnalisé (après les polices)
+                c.InjectStylesheet("/swagger-ui/custom-theme.css");
+                c.DocumentTitle = "Querier API Documentation";
+
+                // Configuration du logo et styles supplémentaires
+                c.HeadContent = @"
+                    <style>
+                        :root {
+                            --bg-primary: #121212;
+                            --bg-secondary: #1E1E1E;
+                            --text-primary: #FFFFFF;
+                            --text-secondary: #CCCCCC;
+                            --border-color: #333333;
+                            --accent-color: #4CAF50;
+                            --accent-light: #81C784;
+                            --accent-dark: #388E3C;
+                            --method-get: #2196F3;
+                            --method-post: #4CAF50;
+                            --method-put: #FF9800;
+                            --method-delete: #F44336;
+                            --code-bg: #2d2d2d;
+                        }
+
+                        body, .swagger-ui {
+                            background-color: var(--bg-primary) !important;
+                            color: var(--text-primary) !important;
+                        }
+
+                        /* Suppression de la bande blanche */
+                        .swagger-ui .scheme-container {
+                            background-color: var(--bg-primary) !important;
+                            box-shadow: none !important;
+                            border-bottom: 1px solid var(--border-color) !important;
+                        }
+
+                        .swagger-ui .auth-wrapper {
+                            color: var(--text-primary) !important;
+                        }
+
+                        .swagger-ui .auth-container {
+                            background-color: var(--bg-secondary) !important;
+                            border-color: var(--border-color) !important;
+                        }
+
+                        .swagger-ui .info .title,
+                        .swagger-ui .info h1,
+                        .swagger-ui .info h2,
+                        .swagger-ui .info h3,
+                        .swagger-ui .info h4,
+                        .swagger-ui .info h5,
+                        .swagger-ui .info h6,
+                        .swagger-ui .opblock-tag,
+                        .swagger-ui table thead tr th,
+                        .swagger-ui .parameter__name,
+                        .swagger-ui .tab li,
+                        .swagger-ui .opblock .opblock-summary-operation-id,
+                        .swagger-ui .opblock .opblock-summary-path,
+                        .swagger-ui .opblock .opblock-summary-description {
+                            color: var(--text-primary) !important;
+                        }
+
+                        /* Amélioration du contraste pour le texte */
+                        .swagger-ui .opblock .opblock-section-header {
+                            background-color: var(--bg-secondary) !important;
+                            box-shadow: none !important;
+                        }
+
+                        .swagger-ui .opblock .opblock-section-header h4 {
+                            color: var(--text-primary) !important;
+                        }
+
+                        .swagger-ui .parameter__name,
+                        .swagger-ui .parameter__type,
+                        .swagger-ui .parameter__deprecated,
+                        .swagger-ui .parameter__in,
+                        .swagger-ui table.parameters td,
+                        .swagger-ui table.parameters th {
+                            color: var(--text-primary) !important;
+                        }
+
+                        .swagger-ui .opblock {
+                            background-color: var(--bg-secondary) !important;
+                            border-color: var(--border-color) !important;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+                            margin: 0 0 10px 0 !important;
+                        }
+
+                        /* Topbar et Logo */
+                        .swagger-ui .topbar {
+                            background-color: var(--bg-secondary) !important;
+                            border-bottom: 1px solid var(--border-color) !important;
+                            padding: 8px 0 !important;
+                        }
+
+                        .swagger-ui .topbar-wrapper {
+                            padding: 0 16px !important;
+                        }
+
+                        /* Correction du logo */
+                        .swagger-ui img {
+                            display: block !important;
+                        }
+
+                        .swagger-ui .topbar-wrapper img {
+                            content: url('/swagger-ui/querier_logo_no_bg_big.png') !important;
+                            height: 40px !important;
+                            width: auto !important;
+                            display: block !important;
+                            margin: 0 !important;
+                        }
+
+                        /* Masquer le texte Swagger UI par défaut */
+                        .swagger-ui .topbar a span {
+                            display: none !important;
+                        }
+
+                        /* Méthodes HTTP avec meilleur contraste */
+                        .swagger-ui .opblock.opblock-get {
+                            border-color: var(--method-get) !important;
+                            background-color: rgba(33, 150, 243, 0.1) !important;
+                        }
+
+                        .swagger-ui .opblock.opblock-post {
+                            border-color: var(--method-post) !important;
+                            background-color: rgba(76, 175, 80, 0.1) !important;
+                        }
+
+                        .swagger-ui .opblock.opblock-put {
+                            border-color: var(--method-put) !important;
+                            background-color: rgba(255, 152, 0, 0.1) !important;
+                        }
+
+                        .swagger-ui .opblock.opblock-delete {
+                            border-color: var(--method-delete) !important;
+                            background-color: rgba(244, 67, 54, 0.1) !important;
+                        }
+
+                        /* Inputs et Boutons avec meilleur contraste */
+                        .swagger-ui input[type=text],
+                        .swagger-ui input[type=password],
+                        .swagger-ui input[type=search],
+                        .swagger-ui input[type=number],
+                        .swagger-ui textarea {
+                            background-color: var(--bg-primary) !important;
+                            color: var(--text-primary) !important;
+                            border: 1px solid var(--border-color) !important;
+                        }
+
+                        .swagger-ui .btn {
+                            background-color: var(--accent-color) !important;
+                            color: white !important;
+                            border: none !important;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+                        }
+
+                        .swagger-ui .btn:hover {
+                            background-color: var(--accent-light) !important;
+                        }
+
+                        .swagger-ui .btn.authorize {
+                            background-color: var(--accent-color) !important;
+                            border-color: var(--accent-color) !important;
+                            color: white !important;
+                        }
+
+                        .swagger-ui .btn.authorize svg {
+                            fill: white !important;
+                        }
+
+                        /* Schémas et Modèles */
+                        .swagger-ui section.models {
+                            background-color: var(--bg-secondary) !important;
+                            border-color: var(--border-color) !important;
+                        }
+
+                        .swagger-ui section.models h4 {
+                            color: var(--text-primary) !important;
+                        }
+
+                        /* Description et Documentation */
+                        .swagger-ui .markdown p,
+                        .swagger-ui .markdown pre,
+                        .swagger-ui .renderedMarkdown p,
+                        .swagger-ui .renderedMarkdown pre {
+                            color: var(--text-secondary) !important;
+                        }
+
+                        /* Sélecteurs et Filtres */
+                        .swagger-ui select {
+                            background-color: var(--bg-primary) !important;
+                            color: var(--text-primary) !important;
+                            border-color: var(--border-color) !important;
+                        }
+
+                        /* Amélioration du contraste pour les tables */
+                        .swagger-ui table {
+                            background-color: var(--bg-secondary) !important;
+                            border-collapse: separate !important;
+                            border-spacing: 0 !important;
+                            border: 1px solid var(--border-color) !important;
+                        }
+
+                        .swagger-ui table thead tr {
+                            background-color: var(--bg-primary) !important;
+                            border-bottom: 1px solid var(--border-color) !important;
+                        }
+
+                        .swagger-ui table tbody tr:hover {
+                            background-color: rgba(255, 255, 255, 0.05) !important;
+                        }
+                    </style>
+                ";
+            });
         }
     }
 } 
