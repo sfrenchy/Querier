@@ -9,26 +9,21 @@ using Querier.Api.Domain.Entities.Auth;
 
 namespace Querier.Api.Infrastructure.Data.Repositories
 {
-    public class RoleRepository : IRoleRepository
+    public class RoleRepository(ILogger<RoleRepository> logger, RoleManager<ApiRole> roleManager)
+        : IRoleRepository
     {
-        private readonly ILogger<UserRepository> _logger;
-        private readonly RoleManager<ApiRole> _roleManager;
-
-        public RoleRepository(ILogger<UserRepository> logger, RoleManager<ApiRole> roleManager)
-        {
-            _logger = logger;
-            _roleManager = roleManager;
-        }
-
         public List<ApiRole> GetAll()
         {
             try
             {
-                return _roleManager.Roles.ToList();
+                logger.LogInformation("Retrieving all roles");
+                var roles = roleManager.Roles.ToList();
+                logger.LogInformation("Retrieved {Count} roles", roles.Count);
+                return roles;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.Message);
+                logger.LogError(ex, "Error retrieving all roles");
                 return new List<ApiRole>();
             }
         }
@@ -37,19 +32,36 @@ namespace Querier.Api.Infrastructure.Data.Repositories
         {
             try
             {
-                var foundRole = await _roleManager.Roles.FirstOrDefaultAsync(r => string.Equals(r.Name, role.Name));
-                if (foundRole != null)
+                if (role == null)
                 {
-                    _logger.LogError($"Role {role.Name} cannot be added because it already exists");
+                    logger.LogError("Attempted to add null role");
                     return false;
                 }
 
-                var created = await _roleManager.CreateAsync(role);
-                return created.Succeeded;
+                logger.LogInformation("Adding new role: {RoleName}", role.Name);
+                var foundRole = await roleManager.Roles.FirstOrDefaultAsync(r => 
+                    string.Equals(r.Name, role.Name, StringComparison.OrdinalIgnoreCase));
+
+                if (foundRole != null)
+                {
+                    logger.LogWarning("Role {RoleName} already exists", role.Name);
+                    return false;
+                }
+
+                var result = await roleManager.CreateAsync(role);
+                if (!result.Succeeded)
+                {
+                    logger.LogError("Failed to create role {RoleName}. Errors: {Errors}", 
+                        role.Name, string.Join(", ", result.Errors.Select(e => e.Description)));
+                    return false;
+                }
+
+                logger.LogInformation("Successfully created role {RoleName}", role.Name);
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.Message);
+                logger.LogError(ex, "Error adding role {RoleName}", role?.Name);
                 return false;
             }
         }
@@ -58,18 +70,36 @@ namespace Querier.Api.Infrastructure.Data.Repositories
         {
             try
             {
-                var foundRole = await _roleManager.FindByIdAsync(role.Id);
-                if (foundRole == null)
+                if (role == null)
                 {
-                    _logger.LogError($"Role {role.Name} cannot be edited because it's not found");
+                    logger.LogError("Attempted to update null role");
                     return false;
                 }
+
+                logger.LogInformation("Updating role {RoleId} to name {RoleName}", role.Id, role.Name);
+                var foundRole = await roleManager.FindByIdAsync(role.Id);
+                if (foundRole == null)
+                {
+                    logger.LogWarning("Role with ID {RoleId} not found", role.Id);
+                    return false;
+                }
+
                 foundRole.Name = role.Name;
-                return (await _roleManager.UpdateAsync(foundRole)).Succeeded;
+                var result = await roleManager.UpdateAsync(foundRole);
+                
+                if (!result.Succeeded)
+                {
+                    logger.LogError("Failed to update role {RoleId}. Errors: {Errors}", 
+                        role.Id, string.Join(", ", result.Errors.Select(e => e.Description)));
+                    return false;
+                }
+
+                logger.LogInformation("Successfully updated role {RoleId} to name {RoleName}", role.Id, role.Name);
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.Message);
+                logger.LogError(ex, "Error updating role {RoleId}", role?.Id);
                 return false;
             }
         }
@@ -80,29 +110,32 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             {
                 if (string.IsNullOrEmpty(id))
                 {
-                    _logger.LogError("Role with id null or empty cannot be deleted");
+                    logger.LogError("Attempted to delete role with null or empty ID");
                     return false;
                 }
 
-                var foundRole = await _roleManager.Roles
-                    .FirstOrDefaultAsync(r => r.Id == id);
+                logger.LogInformation("Deleting role with ID {RoleId}", id);
+                var foundRole = await roleManager.Roles.FirstOrDefaultAsync(r => r.Id == id);
                 if (foundRole == null)
                 {
-                    _logger.LogError($"Role with id {id} cannot be deleted because it's not found");
+                    logger.LogWarning("Role with ID {RoleId} not found", id);
                     return false;
                 }
 
-                var deleted = await _roleManager.DeleteAsync(foundRole);
-                if (!deleted.Succeeded)
+                var result = await roleManager.DeleteAsync(foundRole);
+                if (!result.Succeeded)
                 {
-                    _logger.LogError($"Error when deleting role {foundRole.Name}");
+                    logger.LogError("Failed to delete role {RoleName}. Errors: {Errors}", 
+                        foundRole.Name, string.Join(", ", result.Errors.Select(e => e.Description)));
                     return false;
                 }
-                return deleted.Succeeded;
+
+                logger.LogInformation("Successfully deleted role {RoleName}", foundRole.Name);
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.Message);
+                logger.LogError(ex, "Error deleting role with ID {RoleId}", id);
                 return false;
             }
         }
