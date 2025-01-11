@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -194,9 +195,18 @@ namespace Querier.Api.Domain.Services
             var jwtTokenHandler = new JwtSecurityTokenHandler();
             try
             {
-                // This validation function will make sure that the token meets the validation parameters
-                // and its an actual jwt token not just a random string
+                // Get the JWT secret and set up validation parameters
+                var jwtSecret = await settingService.GetSettingValueAsync<string>("jwt:secret");
+                if (string.IsNullOrEmpty(jwtSecret))
+                    throw new InvalidOperationException("JWT secret is not configured");
+
+                var key = Encoding.ASCII.GetBytes(jwtSecret);
+                var signingKey = new SymmetricSecurityKey(key);
+
+                // Configure validation parameters with the signing key
                 tokenValidationParameters.ValidateLifetime = false;
+                tokenValidationParameters.IssuerSigningKey = signingKey;
+
                 var principal = jwtTokenHandler.ValidateToken(tokenRequest.Token, tokenValidationParameters, out var validatedToken);
 
                 // Now we need to check if the token has a valid security algorithm
@@ -220,7 +230,7 @@ namespace Querier.Api.Domain.Services
                 {
                     return new AuthResultDto()
                     {
-                        Errors = new List<string>() { "We cannot refresh this since the token has not expired" },
+                        Errors = new List<string>() { $"We cannot refresh this since the token has not expired. Expire in {(expDate - DateTime.UtcNow).TotalMinutes} minutes" },
                         Success = false
                     };
                 }
