@@ -2,13 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Entities;
-using Querier.Api.Infrastructure.Services;
+using Querier.Api.Domain.Exceptions;
 
 namespace Querier.Api.Controllers
 {
@@ -25,15 +27,9 @@ namespace Querier.Api.Controllers
     [ApiController]
     [Route("api/v1/[controller]")]
     [Authorize]
-    public class SQLQueryController : ControllerBase
+    public class SqlQueryController(ISqlQueryService sqlQueryService, ILogger<SqlQueryController> logger)
+        : ControllerBase
     {
-        private readonly ISqlQueryService _sqlQueryService;
-
-        public SQLQueryController(ISqlQueryService sqlQueryService)
-        {
-            _sqlQueryService = sqlQueryService;
-        }
-
         /// <summary>
         /// Get all SQL queries accessible by the current user
         /// </summary>
@@ -43,9 +39,26 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(IEnumerable<SQLQueryDTO>), 200)]
         public async Task<ActionResult<IEnumerable<SQLQueryDTO>>> GetQueries()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var queries = await _sqlQueryService.GetAllQueriesAsync(userId);
-            return Ok(queries);
+            try
+            {
+                logger.LogDebug("Getting all SQL queries for current user");
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                
+                if (string.IsNullOrEmpty(userId))
+                {
+                    logger.LogWarning("User ID not found in claims");
+                    return Unauthorized("User ID not found in claims");
+                }
+
+                var queries = await sqlQueryService.GetAllQueriesAsync(userId);
+                logger.LogInformation("Successfully retrieved {Count} queries for user {UserId}", queries.ToList().Count, userId);
+                return Ok(queries);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving SQL queries");
+                return StatusCode(500, "An error occurred while retrieving SQL queries");
+            }
         }
 
         /// <summary>
@@ -60,32 +73,64 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(404)]
         public async Task<ActionResult<SQLQuery>> GetQuery(int id)
         {
-            var query = await _sqlQueryService.GetQueryByIdAsync(id);
-            if (query == null) return NotFound();
-            return Ok(query);
+            try
+            {
+                logger.LogDebug("Getting SQL query with ID: {QueryId}", id);
+                var query = await sqlQueryService.GetQueryByIdAsync(id);
+                
+                if (query == null)
+                {
+                    logger.LogWarning("SQL query with ID {QueryId} not found", id);
+                    return NotFound();
+                }
+
+                logger.LogInformation("Successfully retrieved SQL query with ID {QueryId}", id);
+                return Ok(query);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving SQL query with ID {QueryId}", id);
+                return StatusCode(500, "An error occurred while retrieving the SQL query");
+            }
         }
 
         /// <summary>
         /// Create a new SQL query
         /// </summary>
-        /// <param name="query">The SQL query to create</param>
+        /// <param name="dto">The SQL query to create</param>
         /// <returns>The created SQL query</returns>
         /// <response code="201">Returns the newly created query</response>
         /// <response code="400">If the query is invalid</response>
         [HttpPost]
         [ProducesResponseType(typeof(SQLQuery), 201)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<SQLQuery>> CreateQuery(SQLQueryCreateDto createUpdateSqlQueryDto)
+        public async Task<ActionResult<SQLQuery>> CreateQuery(SQLQueryCreateDto dto)
         {
-            var createdQuery = await _sqlQueryService.CreateQueryAsync(createUpdateSqlQueryDto.Query, createUpdateSqlQueryDto.SampleParameters);
-            return CreatedAtAction(nameof(GetQuery), new { id = createdQuery.Id }, createdQuery);
+            try
+            {
+                logger.LogDebug("Creating new SQL query");
+                
+                if (dto == null)
+                {
+                    logger.LogWarning("Invalid request: SQL query data is null");
+                    return BadRequest("SQL query data is required");
+                }
+
+                var createdQuery = await sqlQueryService.CreateQueryAsync(dto.Query, dto.SampleParameters);
+                logger.LogInformation("Successfully created SQL query with ID {QueryId}", createdQuery.Id);
+                return CreatedAtAction(nameof(GetQuery), new { id = createdQuery.Id }, createdQuery);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error creating SQL query");
+                return StatusCode(500, "An error occurred while creating the SQL query");
+            }
         }
 
         /// <summary>
         /// Update an existing SQL query
         /// </summary>
-        /// <param name="id">The ID of the SQL query to update</param>
-        /// <param name="query">The updated SQL query data</param>
+        /// <param name="dto">The updated SQL query data</param>
         /// <returns>The updated SQL query</returns>
         /// <response code="200">Returns the updated query</response>
         /// <response code="400">If the ID doesn't match the query ID</response>
@@ -94,11 +139,34 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(SQLQuery), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<SQLQuery>> UpdateQuery(SQLQueryUpdateDto createUpdateSqlQueryDto)
+        public async Task<ActionResult<SQLQuery>> UpdateQuery(SQLQueryUpdateDto dto)
         {
-            var updatedQuery = await _sqlQueryService.UpdateQueryAsync(createUpdateSqlQueryDto.Query, createUpdateSqlQueryDto.SampleParameters);
-            if (updatedQuery == null) return NotFound();
-            return Ok(updatedQuery);
+            try
+            {
+                logger.LogDebug("Updating SQL query with ID {QueryId}", dto?.Query?.Id);
+                
+                if (dto == null)
+                {
+                    logger.LogWarning("Invalid request: SQL query data is null");
+                    return BadRequest("SQL query data is required");
+                }
+
+                var updatedQuery = await sqlQueryService.UpdateQueryAsync(dto.Query, dto.SampleParameters);
+                
+                if (updatedQuery == null)
+                {
+                    logger.LogWarning("SQL query with ID {QueryId} not found", dto.Query?.Id);
+                    return NotFound();
+                }
+
+                logger.LogInformation("Successfully updated SQL query with ID {QueryId}", updatedQuery.Id);
+                return Ok(updatedQuery);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating SQL query with ID {QueryId}", dto?.Query?.Id);
+                return StatusCode(500, "An error occurred while updating the SQL query");
+            }
         }
 
         /// <summary>
@@ -111,15 +179,27 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(204)]
         public async Task<IActionResult> DeleteQuery(int id)
         {
-            await _sqlQueryService.DeleteQueryAsync(id);
-            return NoContent();
+            try
+            {
+                logger.LogDebug("Deleting SQL query with ID {QueryId}", id);
+                await sqlQueryService.DeleteQueryAsync(id);
+                logger.LogInformation("Successfully deleted SQL query with ID {QueryId}", id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error deleting SQL query with ID {QueryId}", id);
+                return StatusCode(500, "An error occurred while deleting the SQL query");
+            }
         }
 
         /// <summary>
         /// Execute a SQL query with parameters
         /// </summary>
         /// <param name="id">The ID of the SQL query to execute</param>
+        /// <param name="pageSize">Number of item in a page</param>
         /// <param name="parameters">Dictionary of parameters to use in the query</param>
+        /// <param name="pageNumber">The requested page number</param>
         /// <returns>The query results</returns>
         /// <response code="200">Returns the query results</response>
         /// <response code="404">If the query is not found</response>
@@ -132,21 +212,37 @@ namespace Querier.Api.Controllers
             int id,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 0,
-            [FromBody] Dictionary<string, object>? parameters = null)
+            [FromBody] Dictionary<string, object> parameters = null)
         {
             try
             {
+                logger.LogDebug("Executing SQL query with ID {QueryId}, Page {PageNumber}, Size {PageSize}", 
+                    id, pageNumber, pageSize);
+
                 parameters ??= new Dictionary<string, object>();
-                var result = await _sqlQueryService.ExecuteQueryAsync(
+                logger.LogDebug("Query parameters: {@Parameters}", parameters);
+
+                var result = await sqlQueryService.ExecuteQueryAsync(
                     id, 
                     parameters,
                     pageNumber, 
                     pageSize
                 );
+
+                logger.LogInformation(
+                    "Successfully executed SQL query with ID {QueryId}. Results retrieved on page {PageNumber}", 
+                    id, pageNumber);
+                
                 return Ok(result);
+            }
+            catch (NotFoundException ex)
+            {
+                logger.LogWarning(ex, "SQL query with ID {QueryId} not found", id);
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Error executing SQL query with ID {QueryId}", id);
                 return BadRequest(ex.Message);
             }
         }
