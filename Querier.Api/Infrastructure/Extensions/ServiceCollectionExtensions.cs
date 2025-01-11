@@ -206,7 +206,7 @@ namespace Querier.Api.Infrastructure.Extensions
             // Core services
             services.AddScoped<IEntityCRUDService, EntityCRUDService>();
             services.AddScoped<IWizardService, WizardService>();
-            services.AddScoped<IDBConnectionService, DBConnectionService>();
+            services.AddScoped<IDBConnectionService, DbConnectionService>();
             services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 
             // User and Auth services

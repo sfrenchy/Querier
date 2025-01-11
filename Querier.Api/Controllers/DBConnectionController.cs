@@ -5,12 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
-using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Controllers
 {
@@ -31,20 +28,11 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public class DBConnectionController : ControllerBase
+    public class DbConnectionController(
+        IDBConnectionService dbConnectionService,
+        ILogger<DbConnectionController> logger)
+        : ControllerBase
     {
-        private readonly IConfiguration _configuration;
-        private readonly IDBConnectionService _dbConnectionService;
-        private readonly IHostApplicationLifetime _hostApplicationLifetime;
-        private readonly ILogger<DBConnectionController> _logger;
-
-        public DBConnectionController(IHostApplicationLifetime hostApplicationLifetime, IDBConnectionService dbConnectionService, IConfiguration configuration, ILogger<DBConnectionController> logger)
-        {
-            _logger = logger;
-            _configuration = configuration;
-            _dbConnectionService = dbConnectionService;
-            _hostApplicationLifetime = hostApplicationLifetime;
-        }
 
         /// <summary>
         /// Adds a new database connection
@@ -66,9 +54,41 @@ namespace Querier.Api.Controllers
         [HttpPost("AddDbConnection")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddDBConnectionAsync([FromBody] DBConnectionCreateDto connection)
+        public async Task<IActionResult> AddDbConnectionAsync([FromBody] DBConnectionCreateDto connection)
         {
-            return Ok(await _dbConnectionService.AddConnectionAsync(connection));
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    logger.LogWarning("Invalid model state for database connection creation");
+                    return BadRequest(ModelState);
+                }
+
+                logger.LogInformation("Adding new database connection: {Name}", connection.Name);
+                var result = await dbConnectionService.AddConnectionAsync(connection);
+
+                if (result.State == Domain.Common.Enums.DBConnectionState.ConnectionError)
+                {
+                    logger.LogWarning("Connection error while adding database: {Name}. Messages: {@Messages}", 
+                        connection.Name, result.Messages);
+                    return BadRequest(new { error = "Connection error", messages = result.Messages });
+                }
+
+                if (result.State == Domain.Common.Enums.DBConnectionState.CompilationError)
+                {
+                    logger.LogWarning("Compilation error while adding database: {Name}. Messages: {@Messages}", 
+                        connection.Name, result.Messages);
+                    return BadRequest(new { error = "Compilation error", messages = result.Messages });
+                }
+
+                logger.LogInformation("Successfully added database connection: {Name}", connection.Name);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error adding database connection: {Name}", connection?.Name);
+                throw;
+            }
         }
 
         /// <summary>
@@ -83,17 +103,37 @@ namespace Querier.Api.Controllers
         ///         "id": "123"
         ///     }
         /// </remarks>
-        /// <param name="request">The identifier of the connection to delete</param>
+        /// <param name="dbConnectionId">The identifier of the connection to delete</param>
         /// <returns>The result of the deletion operation</returns>
         /// <response code="200">Connection was successfully deleted</response>
         /// <response code="404">If the connection was not found</response>
         [HttpDelete("DeleteDBConnection")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteDBConnectionAsync([FromQuery] int dbConnectionId)
+        public async Task<IActionResult> DeleteDbConnectionAsync([FromQuery] int dbConnectionId)
         {
-            await _dbConnectionService.DeleteDBConnectionAsync(dbConnectionId);
-            return NoContent();
+            try
+            {
+                logger.LogInformation("Deleting database connection with ID: {Id}", dbConnectionId);
+
+                try
+                {
+                    await dbConnectionService.DeleteDbConnectionAsync(dbConnectionId);
+                }
+                catch (KeyNotFoundException)
+                {
+                    logger.LogWarning("Database connection not found with ID: {Id}", dbConnectionId);
+                    return NotFound(new { error = $"Database connection with ID {dbConnectionId} not found" });
+                }
+
+                logger.LogInformation("Successfully deleted database connection with ID: {Id}", dbConnectionId);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error deleting database connection with ID: {Id}", dbConnectionId);
+                throw;
+            }
         }
 
         /// <summary>
@@ -105,7 +145,18 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
         {
-            return Ok(await _dbConnectionService.GetAllAsync());
+            try
+            {
+                logger.LogInformation("Retrieving all database connections");
+                var connections = await dbConnectionService.GetAllAsync();
+                logger.LogInformation("Successfully retrieved {Count} database connections", connections.Count);
+                return Ok(connections);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving all database connections");
+                throw;
+            }
         }
 
         /// <summary>
@@ -134,20 +185,24 @@ namespace Querier.Api.Controllers
         {
             try
             {
-                var schema = await _dbConnectionService.GetDatabaseSchemaAsync(connectionId);
+                logger.LogInformation("Retrieving database schema for connection ID: {Id}", connectionId);
+                var schema = await dbConnectionService.GetDatabaseSchemaAsync(connectionId);
+                logger.LogInformation("Successfully retrieved schema for connection ID: {Id}", connectionId);
                 return Ok(schema);
             }
             catch (KeyNotFoundException)
             {
+                logger.LogWarning("Database connection not found with ID: {Id}", connectionId);
                 return NotFound($"Database connection with ID {connectionId} not found");
             }
             catch (NotSupportedException ex)
             {
+                logger.LogWarning(ex, "Database type not supported for connection ID: {Id}", connectionId);
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving database schema for connection {ConnectionId}", connectionId);
+                logger.LogError(ex, "Error retrieving database schema for connection ID: {Id}", connectionId);
                 return StatusCode(500, "An error occurred while retrieving the database schema");
             }
         }
@@ -179,16 +234,30 @@ namespace Querier.Api.Controllers
         {
             try
             {
-                var objects = await _dbConnectionService.GetQueryObjectsAsync(connectionId, request.Query);
+                if (!ModelState.IsValid)
+                {
+                    logger.LogWarning("Invalid model state for query analysis on connection ID: {Id}", connectionId);
+                    return BadRequest(ModelState);
+                }
+
+                logger.LogInformation("Analyzing query for connection ID: {Id}", connectionId);
+                var objects = await dbConnectionService.GetQueryObjectsAsync(connectionId, request.Query);
+                logger.LogInformation("Successfully analyzed query for connection ID: {Id}", connectionId);
                 return Ok(objects);
             }
             catch (KeyNotFoundException)
             {
+                logger.LogWarning("Database connection not found with ID: {Id}", connectionId);
                 return NotFound($"Database connection with ID {connectionId} not found");
+            }
+            catch (ArgumentException ex)
+            {
+                logger.LogWarning(ex, "Invalid query for connection ID: {Id}", connectionId);
+                return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error analyzing query");
+                logger.LogError(ex, "Error analyzing query for connection ID: {Id}", connectionId);
                 return StatusCode(500, "An error occurred while analyzing the query");
             }
         }
@@ -210,16 +279,24 @@ namespace Querier.Api.Controllers
         {
             try
             {
-                var sources = await _dbConnectionService.GetConnectionSourcesAsync(connectionId);
+                logger.LogInformation("Downloading sources for connection ID: {Id}", connectionId);
+                var sources = await dbConnectionService.GetConnectionSourcesAsync(connectionId);
+                logger.LogInformation("Successfully downloaded sources for connection ID: {Id}", connectionId);
                 return File(sources.Content, "application/zip", sources.FileName);
             }
             catch (KeyNotFoundException)
             {
+                logger.LogWarning("Database connection not found with ID: {Id}", connectionId);
                 return NotFound($"Database connection with ID {connectionId} not found");
+            }
+            catch (InvalidOperationException ex)
+            {
+                logger.LogWarning(ex, "No source code available for connection ID: {Id}", connectionId);
+                return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error downloading sources for connection {ConnectionId}", connectionId);
+                logger.LogError(ex, "Error downloading sources for connection ID: {Id}", connectionId);
                 return StatusCode(500, "An error occurred while downloading the sources");
             }
         }
@@ -251,19 +328,23 @@ namespace Querier.Api.Controllers
             {
                 if (!new[] { "SQLServer", "MySQL", "PostgreSQL" }.Contains(databaseType))
                 {
+                    logger.LogWarning("Unsupported database type requested: {Type}", databaseType);
                     return BadRequest($"Database type '{databaseType}' is not supported. Supported types are: SQLServer, MySQL, PostgreSQL");
                 }
 
-                var servers = await _dbConnectionService.EnumerateServersAsync(databaseType);
+                logger.LogInformation("Enumerating {Type} servers", databaseType);
+                var servers = await dbConnectionService.EnumerateServersAsync(databaseType);
+                logger.LogInformation("Successfully enumerated {Count} {Type} servers", servers.Count, databaseType);
                 return Ok(servers);
             }
             catch (NotSupportedException ex)
             {
+                logger.LogWarning(ex, "Database type not supported: {Type}", databaseType);
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error enumerating {DatabaseType} servers", databaseType);
+                logger.LogError(ex, "Error enumerating {Type} servers", databaseType);
                 return StatusCode(500, $"An error occurred while enumerating {databaseType} servers");
             }
         }
@@ -276,22 +357,26 @@ namespace Querier.Api.Controllers
         /// <response code="200">Returns the list of endpoints</response>
         /// <response code="404">If the connection is not found</response>
         [HttpGet("{id}/endpoints")]
-        [ProducesResponseType(typeof(List<DBConnectionEndpointInfoDto>), 200)]
-        [ProducesResponseType(404)]
+        [ProducesResponseType(typeof(List<DBConnectionEndpointInfoDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<List<DBConnectionEndpointInfoDto>>> GetEndpoints(int id)
         {
             try
             {
-                var endpoints = await _dbConnectionService.GetEndpointsAsync(id);
+                logger.LogInformation("Retrieving endpoints for connection ID: {Id}", id);
+                var endpoints = await dbConnectionService.GetEndpointsAsync(id);
+                logger.LogInformation("Successfully retrieved {Count} endpoints for connection ID: {Id}", 
+                    endpoints.Count, id);
                 return Ok(endpoints);
             }
             catch (KeyNotFoundException)
             {
+                logger.LogWarning("Database connection not found with ID: {Id}", id);
                 return NotFound($"Connection with ID {id} not found");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting endpoints for connection {ConnectionId}", id);
+                logger.LogError(ex, "Error retrieving endpoints for connection ID: {Id}", id);
                 throw;
             }
         }
@@ -304,22 +389,26 @@ namespace Querier.Api.Controllers
         /// <response code="200">Returns the list of controllers</response>
         /// <response code="404">If the connection is not found</response>
         [HttpGet("{id}/controllers")]
-        [ProducesResponseType(typeof(List<DBConnectionControllerInfoDto>), 200)]
-        [ProducesResponseType(404)]
+        [ProducesResponseType(typeof(List<DBConnectionControllerInfoDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<List<DBConnectionControllerInfoDto>>> GetControllers(int id)
         {
             try
             {
-                var controllers = await _dbConnectionService.GetControllersAsync(id);
+                logger.LogInformation("Retrieving controllers for connection ID: {Id}", id);
+                var controllers = await dbConnectionService.GetControllersAsync(id);
+                logger.LogInformation("Successfully retrieved {Count} controllers for connection ID: {Id}", 
+                    controllers.Count, id);
                 return Ok(controllers);
             }
             catch (KeyNotFoundException)
             {
+                logger.LogWarning("Database connection not found with ID: {Id}", id);
                 return NotFound($"Connection with ID {id} not found");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting controllers for connection {ConnectionId}", id);
+                logger.LogError(ex, "Error retrieving controllers for connection ID: {Id}", id);
                 throw;
             }
         }

@@ -3,7 +3,9 @@ using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api
@@ -33,7 +35,13 @@ namespace Querier.Api
             var optionsBuilder = new DbContextOptionsBuilder<ApiDbContext>();
             optionsBuilder.UseSqlite(configuration.GetConnectionString("ApiDBConnection"));
 
-            using (var context = new ApiDbContext(optionsBuilder.Options, configuration))
+            var serviceProvider = new ServiceCollection()
+                .AddLogging()
+                .BuildServiceProvider();
+            var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger<ApiDbContext>();
+
+            using (var context = new ApiDbContext(optionsBuilder.Options, configuration, logger))
             {
                 Console.WriteLine("Ensuring database exists...");
                 context.Database.EnsureCreated();

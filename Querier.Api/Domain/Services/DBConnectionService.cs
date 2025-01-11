@@ -10,59 +10,53 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Antlr4.StringTemplate;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Npgsql;
 using Querier.Api.Application.DTOs;
-using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Entities.DBConnection;
-using Querier.Api.Domain.Entities.QDBConnection;
-using Querier.Api.Infrastructure.Data.Context;
 using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Templates;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace Querier.Api.Domain.Services
 {
-    public class DBConnectionService : IDBConnectionService
+    public class DbConnectionService : IDBConnectionService
     {
         private readonly IDbConnectionRepository _dbConnectionRepository;
-        private readonly IDynamicContextList _dynamicContextList;
-        private readonly ILogger<DBConnectionService> _logger;
+        private readonly ILogger<DbConnectionService> _logger;
         private readonly IServiceProvider _serviceProvider;
         private readonly ApplicationPartManager _partManager;
-        private readonly JsonSchemaGenerator _jsonSchemaGenerator;
         private readonly EndpointExtractor _endpointExtractor;
         private readonly DatabaseServerDiscovery _serverDiscovery;
         private readonly DatabaseSchemaExtractor _schemaExtractor;
 
-        public DBConnectionService(
-            IDynamicContextList dynamicContextList,
+        public DbConnectionService(
             IDbConnectionRepository dbConnectionRepository,
             IServiceProvider serviceProvider,
-            ILogger<DBConnectionService> logger,
+            ILogger<DbConnectionService> logger,
             ApplicationPartManager partManager,
             ILogger<DatabaseServerDiscovery> serverDiscoveryLogger,
-            ILogger<DatabaseSchemaExtractor> schemaExtractorLogger)
+            ILogger<DatabaseSchemaExtractor> schemaExtractorLogger,
+            ILogger<JsonSchemaGenerator> jsonSchemaGeneratorLogger,
+            ILogger<EndpointExtractor> endpointExtractorLogger)
         {
             _logger = logger;
+            _dbConnectionRepository = dbConnectionRepository;
             _serviceProvider = serviceProvider;
-            _dynamicContextList = dynamicContextList;
             _partManager = partManager;
-            _jsonSchemaGenerator = new JsonSchemaGenerator();
-            _endpointExtractor = new EndpointExtractor(_jsonSchemaGenerator);
+            var jsonSchemaGenerator = new JsonSchemaGenerator(jsonSchemaGeneratorLogger);
+            _endpointExtractor = new EndpointExtractor(jsonSchemaGenerator, endpointExtractorLogger);
             _serverDiscovery = new DatabaseServerDiscovery(serverDiscoveryLogger);
             _schemaExtractor = new DatabaseSchemaExtractor(schemaExtractorLogger);
         }
@@ -79,7 +73,7 @@ namespace Querier.Api.Domain.Services
                 switch (connection.ConnectionType)
                 {
                     case DbConnectionType.SqlServer:
-                        using (SqlConnection c = new SqlConnection(connection.ConnectionString))
+                        await using (SqlConnection c = new SqlConnection(connection.ConnectionString))
                         {
                             c.Open();
                             connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
@@ -88,7 +82,7 @@ namespace Querier.Api.Domain.Services
                         }
                         break;
                     case DbConnectionType.MySql:
-                        using (MySqlConnection c = new MySqlConnection(connection.ConnectionString))
+                        await using (MySqlConnection c = new MySqlConnection(connection.ConnectionString))
                         {
                             c.Open();
                             connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
@@ -97,7 +91,7 @@ namespace Querier.Api.Domain.Services
                         }
                         break;
                     case DbConnectionType.PgSql:
-                        using (NpgsqlConnection c = new NpgsqlConnection(connection.ConnectionString))
+                        await using (NpgsqlConnection c = new NpgsqlConnection(connection.ConnectionString))
                         {
                             c.Open();
                             connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
@@ -114,7 +108,6 @@ namespace Querier.Api.Domain.Services
                 return result;
             }
 
-            // if acces to db OK => scaffolding context
             IReverseEngineerScaffolder scaffolder = connection.ConnectionType switch
             {
                 DbConnectionType.SqlServer => DatabaseScaffolderFactory.CreateMssqlScaffolder(),
@@ -148,8 +141,7 @@ namespace Querier.Api.Domain.Services
             var sourceFiles = new List<string> { contextFile };
             sourceFiles.AddRange(scaffoldedModelSources.AdditionalFiles.Select(f => f.Code));
 
-            Dictionary<string, string> srcZipContent = new Dictionary<string, string>();
-            srcZipContent.Add(scaffoldedModelSources.ContextFile.Path, scaffoldedModelSources.ContextFile.Code);
+            Dictionary<string, string> srcZipContent = new Dictionary<string, string> { { scaffoldedModelSources.ContextFile.Path, scaffoldedModelSources.ContextFile.Code } };
             foreach (var addFile in scaffoldedModelSources.AdditionalFiles)
             {
                 srcZipContent.Add(addFile.Path, addFile.Code);
@@ -158,7 +150,7 @@ namespace Querier.Api.Domain.Services
             // if scaffolding OK => Generate a common DB Schema representation for stored procedure
             if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == DbConnectionType.SqlServer)
             {
-                List<Querier.Api.Domain.Entities.QDBConnection.StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
+                List<Entities.QDBConnection.StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
                 procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
 
                 var procedureModel = new StoredProcedureTemplateModel
@@ -169,7 +161,7 @@ namespace Querier.Api.Domain.Services
                     ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
                 };
 
-                await GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
+                GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
             }
 
             // Extract entity metadata from scaffolded model
@@ -181,18 +173,18 @@ namespace Querier.Api.Domain.Services
                 EntityList = ExtractEntityMetadata(scaffoldedModelSources)
             };
 
-            await GenerateEntityFiles(entityModel, srcZipContent, sourceFiles);
+            GenerateEntityFiles(entityModel, srcZipContent, sourceFiles);
 
             // Create source zip
-            byte[] sourceZipBytes = await CreateSourceZip(srcZipContent);
+            byte[] sourceZipBytes = CreateSourceZip(srcZipContent);
 
             if (!Directory.Exists("Assemblies"))
                 Directory.CreateDirectory("Assemblies");
             string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
-            File.WriteAllBytes(srcPath, sourceZipBytes);
+            await File.WriteAllBytesAsync(srcPath, sourceZipBytes);
 
             // Compile generated sources
-            var (assemblyBytes, pdbBytes) = await CompileAssembly(connection.Name, sourceFiles);
+            var (assemblyBytes, pdbBytes) = CompileAssembly(connection.Name, sourceFiles);
             if (assemblyBytes == null)
             {
                 result.State = DBConnectionState.CompilationError;
@@ -203,7 +195,7 @@ namespace Querier.Api.Domain.Services
             var hash = ComputeAssemblyHash(assemblyBytes);
 
             // Load assembly
-            var assemblyLoadContext = new AssemblyLoadContext("DbContext", false);
+            var assemblyLoadContext = new AssemblyLoadContext("DbContext");
             var loadedAssembly = assemblyLoadContext.LoadFromStream(new MemoryStream(assemblyBytes));
 
             // Create new connection
@@ -235,7 +227,7 @@ namespace Querier.Api.Domain.Services
             return result;
         }
 
-        private async Task GenerateProcedureFiles(StoredProcedureTemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateProcedureFiles(StoredProcedureTemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
         {
             var templates = new[]
             {
@@ -269,7 +261,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private async Task GenerateEntityFiles(TemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateEntityFiles(TemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
         {
             var templates = new[]
             {
@@ -298,7 +290,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private async Task<byte[]> CreateSourceZip(Dictionary<string, string> srcZipContent)
+        private byte[] CreateSourceZip(Dictionary<string, string> srcZipContent)
         {
             using var sourceStream = new MemoryStream();
             using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Create))
@@ -315,7 +307,7 @@ namespace Querier.Api.Domain.Services
             return sourceStream.ToArray();
         }
 
-        private async Task<(byte[] assemblyBytes, byte[] pdbBytes)> CompileAssembly(string contextName, List<string> sourceFiles)
+        private (byte[] assemblyBytes, byte[] pdbBytes) CompileAssembly(string contextName, List<string> sourceFiles)
         {
             var peStream = new MemoryStream();
             var pdbStream = new MemoryStream();
@@ -387,7 +379,7 @@ namespace Querier.Api.Domain.Services
                 typeof(List<>),
                 typeof(Infrastructure.Database.Parameters.OutputParameter<>),
                 typeof(Microsoft.Extensions.Caching.Distributed.IDistributedCache),
-                typeof(System.Linq.Enumerable),
+                typeof(Enumerable),
                 typeof(MemoryStream),
                 typeof(StreamReader)
             };
@@ -398,7 +390,7 @@ namespace Querier.Api.Domain.Services
             return refs;
         }
 
-        public async Task DeleteDBConnectionAsync(int dbConnectionId)
+        public async Task DeleteDbConnectionAsync(int dbConnectionId)
         {
             await _dbConnectionRepository.DeleteDbConnectionAsync(dbConnectionId);
         }
@@ -588,7 +580,7 @@ namespace Querier.Api.Domain.Services
             return entities;
         }
 
-        private List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(List<Querier.Api.Domain.Entities.QDBConnection.StoredProcedure> procedures)
+        private List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(List<Entities.QDBConnection.StoredProcedure> procedures)
         {
             return procedures.Select(p => new StoredProcedureMetadata
             {
@@ -656,14 +648,6 @@ namespace Querier.Api.Domain.Services
                 _logger.LogError(ex, "Error getting query objects for connection {ConnectionId}", connectionId);
                 throw;
             }
-        }
-
-        private string GetParameterSource(FromBodyAttribute fromBody, FromQueryAttribute fromQuery, FromRouteAttribute fromRoute)
-        {
-            if (fromBody != null) return "FromBody";
-            if (fromQuery != null) return "FromQuery";
-            if (fromRoute != null) return "FromRoute";
-            return "FromQuery";
         }
     }
 }
