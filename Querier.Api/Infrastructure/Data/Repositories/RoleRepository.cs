@@ -139,5 +139,34 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 return false;
             }
         }
+
+        public async Task<ApiRole> GetByIdAsync(string id)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(id))
+                {
+                    logger.LogError("Attempted to get role with null or empty ID");
+                    return null;
+                }
+
+                logger.LogInformation("Getting role with ID {RoleId}", id);
+                var role = await roleManager.FindByIdAsync(id);
+                
+                if (role == null)
+                {
+                    logger.LogWarning("Role with ID {RoleId} not found", id);
+                    return null;
+                }
+
+                logger.LogInformation("Successfully retrieved role {RoleName}", role.Name);
+                return role;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error getting role with ID {RoleId}", id);
+                return null;
+            }
+        }
     }
 }

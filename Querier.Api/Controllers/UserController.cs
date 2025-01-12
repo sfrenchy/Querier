@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -39,18 +40,18 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     GET /api/v1/usermanagement/view/123
+        ///     GET /api/v1/user/123
         /// </remarks>
         /// <param name="id">The unique identifier of the user</param>
         /// <returns>The user details</returns>
         /// <response code="200">Returns the requested user</response>
         /// <response code="400">If the ID is invalid</response>
         /// <response code="404">If the user was not found</response>
-        [HttpGet("View/{id}")]
+        [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> ViewAsync(string id)
+        public async Task<IActionResult> GetByIdAsync(string id)
         {
             try
             {
@@ -80,11 +81,39 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
+        /// Retrieves all users
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     GET /api/v1/user
+        /// </remarks>
+        /// <returns>List of all users</returns>
+        /// <response code="200">Returns the list of users</response>
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<ApiUserDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllAsync()
+        {
+            try
+            {
+                logger.LogDebug("Retrieving all users");
+                var users = await userService.GetAllAsync();
+                logger.LogInformation("Successfully retrieved {Count} users", users.ToList().Count);
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving all users");
+                return StatusCode(500, "An error occurred while retrieving users");
+            }
+        }
+
+        /// <summary>
         /// Creates a new user account
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     PUT /api/v1/usermanagement/add
+        ///     POST /api/v1/user
         ///     {
         ///         "email": "user@example.com",
         ///         "username": "johndoe",
@@ -92,14 +121,14 @@ namespace Querier.Api.Controllers
         ///     }
         /// </remarks>
         /// <param name="user">The user details for registration</param>
-        /// <returns>Success indicator</returns>
-        /// <response code="200">User was successfully created</response>
+        /// <returns>The created user</returns>
+        /// <response code="201">User was successfully created</response>
         /// <response code="400">If the request data is invalid</response>
-        [HttpPut("Add")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpPost]
+        [ProducesResponseType(typeof(ApiUserDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AddAsync([FromBody] ApiUserCreateDto user)
+        public async Task<IActionResult> CreateAsync([FromBody] ApiUserCreateDto user)
         {
             try
             {
@@ -120,8 +149,9 @@ namespace Querier.Api.Controllers
                 var result = await userService.AddAsync(user);
                 if (result)
                 {
+                    var createdUser = await userService.GetByEmailAsync(user.Email);
                     logger.LogInformation("Successfully created user with email: {Email}", user.Email);
-                    return Ok(new { message = "User created successfully" });
+                    return CreatedAtAction(nameof(GetByIdAsync), new { id = createdUser.Id }, createdUser);
                 }
 
                 logger.LogError("Failed to create user with email: {Email}", user.Email);
@@ -139,23 +169,33 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     PUT /api/v1/usermanagement/update
+        ///     PUT /api/v1/user/{id}
         ///     {
         ///         "id": "123",
         ///         "email": "updated@example.com",
         ///         "username": "janedoe"
         ///     }
         /// </remarks>
+        /// <param name="id">The ID of the user to update</param>
         /// <param name="user">The updated user information</param>
         /// <returns>Success indicator</returns>
-        [HttpPut("Update")]
+        /// <response code="200">User was successfully updated</response>
+        /// <response code="400">If the request data is invalid</response>
+        /// <response code="404">If the user was not found</response>
+        [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateAsync([FromBody] ApiUserUpdateDto user)
+        public async Task<IActionResult> UpdateAsync(string id, [FromBody] ApiUserUpdateDto user)
         {
             try
             {
+                if (id != user.Id)
+                {
+                    return BadRequest("ID mismatch between URL and body");
+                }
+
                 logger.LogDebug("Updating user with ID: {UserId}", user?.Id);
 
                 if (user == null)
@@ -177,8 +217,8 @@ namespace Querier.Api.Controllers
                     return Ok(new { message = "User updated successfully" });
                 }
 
-                logger.LogError("Failed to update user with ID: {UserId}", user.Id);
-                return StatusCode(500, "Failed to update user");
+                logger.LogWarning("User not found with ID: {UserId}", user.Id);
+                return NotFound($"User with ID {user.Id} not found");
             }
             catch (Exception ex)
             {
@@ -192,14 +232,16 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     DELETE /api/v1/usermanagement/delete/123
+        ///     DELETE /api/v1/user/{id}
         /// </remarks>
         /// <param name="id">The ID of the user to delete</param>
         /// <returns>Success indicator</returns>
-        [HttpDelete("Delete/{id}")]
+        /// <response code="200">User was successfully deleted</response>
+        /// <response code="404">If the user was not found</response>
+        [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteAsync(string id)
         {
             try
@@ -210,12 +252,6 @@ namespace Querier.Api.Controllers
                 {
                     logger.LogWarning("Invalid user ID provided: null or empty");
                     return BadRequest("User ID is required");
-                }
-
-                if (!ModelState.IsValid)
-                {
-                    logger.LogWarning("Invalid model state: {@ModelState}", ModelState);
-                    return BadRequest(new { message = "Invalid request", errors = ModelState });
                 }
 
                 var result = await userService.DeleteByIdAsync(id);
@@ -236,38 +272,11 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Retrieves all users without pagination
+        /// Resets a user's password
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     GET /api/v1/usermanagement/getall
-        /// </remarks>
-        /// <returns>Complete list of users</returns>
-        [HttpGet("GetAll")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAll()
-        {
-            try
-            {
-                logger.LogDebug("Retrieving all users");
-                var users = await userService.GetAllAsync();
-                logger.LogInformation("Successfully retrieved {Count} users", users.ToList().Count);
-                return Ok(users);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error retrieving all users");
-                return StatusCode(500, "An error occurred while retrieving users");
-            }
-        }
-
-        /// <summary>
-        /// Resets a user's password using the reset token
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///     POST /api/v1/usermanagement/resetpassword
+        ///     POST /api/v1/user/reset-password
         ///     {
         ///         "token": "reset-token",
         ///         "newPassword": "NewSecurePassword123!"
@@ -275,12 +284,14 @@ namespace Querier.Api.Controllers
         /// </remarks>
         /// <param name="resetPasswordInfo">The reset token and new password</param>
         /// <returns>Result of the password reset operation</returns>
-        [HttpPost("resetPassword")]
+        /// <response code="200">Password was successfully reset</response>
+        /// <response code="400">If the request data is invalid</response>
+        [HttpPost("reset-password")]
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordInfo)
+        public async Task<ActionResult> ResetPasswordAsync([FromBody] ResetPasswordDto resetPasswordInfo)
         {
             try
             {
@@ -320,113 +331,134 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     GET /api/v1/usermanagement/emailconfirmation/confirmation-token/user@example.com
+        ///     GET /api/v1/user/email-confirmation/{token}/{email}
         /// </remarks>
         /// <param name="token">The email confirmation token</param>
-        /// <param name="mail">The email address to confirm</param>
+        /// <param name="email">The email address to confirm</param>
         /// <returns>Result of the email confirmation operation</returns>
-        [HttpGet("emailConfirmation/{token}/{mail}")]
+        /// <response code="200">Email was successfully confirmed</response>
+        /// <response code="400">If the request data is invalid</response>
+        [HttpGet("email-confirmation/{token}/{email}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult> EmailConfirmation(string token, string mail)
+        public async Task<ActionResult> EmailConfirmationAsync(string token, string email)
         {
             try
             {
-                logger.LogDebug("Processing email confirmation for: {Email}", mail);
+                logger.LogDebug("Processing email confirmation for: {Email}", email);
 
-                if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(mail))
+                if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
                 {
                     logger.LogWarning("Invalid request: token or email is missing");
                     return BadRequest("Token and email are required");
                 }
 
-                var response = await userService.EmailConfirmationAsync(new EmailConfirmationDto { Email = mail, Token = token });
+                var response = await userService.EmailConfirmationAsync(new EmailConfirmationDto { Email = email, Token = token });
                 if (response)
                 {
-                    logger.LogInformation("Email confirmation successful for: {Email}", mail);
+                    logger.LogInformation("Email confirmation successful for: {Email}", email);
                     return Ok(new { message = "Email confirmed successfully" });
                 }
 
-                logger.LogWarning("Email confirmation failed for: {Email}", mail);
+                logger.LogWarning("Email confirmation failed for: {Email}", email);
                 return BadRequest("Email confirmation failed");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error confirming email for: {Email}", mail);
+                logger.LogError(ex, "Error confirming email for: {Email}", email);
                 return StatusCode(500, "An error occurred while confirming the email");
             }
         }
 
         /// <summary>
-        /// Retrieves the current user's profile
+        /// Resends the email confirmation link
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     GET /api/v1/usermanagement/me
+        ///     POST /api/v1/user/resend-confirmation?email=user@example.com
         /// </remarks>
-        /// <returns>The current user's details</returns>
-        /// <response code="200">Returns the current user</response>
-        /// <response code="401">If the user is not authenticated</response>
-        [HttpGet("me")]
-        [Authorize]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Me()
-        {
-            try
-            {
-                logger.LogDebug("Retrieving current user profile");
-                var user = await userService.GetCurrentUserAsync(User);
-                
-                if (user == null)
-                {
-                    logger.LogWarning("Current user not found");
-                    return NotFound("Current user not found");
-                }
-
-                logger.LogInformation("Successfully retrieved current user profile: {UserId}", user.Id);
-                return Ok(user);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error retrieving current user profile");
-                return StatusCode(500, "An error occurred while retrieving the current user profile");
-            }
-        }
-
+        /// <param name="email">The email address to resend confirmation to</param>
+        /// <returns>Result of the resend operation</returns>
+        /// <response code="200">Confirmation email was successfully sent</response>
+        /// <response code="400">If the email is invalid or not found</response>
         [HttpPost("resend-confirmation")]
-        [Authorize]
+        [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> ResendConfirmationEmail([FromQuery] string userEmail)
+        public async Task<IActionResult> ResendConfirmationEmailAsync([FromQuery] string email)
         {
             try
             {
-                logger.LogDebug("Resending confirmation email to: {Email}", userEmail);
+                logger.LogDebug("Resending confirmation email to: {Email}", email);
 
-                if (string.IsNullOrEmpty(userEmail))
+                if (string.IsNullOrEmpty(email))
                 {
                     logger.LogWarning("Invalid request: email is missing");
                     return BadRequest("Email address is required");
                 }
 
-                var result = await userService.ResendConfirmationEmailAsync(userEmail);
+                var result = await userService.ResendConfirmationEmailAsync(email);
                 if (result)
                 {
-                    logger.LogInformation("Confirmation email resent successfully to: {Email}", userEmail);
+                    logger.LogInformation("Confirmation email resent successfully to: {Email}", email);
                     return Ok(new { message = "Confirmation email sent successfully" });
                 }
 
-                logger.LogWarning("Failed to resend confirmation email to: {Email}", userEmail);
+                logger.LogWarning("Failed to resend confirmation email to: {Email}", email);
                 return BadRequest("Failed to send confirmation email");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error resending confirmation email to: {Email}", userEmail);
+                logger.LogError(ex, "Error resending confirmation email to: {Email}", email);
                 return StatusCode(500, "An error occurred while sending the confirmation email");
+            }
+        }
+
+        /// <summary>
+        /// Retrieves a user by their email address
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     GET /api/v1/user/email/user@example.com
+        /// </remarks>
+        /// <param name="email">The email address of the user</param>
+        /// <returns>The user details</returns>
+        /// <response code="200">Returns the requested user</response>
+        /// <response code="400">If the email is invalid</response>
+        /// <response code="404">If the user was not found</response>
+        [HttpGet("email/{email}")]
+        [ProducesResponseType(typeof(ApiUserDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetByEmailAsync(string email)
+        {
+            try
+            {
+                logger.LogDebug("Retrieving user with email: {Email}", email);
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    logger.LogWarning("Invalid email provided: null or empty");
+                    return BadRequest("Email is required");
+                }
+
+                var user = await userService.GetByEmailAsync(email);
+                if (user == null)
+                {
+                    logger.LogWarning("User not found with email: {Email}", email);
+                    return NotFound($"User with email {email} not found");
+                }
+
+                logger.LogInformation("Successfully retrieved user with email: {Email}", email);
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving user with email: {Email}", email);
+                return StatusCode(500, "An error occurred while retrieving the user");
             }
         }
     }

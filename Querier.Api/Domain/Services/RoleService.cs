@@ -26,10 +26,19 @@ namespace Querier.Api.Domain.Services.Role
             _userRepository = userRepository;
         }
 
-        public async Task<bool> AddAsync(RoleCreateDto role)
+        public async Task<RoleDto> GetByIdAsync(string id)
+        {
+            var role = await _roleRepository.GetByIdAsync(id);
+            if (role == null) return null;
+            return new RoleDto { Id = role.Id, Name = role.Name };
+        }
+
+        public async Task<RoleDto> AddAsync(RoleCreateDto role)
         {
             var newRole = new ApiRole(role.Name);
-            return await _roleRepository.AddAsync(newRole);
+            var success = await _roleRepository.AddAsync(newRole);
+            if (!success) return null;
+            return new RoleDto { Id = newRole.Id, Name = newRole.Name };
         }
 
         public async Task<bool> UpdateAsync(RoleDto role)

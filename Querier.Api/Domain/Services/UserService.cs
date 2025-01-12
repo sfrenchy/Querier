@@ -233,6 +233,35 @@ namespace Querier.Api.Domain.Services
             }
         }
 
+        public async Task<ApiUserDto> GetByEmailAsync(string email)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(email))
+                {
+                    logger.LogError("Attempted to get user with null or empty email");
+                    return null;
+                }
+
+                logger.LogDebug("Retrieving user with email {Email}", email);
+                var user = await userRepository.GetByEmailAsync(email);
+                if (user == null)
+                {
+                    logger.LogWarning("User with email {Email} not found", email);
+                    return null;
+                }
+                
+                var dto = ApiUserDto.FromEntity(user);
+                logger.LogDebug("Successfully retrieved user with email {Email}", email);
+                return dto;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving user with email {Email}", email);
+                return null;
+            }
+        }
+
         public async Task<IEnumerable<ApiUserDto>> GetAllAsync()
         {
             try

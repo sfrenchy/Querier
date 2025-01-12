@@ -7,6 +7,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
     public interface IRoleRepository
     {
         List<ApiRole> GetAll();
+        Task<ApiRole> GetByIdAsync(string id);
         Task<bool> AddAsync(ApiRole role);
         Task<bool> UpdateAsync(ApiRole role);
         Task<bool> DeleteByIdAsync(string id);

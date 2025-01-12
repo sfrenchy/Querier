@@ -52,11 +52,11 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     GET /api/v1/role/getall
+        ///     GET /api/v1/role
         /// </remarks>
         /// <returns>List of all roles</returns>
         /// <response code="200">Returns the list of roles</response>
-        [HttpGet("GetAll")]
+        [HttpGet]
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         public IActionResult GetAllAsync()
         {
@@ -79,24 +79,65 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
+        /// Retrieves a role by its ID
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     GET /api/v1/role/1
+        /// </remarks>
+        /// <param name="id">The unique identifier of the role</param>
+        /// <returns>The role details</returns>
+        /// <response code="200">Returns the requested role</response>
+        /// <response code="404">If the role was not found</response>
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(RoleDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetByIdAsync(string id)
+        {
+            try
+            {
+                logger.LogDebug("Retrieving role with ID: {RoleId}", id);
+                var role = await roleService.GetByIdAsync(id);
+                
+                if (role == null)
+                {
+                    logger.LogWarning("Role not found with ID: {RoleId}", id);
+                    return NotFound(new { message = $"Role with ID {id} not found" });
+                }
+
+                logger.LogInformation("Successfully retrieved role: {RoleId}", id);
+                return Ok(role);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving role with ID: {RoleId}", id);
+                return Problem(
+                    title: "Error retrieving role",
+                    detail: "An unexpected error occurred while retrieving the role",
+                    statusCode: 500
+                );
+            }
+        }
+
+        /// <summary>
         /// Creates a new role
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     POST /api/v1/role/addrole
+        ///     POST /api/v1/role
         ///     {
         ///         "name": "Administrator",
         ///         "description": "Full system access"
         ///     }
         /// </remarks>
         /// <param name="role">The role details to create</param>
-        /// <returns>Success indicator</returns>
-        /// <response code="200">Role was successfully created</response>
+        /// <returns>The created role</returns>
+        /// <response code="201">Role was successfully created</response>
         /// <response code="400">If the request data is invalid</response>
-        [HttpPost("AddRole")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [HttpPost]
+        [ProducesResponseType(typeof(RoleDto), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddRoleAsync(RoleCreateDto role)
+        public async Task<IActionResult> CreateAsync(RoleCreateDto role)
         {
             try
             {
@@ -108,9 +149,9 @@ namespace Querier.Api.Controllers
                 }
 
                 logger.LogDebug("Creating new role with name: {RoleName}", role.Name);
-                var result = await roleService.AddAsync(role);
+                var createdRole = await roleService.AddAsync(role);
                 logger.LogInformation("Role created successfully: {RoleName}", role.Name);
-                return Ok(result);
+                return CreatedAtAction(nameof(GetByIdAsync), new { id = createdRole.Id }, createdRole);
             }
             catch (Exception ex)
             {
@@ -128,20 +169,21 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     POST /api/v1/role/updaterole
+        ///     PUT /api/v1/role/1
         ///     {
         ///         "id": "1",
         ///         "name": "Modified Role",
         ///         "description": "Updated description"
         ///     }
         /// </remarks>
+        /// <param name="id">The ID of the role to update</param>
         /// <param name="role">The updated role information</param>
         /// <returns>Success indicator</returns>
-        [HttpPost("UpdateRole")]
+        [HttpPut("{id}")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> UpdateRoleAsync(RoleDto role)
+        public async Task<IActionResult> UpdateAsync(string id, RoleDto role)
         {
             try
             {
@@ -179,14 +221,14 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     DELETE /api/v1/role/deleterole/1
+        ///     DELETE /api/v1/role/1
         /// </remarks>
         /// <param name="id">The ID of the role to delete</param>
         /// <returns>Success indicator</returns>
-        [HttpDelete("DeleteRole/{id}")]
+        [HttpDelete("{id}")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteRoleAsync(string id)
+        public async Task<IActionResult> DeleteAsync(string id)
         {
             try
             {
@@ -217,25 +259,25 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     GET /api/v1/role/getrolesforuser/123
+        ///     GET /api/v1/role/user/123
         /// </remarks>
-        /// <param name="idUser">The user's ID</param>
+        /// <param name="userId">The user's ID</param>
         /// <returns>List of roles assigned to the user</returns>
-        [HttpGet("GetRolesForUser/{idUser}")]
+        [HttpGet("user/{userId}")]
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetRolesForUser(string idUser)
+        public async Task<IActionResult> GetRolesForUser(string userId)
         {
             try
             {
-                logger.LogDebug("Retrieving roles for user: {UserId}", idUser);
-                var roles = await roleService.GetRolesForUserAsync(idUser);
-                logger.LogInformation("Successfully retrieved {Count} roles for user: {UserId}", roles.Count(), idUser);
+                logger.LogDebug("Retrieving roles for user: {UserId}", userId);
+                var roles = await roleService.GetRolesForUserAsync(userId);
+                logger.LogInformation("Successfully retrieved {Count} roles for user: {UserId}", roles.Count(), userId);
                 return Ok(roles);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error occurred while retrieving roles for user: {UserId}", idUser);
+                logger.LogError(ex, "Error occurred while retrieving roles for user: {UserId}", userId);
                 return Problem(
                     title: "Error retrieving user roles",
                     detail: "An unexpected error occurred while retrieving the user's roles",
@@ -249,13 +291,13 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     GET /api/v1/role/getcurrentuserroles
+        ///     GET /api/v1/role/me
         /// </remarks>
         /// <returns>List of roles for the current user</returns>
-        [HttpGet("GetCurrentUserRoles")]
+        [HttpGet("me")]
         [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetCurrentUserRole()
+        public async Task<IActionResult> GetCurrentUserRoles()
         {
             try
             {

@@ -9,6 +9,7 @@ namespace Querier.Api.Application.Interfaces.Services
     public interface IUserService
     {
         public Task<ApiUserDto> GetByIdAsync(string id);
+        public Task<ApiUserDto> GetByEmailAsync(string email);
         public Task<bool> SetUserRolesAsync(string id, List<RoleDto> roles);
         public Task<bool> AddAsync(ApiUserCreateDto user);
         public Task<bool> UpdateAsync(ApiUserUpdateDto user);
