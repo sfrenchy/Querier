@@ -57,7 +57,8 @@ namespace Querier.Api.Application.DTOs
                 ConnectionType = Enum.Parse<DbConnectionType>(connection.ConnectionType.ToString()),
                 ApiRoute = connection.ApiRoute,
                 ContextName = connection.ContextName,
-                Description = connection.Description
+                Description = connection.Description,
+                Id = connection.Id
             };
         }
     }
