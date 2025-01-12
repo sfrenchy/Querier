@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Querier.Api.Application.DTOs;
@@ -13,8 +14,8 @@ namespace Querier.Api.Application.Interfaces.Services
         Task<T> GetSettingValueAsync<T>(string name);
         Task<T> GetSettingValueAsync<T>(string name, T defaultValue);
         Task<T> GetSettingValueIfExistsAsync<T>(string name, T defaultValue, string description);
-        Task UpdateSettingIfExistsAsync<T>(string name, T value, string description);
-        Task UpdateSettings(Dictionary<string, string> settings);
+        Task UpdateSettingIfExistsAsync<T>(string name, T value);
+        Task UpdateSettings(Dictionary<string, dynamic> settings);
     }
 
 

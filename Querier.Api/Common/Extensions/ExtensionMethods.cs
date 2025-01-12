@@ -447,28 +447,28 @@ namespace Querier.Api.Common.Extensions
                 
                 if (pi.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.KeyAttribute)).Any())
                     {
-                    pd.Options.Add(PropertyOption.IsKey);
+                        pd.Options.Add(PropertyOption.IsKey);
                         LOGGER.LogDebug("Property {PropertyName} marked as Key", pi.Name);
                     }
                 
-                if (pi.IsNullableProperty())
+                    if (pi.IsNullableProperty())
                     {
-                    pd.Options.Add(PropertyOption.IsNullable);
+                        pd.Options.Add(PropertyOption.IsNullable);
                         LOGGER.LogDebug("Property {PropertyName} marked as Nullable", pi.Name);
                     }
 
-                if (pi.GetCustomAttributes(typeof(JsonStringAttribute)).Any())
+                    if (pi.GetCustomAttributes(typeof(JsonStringAttribute)).Any())
                     {
-                    pd.Type = "JsonString";
+                        pd.Type = "JsonString";
                         LOGGER.LogDebug("Property {PropertyName} marked as JsonString", pi.Name);
                     }
 
-                result.Properties.Add(pd);
-            }
+                    result.Properties.Add(pd);
+                }
 
                 LOGGER.LogInformation("Successfully converted type {TypeName} to EntityDefinition with {PropertyCount} properties",
                     type.Name, result.Properties.Count);
-            return result;
+                return result;
             }
             catch (Exception ex)
             {

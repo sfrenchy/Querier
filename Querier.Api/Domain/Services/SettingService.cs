@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories;
 using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Common.Extensions;
 using Querier.Api.Domain.Entities;
 
 namespace Querier.Api.Domain.Services
@@ -219,7 +220,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task UpdateSettingIfExistsAsync<T>(string name, T value, string description = "")
+        public async Task UpdateSettingIfExistsAsync<T>(string name, T value)
         {
             try
             {
@@ -253,7 +254,6 @@ namespace Querier.Api.Domain.Services
                     {
                         Name = name,
                         Value = value?.ToString(),
-                        Description = description,
                         Type = typeof(T).ToString()
                     };
                     await settingRepository.AddAsync(setting);
@@ -267,7 +267,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task UpdateSettings(Dictionary<string, string> settings)
+        public async Task UpdateSettings(Dictionary<string, dynamic> settings)
         {
             try
             {
@@ -283,7 +283,7 @@ namespace Querier.Api.Domain.Services
                 {
                     try
                     {
-                        await UpdateSettingIfExistsAsync(name, value);
+                        await UpdateSettingIfExistsAsync(name, value.Item1);
                     }
                     catch (Exception ex)
                     {

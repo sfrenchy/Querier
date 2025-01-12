@@ -83,10 +83,10 @@ namespace Querier.Api.Domain.Services
             try
             {
                 logger.LogDebug("Updating JWT settings");
-                await settingService.UpdateSettingIfExistsAsync("jwt:secret", jwtSecret, "");
-                await settingService.UpdateSettingIfExistsAsync("jwt:issuer", "QuerierApi", "");
-                await settingService.UpdateSettingIfExistsAsync("jwt:audience", "QuerierClient", "");
-                await settingService.UpdateSettingIfExistsAsync("jwt:expiry", 60, "");
+                await settingService.UpdateSettingIfExistsAsync("jwt:secret", jwtSecret);
+                await settingService.UpdateSettingIfExistsAsync("jwt:issuer", "QuerierApi");
+                await settingService.UpdateSettingIfExistsAsync("jwt:audience", "QuerierClient");
+                await settingService.UpdateSettingIfExistsAsync("jwt:expiry", 60);
                 logger.LogInformation("JWT settings updated successfully");
             }
             catch (Exception ex)
@@ -179,14 +179,13 @@ namespace Querier.Api.Domain.Services
             try
             {
                 logger.LogDebug("Configuring SMTP settings");
-                await settingService.UpdateSettingIfExistsAsync("smtp:host", smtpSetup.Host, "");
-                await settingService.UpdateSettingIfExistsAsync("smtp:port", smtpSetup.Port, "");
-                await settingService.UpdateSettingIfExistsAsync("smtp:username", smtpSetup.Username, "");
-                await settingService.UpdateSettingIfExistsAsync("smtp:password", smtpSetup.Password, "");
-                await settingService.UpdateSettingIfExistsAsync("smtp:useSSL", smtpSetup.useSSL, "");
-                await settingService.UpdateSettingIfExistsAsync("smtp:senderEmail", smtpSetup.SenderEmail, "");
-                await settingService.UpdateSettingIfExistsAsync("smtp:senderName", smtpSetup.SenderName, "");
-                await settingService.UpdateSettingIfExistsAsync("smtp:requiresAuth", smtpSetup.RequireAuth, "");
+                await settingService.UpdateSettingIfExistsAsync("smtp:host", smtpSetup.Host);
+                await settingService.UpdateSettingIfExistsAsync("smtp:port", smtpSetup.Port);
+                await settingService.UpdateSettingIfExistsAsync("smtp:username", smtpSetup.Username);
+                await settingService.UpdateSettingIfExistsAsync("smtp:useSSL", smtpSetup.useSSL);
+                await settingService.UpdateSettingIfExistsAsync("smtp:senderEmail", smtpSetup.SenderEmail);
+                await settingService.UpdateSettingIfExistsAsync("smtp:senderName", smtpSetup.SenderName);
+                await settingService.UpdateSettingIfExistsAsync("smtp:requiresAuth", smtpSetup.RequireAuth);
                 logger.LogInformation("SMTP settings configured successfully");
             }
             catch (Exception ex)
@@ -204,7 +203,7 @@ namespace Querier.Api.Domain.Services
                 var isConfigured = await settingService.GetSettingValueIfExistsAsync("api:isConfigured", false, "");
                 if (!isConfigured)
                 {
-                    await settingService.UpdateSettingIfExistsAsync("api:isConfigured", true, "");
+                    await settingService.UpdateSettingIfExistsAsync("api:isConfigured", true);
                 }
                 logger.LogInformation("API configuration status updated successfully");
             }

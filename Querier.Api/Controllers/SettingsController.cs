@@ -378,34 +378,34 @@ namespace Querier.Api.Controllers
         {
             try
             {
-                var settings = new Dictionary<string, string>
+                var settings = new Dictionary<string, dynamic>
                 {
                     { "api:scheme", config.Scheme },
                     { "api:host", config.Host },
-                    { "api:port", config.Port.ToString() },
+                    { "api:port", config.Port },
                     { "api:allowedHosts", config.AllowedHosts },
                     { "api:allowedOrigins", config.AllowedOrigins },
                     { "api:allowedMethods", config.AllowedMethods },
                     { "api:allowedHeaders", config.AllowedHeaders },
-                    { "api:email:ResetPasswordTokenValidityLifeSpanMinutes", config.ResetPasswordTokenValidity.ToString() },
-                    { "api:email:confirmationTokenValidityLifeSpanDays", config.EmailConfirmationTokenValidity.ToString() },
-                    { "api:password:requireDigit", config.RequireDigit.ToString() },
-                    { "api:password:requireLowercase", config.RequireLowercase.ToString() },
-                    { "api:password:requireNonAlphanumeric", config.RequireNonAlphanumeric.ToString() },
-                    { "api:password:requireUppercase", config.RequireUppercase.ToString() },
-                    { "api:password:requiredLength", config.RequiredLength.ToString() },
-                    { "api:password:requiredUniqueChars", config.RequiredUniqueChars.ToString() },
+                    { "api:email:ResetPasswordTokenValidityLifeSpanMinutes", config.ResetPasswordTokenValidity },
+                    { "api:email:confirmationTokenValidityLifeSpanDays", config.EmailConfirmationTokenValidity },
+                    { "api:password:requireDigit", config.RequireDigit },
+                    { "api:password:requireLowercase", config.RequireLowercase },
+                    { "api:password:requireNonAlphanumeric", config.RequireNonAlphanumeric },
+                    { "api:password:requireUppercase", config.RequireUppercase },
+                    { "api:password:requiredLength", config.RequiredLength },
+                    { "api:password:requiredUniqueChars", config.RequiredUniqueChars },
                     { "smtp:host", config.SmtpHost },
-                    { "smtp:port", config.SmtpPort.ToString() },
+                    { "smtp:port", config.SmtpPort },
                     { "smtp:username", config.SmtpUsername },
                     { "smtp:password", config.SmtpPassword },
-                    { "smtp:useSSL", config.SmtpUseSSL.ToString() },
+                    { "smtp:useSSL", config.SmtpUseSSL },
                     { "smtp:senderEmail", config.SmtpSenderEmail },
                     { "smtp:senderName", config.SmtpSenderName },
-                    { "smtp:requiresAuth", config.SmtpRequireAuth.ToString() },
-                    { "api:redis:enabled", config.RedisEnabled.ToString() },
+                    { "smtp:requiresAuth", config.SmtpRequireAuth },
+                    { "api:redis:enabled", config.RedisEnabled },
                     { "api:redis:host", config.RedisHost },
-                    { "api:redis:port", config.RedisPort.ToString() },
+                    { "api:redis:port", config.RedisPort },
                 };
 
                 await _settingService.UpdateSettings(settings);
