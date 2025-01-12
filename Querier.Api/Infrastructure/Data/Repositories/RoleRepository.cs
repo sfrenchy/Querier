@@ -40,7 +40,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
 
                 logger.LogInformation("Adding new role: {RoleName}", role.Name);
                 var foundRole = await roleManager.Roles.FirstOrDefaultAsync(r => 
-                    string.Equals(r.Name, role.Name, StringComparison.OrdinalIgnoreCase));
+                    r.Name.ToLower() == role.Name.ToLower());
 
                 if (foundRole != null)
                 {

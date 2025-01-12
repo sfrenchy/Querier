@@ -151,7 +151,7 @@ namespace Querier.Api.Controllers
                 logger.LogDebug("Creating new role with name: {RoleName}", role.Name);
                 var createdRole = await roleService.AddAsync(role);
                 logger.LogInformation("Role created successfully: {RoleName}", role.Name);
-                return CreatedAtAction(nameof(GetByIdAsync), new { id = createdRole.Id }, createdRole);
+                return Created($"/api/v1/role/{createdRole.Id}", createdRole);
             }
             catch (Exception ex)
             {
