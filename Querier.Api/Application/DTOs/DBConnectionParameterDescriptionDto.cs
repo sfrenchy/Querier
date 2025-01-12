@@ -4,7 +4,7 @@ namespace Querier.Api.Application.DTOs
     /// Data transfer object containing the description of a parameter for a generated controller endpoint
     /// Used to describe complex parameter types in the API
     /// </summary>
-    public class DBConnectionEndpointParameterDescriptionDto
+    public class DBConnectionParameterDescriptionDto
     {
         /// <summary>
         /// Name of the parameter in the endpoint

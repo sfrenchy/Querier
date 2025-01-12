@@ -2,15 +2,9 @@ using System.Collections.Generic;
 
 namespace Querier.Api.Domain.Common.Models
 {
-    public class PagedResult<T>
+    public class PagedResult<T>(IEnumerable<T> items, int total)
     {
-        public IEnumerable<T> Items { get; }
-        public int Total { get; }
-
-        public PagedResult(IEnumerable<T> items, int total)
-        {
-            Items = items;
-            Total = total;
-        }
+        public IEnumerable<T> Items { get; } = items;
+        public int Total { get; } = total;
     }
 } 

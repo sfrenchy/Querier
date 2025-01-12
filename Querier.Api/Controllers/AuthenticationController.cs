@@ -283,5 +283,77 @@ namespace Querier.Api.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// Signs out the current user by invalidating their refresh token
+        /// </summary>
+        /// <remarks>
+        /// Invalidates the user's current refresh token, effectively ending their session.
+        /// This should be called when the user wants to log out of the application.
+        /// 
+        /// Sample request:
+        ///     POST /api/v1/authentication/signout
+        ///     {
+        ///         "refreshToken": "6e7c8f9a-b1c2-3d4e-5f6g..."
+        ///     }
+        /// 
+        /// Sample success response:
+        ///     {
+        ///         "success": true,
+        ///         "errors": null
+        ///     }
+        /// 
+        /// Sample error response:
+        ///     {
+        ///         "success": false,
+        ///         "errors": [
+        ///             "Invalid refresh token"
+        ///         ]
+        ///     }
+        /// </remarks>
+        /// <param name="tokenRequest">The refresh token to invalidate</param>
+        /// <returns>Result indicating whether the sign out was successful</returns>
+        /// <response code="200">Sign out successful</response>
+        /// <response code="400">Invalid refresh token</response>
+        /// <response code="500">Internal server error during sign out</response>
+        [HttpPost]
+        [Route("SignOut")]
+        [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> SignOut([FromBody] RefreshTokenDto tokenRequest)
+        {
+            if (!ModelState.IsValid)
+            {
+                logger.LogWarning("Invalid sign out request");
+                return BadRequest(new AuthResultDto
+                {
+                    Success = false,
+                    Errors = new List<string> { "Invalid token" }
+                });
+            }
+
+            try
+            {
+                var result = await authManagementService.SignOut(tokenRequest);
+                if (result.Success)
+                {
+                    logger.LogInformation("User successfully signed out");
+                    return Ok(result);
+                }
+
+                logger.LogWarning("Sign out failed. Errors: {@Errors}", result.Errors);
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unexpected error during sign out");
+                return StatusCode(StatusCodes.Status500InternalServerError, new AuthResultDto
+                {
+                    Success = false,
+                    Errors = new List<string> { "An unexpected error occurred during sign out" }
+                });
+            }
+        }
     }
 }

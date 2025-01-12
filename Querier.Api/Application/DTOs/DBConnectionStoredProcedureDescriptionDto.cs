@@ -5,7 +5,7 @@ namespace Querier.Api.Application.DTOs
     /// <summary>
     /// Data transfer object containing the description of a database stored procedure
     /// </summary>
-    public class DBConnectionStoredProcedureDescriptionDto
+    public class DbConnectionStoredProcedureDescriptionDto
     {
         /// <summary>
         /// Name of the stored procedure
@@ -20,6 +20,6 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// List of parameters accepted by the stored procedure
         /// </summary>
-        public List<DBConnectionEndpointParameterDescriptionDto> Parameters { get; set; } = new();
+        public List<DBConnectionParameterDescriptionDto> Parameters { get; set; } = new();
     }
 }

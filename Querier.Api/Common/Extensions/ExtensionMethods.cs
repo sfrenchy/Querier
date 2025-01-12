@@ -20,7 +20,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Domain.Common.Attributes;
-using Querier.Api.Domain.Common.ValueObjects;
+using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Tools;
 
 namespace Querier.Api.Common.Extensions
@@ -419,12 +419,12 @@ namespace Querier.Api.Common.Extensions
             }
         }
 
-        public static EntityDefinition ToEntityDefinition(this Type type)
+        public static EntityDefinitionDto ToEntityDefinition(this Type type)
         {
             try
             {
                 LOGGER.LogDebug("Converting type {TypeName} to EntityDefinition", type.Name);
-                var result = new EntityDefinition
+                var result = new EntityDefinitionDto
                 {
                     Name = type.FullName,
                     Properties = []
@@ -438,7 +438,7 @@ namespace Querier.Api.Common.Extensions
 
                 foreach (var pi in properties)
                 {
-                    var pd = new PropertyDefinition
+                    var pd = new PropertyDefinitionDto
                     {
                         Name = pi.Name,
                         Type = pi.IsNullableProperty() ? Nullable.GetUnderlyingType(pi.PropertyType).Name + "?" : pi.PropertyType.Name,

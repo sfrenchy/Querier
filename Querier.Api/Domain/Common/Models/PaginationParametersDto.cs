@@ -1,6 +1,6 @@
 namespace Querier.Api.Domain.Common.Models
 {
-    public class PaginationParameters
+    public class PaginationParametersDto
     {
         private const int MaxPageSize = 50;
         private int _pageSize = 10;

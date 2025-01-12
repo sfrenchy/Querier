@@ -4,7 +4,6 @@ using System.Data;
 using System.Threading.Tasks;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Domain.Common.Models;
-using Querier.Api.Domain.Common.ValueObjects;
 
 namespace Querier.Api.Application.Interfaces.Services
 {
@@ -21,7 +20,7 @@ namespace Querier.Api.Application.Interfaces.Services
         /// </summary>
         /// <param name="contextTypeFullname">A full name of an available context (ie: Querier.Api.Models.ApiDbContext)</param>
         /// <returns>The list of entites available in the context with regarding informations</returns>
-        public List<EntityDefinition> GetEntities(string contextTypeFullname);
+        public List<EntityDefinitionDto> GetEntities(string contextTypeFullname);
 
         /// <summary>
         /// Get the entity definition for the context and the entity
@@ -29,7 +28,7 @@ namespace Querier.Api.Application.Interfaces.Services
         /// <param name="contextTypeFullname">A full name of an available context (ie: Querier.Api.Models.ApiDbContext)</param>
         /// <param name="entityFullname">A full name of an available context entity (ie: Querier.Api.Models.UI.QPageCategory)</param>
         /// <returns></returns>
-        public EntityDefinition GetEntity(string contextTypeFullname, string entityFullname);
+        public EntityDefinitionDto GetEntity(string contextTypeFullname, string entityFullname);
 
         /// <summary>
         /// Create a new entity in a specific context
@@ -70,7 +69,7 @@ namespace Querier.Api.Application.Interfaces.Services
         /// <returns>An enumerable that hold the datas for entity of the context</returns>
         public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<EntityCRUDDataFilterDto> filters);
 
-        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, PaginationParameters pagination, string orderBy);
+        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, PaginationParametersDto pagination, string orderBy);
 
         /// <summary>
         /// Update an entity in a specific context
@@ -81,7 +80,7 @@ namespace Querier.Api.Application.Interfaces.Services
         /// <returns>The modified entity</returns>
         public int Update(string contextTypeFullname, string entityFullname, object entity);
 
-        public SQLQueryResult GetSqlQueryEntityDefinition(EntityCRUDExecuteSQLQueryDto request);
+        public SqlQueryResultDto GetSqlQueryEntityDefinition(EntityCRUDExecuteSQLQueryDto request);
         public int CreateOrUpdate(string contextTypeFullname, string entityFullname, object entity);
         public void Delete(string contextTypeFullname, string entityFullname, object entityIdentifier);
     }

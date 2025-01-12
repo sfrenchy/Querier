@@ -30,39 +30,78 @@ namespace Querier.Api.Controllers
     public class PageController(IPageService pageService, ILogger<PageController> logger) : ControllerBase
     {
         /// <summary>
-        /// Gets all pages in a menu category
+        /// Gets all pages in the system
         /// </summary>
-        /// <param name="categoryId">ID of the category</param>
-        /// <returns>List of pages</returns>
+        /// <returns>List of all pages</returns>
         /// <response code="200">Returns the list of pages</response>
-        /// <response code="404">If the category is not found</response>
+        /// <response code="401">If the user is not authenticated</response>
+        /// <response code="403">If the user is not authorized</response>
+        /// <response code="500">If there was an internal server error</response>
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<PageDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<IEnumerable<PageDto>>> GetAll([FromQuery] int categoryId)
+        public async Task<ActionResult<IEnumerable<PageDto>>> GetAll()
         {
-            logger.LogInformation("Getting all pages for category {CategoryId}", categoryId);
+            logger.LogInformation("Getting all pages");
             try
             {
                 var pages = await pageService.GetAllAsync();
                 var pagesList = pages.ToList();
-                logger.LogInformation("Successfully retrieved {Count} pages for category {CategoryId}", pagesList.Count, categoryId);
+                logger.LogInformation("Successfully retrieved {Count} pages", pagesList.Count);
                 return Ok(pagesList);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving pages for category {CategoryId}", categoryId);
+                logger.LogError(ex, "Error retrieving pages");
                 return StatusCode(500, new { message = "An error occurred while retrieving the pages" });
             }
         }
 
         /// <summary>
-        /// Gets a page by its ID
+        /// Gets all pages for a specific menu
         /// </summary>
-        /// <param name="id">ID of the page</param>
+        /// <param name="menuId">ID of the menu</param>
+        /// <returns>List of pages in the menu</returns>
+        /// <response code="200">Returns the list of pages for the menu</response>
+        /// <response code="401">If the user is not authenticated</response>
+        /// <response code="403">If the user is not authorized</response>
+        /// <response code="404">If the menu is not found</response>
+        /// <response code="500">If there was an internal server error</response>
+        [HttpGet("menu/{menuId}")]
+        [ProducesResponseType(typeof(IEnumerable<PageDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<IEnumerable<PageDto>>> GetByMenuId(int menuId)
+        {
+            logger.LogInformation("Getting all pages for menu {MenuId}", menuId);
+            try
+            {
+                var pages = await pageService.GetAllByMenuIdAsync(menuId);
+                if (pages == null)
+                {
+                    logger.LogWarning("Menu {MenuId} not found", menuId);
+                    return NotFound(new { message = $"Menu {menuId} not found" });
+                }
+                
+                var pagesList = pages.ToList();
+                logger.LogInformation("Successfully retrieved {Count} pages for menu {MenuId}", pagesList.Count, menuId);
+                return Ok(pagesList);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving pages for menu {MenuId}", menuId);
+                return StatusCode(500, new { message = "An error occurred while retrieving the pages" });
+            }
+        }
+
+        /// <summary>
+        /// Gets a specific page by its ID
+        /// </summary>
+        /// <param name="id">ID of the page to retrieve</param>
         /// <returns>The requested page</returns>
         /// <response code="200">Returns the requested page</response>
+        /// <response code="401">If the user is not authenticated</response>
+        /// <response code="403">If the user is not authorized</response>
         /// <response code="404">If the page is not found</response>
+        /// <response code="500">If there was an internal server error</response>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(PageDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -94,7 +133,10 @@ namespace Querier.Api.Controllers
         /// <param name="request">The page data to create</param>
         /// <returns>The created page</returns>
         /// <response code="201">Returns the newly created page</response>
-        /// <response code="400">If the request is invalid</response>
+        /// <response code="400">If the request data is invalid</response>
+        /// <response code="401">If the user is not authenticated</response>
+        /// <response code="403">If the user is not authorized</response>
+        /// <response code="500">If there was an internal server error</response>
         [HttpPost]
         [ProducesResponseType(typeof(PageDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -127,8 +169,11 @@ namespace Querier.Api.Controllers
         /// <param name="request">The updated page data</param>
         /// <returns>The updated page</returns>
         /// <response code="200">Returns the updated page</response>
+        /// <response code="400">If the request data is invalid</response>
+        /// <response code="401">If the user is not authenticated</response>
+        /// <response code="403">If the user is not authorized</response>
         /// <response code="404">If the page is not found</response>
-        /// <response code="400">If the request is invalid</response>
+        /// <response code="500">If there was an internal server error</response>
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(PageDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -162,12 +207,15 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Deletes a page
+        /// Deletes a specific page
         /// </summary>
         /// <param name="id">ID of the page to delete</param>
-        /// <returns>No content if successful</returns>
+        /// <returns>No content on successful deletion</returns>
         /// <response code="204">If the page was successfully deleted</response>
+        /// <response code="401">If the user is not authenticated</response>
+        /// <response code="403">If the user is not authorized</response>
         /// <response code="404">If the page is not found</response>
+        /// <response code="500">If there was an internal server error</response>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

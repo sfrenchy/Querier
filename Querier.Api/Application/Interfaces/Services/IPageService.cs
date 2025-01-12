@@ -11,5 +11,6 @@ namespace Querier.Api.Application.Interfaces.Services
         Task<PageDto> CreateAsync(PageCreateDto request);
         Task<PageDto> UpdateAsync(int id, PageUpdateDto request);
         Task<bool> DeleteAsync(int id);
+        Task<IEnumerable<PageDto>> GetAllByMenuIdAsync(int menuId);
     }
 } 

@@ -268,6 +268,7 @@ namespace Querier.Api.Infrastructure.Extensions
             services.AddScoped<ISettingRepository, SettingRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IDbConnectionRepository, DbConnectionRepository>();
             
             // Menu and Layout services
             services.AddScoped<IMenuService, MenuService>();
@@ -378,6 +379,7 @@ namespace Querier.Api.Infrastructure.Extensions
                 
                 // Afficher les modèles même s'ils ne sont pas directement référencés
                 c.DocumentFilter<ShowAllModelsDocumentFilter>();
+                c.DocumentFilter<ConnectionPrefixDocumentFilter>();
                 
                 // Configuration de la sécurité
                 c.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme
@@ -434,7 +436,7 @@ namespace Querier.Api.Infrastructure.Extensions
 
                 // Ordonner les contrôleurs alphabétiquement
                 c.OrderActionsBy(apiDesc => $"{apiDesc.ActionDescriptor.RouteValues["controller"]}_{apiDesc.RelativePath}");
-                c.TagActionsBy(api => new[] { api.GroupName ?? api.ActionDescriptor.RouteValues["controller"] });
+                c.TagActionsBy(api => new[] { api.ActionDescriptor.RouteValues["controller"] });
                 c.DocInclusionPredicate((name, api) => true);
             });
 
@@ -465,6 +467,9 @@ namespace Querier.Api.Infrastructure.Extensions
                 // Utilisation du thème personnalisé (après les polices)
                 c.InjectStylesheet("/swagger-ui/custom-theme.css");
                 c.DocumentTitle = "Querier API Documentation";
+
+                // Ajouter le JavaScript pour grouper les tags
+                c.InjectJavascript("/swagger-ui/custom-script.js");
 
                 // Configuration du logo et styles supplémentaires
                 c.HeadContent = @"

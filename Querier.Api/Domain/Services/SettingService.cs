@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories;
 using Querier.Api.Application.Interfaces.Services;
-using Querier.Api.Domain.Common.Metadata;
+using Querier.Api.Domain.Entities;
 
 namespace Querier.Api.Domain.Services
 {

@@ -121,7 +121,7 @@ namespace Querier.Api.Controllers
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<MenuDto>> Update(int id, [FromBody] MenuCreateDto request)
+        public async Task<ActionResult<MenuDto>> Update(int id, [FromBody] MenuDto request)
         {
             if (request == null)
             {

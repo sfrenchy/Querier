@@ -9,7 +9,7 @@ namespace Querier.Api.Application.Interfaces.Services
         Task<List<MenuDto>> GetAllAsync();
         Task<MenuDto> GetByIdAsync(int id);
         Task<MenuDto> CreateAsync(MenuCreateDto request);
-        Task<MenuDto> UpdateAsync(int id, MenuCreateDto request);
+        Task<MenuDto> UpdateAsync(int id, MenuDto request);
         Task<bool> DeleteAsync(int id);
     }
 } 

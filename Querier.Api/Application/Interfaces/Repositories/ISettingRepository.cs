@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Querier.Api.Application.DTOs;
-using Querier.Api.Domain.Common.Metadata;
+using Querier.Api.Domain.Entities;
 
 namespace Querier.Api.Application.Interfaces.Repositories
 {

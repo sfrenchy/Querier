@@ -1,6 +1,4 @@
-﻿using Querier.Api.Domain.Common.ValueObjects;
-
-namespace Querier.Api.Application.DTOs
+﻿namespace Querier.Api.Application.DTOs
 {
     /// <summary>
     /// Data transfer object for filtering entities in generic CRUD operations
@@ -12,7 +10,7 @@ namespace Querier.Api.Application.DTOs
         /// The property/column definition to filter on
         /// Contains information about the property name and type
         /// </summary>
-        public PropertyDefinition Column { get; set; }
+        public PropertyDefinitionDto Column { get; set; }
 
         /// <summary>
         /// The comparison operator to use (e.g., "equals", "contains", "greaterThan")

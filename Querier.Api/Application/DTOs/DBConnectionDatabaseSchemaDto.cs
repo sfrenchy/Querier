@@ -20,11 +20,11 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// List of all stored procedures in the database with their descriptions
         /// </summary>
-        public List<DBConnectionStoredProcedureDescriptionDto> StoredProcedures { get; set; } = new();
+        public List<DbConnectionStoredProcedureDescriptionDto> StoredProcedures { get; set; } = new();
 
         /// <summary>
         /// List of all user-defined functions in the database with their descriptions
         /// </summary>
-        public List<DBConnectionUserFunctionDescriptionDto> UserFunctions { get; set; } = new();
+        public List<DbConnectionUserFunctionDescriptionDto> UserFunctions { get; set; } = new();
     }
 }

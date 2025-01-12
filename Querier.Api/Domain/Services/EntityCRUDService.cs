@@ -14,8 +14,8 @@ using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Common.Extensions;
 using Querier.Api.Common.Utilities;
+using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Common.Models;
-using Querier.Api.Domain.Common.ValueObjects;
 using Querier.Api.Tools;
 using DataTable = System.Data.DataTable;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -63,7 +63,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public List<EntityDefinition> GetEntities(string contextTypeFullname)
+        public List<EntityDefinitionDto> GetEntities(string contextTypeFullname)
         {
             try
             {
@@ -73,7 +73,7 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogInformation("Getting entities for context: {Context}", contextTypeFullname);
-                List<EntityDefinition> result = new List<EntityDefinition>();
+                List<EntityDefinitionDto> result = new List<EntityDefinitionDto>();
                 
                 DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
                 if (targetContext == null)
@@ -113,7 +113,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public EntityDefinition GetEntity(string contextTypeFullname, string entityFullname)
+        public EntityDefinitionDto GetEntity(string contextTypeFullname, string entityFullname)
         {
             try
             {
@@ -237,7 +237,7 @@ namespace Querier.Api.Domain.Services
         }
 
         public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, 
-            PaginationParameters pagination, string orderBy = "")
+            PaginationParametersDto pagination, string orderBy = "")
         {
             try
             {
@@ -445,9 +445,9 @@ namespace Querier.Api.Domain.Services
             targetContext.SaveChanges();
         }
 
-        public SQLQueryResult GetSqlQueryEntityDefinition(EntityCRUDExecuteSQLQueryDto request)
+        public SqlQueryResultDto GetSqlQueryEntityDefinition(EntityCRUDExecuteSQLQueryDto request)
         {
-            SQLQueryResult result = new SQLQueryResult
+            SqlQueryResultDto result = new SqlQueryResultDto
             {
                 QuerySuccessful = true,
                 Datas = []
@@ -457,7 +457,7 @@ namespace Querier.Api.Domain.Services
             try
             {
                 DataTable dt = apiDbContext.Database.RawSqlQuery(request.SqlQuery);
-                result.Entity = new EntityDefinition
+                result.Entity = new EntityDefinitionDto
                 {
                     Name = "UNK",
                     Properties = []
@@ -465,7 +465,7 @@ namespace Querier.Api.Domain.Services
                 foreach (DataColumn dtColumn in dt.Columns)
                 {
                     Type colType = dtColumn.DataType;
-                    PropertyDefinition pd = new PropertyDefinition
+                    PropertyDefinitionDto pd = new PropertyDefinitionDto
                     {
                         Name = dtColumn.ColumnName,
                         Type = dtColumn.AllowDBNull ? colType.Name + "?" : colType.Name,

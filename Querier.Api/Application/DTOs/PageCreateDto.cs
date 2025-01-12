@@ -40,6 +40,6 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// ID of the dynamic menu category this page will belong to
         /// </summary>
-        public int DynamicMenuCategoryId { get; set; }
+        public int MenuId { get; set; }
     }
 } 

@@ -99,6 +99,14 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                     return null;
                 }
 
+                // Load user roles
+                var roles = await userManager.GetRolesAsync(user);
+                user.UserRoles = roles.Select(roleName => new ApiUserRole 
+                { 
+                    Role = new ApiRole { Name = roleName },
+                    User = user
+                }).ToList();
+
                 logger.LogInformation("Successfully retrieved user with email: {Email}", email);
                 return user;
             }

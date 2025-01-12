@@ -9,5 +9,6 @@ namespace Querier.Api.Application.Interfaces.Services
         Task<SignUpResultDto> SignUp(SignUpDto user);
         Task<SignUpResultDto> SignIn(SignInDto user);
         Task<AuthResultDto> RefreshToken(RefreshTokenDto tokenRequest);
+        Task<AuthResultDto> SignOut(RefreshTokenDto tokenRequest);
     }
 }

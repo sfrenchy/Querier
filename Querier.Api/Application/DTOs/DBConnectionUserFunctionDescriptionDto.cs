@@ -5,7 +5,7 @@ namespace Querier.Api.Application.DTOs
     /// <summary>
     /// Data transfer object containing the description of a user-defined database function
     /// </summary>
-    public class DBConnectionUserFunctionDescriptionDto
+    public class DbConnectionUserFunctionDescriptionDto
     {
         /// <summary>
         /// Name of the user-defined function
@@ -20,7 +20,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// List of parameters accepted by the user-defined function
         /// </summary>
-        public List<DBConnectionEndpointParameterDescriptionDto> Parameters { get; set; } = new();
+        public List<DBConnectionParameterDescriptionDto> Parameters { get; set; } = new();
 
         /// <summary>
         /// Data type returned by the user-defined function

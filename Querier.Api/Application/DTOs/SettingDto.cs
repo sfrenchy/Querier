@@ -1,5 +1,5 @@
 using System;
-using Querier.Api.Domain.Common.Metadata;
+using Querier.Api.Domain.Entities;
 
 namespace Querier.Api.Application.DTOs
 {

@@ -89,7 +89,7 @@ namespace Querier.Api.Infrastructure.Services
             }
         }
 
-        public async Task<MenuDto> UpdateAsync(int id, MenuCreateDto request)
+        public async Task<MenuDto> UpdateAsync(int id, MenuDto request)
         {
             if (request == null)
             {

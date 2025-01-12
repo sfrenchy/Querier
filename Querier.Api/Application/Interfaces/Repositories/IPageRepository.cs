@@ -11,5 +11,6 @@ namespace Querier.Api.Application.Interfaces.Repositories
         Task<Page> CreateAsync(Page page);
         Task<Page> UpdateAsync(int id, Page page);
         Task<bool> DeleteAsync(int id);
+        Task<IEnumerable<Page>> GetAllByMenuIdAsync(int menuId);
     }
 }

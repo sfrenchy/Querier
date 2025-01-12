@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Querier.Api.Domain.Common.Metadata
+namespace Querier.Api.Domain.Entities
 {
     /// <summary>
     /// Represents an application setting in the system

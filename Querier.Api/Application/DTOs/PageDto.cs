@@ -47,7 +47,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// ID of the dynamic menu category this page belongs to
         /// </summary>
-        public int DynamicMenuCategoryId { get; set; }
+        public int MenuId { get; set; }
 
         /// <summary>
         /// List of rows that make up the page's layout
@@ -65,7 +65,7 @@ namespace Querier.Api.Application.DTOs
                 IsVisible = entity.IsVisible,
                 Roles = entity.Roles == null ? new List<string>() : entity.Roles.Split(',').Where(r => !string.IsNullOrWhiteSpace(r)).ToList(),
                 Route = entity.Route,
-                DynamicMenuCategoryId = entity.MenuId
+                MenuId = entity.MenuId
             };
         }
     }

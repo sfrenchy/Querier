@@ -10,7 +10,6 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Querier.Api.Domain.Common.Metadata;
 using Querier.Api.Domain.Entities;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Entities.DBConnection;

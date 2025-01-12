@@ -70,7 +70,7 @@ namespace Querier.Api.Infrastructure.Services
                     IsVisible = request.IsVisible,
                     Roles = string.Join(",", request.Roles ?? Enumerable.Empty<string>()),
                     Route = request.Route,
-                    MenuId = request.DynamicMenuCategoryId,
+                    MenuId = request.MenuId,
                     PageTranslations = request.Names.Select(x => new PageTranslation
                     {
                         LanguageCode = x.Key,
@@ -157,5 +157,21 @@ namespace Querier.Api.Infrastructure.Services
             }
         }
 
+        public async Task<IEnumerable<PageDto>> GetAllByMenuIdAsync(int menuId)
+        {
+            logger.LogInformation("Getting pages for menu {MenuId}", menuId);
+            try
+            {
+                var pages = await repository.GetAllByMenuIdAsync(menuId);
+                var result = pages.Select(PageDto.FromEntity).ToList();
+                logger.LogInformation("Successfully retrieved {Count} pages for menu {MenuId}", result.Count, menuId);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving pages for menu {MenuId}", menuId);
+                throw;
+            }
+        }
     }
 } 

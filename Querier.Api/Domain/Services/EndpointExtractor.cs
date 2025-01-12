@@ -59,6 +59,7 @@ namespace Querier.Api.Domain.Services
                                 var endpoint = new EndpointDescription
                                 {
                                     Action = action.Name,
+                                    Controller = controller.Name,
                                     HttpMethod = string.Join(", ", httpMethods),
                                     Route = CombineRoutes(controllerRoute, actionRoute),
                                     Responses = GetResponses(action).ToList(),
@@ -207,18 +208,31 @@ namespace Querier.Api.Domain.Services
                 _logger.LogTrace("Getting responses for action: {ActionName}", action.Name);
                 var responses = new List<EndpointResponse>();
 
-                // Add success response
-                var produces = action.GetCustomAttribute<ProducesResponseTypeAttribute>();
-                if (produces != null)
+                // Add success responses
+                var produces = action.GetCustomAttributes<ProducesResponseTypeAttribute>(true);
+                foreach (var response in produces)
                 {
                     responses.Add(new EndpointResponse
                     {
-                        StatusCode = produces.StatusCode,
-                        Description = "Successful response",
-                        JsonSchema = _schemaGenerator.GenerateSchema(produces.Type)
+                        StatusCode = response.StatusCode,
+                        Description = GetResponseDescription(response.StatusCode),
+                        JsonSchema = _schemaGenerator.GenerateSchema(response.Type),
+                        Type = response.Type?.Name ?? "void"
                     });
-                    _logger.LogTrace("Added success response with status code {StatusCode} for action {ActionName}", 
-                        produces.StatusCode, action.Name);
+                    _logger.LogTrace("Added response with status code {StatusCode} for action {ActionName}", 
+                        response.StatusCode, action.Name);
+                }
+
+                // If no responses defined, add a default 200 response
+                if (!responses.Any())
+                {
+                    responses.Add(new EndpointResponse
+                    {
+                        StatusCode = 200,
+                        Description = "Successful response",
+                        JsonSchema = "{}",
+                        Type = "void"
+                    });
                 }
 
                 // Add error response
@@ -226,7 +240,8 @@ namespace Querier.Api.Domain.Services
                 {
                     StatusCode = 400,
                     Description = "Bad Request",
-                    JsonSchema = GenerateErrorSchema()
+                    JsonSchema = GenerateErrorSchema(),
+                    Type = "ErrorResponse"
                 });
                 _logger.LogTrace("Added error response for action {ActionName}", action.Name);
 
@@ -237,6 +252,23 @@ namespace Querier.Api.Domain.Services
                 _logger.LogError(ex, "Error getting responses for action: {ActionName}", action.Name);
                 throw;
             }
+        }
+
+        private string GetResponseDescription(int statusCode)
+        {
+            return statusCode switch
+            {
+                200 => "Successful response",
+                201 => "Resource created successfully",
+                204 => "No content",
+                400 => "Bad request",
+                401 => "Unauthorized",
+                403 => "Forbidden",
+                404 => "Resource not found",
+                409 => "Conflict",
+                500 => "Internal server error",
+                _ => "Response"
+            };
         }
 
         private string GenerateErrorSchema()

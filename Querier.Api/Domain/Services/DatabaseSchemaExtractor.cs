@@ -74,20 +74,20 @@ namespace Querier.Api.Domain.Services
             try
             {
                 _logger.LogDebug("Opening SQL Server connection");
-            using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync();
+                await using var connection = new SqlConnection(connectionString);
+                await connection.OpenAsync();
 
-                _logger.LogTrace("Extracting tables");
-            await ExtractTables(connection, response);
+                    _logger.LogTrace("Extracting tables");
+                await ExtractTables(connection, response);
 
-                _logger.LogTrace("Extracting views");
-            await ExtractViews(connection, response);
+                    _logger.LogTrace("Extracting views");
+                await ExtractViews(connection, response);
 
-                _logger.LogTrace("Extracting stored procedures");
-            await ExtractStoredProcedures(connection, response);
+                    _logger.LogTrace("Extracting stored procedures");
+                await ExtractStoredProcedures(connection, response);
 
-                _logger.LogTrace("Extracting user functions");
-            await ExtractUserFunctions(connection, response);
+                    _logger.LogTrace("Extracting user functions");
+                await ExtractUserFunctions(connection, response);
 
                 _logger.LogDebug("Successfully extracted SQL Server schema");
             }
@@ -270,57 +270,55 @@ namespace Querier.Api.Domain.Services
             try
             {
                 _logger.LogDebug("Starting stored procedure extraction");
-            var spQuery = @"
-                SELECT 
-                    SPECIFIC_SCHEMA,
-                    SPECIFIC_NAME,
-                    PARAMETER_NAME,
-                    DATA_TYPE,
-                    PARAMETER_MODE
-                FROM INFORMATION_SCHEMA.PARAMETERS
-                WHERE SPECIFIC_SCHEMA != 'sys'
-                ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION";
+                var spQuery = @"
+                    SELECT 
+                        SPECIFIC_SCHEMA,
+                        SPECIFIC_NAME,
+                        PARAMETER_NAME,
+                        DATA_TYPE,
+                        PARAMETER_MODE
+                    FROM INFORMATION_SCHEMA.PARAMETERS
+                    WHERE SPECIFIC_SCHEMA != 'sys'
+                    ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION";
 
-            using var command = new SqlCommand(spQuery, connection);
-            using var reader = await command.ExecuteReaderAsync();
+                await using var command = new SqlCommand(spQuery, connection);
+                await using var reader = await command.ExecuteReaderAsync();
 
-            DBConnectionStoredProcedureDescriptionDto currentSp = null;
-            string currentSpName = null;
-            string currentSchema = null;
+                DbConnectionStoredProcedureDescriptionDto currentSp = null;
+                string currentSpName = null;
+                string currentSchema = null;
                 int spCount = 0;
                 int paramCount = 0;
 
-            while (await reader.ReadAsync())
+                while (await reader.ReadAsync())
                 {
                     try
-            {
-                var schema = reader.GetString(0);
-                var spName = reader.GetString(1);
-
-                if (currentSpName != spName || currentSchema != schema)
-                {
-                    currentSp = new DBConnectionStoredProcedureDescriptionDto
                     {
-                        Name = spName,
-                        Schema = schema
-                    };
-                    response.StoredProcedures.Add(currentSp);
-                    currentSpName = spName;
-                    currentSchema = schema;
+                        var schema = reader.GetString(0);
+                        var spName = reader.GetString(1);
+
+                        if (currentSpName != spName || currentSchema != schema)
+                        {
+                            currentSp = new DbConnectionStoredProcedureDescriptionDto
+                            {
+                                Name = spName,
+                                Schema = schema
+                            };
+                            response.StoredProcedures.Add(currentSp);
+                            currentSpName = spName;
+                            currentSchema = schema;
                             spCount++;
                             _logger.LogTrace("Processing stored procedure {Schema}.{Procedure}", schema, spName);
-                }
-
-                if (!reader.IsDBNull(2)) // Skip return value parameter
-                {
-                    currentSp.Parameters.Add(new DBConnectionEndpointParameterDescriptionDto
-                    {
-                        Name = reader.GetString(2),
-                        DataType = reader.GetString(3),
-                        Mode = reader.GetString(4)
-                    });
-                            paramCount++;
                         }
+
+                        if (reader.IsDBNull(2)) continue; // Skip return value parameter
+                        currentSp.Parameters.Add(new DBConnectionParameterDescriptionDto
+                        {
+                            Name = reader.GetString(2),
+                            DataType = reader.GetString(3),
+                            Mode = reader.GetString(4)
+                        });
+                        paramCount++;
                     }
                     catch (Exception ex)
                     {
@@ -362,7 +360,7 @@ namespace Querier.Api.Domain.Services
             using var command = new SqlCommand(functionQuery, connection);
             using var reader = await command.ExecuteReaderAsync();
 
-            DBConnectionUserFunctionDescriptionDto currentFunc = null;
+            DbConnectionUserFunctionDescriptionDto currentFunc = null;
             string currentFuncName = null;
             string currentSchema = null;
                 int funcCount = 0;
@@ -371,32 +369,32 @@ namespace Querier.Api.Domain.Services
             while (await reader.ReadAsync())
                 {
                     try
-            {
-                var schema = reader.GetString(0);
-                var funcName = reader.GetString(1);
-
-                if (currentFuncName != funcName || currentSchema != schema)
-                {
-                    currentFunc = new DBConnectionUserFunctionDescriptionDto
                     {
-                        Name = funcName,
-                        Schema = schema
-                    };
-                    response.UserFunctions.Add(currentFunc);
-                    currentFuncName = funcName;
-                    currentSchema = schema;
+                        var schema = reader.GetString(0);
+                        var funcName = reader.GetString(1);
+
+                        if (currentFuncName != funcName || currentSchema != schema)
+                        {
+                            currentFunc = new DbConnectionUserFunctionDescriptionDto
+                            {
+                                Name = funcName,
+                                Schema = schema
+                            };
+                            response.UserFunctions.Add(currentFunc);
+                            currentFuncName = funcName;
+                            currentSchema = schema;
                             funcCount++;
                             _logger.LogTrace("Processing user function {Schema}.{Function}", schema, funcName);
-                }
+                        }
 
-                if (!reader.IsDBNull(2)) // Skip return value parameter
-                {
-                    currentFunc.Parameters.Add(new DBConnectionEndpointParameterDescriptionDto
-                    {
-                        Name = reader.GetString(2),
-                        DataType = reader.GetString(3),
-                        Mode = reader.GetString(4)
-                    });
+                        if (!reader.IsDBNull(2)) // Skip return value parameter
+                        {
+                            currentFunc.Parameters.Add(new DBConnectionParameterDescriptionDto
+                            {
+                                Name = reader.GetString(2),
+                                DataType = reader.GetString(3),
+                                Mode = reader.GetString(4)
+                            });
                             paramCount++;
                         }
                     }

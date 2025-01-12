@@ -282,17 +282,14 @@ namespace Querier.Api.Domain.Services
                     return new AuthResultDto
                     {
                         Success = false,
-                        Errors =
-                        [
-                            $"Token is still valid for {(expiryDateUtc - DateTime.UtcNow).TotalMinutes:F1} minutes"
-                        ]
+                        Errors = ["Token has not expired yet"]
                     };
                 }
 
                 var storedRefreshToken = await authenticationRepository.GetRefreshTokenAsync(tokenRequest.RefreshToken);
                 if (storedRefreshToken == null)
                 {
-                    logger.LogWarning("Refresh token not found");
+                    logger.LogWarning("Refresh token does not exist");
                     return new AuthResultDto
                     {
                         Success = false,
@@ -361,6 +358,43 @@ namespace Querier.Api.Domain.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unexpected error during token refresh");
+                throw;
+            }
+        }
+
+        public async Task<AuthResultDto> SignOut(RefreshTokenDto tokenRequest)
+        {
+            try
+            {
+                logger.LogInformation("Attempting to sign out user");
+
+                var storedRefreshToken = await authenticationRepository.GetRefreshTokenAsync(tokenRequest.RefreshToken);
+                if (storedRefreshToken == null)
+                {
+                    logger.LogWarning("Refresh token does not exist");
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        Errors = ["Invalid refresh token"]
+                    };
+                }
+
+                // Revoke the refresh token
+                storedRefreshToken.IsRevoked = true;
+                await authenticationRepository.UpdateRefreshTokenAsync(storedRefreshToken);
+
+                // Delete all refresh tokens for the user for complete sign out
+                await authenticationRepository.DeleteRefreshTokensForUserAsync(storedRefreshToken.UserId);
+
+                logger.LogInformation("Successfully signed out user with ID: {UserId}", storedRefreshToken.UserId);
+                return new AuthResultDto
+                {
+                    Success = true
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unexpected error during sign out");
                 throw;
             }
         }

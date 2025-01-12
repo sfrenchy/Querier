@@ -2,20 +2,20 @@ using $nameSpace$;
 using $nameSpace$.ProcedureParameters;
 using $nameSpace$.ProcedureReportRequests;
 using $nameSpace$.ProcedureResultSets;
-using Querier.Api.Tools;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Threading;
 using System;
 using System.Linq;
 using System.IO;
 using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Infrastructure.Database.Services.Base;
+
 
 namespace $nameSpace$.Services
 {

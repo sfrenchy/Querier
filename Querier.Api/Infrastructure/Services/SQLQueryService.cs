@@ -13,11 +13,11 @@ using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Common.Extensions;
 using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Models;
-using Querier.Api.Domain.Common.ValueObjects;
 using Querier.Api.Domain.Entities;
 using Querier.Api.Domain.Exceptions;
 using Querier.Api.Infrastructure.Data.Context;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Domain.Common.Enums;
 
 namespace Querier.Api.Infrastructure.Services
 {
@@ -194,11 +194,11 @@ namespace Querier.Api.Infrastructure.Services
                 DataTable dt = dbcontext.Database.RawSqlQuery(query.Query, parameters);
                 logger.LogDebug("Query execution successful, creating entity definition");
 
-                    var entityDefinition = new EntityDefinition
+                    var entityDefinition = new EntityDefinitionDto
                     {
                         Name = query.Name,
                         Properties = dt.Columns.Cast<DataColumn>()
-                            .Select(column => new PropertyDefinition
+                            .Select(column => new PropertyDefinitionDto
                             {
                                 Name = column.ColumnName,
                                 Type = column.AllowDBNull ? $"{column.DataType.Name}?" : column.DataType.Name,

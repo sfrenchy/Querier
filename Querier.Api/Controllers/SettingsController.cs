@@ -11,7 +11,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
-using Querier.Api.Domain.Common.Metadata;
 using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Services;
 

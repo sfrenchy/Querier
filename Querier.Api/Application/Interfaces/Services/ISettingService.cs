@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Querier.Api.Application.DTOs;
-using Querier.Api.Domain.Common.Metadata;
 
 namespace Querier.Api.Application.Interfaces.Services
 {

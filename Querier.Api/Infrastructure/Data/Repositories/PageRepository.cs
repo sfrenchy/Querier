@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Querier.Api.Application.Interfaces.Repositories;
 using Querier.Api.Domain.Entities.Menu;
 using Querier.Api.Infrastructure.Data.Context;
+using System.Linq;
 
 namespace Querier.Api.Infrastructure.Data.Repositories
 {
@@ -164,6 +165,24 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error deleting page {PageId}", id);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<Page>> GetAllByMenuIdAsync(int menuId)
+        {
+            logger.LogDebug("Getting pages for menu {MenuId}", menuId);
+            try
+            {
+                var pages = await context.Pages
+                    .Where(p => p.MenuId == menuId)
+                    .ToListAsync();
+                logger.LogDebug("Retrieved {Count} pages for menu {MenuId}", pages.Count, menuId);
+                return pages;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving pages for menu {MenuId}", menuId);
                 throw;
             }
         }

@@ -29,7 +29,7 @@ namespace $nameSpace$.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(PagedResult<$entity.Name$Dto>), 200)]
-        public async Task<IActionResult> GetAll([FromQuery] PaginationParameters? parameters = null)
+        public async Task<IActionResult> GetAll([FromQuery] PaginationParametersDto? parameters = null)
         {
             _logger.LogInformation("GetAll $entity.Name$ action called");
             var result = await _service.GetAllAsync(parameters);

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.Interfaces.Repositories;
-using Querier.Api.Domain.Common.Metadata;
+using Querier.Api.Domain.Entities;
 using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api.Infrastructure.Data.Repositories
