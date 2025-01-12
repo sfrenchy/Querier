@@ -494,10 +494,7 @@ namespace Querier.Api.Domain.Services
                     logger.LogError("Attempted to get current user with null claims");
                     return null;
                 }
-
-            var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
+                
                 var userEmail = userClaims.FindFirst(ClaimTypes.Email)?.Value;
                 if (string.IsNullOrEmpty(userEmail))
                 {
@@ -505,18 +502,15 @@ namespace Querier.Api.Domain.Services
                     return null;
                 }
 
-                    logger.LogDebug("Looking up user by email: {Email}", userEmail);
+                logger.LogDebug("Looking up user by email: {Email}", userEmail);
                 var userByEmail = await userRepository.GetByEmailAsync(userEmail);
                 if (userByEmail == null)
                 {
-                        logger.LogWarning("No user found with email: {Email}", userEmail);
+                    logger.LogWarning("No user found with email: {Email}", userEmail);
                     return null;
                 }
-                userId = userByEmail.Id;
-            }
 
-                logger.LogDebug("Retrieving current user with ID: {UserId}", userId);
-            return await GetByIdAsync(userId);
+                return ApiUserDto.FromEntity(userByEmail);
             }
             catch (Exception ex)
             {

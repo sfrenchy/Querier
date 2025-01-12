@@ -69,6 +69,7 @@ namespace Querier.Api.Controllers
         /// <response code="403">If the user is not authorized</response>
         /// <response code="500">If there was an internal server error</response>
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<SettingDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetSettings()
         {
             var settings = await _settingService.GetSettingsAsync();
@@ -79,7 +80,36 @@ namespace Querier.Api.Controllers
         /// Update an application setting
         /// </summary>
         /// <remarks>
-        /// This endpoint is used to update an application setting. It requires authentication.
+        /// This endpoint is used to update an existing application setting. It requires authentication.
+        /// 
+        /// Sample request:
+        ///     PUT /api/v1/settings
+        ///     {
+        ///         "name": "api:isConfigured",
+        ///         "value": "true"
+        ///     }
+        /// </remarks>
+        /// <param name="setting">The setting to update</param>
+        /// <returns>The updated setting</returns>
+        /// <response code="200">Returns the updated setting</response>
+        /// <response code="401">If the user is not authenticated</response>
+        /// <response code="403">If the user is not authorized</response>
+        /// <response code="404">If the setting was not found</response>
+        /// <response code="500">If there was an internal server error</response>
+        [HttpPut]
+        [ProducesResponseType(typeof(SettingDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateSettings([FromBody] SettingDto setting)
+        {
+            var updatedSetting = await _settingService.UpdateSettingAsync(setting);
+            return Ok(updatedSetting);
+        }
+
+        /// <summary>
+        /// Create a new application setting
+        /// </summary>
+        /// <remarks>   
+        /// This endpoint is used to create a new application setting. It requires authentication.
         /// 
         /// Sample request:
         ///     POST /api/v1/settings
@@ -88,38 +118,17 @@ namespace Querier.Api.Controllers
         ///         "value": "true"
         ///     }
         /// </remarks>
-        /// <param name="setting"></param>
-        /// <returns>The updated setting</returns>
-        /// <response code="200">Returns the updated setting</response>
+        /// <param name="setting">The setting to create</param>
+        /// <returns>The newly created setting</returns>
+        /// <response code="200">Returns the created setting</response>
+        /// <response code="400">If a setting with the same name already exists</response>
         /// <response code="401">If the user is not authenticated</response>
         /// <response code="403">If the user is not authorized</response>
         /// <response code="500">If there was an internal server error</response>
-        
         [HttpPost]
-        public async Task<IActionResult> UpdateSettings([FromBody] SettingDto setting)
-        {
-            var updatedSetting = await _settingService.UpdateSettingAsync(setting);
-            return Ok(updatedSetting);
-        }
-        /// <summary>
-        /// Configure an application setting
-        /// </summary>
-        /// <remarks>   
-        /// This endpoint is used to configure an application setting. It requires authentication.
-        /// 
-        /// Sample request:
-        ///     POST /api/v1/settings/configure
-        ///     {
-        ///         "name": "api:isConfigured",
-        ///         "value": "true"
-        ///     }
-        /// </remarks>
-        /// <param name="setting"></param>
-        /// <returns>The updated setting</returns>
-        /// <response code="200">Returns the updated setting</response>
-        /// <response code="500">If there was an internal server error</response>
-        [HttpPost("configure")]
-        public async Task<IActionResult> Configure([FromBody] SettingDto setting)
+        [ProducesResponseType(typeof(SettingDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateSetting([FromBody] SettingDto setting)
         {
             var configuredSetting = await _settingService.CreateSettingAsync(setting);
             return Ok(configuredSetting);
@@ -153,6 +162,7 @@ namespace Querier.Api.Controllers
         /// <response code="500">If there was an error retrieving the configuration</response>
         [Authorize]
         [HttpGet("api-configuration")]
+        [ProducesResponseType(typeof(ApiConfigurationDto), StatusCodes.Status200OK)]
         public async Task<ActionResult<ApiConfigurationDto>> GetApiConfiguration()
         {
             try
@@ -231,9 +241,10 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// This endpoint is used to update the API configuration settings. Only users with the Admin role can access this endpoint.
+        /// The operation is idempotent - multiple identical requests will have the same effect as a single request.
         /// 
         /// Sample request:
-        ///     POST /api/v1/settings/api-configuration
+        ///     PUT /api/v1/settings/api-configuration
         ///     {
         ///         "scheme": "https",
         ///         "host": "localhost",
@@ -249,17 +260,29 @@ namespace Querier.Api.Controllers
         ///         "requireNonAlphanumeric": true,
         ///         "requireUppercase": true,
         ///         "requiredLength": 12,
-        ///         "requiredUniqueChars": 1
+        ///         "requiredUniqueChars": 1,
+        ///         "smtpHost": "smtp.example.com",
+        ///         "smtpPort": 587,
+        ///         "smtpUsername": "user@example.com",
+        ///         "smtpPassword": "password",
+        ///         "smtpUseSSL": true,
+        ///         "smtpSenderEmail": "noreply@example.com",
+        ///         "smtpSenderName": "My Application",
+        ///         "smtpRequireAuth": true,
+        ///         "redisEnabled": false,
+        ///         "redisHost": "localhost",
+        ///         "redisPort": 6379
         ///     }
         /// </remarks>
-        /// <param name="config"></param>
-        /// <returns>The updated API configuration</returns>
-        /// <response code="200">Returns the updated API configuration</response>
+        /// <param name="config">The API configuration to update</param>
+        /// <returns>No content</returns>
+        /// <response code="204">The configuration was updated successfully</response>
         /// <response code="401">If the user is not authenticated</response>
         /// <response code="403">If the user is not an Admin</response>
         /// <response code="500">If there was an error updating the configuration</response>
-        [HttpPost("api-configuration")]
+        [HttpPut("api-configuration")]
         [Authorize(Roles = "Admin")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> UpdateApiConfiguration([FromBody] ApiConfigurationDto config)
         {
             try
@@ -295,7 +318,7 @@ namespace Querier.Api.Controllers
                 };
 
                 await _settingService.UpdateSettings(settings);
-                return Ok();
+                return NoContent();
             }
             catch (Exception ex)
             {

@@ -140,18 +140,17 @@ namespace Querier.Api.Domain.Services
                 };
                 }
             
-            var authResult = await GenerateJwtToken(newUser);
-                logger.LogInformation("Successfully signed up user: {Email}", user.Email);
+                var authResult = await GenerateJwtToken(newUser);
+                    logger.LogInformation("Successfully signed up user: {Email}", user.Email);
 
-            return new SignUpResultDto()
-            {
-                Success = true,
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                RefreshToken = authResult.RefreshToken,
-                Token = authResult.Token,
-                UserName = user.UserName,
+                return new SignUpResultDto()
+                {
+                    Success = true,
+                    Email = user.Email,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    RefreshToken = authResult.RefreshToken,
+                    Token = authResult.Token,
                     Roles = user.Roles
                 };
             }
@@ -227,7 +226,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task<AuthResultDto> RefreshToken(TokenRequest tokenRequest)
+        public async Task<AuthResultDto> RefreshToken(RefreshTokenDto tokenRequest)
         {
             try
             {

@@ -53,7 +53,7 @@ namespace Querier.Api
                 _logger.LogInformation("Configuring controllers and CORS");
                 services.AddControllers()
                        .AddNewtonsoftJson(options => {
-                           options.SerializerSettings.ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver();
+                           options.SerializerSettings.ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver();
                            options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Include;
                            options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
                        });

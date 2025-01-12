@@ -9,7 +9,7 @@ namespace Querier.Api.Application.DTOs
         public string Name { get; set; }
         public string Value { get; set; }
         public string Description { get; set; }
-        public Type Type { get; set; }
+        public string Type { get; set; }
 
         public static SettingDto FromEntity(Setting entity)
         {
@@ -19,7 +19,7 @@ namespace Querier.Api.Application.DTOs
                 Name = entity.Name,
                 Value = entity.Value,
                 Description = entity.Description,
-                Type = Type.GetType(entity.Type)
+                Type = entity.Type
             };
         }
     }

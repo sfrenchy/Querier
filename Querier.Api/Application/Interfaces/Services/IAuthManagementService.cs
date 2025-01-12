@@ -8,6 +8,6 @@ namespace Querier.Api.Application.Interfaces.Services
     {
         Task<SignUpResultDto> SignUp(SignUpDto user);
         Task<SignUpResultDto> SignIn(SignInDto user);
-        Task<AuthResultDto> RefreshToken(TokenRequest tokenRequest);
+        Task<AuthResultDto> RefreshToken(RefreshTokenDto tokenRequest);
     }
 }

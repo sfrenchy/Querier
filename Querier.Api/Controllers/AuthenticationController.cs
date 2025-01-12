@@ -12,35 +12,30 @@ using Querier.Api.Domain.Services;
 namespace Querier.Api.Controllers
 {
     /// <summary>
-    /// Controller for handling user authentication
+    /// Controller responsible for managing user authentication and authorization
     /// </summary>
     /// <remarks>
-    /// This controller provides endpoints for:
-    /// - User login and authentication
-    /// - Token management
-    /// - Password reset functionality
-    /// - Session management
+    /// This controller handles all authentication-related operations including:
+    /// - User registration (SignUp)
+    /// - User authentication (SignIn)
+    /// - Token management (refresh)
+    /// - Session handling
+    /// 
+    /// All endpoints return standardized responses with appropriate HTTP status codes
+    /// and follow RESTful conventions.
     /// </remarks>
     [Route("api/v1/[controller]")] // api/authmanagement
     [ApiController]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public class AuthenticationController : ControllerBase
+    public class AuthenticationController(
+        IAuthenticationService authManagementService,
+        ILogger<AuthenticationController> logger)
+        : ControllerBase
     {
-        private readonly ILogger<AuthenticationController> _logger;
-        private readonly IAuthenticationService _authManagementService;
-
-        public AuthenticationController(IAuthenticationService authManagementService, ILogger<AuthenticationController> logger)
-        {
-            _authManagementService = authManagementService;
-            _logger = logger;
-        }
-
         /// <summary>
-        /// Register a new user
+        /// Registers a new user in the system
         /// </summary>
         /// <remarks>
-        /// Creates a new user account with the provided credentials.
+        /// Creates a new user account and generates authentication tokens upon successful registration.
         /// 
         /// Sample request:
         ///     POST /api/v1/authmanagement/signup
@@ -49,20 +44,23 @@ namespace Querier.Api.Controllers
         ///         "password": "StrongPassword123!"
         ///     }
         /// </remarks>
-        /// <param name="user">The user registration details</param>
-        /// <returns>Registration result with authentication tokens if successful</returns>
-        /// <response code="200">Returns the registration result with tokens</response>
-        /// <response code="400">If the registration details are invalid</response>
+        /// <param name="user">User registration details containing email and password</param>
+        /// <returns>Registration result containing authentication tokens if successful</returns>
+        /// <response code="200">Registration successful, returns tokens</response>
+        /// <response code="400">Invalid registration details or validation errors</response>
+        /// <response code="500">Internal server error during registration</response>
         [HttpPost]
         [Route("SignUp")]
         [ProducesResponseType(typeof(SignUpResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(SignUpResultDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(SignUpResultDto), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> SignUp([FromBody] SignUpDto user)
         {
-            _logger.LogInformation("Attempting to sign up user with email: {Email}", user.Email);
+            logger.LogInformation("Attempting to sign up user with email: {Email}", user.Email);
 
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("Invalid signup model state for email: {Email}", user.Email);
+                logger.LogWarning("Invalid signup model state for email: {Email}", user.Email);
                 return BadRequest(new SignUpResultDto
                 {
                     Success = false,
@@ -72,19 +70,19 @@ namespace Querier.Api.Controllers
 
             try
             {
-                var result = await _authManagementService.SignUp(user);
+                var result = await authManagementService.SignUp(user);
                 if (result.Success)
                 {
-                    _logger.LogInformation("User successfully signed up: {Email}", user.Email);
+                    logger.LogInformation("User successfully signed up: {Email}", user.Email);
                     return Ok(result);
                 }
 
-                _logger.LogWarning("Failed to sign up user: {Email}. Errors: {@Errors}", user.Email, result.Errors);
+                logger.LogWarning("Failed to sign up user: {Email}. Errors: {@Errors}", user.Email, result.Errors);
                 return BadRequest(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error during signup for email: {Email}", user.Email);
+                logger.LogError(ex, "Unexpected error during signup for email: {Email}", user.Email);
                 return StatusCode(StatusCodes.Status500InternalServerError, new SignUpResultDto
                 {
                     Success = false,
@@ -94,10 +92,10 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Authenticate a user
+        /// Authenticates an existing user
         /// </summary>
         /// <remarks>
-        /// Authenticates a user with their credentials and returns authentication tokens.
+        /// Validates user credentials and issues authentication tokens upon successful authentication.
         /// 
         /// Sample request:
         ///     POST /api/v1/authmanagement/signin
@@ -106,20 +104,21 @@ namespace Querier.Api.Controllers
         ///         "password": "YourPassword123!"
         ///     }
         /// </remarks>
-        /// <param name="user">The user credentials</param>
-        /// <returns>Authentication result with tokens if successful</returns>
-        /// <response code="200">Returns the authentication tokens</response>
-        /// <response code="400">If the credentials are invalid</response>
+        /// <param name="user">User credentials containing email and password</param>
+        /// <returns>Authentication result containing tokens if successful</returns>
+        /// <response code="200">Authentication successful, returns tokens</response>
+        /// <response code="400">Invalid credentials or validation errors</response>
+        /// <response code="500">Internal server error during authentication</response>
         [HttpPost]
         [Route("SignIn")]
         [ProducesResponseType(typeof(SignUpResultDto), StatusCodes.Status200OK)]
         public async Task<IActionResult> SignIn([FromBody] SignInDto user)
         {
-            _logger.LogInformation("Attempting to sign in user: {Email}", user.Email);
+            logger.LogInformation("Attempting to sign in user: {Email}", user.Email);
 
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("Invalid signin model state for email: {Email}", user.Email);
+                logger.LogWarning("Invalid signin model state for email: {Email}", user.Email);
                 return BadRequest(new SignUpResultDto
                 {
                     Success = false,
@@ -129,19 +128,19 @@ namespace Querier.Api.Controllers
 
             try
             {
-                var result = await _authManagementService.SignIn(user);
+                var result = await authManagementService.SignIn(user);
                 if (result.Success)
                 {
-                    _logger.LogInformation("User successfully signed in: {Email}", user.Email);
+                    logger.LogInformation("User successfully signed in: {Email}", user.Email);
                     return Ok(result);
                 }
 
-                _logger.LogWarning("Failed login attempt for user: {Email}", user.Email);
+                logger.LogWarning("Failed login attempt for user: {Email}", user.Email);
                 return BadRequest(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error during signin for email: {Email}", user.Email);
+                logger.LogError(ex, "Unexpected error during signin for email: {Email}", user.Email);
                 return StatusCode(StatusCodes.Status500InternalServerError, new SignUpResultDto
                 {
                     Success = false,
@@ -151,31 +150,35 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Refresh an authentication token
+        /// Refreshes an expired JWT token using a valid refresh token
         /// </summary>
         /// <remarks>
-        /// Generates a new JWT token using a valid refresh token.
+        /// Issues a new set of authentication tokens when provided with valid existing tokens.
+        /// This endpoint should be called when the JWT token expires but the refresh token is still valid.
         /// 
         /// Sample request:
         ///     POST /api/v1/authmanagement/refreshtoken
         ///     {
-        ///         "token": "current-jwt-token",
-        ///         "refreshToken": "current-refresh-token"
+        ///         "token": "expired-jwt-token",
+        ///         "refreshToken": "valid-refresh-token"
         ///     }
         /// </remarks>
-        /// <param name="tokenRequest">The current tokens</param>
-        /// <returns>New authentication tokens if successful</returns>
-        /// <response code="200">Returns new authentication tokens</response>
-        /// <response code="400">If the tokens are invalid</response>
+        /// <param name="tokenRequest">Current JWT and refresh tokens</param>
+        /// <returns>New authentication tokens if refresh is successful</returns>
+        /// <response code="200">Token refresh successful, returns new tokens</response>
+        /// <response code="400">Invalid or expired tokens</response>
+        /// <response code="500">Internal server error during token refresh</response>
         [HttpPost]
         [Route("RefreshToken")]
-        [ProducesResponseType(typeof(SignUpResultDto), StatusCodes.Status200OK)]
-        public async Task<IActionResult> RefreshToken([FromBody] TokenRequest tokenRequest)
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthResultDto))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(AuthResultDto))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(AuthResultDto))]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto tokenRequest)
         {
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("Invalid refresh token request");
-                return BadRequest(new SignUpResultDto
+                logger.LogWarning("Invalid refresh token request");
+                return BadRequest(new AuthResultDto
                 {
                     Success = false,
                     Errors = new List<string> { "Invalid token request" }
@@ -184,11 +187,11 @@ namespace Querier.Api.Controllers
 
             try
             {
-                var result = await _authManagementService.RefreshToken(tokenRequest);
+                var result = await authManagementService.RefreshToken(tokenRequest);
                 if (result == null)
                 {
-                    _logger.LogWarning("Token refresh failed - invalid or expired token");
-                    return BadRequest(new SignUpResultDto
+                    logger.LogWarning("Token refresh failed - invalid or expired token");
+                    return BadRequest(new AuthResultDto
                     {
                         Success = false,
                         Errors = new List<string> { "Invalid token" }
@@ -197,17 +200,17 @@ namespace Querier.Api.Controllers
 
                 if (result.Success)
                 {
-                    _logger.LogInformation("Token successfully refreshed");
+                    logger.LogInformation("Token successfully refreshed");
                     return Ok(result);
                 }
 
-                _logger.LogWarning("Token refresh failed. Errors: {@Errors}", result.Errors);
+                logger.LogWarning("Token refresh failed. Errors: {@Errors}", result.Errors);
                 return BadRequest(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error during token refresh");
-                return StatusCode(StatusCodes.Status500InternalServerError, new SignUpResultDto
+                logger.LogError(ex, "Unexpected error during token refresh");
+                return StatusCode(StatusCodes.Status500InternalServerError, new AuthResultDto
                 {
                     Success = false,
                     Errors = new List<string> { "An unexpected error occurred during token refresh" }
