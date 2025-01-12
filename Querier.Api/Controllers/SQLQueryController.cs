@@ -60,8 +60,8 @@ namespace Querier.Api.Controllers
         /// <returns>List of SQL queries (public ones and those created by the user)</returns>
         /// <response code="200">Returns the list of queries</response>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<SQLQueryDTO>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<SQLQueryDTO>>> GetAllAsync()
+        [ProducesResponseType(typeof(IEnumerable<SqlQueryDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<SqlQueryDto>>> GetAllAsync()
         {
             try
             {
@@ -96,7 +96,7 @@ namespace Querier.Api.Controllers
         /// <returns>The SQL query if found</returns>
         /// <response code="200">Returns the requested query</response>
         /// <response code="404">If the query was not found</response>
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetSqlQueryById")]
         [ProducesResponseType(typeof(SQLQuery), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<SQLQuery>> GetByIdAsync(int id)
@@ -156,7 +156,7 @@ namespace Querier.Api.Controllers
 
                 var createdQuery = await sqlQueryService.CreateQueryAsync(dto.Query, dto.SampleParameters);
                 logger.LogInformation("Successfully created SQL query with ID {QueryId}", createdQuery.Id);
-                return CreatedAtAction(nameof(GetByIdAsync), new { id = createdQuery.Id }, createdQuery);
+                return CreatedAtRoute("GetSqlQueryById", new { id = createdQuery.Id }, createdQuery);
             }
             catch (Exception ex)
             {

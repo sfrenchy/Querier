@@ -10,7 +10,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// The SQL query information to create
         /// </summary>
-        public SQLQueryDTO Query { get; set; }
+        public SqlQueryDto Query { get; set; }
 
         /// <summary>
         /// Dictionary of sample parameter values for testing the query, where key is the parameter name

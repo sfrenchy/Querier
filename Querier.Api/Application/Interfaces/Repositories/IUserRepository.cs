@@ -8,7 +8,7 @@ namespace Querier.Api.Application.Interfaces.Repositories
     public interface IUserRepository
     {
         Task<ApiUser> GetByIdAsync(string id);
-        Task<(ApiUser user, List<string> roles)?> GetWithRolesAsync(string id);
+        Task<(ApiUser user, List<ApiRole> roles)?> GetWithRolesAsync(string id);
         Task<ApiUser> GetByEmailAsync(string email);
         Task<IdentityResult> AddAsync(ApiUser user);
         Task<bool> UpdateAsync(ApiUser user);

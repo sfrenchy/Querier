@@ -4,12 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
-using Querier.Api.Domain.Entities.Auth;
 
 namespace Querier.Api.Controllers
 {
@@ -256,7 +254,7 @@ namespace Querier.Api.Controllers
                 {
                     var createdUser = await userService.GetByEmailAsync(user.Email);
                     logger.LogInformation("Successfully created user with email: {Email}", user.Email);
-                    return CreatedAtAction(nameof(GetByIdAsync), new { id = createdUser.Id }, createdUser);
+                    return Created($"/api/v1/user/{createdUser.Id}", createdUser);
                 }
 
                 logger.LogError("Failed to create user with email: {Email}", user.Email);

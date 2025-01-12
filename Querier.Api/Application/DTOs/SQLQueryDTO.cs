@@ -8,7 +8,7 @@ namespace Querier.Api.Application.DTOs
     /// <summary>
     /// Data transfer object for SQL query information and metadata
     /// </summary>
-    public class SQLQueryDTO
+    public class SqlQueryDto
     {
         /// <summary>
         /// Unique identifier of the SQL query
@@ -34,7 +34,7 @@ namespace Querier.Api.Application.DTOs
         /// Identifier of the user who created the query
         /// </summary>
         public string CreatedBy { get; set; }
-
+        public string CreatedByEmail { get; set; }
         /// <summary>
         /// Date and time when the query was created
         /// </summary>
@@ -75,9 +75,9 @@ namespace Querier.Api.Application.DTOs
         /// </summary>
         /// <param name="sqlQuery">The domain entity to convert</param>
         /// <returns>A new SQLQueryDTO instance</returns>
-        public static SQLQueryDTO FromEntity(SQLQuery sqlQuery)
+        public static SqlQueryDto FromEntity(SQLQuery sqlQuery)
         {
-            return new SQLQueryDTO()
+            return new SqlQueryDto()
             {
                 Id = sqlQuery.Id,
                 Name = sqlQuery.Name,
@@ -90,6 +90,7 @@ namespace Querier.Api.Application.DTOs
                 Parameters = sqlQuery.Parameters,
                 DBConnection = new DBConnectionDto()
                 {
+                    Id = sqlQuery.ConnectionId,
                     Name = sqlQuery.Connection.Name,
                     ConnectionString = sqlQuery.Connection.ConnectionString,
                     ConnectionType = Enum.Parse<DbConnectionType>(sqlQuery.Connection.ConnectionType.ToString()),

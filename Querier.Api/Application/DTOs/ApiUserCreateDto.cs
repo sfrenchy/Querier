@@ -25,6 +25,6 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// List of role names to be assigned to the new user
         /// </summary>
-        public List<string> Roles { get; set; }
+        public List<RoleDto> Roles { get; set; }
     }
 }

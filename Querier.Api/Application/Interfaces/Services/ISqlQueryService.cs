@@ -7,10 +7,10 @@ namespace Querier.Api.Application.Interfaces.Services
 {
     public interface ISqlQueryService
     {
-        Task<IEnumerable<SQLQueryDTO>> GetAllQueriesAsync(string userId);
-        Task<SQLQueryDTO> GetQueryByIdAsync(int id);
-        Task<SQLQueryDTO> CreateQueryAsync(SQLQueryDTO query, Dictionary<string, object> sampleParameters = null);
-        Task<SQLQueryDTO> UpdateQueryAsync(SQLQueryDTO query, Dictionary<string, object> sampleParameters = null);
+        Task<IEnumerable<SqlQueryDto>> GetAllQueriesAsync(string userId);
+        Task<SqlQueryDto> GetQueryByIdAsync(int id);
+        Task<SqlQueryDto> CreateQueryAsync(SqlQueryDto query, Dictionary<string, object> sampleParameters = null);
+        Task<SqlQueryDto> UpdateQueryAsync(SqlQueryDto query, Dictionary<string, object> sampleParameters = null);
         Task DeleteQueryAsync(int id);
 
         Task<PagedResult<dynamic>> ExecuteQueryAsync(int queryId, Dictionary<string, object> parameters,

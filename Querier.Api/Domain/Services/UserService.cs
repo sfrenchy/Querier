@@ -98,7 +98,7 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogDebug("Adding roles to new user {Email}", user.Email);
-                var roles = roleRepository.GetAll().Where(r => user.Roles.Contains(r.Name)).ToArray();
+                var roles = roleRepository.GetAll().Where(r => user.Roles.Select(ro => r.Name).Contains(r.Name)).ToArray();
                 var roleResult = await userRepository.AddRoleAsync(newUser, roles);
 
                 if (roleResult)
@@ -130,17 +130,17 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogInformation("Updating user {UserId}", user.Id);
-            var foundUser = await userRepository.GetByIdAsync(user.Id);
-            if (foundUser == null)
-            {
-                    logger.LogWarning("User with ID {UserId} not found", user.Id);
-                return false;
-            }
-            
-            foundUser.Email = user.Email;
-            foundUser.FirstName = user.FirstName;
-            foundUser.LastName = user.LastName;
-            foundUser.UserName = user.Email;
+                var foundUser = await userRepository.GetByIdAsync(user.Id);
+                if (foundUser == null)
+                {
+                        logger.LogWarning("User with ID {UserId} not found", user.Id);
+                    return false;
+                }
+                
+                foundUser.Email = user.Email;
+                foundUser.FirstName = user.FirstName;
+                foundUser.LastName = user.LastName;
+                foundUser.UserName = user.Email;
             
                 var updateResult = await userRepository.UpdateAsync(foundUser);
                 if (!updateResult)
@@ -268,9 +268,23 @@ namespace Querier.Api.Domain.Services
             {
                 logger.LogInformation("Retrieving all users");
                 var users = await userRepository.GetAllAsync();
-                var dtos = users.Select(ApiUserDto.FromEntity);
-                logger.LogInformation("Retrieved {Count} users", users.Count());
-                return dtos;
+                var userDtos = new List<ApiUserDto>();
+
+                foreach (var user in users)
+                {
+                    var userWithRoles = await userRepository.GetWithRolesAsync(user.Id);
+                    if (userWithRoles != null)
+                    {
+                        var roles = userWithRoles.Value.roles;
+                        var roleDtos = roles.Select(r => new RoleDto { Id = r.Id, Name = r.Name }).ToList();
+                        var userDto = ApiUserDto.FromEntity(user);
+                        userDto.Roles = roleDtos;
+                        userDtos.Add(userDto);
+                    }
+                }
+
+                logger.LogInformation("Retrieved {Count} users", userDtos.Count);
+                return userDtos;
             }
             catch (Exception ex)
             {
@@ -532,14 +546,22 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogDebug("Looking up user by email: {Email}", userEmail);
-                var userByEmail = await userRepository.GetByEmailAsync(userEmail);
-                if (userByEmail == null)
+                var userWithRoles = await userRepository.GetWithRolesAsync(userEmail);
+                if (userWithRoles == null || userWithRoles.Value.user == null)
                 {
                     logger.LogWarning("No user found with email: {Email}", userEmail);
                     return null;
                 }
 
-                return ApiUserDto.FromEntity(userByEmail);
+                var user = userWithRoles.Value.user;
+                var roles = userWithRoles.Value.roles;
+
+                // Convertir les noms de rôles en objets RoleDto
+                var roleDtos = roles.Select(r => new RoleDto { Name = r.Name }).ToList();
+                var userDto = ApiUserDto.FromEntity(user);
+                userDto.Roles = roleDtos;
+
+                return userDto;
             }
             catch (Exception ex)
             {

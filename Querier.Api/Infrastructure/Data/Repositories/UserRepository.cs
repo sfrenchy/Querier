@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Querier.Api.Application.Interfaces.Repositories;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Entities.Auth;
+using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api.Infrastructure.Data.Repositories
 {
@@ -17,10 +18,11 @@ namespace Querier.Api.Infrastructure.Data.Repositories
         RoleManager<ApiRole> roleManager,
         ISettingService settings,
         ILogger<UserRepository> logger,
-        IEmailSendingService emailSending)
+        IEmailSendingService emailSending,
+        ApiDbContext context)
         : IUserRepository
     {
-        public async Task<(ApiUser user, List<string> roles)?> GetWithRolesAsync(string id)
+        public async Task<(ApiUser user, List<ApiRole> roles)?> GetWithRolesAsync(string id)
         {
             try
             {
@@ -40,9 +42,10 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                     return null;
                 }
 
-                var roles = await userManager.GetRolesAsync(user);
+                var rolesString = await userManager.GetRolesAsync(user);
+                var result = roleManager.Roles.Where(r => rolesString.Contains(r.Name)).ToList();
                 logger.LogInformation("Successfully retrieved user and roles for ID/Email: {Id}", id);
-                return (user, roles.ToList());
+                return (user, result);
             }
             catch (Exception ex)
             {
@@ -100,12 +103,13 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 }
 
                 // Load user roles
-                var roles = await userManager.GetRolesAsync(user);
-                user.UserRoles = roles.Select(roleName => new ApiUserRole 
-                { 
-                    Role = new ApiRole { Name = roleName },
-                    User = user
-                }).ToList();
+                var roleNames = await userManager.GetRolesAsync(user);
+                
+                // Charge les associations utilisateur-rôle existantes avec leurs rôles
+                user.UserRoles = await context.Set<ApiUserRole>()
+                    .Include(ur => ur.Role)
+                    .Where(ur => ur.UserId == user.Id)
+                    .ToListAsync();
 
                 logger.LogInformation("Successfully retrieved user with email: {Email}", email);
                 return user;
