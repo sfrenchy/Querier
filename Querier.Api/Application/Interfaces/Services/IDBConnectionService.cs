@@ -5,7 +5,7 @@ using static Querier.Api.Domain.Services.DbConnectionService;
 
 namespace Querier.Api.Application.Interfaces.Services
 {
-    public interface IDBConnectionService
+    public interface IDbConnectionService
     {
         Task<DBConnectionCreateResultDto> AddConnectionAsync(DBConnectionCreateDto connection);
         Task DeleteDbConnectionAsync(int dbConnectionId);
@@ -16,5 +16,6 @@ namespace Querier.Api.Application.Interfaces.Services
         Task<SourceDownload> GetConnectionSourcesAsync(int connectionId);
         Task<List<DBConnectionEndpointInfoDto>> GetEndpointsAsync(int connectionId);
         Task<List<DBConnectionControllerInfoDto>> GetControllersAsync(int connectionId);
+        Task<DBConnectionDto> GetByIdAsync(int id);
     }
 }

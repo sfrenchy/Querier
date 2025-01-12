@@ -23,8 +23,16 @@ namespace Querier.Api.Controllers
     /// 
     /// All endpoints return standardized responses with appropriate HTTP status codes
     /// and follow RESTful conventions.
+    /// 
+    /// ## Password Requirements
+    /// - Minimum length: 12 characters
+    /// - Must contain at least one uppercase letter
+    /// - Must contain at least one lowercase letter
+    /// - Must contain at least one number
+    /// - Must contain at least one special character
+    /// - Must not contain common patterns or dictionary words
     /// </remarks>
-    [Route("api/v1/[controller]")] // api/authmanagement
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class AuthenticationController(
         IAuthenticationService authManagementService,
@@ -38,10 +46,29 @@ namespace Querier.Api.Controllers
         /// Creates a new user account and generates authentication tokens upon successful registration.
         /// 
         /// Sample request:
-        ///     POST /api/v1/authmanagement/signup
+        ///     POST /api/v1/authentication/signup
         ///     {
         ///         "email": "user@example.com",
-        ///         "password": "StrongPassword123!"
+        ///         "password": "StrongP@ssw0rd123!"
+        ///     }
+        /// 
+        /// Sample success response:
+        ///     {
+        ///         "success": true,
+        ///         "token": "eyJhbGciOiJIUzI1NiIs...",
+        ///         "refreshToken": "6e7c8f9a-b1c2-3d4e-5f6g...",
+        ///         "errors": null
+        ///     }
+        /// 
+        /// Sample error response:
+        ///     {
+        ///         "success": false,
+        ///         "token": null,
+        ///         "refreshToken": null,
+        ///         "errors": [
+        ///             "Email 'user@example.com' is already taken",
+        ///             "Password does not meet complexity requirements"
+        ///         ]
         ///     }
         /// </remarks>
         /// <param name="user">User registration details containing email and password</param>
@@ -98,10 +125,28 @@ namespace Querier.Api.Controllers
         /// Validates user credentials and issues authentication tokens upon successful authentication.
         /// 
         /// Sample request:
-        ///     POST /api/v1/authmanagement/signin
+        ///     POST /api/v1/authentication/signin
         ///     {
         ///         "email": "user@example.com",
         ///         "password": "YourPassword123!"
+        ///     }
+        /// 
+        /// Sample success response:
+        ///     {
+        ///         "success": true,
+        ///         "token": "eyJhbGciOiJIUzI1NiIs...",
+        ///         "refreshToken": "6e7c8f9a-b1c2-3d4e-5f6g...",
+        ///         "errors": null
+        ///     }
+        /// 
+        /// Sample error response:
+        ///     {
+        ///         "success": false,
+        ///         "token": null,
+        ///         "refreshToken": null,
+        ///         "errors": [
+        ///             "Invalid email or password"
+        ///         ]
         ///     }
         /// </remarks>
         /// <param name="user">User credentials containing email and password</param>
@@ -112,6 +157,8 @@ namespace Querier.Api.Controllers
         [HttpPost]
         [Route("SignIn")]
         [ProducesResponseType(typeof(SignUpResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(SignUpResultDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(SignUpResultDto), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> SignIn([FromBody] SignInDto user)
         {
             logger.LogInformation("Attempting to sign in user: {Email}", user.Email);
@@ -157,10 +204,29 @@ namespace Querier.Api.Controllers
         /// This endpoint should be called when the JWT token expires but the refresh token is still valid.
         /// 
         /// Sample request:
-        ///     POST /api/v1/authmanagement/refreshtoken
+        ///     POST /api/v1/authentication/refreshtoken
         ///     {
-        ///         "token": "expired-jwt-token",
-        ///         "refreshToken": "valid-refresh-token"
+        ///         "token": "eyJhbGciOiJIUzI1NiIs...",
+        ///         "refreshToken": "6e7c8f9a-b1c2-3d4e-5f6g..."
+        ///     }
+        /// 
+        /// Sample success response:
+        ///     {
+        ///         "success": true,
+        ///         "token": "eyJhbGciOiJIUzI1NiIs...",
+        ///         "refreshToken": "7f8d9e0a-c2d3-4e5f-6g7h...",
+        ///         "errors": null
+        ///     }
+        /// 
+        /// Sample error response:
+        ///     {
+        ///         "success": false,
+        ///         "token": null,
+        ///         "refreshToken": null,
+        ///         "errors": [
+        ///             "Invalid token",
+        ///             "Refresh token has expired"
+        ///         ]
         ///     }
         /// </remarks>
         /// <param name="tokenRequest">Current JWT and refresh tokens</param>
@@ -170,9 +236,9 @@ namespace Querier.Api.Controllers
         /// <response code="500">Internal server error during token refresh</response>
         [HttpPost]
         [Route("RefreshToken")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthResultDto))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(AuthResultDto))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(AuthResultDto))]
+        [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto tokenRequest)
         {
             if (!ModelState.IsValid)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +26,8 @@ namespace Querier.Api.Controllers
     /// - Configuring API-specific settings
     /// - Handling user-specific configurations
     /// - Managing system-wide settings for authenticated users
+    /// 
+    /// All endpoints require authentication, and some operations are restricted to users with the Admin role.
     /// </remarks>
     /// <response code="401">If the user is not authenticated</response>
     /// <response code="403">If the user is not authorized</response>
@@ -62,6 +65,20 @@ namespace Querier.Api.Controllers
         /// 
         /// Sample request:
         ///     GET /api/v1/settings
+        /// 
+        /// Sample response:
+        ///     [
+        ///         {
+        ///             "name": "api:scheme",
+        ///             "value": "https",
+        ///             "description": "The scheme of the URL to target API"
+        ///         },
+        ///         {
+        ///             "name": "api:host",
+        ///             "value": "localhost",
+        ///             "description": "The host of the URL to target API"
+        ///         }
+        ///     ]
         /// </remarks>
         /// <returns>A list of application settings</returns>
         /// <response code="200">Returns the list of application settings</response>
@@ -72,8 +89,18 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(IEnumerable<SettingDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetSettings()
         {
-            var settings = await _settingService.GetSettingsAsync();
-            return Ok(settings);
+            try
+            {
+                _logger.LogDebug("Retrieving all settings");
+                var settings = await _settingService.GetSettingsAsync();
+                _logger.LogInformation("Successfully retrieved {Count} settings", settings?.ToList().Count);
+                return Ok(settings);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving settings");
+                return StatusCode(500, "An error occurred while retrieving settings");
+            }
         }
 
         /// <summary>
@@ -81,28 +108,63 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// This endpoint is used to update an existing application setting. It requires authentication.
+        /// The operation is idempotent - multiple identical requests will have the same effect as a single request.
         /// 
         /// Sample request:
         ///     PUT /api/v1/settings
         ///     {
         ///         "name": "api:isConfigured",
-        ///         "value": "true"
+        ///         "value": "true",
+        ///         "description": "Flag indicating if the API is configured"
+        ///     }
+        /// 
+        /// Sample response:
+        ///     {
+        ///         "name": "api:isConfigured",
+        ///         "value": "true",
+        ///         "description": "Flag indicating if the API is configured",
+        ///         "lastModified": "2024-03-19T10:30:00Z"
         ///     }
         /// </remarks>
         /// <param name="setting">The setting to update</param>
         /// <returns>The updated setting</returns>
         /// <response code="200">Returns the updated setting</response>
+        /// <response code="400">If the request data is invalid</response>
         /// <response code="401">If the user is not authenticated</response>
         /// <response code="403">If the user is not authorized</response>
         /// <response code="404">If the setting was not found</response>
         /// <response code="500">If there was an internal server error</response>
         [HttpPut]
         [ProducesResponseType(typeof(SettingDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateSettings([FromBody] SettingDto setting)
         {
-            var updatedSetting = await _settingService.UpdateSettingAsync(setting);
-            return Ok(updatedSetting);
+            try
+            {
+                if (setting == null)
+                {
+                    _logger.LogWarning("Invalid request: setting is null");
+                    return BadRequest("Setting data is required");
+                }
+
+                _logger.LogDebug("Updating setting {SettingName}", setting.Name);
+                var updatedSetting = await _settingService.UpdateSettingAsync(setting);
+                
+                if (updatedSetting == null)
+                {
+                    _logger.LogWarning("Setting {SettingName} not found", setting.Name);
+                    return NotFound($"Setting '{setting.Name}' not found");
+                }
+
+                _logger.LogInformation("Successfully updated setting {SettingName}", setting.Name);
+                return Ok(updatedSetting);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating setting {SettingName}", setting?.Name);
+                return StatusCode(500, "An error occurred while updating the setting");
+            }
         }
 
         /// <summary>
@@ -114,24 +176,54 @@ namespace Querier.Api.Controllers
         /// Sample request:
         ///     POST /api/v1/settings
         ///     {
-        ///         "name": "api:isConfigured",
-        ///         "value": "true"
+        ///         "name": "api:newSetting",
+        ///         "value": "value",
+        ///         "description": "Description of the new setting"
+        ///     }
+        /// 
+        /// Sample response:
+        ///     {
+        ///         "name": "api:newSetting",
+        ///         "value": "value",
+        ///         "description": "Description of the new setting",
+        ///         "lastModified": "2024-03-19T10:30:00Z"
         ///     }
         /// </remarks>
         /// <param name="setting">The setting to create</param>
         /// <returns>The newly created setting</returns>
-        /// <response code="200">Returns the created setting</response>
-        /// <response code="400">If a setting with the same name already exists</response>
+        /// <response code="201">Returns the created setting</response>
+        /// <response code="400">If a setting with the same name already exists or if the request data is invalid</response>
         /// <response code="401">If the user is not authenticated</response>
         /// <response code="403">If the user is not authorized</response>
         /// <response code="500">If there was an internal server error</response>
         [HttpPost]
-        [ProducesResponseType(typeof(SettingDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(SettingDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateSetting([FromBody] SettingDto setting)
         {
-            var configuredSetting = await _settingService.CreateSettingAsync(setting);
-            return Ok(configuredSetting);
+            try
+            {
+                if (setting == null)
+                {
+                    _logger.LogWarning("Invalid request: setting is null");
+                    return BadRequest("Setting data is required");
+                }
+
+                _logger.LogDebug("Creating new setting {SettingName}", setting.Name);
+                var createdSetting = await _settingService.CreateSettingAsync(setting);
+                _logger.LogInformation("Successfully created setting {SettingName}", setting.Name);
+                
+                return CreatedAtAction(
+                    nameof(GetSettings),
+                    new { name = createdSetting.Name },
+                    createdSetting
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating setting {SettingName}", setting?.Name);
+                return StatusCode(500, "An error occurred while creating the setting");
+            }
         }   
 
         /// <summary>

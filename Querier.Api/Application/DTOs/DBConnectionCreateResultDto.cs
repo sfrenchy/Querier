@@ -22,5 +22,7 @@ namespace Querier.Api.Application.DTOs
         /// List of messages describing the connection creation process or any errors encountered
         /// </summary>
         public List<string> Messages { get; set; } = new List<string>();
+        
+        public int Id { get; set; }
     }
 }

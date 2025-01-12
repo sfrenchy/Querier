@@ -168,6 +168,8 @@ namespace Querier.Api.Controllers
         /// Updates an existing role
         /// </summary>
         /// <remarks>
+        /// This endpoint updates an existing role. The operation is idempotent - multiple identical requests will have the same effect as a single request.
+        /// 
         /// Sample request:
         ///     PUT /api/v1/role/1
         ///     {
@@ -175,12 +177,30 @@ namespace Querier.Api.Controllers
         ///         "name": "Modified Role",
         ///         "description": "Updated description"
         ///     }
+        /// 
+        /// Sample response:
+        ///     204 No Content
+        /// 
+        /// Error responses:
+        ///     400 Bad Request
+        ///     {
+        ///         "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+        ///         "title": "Bad Request",
+        ///         "status": 400,
+        ///         "detail": "The request is invalid",
+        ///         "errors": {
+        ///             "name": ["The Name field is required"]
+        ///         }
+        ///     }
         /// </remarks>
         /// <param name="id">The ID of the role to update</param>
         /// <param name="role">The updated role information</param>
-        /// <returns>Success indicator</returns>
+        /// <returns>No content if successful</returns>
+        /// <response code="204">If the role was successfully updated</response>
+        /// <response code="400">If the request data is invalid</response>
+        /// <response code="404">If the role was not found</response>
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateAsync(string id, RoleDto role)
@@ -194,6 +214,12 @@ namespace Querier.Api.Controllers
                     return BadRequest(ModelState);
                 }
 
+                if (role.Id != id)
+                {
+                    logger.LogWarning("ID mismatch in role update request. URL ID: {UrlId}, Body ID: {BodyId}", id, role.Id);
+                    return BadRequest(new { message = "ID in URL must match ID in request body" });
+                }
+
                 logger.LogDebug("Updating role: {RoleId} - {RoleName}", role.Id, role.Name);
                 var result = await roleService.UpdateAsync(role);
                 if (!result)
@@ -203,7 +229,7 @@ namespace Querier.Api.Controllers
                 }
 
                 logger.LogInformation("Role updated successfully: {RoleId} - {RoleName}", role.Id, role.Name);
-                return Ok(true);
+                return NoContent();
             }
             catch (Exception ex)
             {
@@ -220,13 +246,29 @@ namespace Querier.Api.Controllers
         /// Deletes a role by its ID
         /// </summary>
         /// <remarks>
+        /// This endpoint permanently deletes a role. This operation cannot be undone.
+        /// 
         /// Sample request:
         ///     DELETE /api/v1/role/1
+        /// 
+        /// Sample response:
+        ///     204 No Content
+        /// 
+        /// Error responses:
+        ///     404 Not Found
+        ///     {
+        ///         "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+        ///         "title": "Not Found",
+        ///         "status": 404,
+        ///         "detail": "Role with ID 1 not found"
+        ///     }
         /// </remarks>
         /// <param name="id">The ID of the role to delete</param>
-        /// <returns>Success indicator</returns>
+        /// <returns>No content if successful</returns>
+        /// <response code="204">If the role was successfully deleted</response>
+        /// <response code="404">If the role was not found</response>
         [HttpDelete("{id}")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteAsync(string id)
         {
@@ -241,7 +283,7 @@ namespace Querier.Api.Controllers
                 }
 
                 logger.LogInformation("Role deleted successfully: {RoleId}", id);
-                return Ok(true);
+                return NoContent();
             }
             catch (Exception ex)
             {

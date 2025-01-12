@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
@@ -23,21 +24,44 @@ namespace Querier.Api.Controllers
     /// - Managing query parameters
     /// - Analyzing query performance
     /// - Handling query results
+    /// 
+    /// ## Authentication
+    /// All endpoints in this controller require authentication.
+    /// Use a valid JWT token in the Authorization header:
+    /// ```
+    /// Authorization: Bearer {your-jwt-token}
+    /// ```
+    /// 
+    /// ## Common Responses
+    /// - 200 OK: Operation completed successfully
+    /// - 201 Created: Resource created successfully
+    /// - 400 Bad Request: Invalid input data
+    /// - 401 Unauthorized: Authentication required
+    /// - 403 Forbidden: User lacks required permissions
+    /// - 404 Not Found: Resource not found
+    /// - 500 Internal Server Error: Unexpected server error
     /// </remarks>
     [ApiController]
     [Route("api/v1/[controller]")]
     [Authorize]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public class SqlQueryController(ISqlQueryService sqlQueryService, ILogger<SqlQueryController> logger)
         : ControllerBase
     {
         /// <summary>
-        /// Get all SQL queries accessible by the current user
+        /// Retrieves all SQL queries accessible by the current user
         /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     GET /api/v1/sqlquery
+        /// </remarks>
         /// <returns>List of SQL queries (public ones and those created by the user)</returns>
         /// <response code="200">Returns the list of queries</response>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<SQLQueryDTO>), 200)]
-        public async Task<ActionResult<IEnumerable<SQLQueryDTO>>> GetQueries()
+        [ProducesResponseType(typeof(IEnumerable<SQLQueryDTO>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<SQLQueryDTO>>> GetAllAsync()
         {
             try
             {
@@ -62,16 +86,20 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Get a specific SQL query by its ID
+        /// Retrieves a specific SQL query by its ID
         /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     GET /api/v1/sqlquery/123
+        /// </remarks>
         /// <param name="id">The ID of the SQL query</param>
         /// <returns>The SQL query if found</returns>
-        /// <response code="200">Returns the query</response>
-        /// <response code="404">If the query is not found</response>
+        /// <response code="200">Returns the requested query</response>
+        /// <response code="404">If the query was not found</response>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(SQLQuery), 200)]
-        [ProducesResponseType(404)]
-        public async Task<ActionResult<SQLQuery>> GetQuery(int id)
+        [ProducesResponseType(typeof(SQLQuery), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<SQLQuery>> GetByIdAsync(int id)
         {
             try
             {
@@ -95,16 +123,26 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Create a new SQL query
+        /// Creates a new SQL query
         /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     POST /api/v1/sqlquery
+        ///     {
+        ///         "query": "SELECT * FROM Users WHERE Age > @age",
+        ///         "sampleParameters": {
+        ///             "age": 18
+        ///         }
+        ///     }
+        /// </remarks>
         /// <param name="dto">The SQL query to create</param>
         /// <returns>The created SQL query</returns>
         /// <response code="201">Returns the newly created query</response>
         /// <response code="400">If the query is invalid</response>
         [HttpPost]
-        [ProducesResponseType(typeof(SQLQuery), 201)]
-        [ProducesResponseType(400)]
-        public async Task<ActionResult<SQLQuery>> CreateQuery(SQLQueryCreateDto dto)
+        [ProducesResponseType(typeof(SQLQuery), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<SQLQuery>> CreateAsync(SQLQueryCreateDto dto)
         {
             try
             {
@@ -118,7 +156,7 @@ namespace Querier.Api.Controllers
 
                 var createdQuery = await sqlQueryService.CreateQueryAsync(dto.Query, dto.SampleParameters);
                 logger.LogInformation("Successfully created SQL query with ID {QueryId}", createdQuery.Id);
-                return CreatedAtAction(nameof(GetQuery), new { id = createdQuery.Id }, createdQuery);
+                return CreatedAtAction(nameof(GetByIdAsync), new { id = createdQuery.Id }, createdQuery);
             }
             catch (Exception ex)
             {
@@ -128,22 +166,36 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Update an existing SQL query
+        /// Updates an existing SQL query
         /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     PUT /api/v1/sqlquery/123
+        ///     {
+        ///         "query": {
+        ///             "id": 123,
+        ///             "sql": "SELECT * FROM Users WHERE Age > @age"
+        ///         },
+        ///         "sampleParameters": {
+        ///             "age": 21
+        ///         }
+        ///     }
+        /// </remarks>
+        /// <param name="id">The ID of the query to update</param>
         /// <param name="dto">The updated SQL query data</param>
         /// <returns>The updated SQL query</returns>
         /// <response code="200">Returns the updated query</response>
-        /// <response code="400">If the ID doesn't match the query ID</response>
-        /// <response code="404">If the query is not found</response>
+        /// <response code="400">If the request data is invalid</response>
+        /// <response code="404">If the query was not found</response>
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(SQLQuery), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        public async Task<ActionResult<SQLQuery>> UpdateQuery(SQLQueryUpdateDto dto)
+        [ProducesResponseType(typeof(SQLQuery), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<SQLQuery>> UpdateAsync(int id, SQLQueryUpdateDto dto)
         {
             try
             {
-                logger.LogDebug("Updating SQL query with ID {QueryId}", dto?.Query?.Id);
+                logger.LogDebug("Updating SQL query with ID {QueryId}", id);
                 
                 if (dto == null)
                 {
@@ -151,12 +203,17 @@ namespace Querier.Api.Controllers
                     return BadRequest("SQL query data is required");
                 }
 
+                if (dto.Query?.Id != id)
+                {
+                    return BadRequest("ID mismatch between URL and body");
+                }
+
                 var updatedQuery = await sqlQueryService.UpdateQueryAsync(dto.Query, dto.SampleParameters);
                 
                 if (updatedQuery == null)
                 {
-                    logger.LogWarning("SQL query with ID {QueryId} not found", dto.Query?.Id);
-                    return NotFound();
+                    logger.LogWarning("SQL query with ID {QueryId} not found", id);
+                    return NotFound($"SQL query with ID {id} not found");
                 }
 
                 logger.LogInformation("Successfully updated SQL query with ID {QueryId}", updatedQuery.Id);
@@ -164,20 +221,26 @@ namespace Querier.Api.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error updating SQL query with ID {QueryId}", dto?.Query?.Id);
+                logger.LogError(ex, "Error updating SQL query with ID {QueryId}", id);
                 return StatusCode(500, "An error occurred while updating the SQL query");
             }
         }
 
         /// <summary>
-        /// Delete a SQL query
+        /// Deletes a SQL query
         /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     DELETE /api/v1/sqlquery/123
+        /// </remarks>
         /// <param name="id">The ID of the SQL query to delete</param>
         /// <returns>No content if successful</returns>
         /// <response code="204">If the query was successfully deleted</response>
+        /// <response code="404">If the query was not found</response>
         [HttpDelete("{id}")]
-        [ProducesResponseType(204)]
-        public async Task<IActionResult> DeleteQuery(int id)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteAsync(int id)
         {
             try
             {
@@ -194,21 +257,29 @@ namespace Querier.Api.Controllers
         }
 
         /// <summary>
-        /// Execute a SQL query with parameters
+        /// Executes a SQL query with parameters
         /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     POST /api/v1/sqlquery/123/execute?pageNumber=1&amp;pageSize=10
+        ///     {
+        ///         "age": 18,
+        ///         "status": "active"
+        ///     }
+        /// </remarks>
         /// <param name="id">The ID of the SQL query to execute</param>
-        /// <param name="pageSize">Number of item in a page</param>
+        /// <param name="pageNumber">The requested page number (default: 1)</param>
+        /// <param name="pageSize">Number of items per page (default: 0 for all)</param>
         /// <param name="parameters">Dictionary of parameters to use in the query</param>
-        /// <param name="pageNumber">The requested page number</param>
         /// <returns>The query results</returns>
         /// <response code="200">Returns the query results</response>
-        /// <response code="404">If the query is not found</response>
         /// <response code="400">If there's an error executing the query</response>
+        /// <response code="404">If the query was not found</response>
         [HttpPost("{id}/execute")]
-        [ProducesResponseType(typeof(PagedResult<dynamic>), 200)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(400)]
-        public async Task<ActionResult<PagedResult<dynamic>>> ExecuteQuery(
+        [ProducesResponseType(typeof(PagedResult<dynamic>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<PagedResult<dynamic>>> ExecuteAsync(
             int id,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 0,
