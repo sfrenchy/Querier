@@ -10,7 +10,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// Dictionary of localized names for the menu item, where key is the language code
         /// </summary>
-        public Dictionary<string, string> Names { get; set; }
+        public List<TranslatableStringDto> Title { get; set; }
 
         /// <summary>
         /// Icon identifier or class name for the menu item
@@ -30,7 +30,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// List of role names that will have access to this menu item
         /// </summary>
-        public List<string> Roles { get; set; }
+        public List<RoleDto> Roles { get; set; }
 
         /// <summary>
         /// Navigation route for the menu item

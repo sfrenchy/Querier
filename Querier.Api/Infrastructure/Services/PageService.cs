@@ -115,6 +115,7 @@ namespace Querier.Api.Infrastructure.Services
                 page.MenuId = request.MenuId;
                 page.PageTranslations.Clear();
                 page.PageTranslations = new List<PageTranslation>();
+                page.Roles = string.Join(',', request.Roles.Select(r => r.Name));
                 foreach (var translation in request.Title)
                     page.PageTranslations.Add(new PageTranslation() { LanguageCode = translation.LanguageCode, Name = translation.Value});
                 

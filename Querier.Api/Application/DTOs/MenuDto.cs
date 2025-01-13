@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using Querier.Api.Common.Utilities;
+using Querier.Api.Domain.Entities.Auth;
 using Querier.Api.Domain.Entities.Menu;
+using Querier.Api.Infrastructure.Data.Repositories;
 
 namespace Querier.Api.Application.DTOs
 {
@@ -17,7 +20,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// Dictionary of localized names for the menu item, where key is the language code
         /// </summary>
-        public Dictionary<string, string> Names { get; set; }
+        public List<TranslatableStringDto> Title { get; set; }
 
         /// <summary>
         /// Icon identifier or class name for the menu item
@@ -37,7 +40,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// List of role names that have access to this menu item
         /// </summary>
-        public List<string> Roles { get; set; }
+        public List<RoleDto> Roles { get; set; }
 
         /// <summary>
         /// Navigation route for the menu item
@@ -46,15 +49,25 @@ namespace Querier.Api.Application.DTOs
 
         public static MenuDto FromEntity(Menu entity)
         {
+            var scope = ServiceActivator.GetScope();
+            var roleRepository = (IRoleRepository) scope.ServiceProvider.GetService(typeof(IRoleRepository));
+            var roles = new List<ApiRole>();
+            if (roleRepository != null)
+            {
+                roles = roleRepository.GetAll();
+            }
             return new MenuDto
             {
                 Id = entity.Id,
-                Names = entity.Translations.ToDictionary(x => x.LanguageCode, x => x.Name),
+                Title = entity.Translations.Select(x => new TranslatableStringDto() { LanguageCode = x.LanguageCode, Value = x.Name }).ToList(),
                 Icon = entity.Icon,
                 Order = entity.Order,
                 IsVisible = entity.IsVisible,
-                Roles = entity.Roles?.Split(',').Where(r => !string.IsNullOrWhiteSpace(r)).ToList() ??
-                        [],
+                Roles = entity.Roles.Split(',').Select(x => new RoleDto()
+                {
+                    Id = roles.FirstOrDefault(r => r.Name == x)?.Id,
+                    Name = roles.FirstOrDefault(r => r.Name == x)?.Name,
+                }).ToList(),
                 Route = entity.Route
             };
         }

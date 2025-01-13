@@ -68,14 +68,11 @@ namespace Querier.Api.Infrastructure.Services
                     Icon = request.Icon,
                     Order = request.Order,
                     IsVisible = request.IsVisible,
-                    Roles = string.Join(",", request.Roles ?? new List<string>()),
-                    Route = request.Route,
-                    Translations = request.Names.Select(x => new MenuTranslation
-                    {
-                        LanguageCode = x.Key,
-                        Name = x.Value
-                    }).ToList()
+                    Roles = string.Join(',', request.Roles.Select(r => r.Name)),
+                    Route = request.Route
                 };
+                foreach (var translation in request.Title)
+                    category.Translations.Add(new MenuTranslation() { LanguageCode = translation.LanguageCode, Name = translation.Value});
 
                 var result = await repository.CreateAsync(category);
                 var response = MenuDto.FromEntity(result);
@@ -110,16 +107,16 @@ namespace Querier.Api.Infrastructure.Services
                 category.Icon = request.Icon;
                 category.Order = request.Order;
                 category.IsVisible = request.IsVisible;
-                category.Roles = string.Join(",", request.Roles ?? new List<string>());
+                category.Roles = string.Join(',', request.Roles.Select(r => r.Name));
                 category.Route = request.Route;
 
                 // Mise à jour des traductions
                 category.Translations.Clear();
-                foreach (var translation in request.Names)
+                foreach (var translation in request.Title)
                 {
                     category.Translations.Add(new MenuTranslation
                     {
-                        LanguageCode = translation.Key,
+                        LanguageCode = translation.LanguageCode,
                         Name = translation.Value
                     });
                 }

@@ -100,25 +100,6 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                     return null;
                 }
 
-                // Mise à jour des propriétés simples
-                existingPage.Icon = page.Icon;
-                existingPage.Order = page.Order;
-                existingPage.IsVisible = page.IsVisible;
-                existingPage.Roles = page.Roles;
-                existingPage.Route = page.Route;
-                existingPage.MenuId = page.MenuId;
-
-                // Mise à jour des traductions
-                existingPage.PageTranslations.Clear();
-                foreach (var translation in page.PageTranslations)
-                {
-                    existingPage.PageTranslations.Add(new PageTranslation
-                    {
-                        LanguageCode = translation.LanguageCode,
-                        Name = translation.Name
-                    });
-                }
-
                 await context.SaveChangesAsync();
                 logger.LogInformation("Successfully updated page {PageId}", id);
                 return existingPage;
