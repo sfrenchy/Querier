@@ -3,7 +3,7 @@ namespace Querier.Api.Application.DTOs
     /// <summary>
     /// Data transfer object for page translations in different languages
     /// </summary>
-    public class PageTranslationDto
+    public class TranslatableStringDto
     {
         /// <summary>
         /// Language code for the translation (e.g., 'en', 'fr', 'es')
@@ -11,8 +11,8 @@ namespace Querier.Api.Application.DTOs
         public string LanguageCode { get; set; }
 
         /// <summary>
-        /// Translated name of the page in the specified language
+        /// Value of the page in the specified language
         /// </summary>
-        public string Name { get; set; }
+        public string Value { get; set; }
     }
 }

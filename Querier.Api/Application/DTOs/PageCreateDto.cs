@@ -10,7 +10,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// Dictionary of localized names for the page, where key is the language code
         /// </summary>
-        public Dictionary<string, string> Names { get; set; }
+        public List<TranslatableStringDto> Title { get; set; }
 
         /// <summary>
         /// Icon identifier or class name for the page
@@ -30,7 +30,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// List of role names that will have access to this page
         /// </summary>
-        public List<string> Roles { get; set; }
+        public List<RoleDto> Roles { get; set; }
 
         /// <summary>
         /// Navigation route for the page
