@@ -29,15 +29,6 @@ namespace Querier.Api.Infrastructure.Services
                     return new LayoutDto
                     {
                         PageId = pageId,
-                        Icon = "settings",
-                        Names = new Dictionary<string, string>
-                        {
-                            { "en", "Page Not Found" },
-                            { "fr", "Page Non Trouvée" }
-                        },
-                        IsVisible = true,
-                        Roles = new List<string>(),
-                        Route = $"/page/{pageId}",
                         Rows = new List<RowDto>()
                     };
                 }
@@ -69,11 +60,6 @@ namespace Querier.Api.Infrastructure.Services
                 var layout = new LayoutDto
                 {
                     PageId = page.Id,
-                    Icon = page.Icon,
-                    Names = page.PageTranslations.ToDictionary(t => t.LanguageCode, t => t.Name),
-                    IsVisible = page.IsVisible,
-                    Roles = page.Roles?.Split(',').Where(r => !string.IsNullOrWhiteSpace(r)).ToList() ?? new List<string>(),
-                    Route = page.Route,
                     Rows = rowResponses
                 };
 
@@ -97,24 +83,6 @@ namespace Querier.Api.Infrastructure.Services
                 {
                     logger.LogWarning("Page {PageId} not found during update", pageId);
                     return null;
-                }
-
-                // Mise à jour des propriétés de la page
-                page.Icon = layout.Icon;
-                page.IsVisible = layout.IsVisible;
-                page.Route = layout.Route;
-                page.Roles = string.Join(",", layout.Roles ?? new List<string>());
-
-                // Mise à jour des traductions
-                page.PageTranslations.Clear();
-                foreach (var translation in layout.Names)
-                {
-                    page.PageTranslations.Add(new PageTranslation
-                    {
-                        PageId = pageId,
-                        LanguageCode = translation.Key,
-                        Name = translation.Value
-                    });
                 }
 
                 await pageRepository.UpdateAsync(pageId, page);
