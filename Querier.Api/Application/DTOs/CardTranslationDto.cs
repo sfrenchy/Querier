@@ -7,21 +7,21 @@ namespace Querier.Api.Application.DTOs
         public string LanguageCode { get; set; }
         public string Title { get; set; }
 
-        public static CardTranslationDto FromEntity(CardTranslation entity)
+        public static TranslatableStringDto FromEntity(CardTranslation entity)
         {
             return new()
             {
                 LanguageCode = entity.LanguageCode,
-                Title = entity.Title
+                Value = entity.Title
             };
         }
 
-        public static CardTranslation ToEntity(CardTranslationDto dto)
+        public static CardTranslation ToEntity(TranslatableStringDto dto)
         {
             return new()
             {
                 LanguageCode = dto.LanguageCode,
-                Title = dto.Title
+                Title = dto.Value
             };
         }
     }

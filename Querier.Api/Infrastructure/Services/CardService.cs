@@ -83,12 +83,12 @@ namespace Querier.Api.Infrastructure.Services
                     HeaderTextColor = request.HeaderTextColor
                 };
 
-                if (request.Titles?.Any() == true)
+                if (request.Title?.Any() == true)
                 {
-                    card.CardTranslations = request.Titles.Select(t => new CardTranslation
+                    card.CardTranslations = request.Title.Select(t => new CardTranslation
                     {
                         LanguageCode = t.LanguageCode,
-                        Title = t.Title
+                        Title = t.Value
                     }).ToList();
                 }
 
@@ -142,14 +142,14 @@ namespace Querier.Api.Infrastructure.Services
                     : null;
 
                 existingCard.CardTranslations.Clear();
-                if (request.Titles?.Any() == true)
+                if (request.Title?.Any() == true)
                 {
-                    foreach (var translation in request.Titles)
+                    foreach (var translation in request.Title)
                     {
                         existingCard.CardTranslations.Add(new CardTranslation
                         {
                             LanguageCode = translation.LanguageCode,
-                            Title = translation.Title,
+                            Title = translation.Value,
                             CardId = id
                         });
                     }

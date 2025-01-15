@@ -19,7 +19,7 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// Dictionary of localized titles for the card, where key is the language code
         /// </summary>
-        public IEnumerable<CardTranslationDto> Titles { get; set; }
+        public IEnumerable<TranslatableStringDto> Title { get; set; }
 
         /// <summary>
         /// Display order of the card within its row
@@ -76,7 +76,7 @@ namespace Querier.Api.Application.DTOs
                 HeaderBackgroundColor = entity.HeaderBackgroundColor,
                 Order = entity.Order,
                 Type = entity.Type,
-                Titles = entity.CardTranslations.Select(CardTranslationDto.FromEntity),
+                Title = entity.CardTranslations.Select(CardTranslationDto.FromEntity),
                 Id = entity.Id,
                 RowId = entity.RowId
             };
@@ -97,7 +97,7 @@ namespace Querier.Api.Application.DTOs
                 HeaderBackgroundColor = dto.HeaderBackgroundColor,
                 Order = dto.Order,
                 Type = dto.Type,
-                CardTranslations = dto.Titles.Select(CardTranslationDto.ToEntity).ToList(),
+                CardTranslations = dto.Title.Select(CardTranslationDto.ToEntity).ToList(),
                 RowId = dto.RowId
             };
         }
