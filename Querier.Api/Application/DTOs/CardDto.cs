@@ -71,7 +71,7 @@ namespace Querier.Api.Application.DTOs
                     : null,
                 GridWidth = entity.GridWidth,
                 TextColor = entity.TextColor,
-                BackgroundColor = entity.TextColor,
+                BackgroundColor = entity.BackgroundColor,
                 HeaderTextColor = entity.HeaderTextColor,
                 HeaderBackgroundColor = entity.HeaderBackgroundColor,
                 Order = entity.Order,

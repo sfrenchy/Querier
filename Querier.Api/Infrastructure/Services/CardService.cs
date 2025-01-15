@@ -85,7 +85,7 @@ namespace Querier.Api.Infrastructure.Services
 
                 if (request.Title?.Any() == true)
                 {
-                    card.CardTranslations = request.Title.Select(t => new CardTranslation
+                     card.CardTranslations = request.Title.Select(t => new CardTranslation
                     {
                         LanguageCode = t.LanguageCode,
                         Title = t.Value
