@@ -60,7 +60,9 @@ namespace Querier.Api.Application.DTOs
         /// Optional text color of the card header (in RGBA format)
         /// </summary>
         public uint? HeaderTextColor { get; set; }
-
+        public bool DisplayHeader { get; set; }
+        public bool DisplayFooter { get; set; }
+        public string Icon { get; set; }
         public int RowId { get; set; }
         public static CardDto FromEntity(Card entity)
         {
@@ -78,7 +80,10 @@ namespace Querier.Api.Application.DTOs
                 Type = entity.Type,
                 Title = entity.CardTranslations.Select(CardTranslationDto.FromEntity),
                 Id = entity.Id,
-                RowId = entity.RowId
+                RowId = entity.RowId,
+                DisplayHeader = entity.DisplayHeader,
+                DisplayFooter = entity.DisplayFooter,
+                Icon = entity.Icon
             };
         }
 

@@ -80,7 +80,10 @@ namespace Querier.Api.Infrastructure.Services
                     BackgroundColor = request.BackgroundColor ?? 0xFF000000,
                     TextColor = request.TextColor ?? 0xFFFFFFFF,
                     HeaderBackgroundColor = request.HeaderBackgroundColor,
-                    HeaderTextColor = request.HeaderTextColor
+                    HeaderTextColor = request.HeaderTextColor,
+                    DisplayHeader = request.DisplayHeader,
+                    DisplayFooter = request.DisplayFooter,
+                    Icon = request.Icon,
                 };
 
                 if (request.Title?.Any() == true)

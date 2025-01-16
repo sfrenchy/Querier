@@ -23,6 +23,9 @@ public class Card
     public uint? HeaderBackgroundColor { get; set; }
     public uint? HeaderTextColor { get; set; }
 
+    public bool DisplayHeader { get; set; }
+    public bool DisplayFooter { get; set; }
+    public string Icon { get; set; }
         
     public virtual Row Row { get; set; }
     public virtual ICollection<CardTranslation> CardTranslations { get; set; }
