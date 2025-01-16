@@ -14,15 +14,33 @@ namespace Querier.Api
     {
         public static void Main(string[] args)
         {
-            var host = CreateHostBuilder(args).Build();
-            var logger = host.Services.GetRequiredService<ILogger<Startup>>();
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .Build();
+
+            var serviceProvider = new ServiceCollection()
+                .AddLogging(builder =>
+                {
+                    builder.AddConsole();
+                    builder.AddDebug();
+                })
+                .BuildServiceProvider();
+
+            var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger<Startup>();
 
             try
             {
                 logger.LogInformation("Starting application initialization");
-                InitializeDatabase(logger);
+                
+                // Initialize database first
+                InitializeDatabase(logger, configuration);
                 logger.LogInformation("Database initialization completed");
 
+                // Then create and run the host
+                var host = CreateHostBuilder(args).Build();
+                
                 logger.LogInformation("Running host");
                 host.Run();
             }
@@ -57,16 +75,10 @@ namespace Querier.Api
                     webBuilder.UseStartup<Startup>();
                 });
 
-        private static void InitializeDatabase(ILogger logger)
+        private static void InitializeDatabase(ILogger logger, IConfiguration configuration)
         {
             try
             {
-                logger.LogInformation("Loading configuration");
-                var configuration = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json")
-                    .Build();
-
                 logger.LogInformation("Configuring database context");
                 var optionsBuilder = new DbContextOptionsBuilder<ApiDbContext>();
                 optionsBuilder.UseSqlite(configuration.GetConnectionString("ApiDBConnection"));
