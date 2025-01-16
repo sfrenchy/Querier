@@ -23,6 +23,6 @@ namespace Querier.Api.Application.DTOs
         /// List of filters to apply to the query results
         /// Filters are applied after the query execution
         /// </summary>
-        public List<EntityCRUDDataFilterDto> Filters { get; set; }
+        public List<DataFilterDto> Filters { get; set; }
     }
 }

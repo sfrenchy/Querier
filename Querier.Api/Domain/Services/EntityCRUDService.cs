@@ -17,6 +17,7 @@ using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Tools;
+using Querier.Api.Infrastructure.Services;
 using DataTable = System.Data.DataTable;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -63,7 +64,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public List<EntityDefinitionDto> GetEntities(string contextTypeFullname)
+        public List<DataStructureDefinitionDto> GetEntities(string contextTypeFullname)
         {
             try
             {
@@ -73,7 +74,7 @@ namespace Querier.Api.Domain.Services
                 }
 
                 logger.LogInformation("Getting entities for context: {Context}", contextTypeFullname);
-                List<EntityDefinitionDto> result = new List<EntityDefinitionDto>();
+                List<DataStructureDefinitionDto> result = new List<DataStructureDefinitionDto>();
                 
                 DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
                 if (targetContext == null)
@@ -93,7 +94,7 @@ namespace Querier.Api.Domain.Services
                     try
                     {
                         var entityType = pi.PropertyType.GetGenericArguments().First();
-                        result.Add(entityType.ToEntityDefinition());
+                        result.Add(entityType.ToEntityDefinition(targetContext));
                         logger.LogTrace("Added entity definition for {Entity}", entityType.Name);
                     }
                     catch (Exception ex)
@@ -113,7 +114,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public EntityDefinitionDto GetEntity(string contextTypeFullname, string entityFullname)
+        public DataStructureDefinitionDto GetEntity(string contextTypeFullname, string entityFullname)
         {
             try
             {
@@ -326,12 +327,12 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<EntityCRUDDataFilterDto> filters)
+        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilterDto> filters)
         {
             return Read(contextTypeFullname, entityTypeFullname, filters, out _);
         }
 
-        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<EntityCRUDDataFilterDto> filters, out Type entityType)
+        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilterDto> filters, out Type entityType)
         {
             Type reqType = Utils.GetType(entityTypeFullname);
             if (reqType == null)
@@ -350,14 +351,14 @@ namespace Querier.Api.Domain.Services
             return JsonConvert.DeserializeObject<List<ExpandoObject>>(JsonConvert.SerializeObject(dt));
         }
 
-        public DataTable GetDatatableFromSql(string contextTypeFullname, string sqlQuery, List<EntityCRUDDataFilterDto> filters)
+        public DataTable GetDatatableFromSql(string contextTypeFullname, string sqlQuery, List<DataFilterDto> filters)
         {
             DbContext apiDbContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
             DataTable dt = apiDbContext.Database.RawSqlQuery(sqlQuery);
             return dt.Filter(filters);
         }
 
-        public IEnumerable<object> ReadFromSql(string contextTypeFullname, string sqlQuery, List<EntityCRUDDataFilterDto> filters)
+        public IEnumerable<object> ReadFromSql(string contextTypeFullname, string sqlQuery, List<DataFilterDto> filters)
         {
             DataTable dt = GetDatatableFromSql(contextTypeFullname, sqlQuery, filters);
             var res = JsonConvert.DeserializeObject<List<ExpandoObject>>(JsonConvert.SerializeObject(dt));
@@ -457,26 +458,14 @@ namespace Querier.Api.Domain.Services
             try
             {
                 DataTable dt = apiDbContext.Database.RawSqlQuery(request.SqlQuery);
-                result.Entity = new EntityDefinitionDto
+                result.Structure = new DataStructureDefinitionDto
                 {
-                    Name = "UNK",
-                    Properties = []
+                    Name = "SQL Query Result",
+                    Description = "Structure of SQL query result",
+                    Type = "object",
+                    SourceType = DataSourceType.Entity,
+                    JsonSchema = new JsonSchemaGeneratorService(logger).GenerateFromDataTable(dt, "SQL Query Result")
                 };
-                foreach (DataColumn dtColumn in dt.Columns)
-                {
-                    Type colType = dtColumn.DataType;
-                    PropertyDefinitionDto pd = new PropertyDefinitionDto
-                    {
-                        Name = dtColumn.ColumnName,
-                        Type = dtColumn.AllowDBNull ? colType.Name + "?" : colType.Name,
-                        Options = []
-                    };
-
-                    if (dtColumn.AllowDBNull)
-                        pd.Options.Add(PropertyOption.IsNullable);
-
-                    result.Entity.Properties.Add(pd);
-                }
 
                 result.Datas = JsonConvert.DeserializeObject<List<dynamic>>(JsonConvert.SerializeObject(dt));
             }

@@ -200,19 +200,13 @@ namespace Querier.Api.Infrastructure.Services
                 DataTable dt = dbcontext.Database.RawSqlQuery(query.Query, parameters);
                 logger.LogDebug("Query execution successful, creating entity definition");
 
-                var entityDefinition = new EntityDefinitionDto
+                var entityDefinition = new DataStructureDefinitionDto
                 {
                     Name = query.Name,
-                    Properties = dt.Columns.Cast<DataColumn>()
-                        .Select(column => new PropertyDefinitionDto
-                        {
-                            Name = column.ColumnName,
-                            Type = column.AllowDBNull ? $"{column.DataType.Name}?" : column.DataType.Name,
-                            Options = column.AllowDBNull
-                                ? [PropertyOption.IsNullable]
-                                : []
-                        })
-                        .ToList()
+                    Description = $"SQL Query result structure for {query.Name}",
+                    Type = "object",
+                    SourceType = DataSourceType.Entity,
+                    JsonSchema = new JsonSchemaGeneratorService(logger).GenerateFromDataTable(dt, query.Name)
                 };
 
                 outputDescription = JsonSerializer.Serialize(entityDefinition);

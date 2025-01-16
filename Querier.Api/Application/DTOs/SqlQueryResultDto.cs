@@ -15,9 +15,9 @@ public class SqlQueryResultDto
     public string ErrorMessage { get; set; }
 
     /// <summary>
-    /// An entity definition
+    /// The structure definition of the query result
     /// </summary>
-    public EntityDefinitionDto Entity { get; set; }
+    public DataStructureDefinitionDto Structure { get; set; }
 
     /// <summary>
     /// A list to contain the data from an sql query

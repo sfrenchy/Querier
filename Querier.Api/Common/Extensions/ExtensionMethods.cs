@@ -22,6 +22,7 @@ using Querier.Api.Application.DTOs;
 using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Tools;
+using Querier.Api.Infrastructure.Services;
 
 namespace Querier.Api.Common.Extensions
 {
@@ -419,60 +420,28 @@ namespace Querier.Api.Common.Extensions
             }
         }
 
-        public static EntityDefinitionDto ToEntityDefinition(this Type type)
+        public static DataStructureDefinitionDto ToEntityDefinition(this Type type, DbContext dbContext = null)
         {
             try
             {
-                LOGGER.LogDebug("Converting type {TypeName} to EntityDefinition", type.Name);
-                var result = new EntityDefinitionDto
+                LOGGER.LogDebug("Converting type {TypeName} to DataStructureDefinition", type.Name);
+                var jsonSchemaGenerator = new JsonSchemaGeneratorService(LOGGER);
+
+                var result = new DataStructureDefinitionDto
                 {
-                    Name = type.FullName,
-                    Properties = []
+                    Name = type.Name,
+                    Description = $"Entity structure for {type.FullName}",
+                    Type = "object",
+                    SourceType = DataSourceType.Entity,
+                    JsonSchema = jsonSchemaGenerator.GenerateFromType(type, dbContext)
                 };
 
-                var properties = type.GetProperties()
-                    .Where(p => p.GetCustomAttribute(typeof(System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute)) == null &&
-                               p.GetCustomAttribute(typeof(Newtonsoft.Json.JsonIgnoreAttribute)) == null);
-
-                LOGGER.LogDebug("Processing {Count} properties for type {TypeName}", properties.Count(), type.Name);
-
-                foreach (var pi in properties)
-                {
-                    var pd = new PropertyDefinitionDto
-                    {
-                        Name = pi.Name,
-                        Type = pi.IsNullableProperty() ? Nullable.GetUnderlyingType(pi.PropertyType).Name + "?" : pi.PropertyType.Name,
-                        Options = []
-                    };
-                
-                if (pi.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.KeyAttribute)).Any())
-                    {
-                        pd.Options.Add(PropertyOption.IsKey);
-                        LOGGER.LogDebug("Property {PropertyName} marked as Key", pi.Name);
-                    }
-                
-                    if (pi.IsNullableProperty())
-                    {
-                        pd.Options.Add(PropertyOption.IsNullable);
-                        LOGGER.LogDebug("Property {PropertyName} marked as Nullable", pi.Name);
-                    }
-
-                    if (pi.GetCustomAttributes(typeof(JsonStringAttribute)).Any())
-                    {
-                        pd.Type = "JsonString";
-                        LOGGER.LogDebug("Property {PropertyName} marked as JsonString", pi.Name);
-                    }
-
-                    result.Properties.Add(pd);
-                }
-
-                LOGGER.LogInformation("Successfully converted type {TypeName} to EntityDefinition with {PropertyCount} properties",
-                    type.Name, result.Properties.Count);
+                LOGGER.LogDebug("Successfully converted type {TypeName} to DataStructureDefinition", type.Name);
                 return result;
             }
             catch (Exception ex)
             {
-                LOGGER.LogError(ex, "Error converting type {TypeName} to EntityDefinition", type.Name);
+                LOGGER.LogError(ex, "Error converting type {TypeName} to DataStructureDefinition", type.Name);
                 throw;
             }
         }
@@ -497,7 +466,7 @@ namespace Querier.Api.Common.Extensions
             }
         }
 
-        public static DataTable Filter(this DataTable source, List<EntityCRUDDataFilterDto> filters)
+        public static DataTable Filter(this DataTable source, List<DataFilterDto> filters)
         {
             try
             {
@@ -518,7 +487,7 @@ namespace Querier.Api.Common.Extensions
             var predicate = PredicateBuilder.True<DataRow>();
                 foreach (var filter in filters)
             {
-                string columnName = filter.Column.Name;
+                string columnName = filter.ColumnMetadata["columnName"];
                 if (source.Columns.Contains(columnName))
                 {
                         LOGGER.LogDebug("Processing filter for column {ColumnName} with operator {Operator}", columnName, filter.Operator);

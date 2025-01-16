@@ -64,7 +64,7 @@ namespace Querier.Api.Controllers
         /// <response code="400">If the context name is invalid or missing</response>
         /// <response code="500">If an error occurs while retrieving entities</response>
         [HttpGet("contexts/{contextName}/entities")]
-        [ProducesResponseType(typeof(EntityDefinitionDto[]), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(DataStructureDefinitionDto[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public IActionResult GetEntities(string contextName)
@@ -101,7 +101,7 @@ namespace Querier.Api.Controllers
         /// <response code="404">If the entity is not found in the context</response>
         /// <response code="500">If an error occurs while retrieving the entity</response>
         [HttpGet("contexts/{contextName}/entities/{entityName}")]
-        [ProducesResponseType(typeof(EntityDefinitionDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(DataStructureDefinitionDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
