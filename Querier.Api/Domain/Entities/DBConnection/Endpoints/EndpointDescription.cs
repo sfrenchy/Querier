@@ -36,6 +36,9 @@ namespace Querier.Api.Domain.Entities.QDBConnection.Endpoints
         [Required]
         public string Route { get; set; }
 
+        [Required]
+        public string EntitySubjectJsonSchema { get; set; }
+
         public string Description { get; set; }
 
         [InverseProperty("EndpointDescription")]

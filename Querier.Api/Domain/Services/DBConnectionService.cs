@@ -581,8 +581,7 @@ namespace Querier.Api.Domain.Services
                         Name = g.Key.Replace("Controller",""),
                         Route = g.First().Route.Replace("Controller",""),
                         HttpGetJsonSchema = g.FirstOrDefault(e => e.HttpMethod == "GET")
-                            ?.Responses.FirstOrDefault(r => r.StatusCode == 200)
-                            ?.JsonSchema
+                            ?.EntitySubjectJsonSchema
                     })
                     .ToList();
 

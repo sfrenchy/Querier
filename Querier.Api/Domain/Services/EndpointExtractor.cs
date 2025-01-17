@@ -6,6 +6,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Domain.Entities.QDBConnection.Endpoints;
+using Querier.Api.Infrastructure.Services;
 
 namespace Querier.Api.Domain.Services
 {
@@ -18,6 +19,27 @@ namespace Querier.Api.Domain.Services
         {
             _schemaGenerator = schemaGenerator ?? throw new ArgumentNullException(nameof(schemaGenerator));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        private Type GetIntrinsicType(Type type)
+        {
+            if (type == null) return null;
+
+            // Si c'est une liste ou une collection, on récupère le type générique
+            if (type.IsGenericType && (type.GetGenericTypeDefinition() == typeof(List<>) || 
+                type.GetGenericTypeDefinition() == typeof(IEnumerable<>) ||
+                type.GetGenericTypeDefinition() == typeof(ICollection<>)))
+            {
+                return type.GetGenericArguments()[0];
+            }
+
+            // Si c'est un type générique (comme PagedResult<T>), on récupère le type générique
+            if (type.IsGenericType && type.GetGenericArguments().Length == 1)
+            {
+                return type.GetGenericArguments()[0];
+            }
+
+            return type;
         }
 
         public List<EndpointDescription> ExtractFromAssembly(Assembly assembly)
@@ -34,6 +56,8 @@ namespace Querier.Api.Domain.Services
                 {
                     try
                     {
+                        JsonSchemaGeneratorService jsonSchemaGenerator = new JsonSchemaGeneratorService(_logger);
+
                         _logger.LogDebug("Processing controller: {ControllerName}", controller.Name);
                         var controllerRoute = controller.GetCustomAttributes<RouteAttribute>()
                             .FirstOrDefault()?.Template ?? string.Empty;
@@ -56,6 +80,16 @@ namespace Querier.Api.Domain.Services
                                 var actionRoute = action.GetCustomAttributes<RouteAttribute>()
                                     .FirstOrDefault()?.Template ?? string.Empty;
 
+                                // Récupérer le type de retour depuis l'attribut ProducesResponseType avec un code 200
+                                var producesAttribute = action.GetCustomAttributes<ProducesResponseTypeAttribute>()
+                                    .FirstOrDefault(a => a.StatusCode == 200 || a.StatusCode == 201);
+                                
+                                Type returnType = null;
+                                if (producesAttribute != null)
+                                {
+                                    returnType = GetIntrinsicType(producesAttribute.Type);
+                                }
+
                                 var endpoint = new EndpointDescription
                                 {
                                     Action = action.Name,
@@ -63,7 +97,8 @@ namespace Querier.Api.Domain.Services
                                     HttpMethod = string.Join(", ", httpMethods),
                                     Route = CombineRoutes(controllerRoute, actionRoute),
                                     Responses = GetResponses(action).ToList(),
-                                    Description = action.GetCustomAttribute<SummaryAttribute>()?.Summary ?? string.Empty
+                                    Description = action.GetCustomAttribute<SummaryAttribute>()?.Summary ?? string.Empty,
+                                    EntitySubjectJsonSchema = returnType != null ? jsonSchemaGenerator.GenerateFromType(returnType) : "{}"
                                 };
 
                                 _logger.LogDebug("Extracted endpoint {EndpointName} with {ParameterCount} parameters and {ResponseCount} responses", 
