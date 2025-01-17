@@ -5,6 +5,8 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Domain.Common.Enums;
+using Querier.Api.Domain.Entities.DBConnection;
 using Querier.Api.Infrastructure.Data.Context;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -22,7 +24,7 @@ namespace Querier.Api.Common.Utilities
             LOGGER = serviceProvider.GetService<ILoggerFactory>()?.CreateLogger(typeof(Utils));
         }
 
-        public static DbContext GetDbContextFromTypeName(string contextTypeName)
+        public static DbContext GetDbContextFromTypeName(string contextTypeName, string connectionString = null, DbConnectionType connectionType = DbConnectionType.SqlServer)
         {
             try
             {
@@ -55,16 +57,22 @@ namespace Querier.Api.Common.Utilities
                     return context;
                 }
 
-                // Get the connection string from the database
-                LOGGER?.LogTrace("Getting connection string from database");
-                var apiDbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApiDbContext>>();
-                using var apiDbContext = apiDbContextFactory.CreateDbContext();
-                var connection = apiDbContext.DBConnections.FirstOrDefault(c => c.ContextName == contextTypeName);
-                
-                if (connection == null)
+                if (connectionString == null)
                 {
-                    LOGGER?.LogError("No connection found for context: {ContextTypeName}", contextTypeName);
-                    throw new InvalidOperationException($"No connection found for context {contextTypeName}");
+                    // Get the connection string from the database
+                    LOGGER?.LogTrace("Getting connection string from database");
+                    var apiDbContextFactory =
+                        scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApiDbContext>>();
+                    using var apiDbContext = apiDbContextFactory.CreateDbContext();
+                    var dbConnection = apiDbContext.DBConnections.FirstOrDefault(c => c.ContextName == contextTypeName);
+
+                    if (dbConnection == null)
+                    {
+                        LOGGER?.LogError("No connection found for context: {ContextTypeName}", contextTypeName);
+                        throw new InvalidOperationException($"No connection found for context {contextTypeName}");
+                    }
+                    connectionString = dbConnection.ConnectionString;
+                    connectionType = dbConnection.ConnectionType;
                 }
 
                 // Create options with the correct connection string
@@ -72,25 +80,25 @@ namespace Querier.Api.Common.Utilities
                 var optionsBuilderType = typeof(DbContextOptionsBuilder<>).MakeGenericType(contextType);
                 var optionsBuilder = (DbContextOptionsBuilder)Activator.CreateInstance(optionsBuilderType);
 
-                switch (connection.ConnectionType)
+                switch (connectionType)
                 {
-                    case Domain.Common.Enums.DbConnectionType.SqlServer:
+                    case DbConnectionType.SqlServer:
                         LOGGER?.LogDebug("Configuring SQL Server connection");
-                        if (optionsBuilder != null) optionsBuilder.UseSqlServer(connection.ConnectionString);
+                        if (optionsBuilder != null) optionsBuilder.UseSqlServer(connectionString);
                         break;
-                    case Domain.Common.Enums.DbConnectionType.MySql:
+                    case DbConnectionType.MySql:
                         LOGGER?.LogDebug("Configuring MySQL connection");
                         if (optionsBuilder != null)
-                            optionsBuilder.UseMySql(connection.ConnectionString,
-                                ServerVersion.AutoDetect(connection.ConnectionString));
+                            optionsBuilder.UseMySql(connectionString,
+                                ServerVersion.AutoDetect(connectionString));
                         break;
-                    case Domain.Common.Enums.DbConnectionType.PgSql:
+                    case DbConnectionType.PgSql:
                         LOGGER?.LogDebug("Configuring PostgresSQL connection");
-                        if (optionsBuilder != null) optionsBuilder.UseNpgsql(connection.ConnectionString);
+                        if (optionsBuilder != null) optionsBuilder.UseNpgsql(connectionString);
                         break;
                     default:
-                        LOGGER?.LogError("Unsupported database type: {ConnectionType}", connection.ConnectionType);
-                        throw new NotSupportedException($"Database type {connection.ConnectionType} not supported");
+                        LOGGER?.LogError("Unsupported database type: {ConnectionType}", connectionType);
+                        throw new NotSupportedException($"Database type {connectionType} not supported");
                 }
 
                 LOGGER?.LogDebug("Creating new instance of context type: {ContextType}", contextType.Name);

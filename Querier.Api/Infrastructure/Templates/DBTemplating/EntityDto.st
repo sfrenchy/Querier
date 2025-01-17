@@ -3,10 +3,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
+using Querier.Api.Domain.Common.Attributes;
 
 namespace $nameSpace$.DTOs
 {
     $entityList: {entity|
+    [DtoFor(Action = "GET", EntityType = "$nameSpace$.$entity.Name$")]
     public class $entity.Name$Dto
     {
         $entity.Properties: {property|
@@ -17,6 +19,7 @@ namespace $nameSpace$.DTOs
         }$
     \}
 
+    [DtoFor(Action = "CREATE", EntityType = "$nameSpace$.$entity.Name$")]
     public class Create$entity.Name$Dto
     {
         $entity.Properties: {property|
@@ -28,6 +31,7 @@ namespace $nameSpace$.DTOs
         }$
     \}
 
+    [DtoFor(Action = "UPDATE", EntityType = "$nameSpace$.$entity.Name$")]
     public class Update$entity.Name$Dto
     {
         $entity.Properties: {property|

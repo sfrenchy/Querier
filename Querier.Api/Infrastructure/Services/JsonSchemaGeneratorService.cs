@@ -6,9 +6,12 @@ using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using Castle.Core.Internal;
+using Google.Apis.Util;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Domain.Common.Attributes;
 
 namespace Querier.Api.Infrastructure.Services;
 
@@ -51,7 +54,7 @@ public class JsonSchemaGeneratorService
             };
 
             var properties = type.GetProperties()
-                .Where(p => p.GetCustomAttribute<NotMappedAttribute>() == null);
+                .Where(p => CustomAttributeExtensions.GetCustomAttribute<NotMappedAttribute>(p) == null);
 
             var requiredProperties = new List<string>();
 
@@ -60,7 +63,7 @@ public class JsonSchemaGeneratorService
                 var propSchema = GetPropertySchema(prop, type);
                 ((Dictionary<string, object>)schema["properties"])[prop.Name] = propSchema;
 
-                if (prop.GetCustomAttribute<RequiredAttribute>() != null)
+                if (CustomAttributeExtensions.GetCustomAttribute<RequiredAttribute>(prop) != null)
                 {
                     requiredProperties.Add(prop.Name);
                 }
@@ -163,6 +166,12 @@ public class JsonSchemaGeneratorService
 
         if (_efModel != null)
         {
+            if (CustomAttributeExtensions.GetCustomAttribute<DtoForAttribute>(containerType) != null)
+            {
+                string typeString = CustomAttributeExtensions.GetCustomAttribute<DtoForAttribute>(containerType)
+                    ?.EntityType;
+                containerType = Type.GetType(typeString);
+            }
             var efEntityType = _efModel.FindEntityType(containerType);
             if (efEntityType != null)
             {
@@ -246,13 +255,13 @@ public class JsonSchemaGeneratorService
         {
             // Fallback to attribute-based metadata when EF Core model is not available
             // Primary Key
-            if (propertyInfo.GetCustomAttribute<KeyAttribute>() != null)
+            if (CustomAttributeExtensions.GetCustomAttribute<KeyAttribute>(propertyInfo) != null)
             {
                 metadata["isPrimaryKey"] = true;
             }
 
             // Foreign Key
-            var fkAttribute = propertyInfo.GetCustomAttribute<ForeignKeyAttribute>();
+            var fkAttribute = CustomAttributeExtensions.GetCustomAttribute<ForeignKeyAttribute>(propertyInfo);
             if (fkAttribute != null)
             {
                 metadata["isForeignKey"] = true;
@@ -276,7 +285,7 @@ public class JsonSchemaGeneratorService
             }
 
             // Column metadata
-            var columnAttr = propertyInfo.GetCustomAttribute<ColumnAttribute>();
+            var columnAttr = CustomAttributeExtensions.GetCustomAttribute<ColumnAttribute>(propertyInfo);
             if (columnAttr != null)
             {
                 if (!string.IsNullOrEmpty(columnAttr.TypeName))
@@ -286,7 +295,7 @@ public class JsonSchemaGeneratorService
             }
 
             // Max Length
-            var stringLengthAttr = propertyInfo.GetCustomAttribute<StringLengthAttribute>();
+            var stringLengthAttr = CustomAttributeExtensions.GetCustomAttribute<StringLengthAttribute>(propertyInfo);
             if (stringLengthAttr != null)
             {
                 schema["maxLength"] = stringLengthAttr.MaximumLength;
@@ -300,14 +309,14 @@ public class JsonSchemaGeneratorService
         }
 
         // Add validation attributes
-        var rangeAttr = propertyInfo.GetCustomAttribute<RangeAttribute>();
+        var rangeAttr = CustomAttributeExtensions.GetCustomAttribute<RangeAttribute>(propertyInfo);
         if (rangeAttr != null)
         {
             schema["minimum"] = rangeAttr.Minimum;
             schema["maximum"] = rangeAttr.Maximum;
         }
 
-        var regexAttr = propertyInfo.GetCustomAttribute<RegularExpressionAttribute>();
+        var regexAttr = CustomAttributeExtensions.GetCustomAttribute<RegularExpressionAttribute>(propertyInfo);
         if (regexAttr != null)
         {
             schema["pattern"] = regexAttr.Pattern;

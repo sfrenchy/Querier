@@ -115,84 +115,15 @@ namespace Querier.Api.Common.Utilities
                         var assembly = assemblyLoadContext.LoadFromStream(new MemoryStream(connection.AssemblyDll));
                         logger.LogInformation("Successfully loaded assembly {AssemblyName}", assemblyName);
 
-                        // Load procedure services
-                        var procedureServicesResolverType = assembly.GetTypes()
-                            .FirstOrDefault(t => typeof(IDynamicContextProceduresServicesResolver).IsAssignableFrom(t));
-
-                        if (procedureServicesResolverType != null)
-                        {
-                            logger.LogDebug("Found procedure services resolver type");
-                            var resolver = (IDynamicContextProceduresServicesResolver)Activator.CreateInstance(procedureServicesResolverType);
-
-                            if (resolver != null)
-                            {
-                                resolver.ConfigureServices(
-                                    (IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)),
-                                    connection.ConnectionString);
-                                var dynamicContextListService =
-                                    serviceProvider.GetRequiredService<IDynamicContextList>();
-                                logger.LogInformation("Adding DynamicContext {Name} for procedures", connection.Name);
-                                dynamicContextListService.DynamicContexts.Add(connection.Name, resolver);
-
-                                foreach (KeyValuePair<Type, Type> service in resolver.ProceduresServices)
-                                {
-                                    logger.LogInformation("Registering procedure service {ServiceType}", service.Key);
-                                    serviceProvider.GetRequiredService<IServiceCollection>()
-                                        .AddSingleton(service.Key, service.Value);
-                                }
-                            }
-                        }
-
-                        // Load entity services
-                        var entityServicesResolverType = assembly.GetTypes()
-                            .FirstOrDefault(t => typeof(IDynamicContextEntityServicesResolver).IsAssignableFrom(t));
-
-                        if (entityServicesResolverType != null)
-                        {
-                            logger.LogDebug("Found entity services resolver type");
-                            var resolver = (IDynamicContextEntityServicesResolver)Activator.CreateInstance(entityServicesResolverType);
-
-                            if (resolver != null)
-                            {
-                                resolver.ConfigureServices(
-                                    (IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)),
-                                    connection.ConnectionString);
-                                logger.LogInformation("Adding DynamicContext {Name} for entities", connection.Name);
-
-                                foreach (KeyValuePair<Type, Type> service in resolver.EntityServices)
-                                {
-                                    logger.LogInformation("Registering entity service {ServiceType}", service.Key);
-                                    serviceProvider.GetRequiredService<IServiceCollection>()
-                                        .AddScoped(service.Key, service.Value);
-                                }
-                            }
-                        }
-
-                        // Ajouter les contrôleurs dynamiquement
-                        logger.LogDebug("Adding assembly part to part manager");
-                        partManager.ApplicationParts.Add(new AssemblyPart(assembly));
-                        var feature = new ControllerFeature();
-                        partManager.PopulateFeature(feature);
-
-                        // Log des contrôleurs trouvés
-                        foreach (var controller in feature.Controllers)
-                        {
-                            logger.LogInformation("Found controller: {ControllerName}", controller.FullName);
-                            foreach (var method in controller.GetMethods())
-                            {
-                                var attributes = method.GetCustomAttributes(typeof(HttpGetAttribute), true)
-                                    .Concat(method.GetCustomAttributes(typeof(HttpPostAttribute), true))
-                                    .Concat(method.GetCustomAttributes(typeof(HttpPutAttribute), true))
-                                    .Concat(method.GetCustomAttributes(typeof(HttpDeleteAttribute), true));
-                                if (attributes.Any())
-                                {
-                                    logger.LogDebug("Route found: {MethodName}", method.Name);
-                                }
-                            }
-                        }
-
-                        logger.LogInformation("Successfully loaded assembly {AssemblyName} for context {ConnectionName}",
-                            assemblyName, connection.Name);
+                        LoadProcedureServiceAndEntityServicesAndAddMVCParts(
+                            assembly,
+                            assemblyName,
+                            connection.Name,
+                            connection.ConnectionString,
+                            serviceProvider,
+                            partManager,
+                            logger
+                            );
                     }
                     catch (Exception ex)
                     {
@@ -212,6 +143,150 @@ namespace Querier.Api.Common.Utilities
             }
         }
 
+        public static void LoadProcedureServiceAndEntityServicesAndAddMVCParts(
+            Assembly assembly, 
+            string assemblyName,
+            string connectionName,
+            string connectionString,
+            IServiceProvider serviceProvider,
+            ApplicationPartManager partManager,
+            ILogger logger)
+        {
+            // Load procedure services
+            var procedureServicesResolverType = assembly.GetTypes()
+                .FirstOrDefault(t => typeof(IDynamicContextProceduresServicesResolver).IsAssignableFrom(t));
+
+            if (procedureServicesResolverType != null)
+            {
+                logger.LogDebug("Found procedure services resolver type");
+                var resolver = (IDynamicContextProceduresServicesResolver)Activator.CreateInstance(procedureServicesResolverType);
+
+                if (resolver != null)
+                {
+                    resolver.ConfigureServices(
+                        (IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)),
+                        connectionString);
+                    var dynamicContextListService =
+                        serviceProvider.GetRequiredService<IDynamicContextList>();
+                    logger.LogInformation("Adding DynamicContext {Name} for procedures", connectionName);
+                    dynamicContextListService.DynamicContexts.Add(connectionName, resolver);
+
+                    foreach (KeyValuePair<Type, Type> service in resolver.ProceduresServices)
+                    {
+                        logger.LogInformation("Registering procedure service {ServiceType}", service.Key);
+                        serviceProvider.GetRequiredService<IServiceCollection>()
+                            .AddSingleton(service.Key, service.Value);
+                    }
+                }
+            }
+            // Load entity services
+            var entityServicesResolverType = assembly.GetTypes()
+                .FirstOrDefault(t => typeof(IDynamicContextEntityServicesResolver).IsAssignableFrom(t));
+
+            if (entityServicesResolverType != null)
+            {
+                logger.LogDebug("Found entity services resolver type");
+                var resolver = (IDynamicContextEntityServicesResolver)Activator.CreateInstance(entityServicesResolverType);
+
+                if (resolver != null)
+                {
+                    resolver.ConfigureServices(
+                        (IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)),
+                        connectionString);
+                    logger.LogInformation("Adding DynamicContext {Name} for entities", connectionName);
+
+                    foreach (KeyValuePair<Type, Type> service in resolver.EntityServices)
+                    {
+                        logger.LogInformation("Registering entity service {ServiceType}", service.Key);
+                        serviceProvider.GetRequiredService<IServiceCollection>()
+                            .AddScoped(service.Key, service.Value);
+                    }
+                }
+            }
+            // Ajouter les contrôleurs dynamiquement
+            logger.LogDebug("Adding assembly part to part manager");
+            partManager.ApplicationParts.Add(new AssemblyPart(assembly));
+            var feature = new ControllerFeature();
+            partManager.PopulateFeature(feature);
+
+            // Log des contrôleurs trouvés
+            foreach (var controller in feature.Controllers)
+            {
+                logger.LogInformation("Found controller: {ControllerName}", controller.FullName);
+                foreach (var method in controller.GetMethods())
+                {
+                    var attributes = method.GetCustomAttributes(typeof(HttpGetAttribute), true)
+                        .Concat(method.GetCustomAttributes(typeof(HttpPostAttribute), true))
+                        .Concat(method.GetCustomAttributes(typeof(HttpPutAttribute), true))
+                        .Concat(method.GetCustomAttributes(typeof(HttpDeleteAttribute), true));
+                    if (attributes.Any())
+                    {
+                        logger.LogDebug("Route found: {MethodName}", method.Name);
+                    }
+                }
+            }
+
+            logger.LogInformation("Successfully loaded assembly {AssemblyName} for context {ConnectionName}",
+                assemblyName, connectionName);
+        }
+
+        public static void LoadAssemblyFromByteArray(
+            string connectionName,
+            string connectionString,
+            byte[] assemblyBytes,
+            IServiceProvider serviceProvider,
+            ApplicationPartManager partManager,
+            ILogger logger)
+        {
+            try
+            {
+                if (serviceProvider == null)
+                {
+                    logger.LogError("ServiceProvider parameter is null");
+                    throw new ArgumentNullException(nameof(serviceProvider));
+                }
+
+                if (partManager == null)
+                {
+                    logger.LogError("PartManager parameter is null");
+                    throw new ArgumentNullException(nameof(partManager));
+                }
+
+                var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies()
+                    .Select(a => Path.GetFileName(a.Location))
+                    .ToList();
+
+                var assemblyName = $"{connectionName}.DynamicContext.dll";
+                if (!loadedAssemblies.Contains(assemblyName))
+                {
+                    logger.LogDebug("Assembly {AssemblyName} not yet loaded", assemblyName);
+
+                    try
+                    {
+                        logger.LogDebug("Creating assembly load context for {AssemblyName}", assemblyName);
+                        var assemblyLoadContext = new AssemblyLoadContext(connectionName);
+                        var assembly = assemblyLoadContext.LoadFromStream(new MemoryStream(assemblyBytes));
+                        logger.LogInformation("Successfully loaded assembly {AssemblyName}", assemblyName);
+                        LoadProcedureServiceAndEntityServicesAndAddMVCParts(assembly, assemblyName, connectionName, connectionString, serviceProvider, partManager, logger);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error loading assembly {AssemblyName}", assemblyName);
+                        throw;
+                    }
+                }
+                else
+                {
+                    logger.LogInformation("Assembly {AssemblyName} already loaded", assemblyName);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in LoadAssemblyFromQDBConnection");
+                throw;
+            }
+        }
+        
         public static void RegenerateSwagger(ISwaggerProvider swaggerProvider, ILogger logger)
         {
             try

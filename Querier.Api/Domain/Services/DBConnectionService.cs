@@ -27,6 +27,7 @@ using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Entities.DBConnection;
 using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Templates;
+using Querier.Api.Infrastructure.Services;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace Querier.Api.Domain.Services
@@ -55,8 +56,8 @@ namespace Querier.Api.Domain.Services
             _dbConnectionRepository = dbConnectionRepository;
             _serviceProvider = serviceProvider;
             _partManager = partManager;
-            var jsonSchemaGenerator = new JsonSchemaGenerator(jsonSchemaGeneratorLogger);
-            _endpointExtractor = new EndpointExtractor(jsonSchemaGenerator, endpointExtractorLogger);
+            var jsonSchemaGenerator = new JsonSchemaGeneratorService(jsonSchemaGeneratorLogger);
+            _endpointExtractor = new EndpointExtractor(jsonSchemaGenerator, endpointExtractorLogger, serviceProvider);
             _serverDiscovery = new DatabaseServerDiscovery(serverDiscoveryLogger);
             _schemaExtractor = new DatabaseSchemaExtractor(schemaExtractorLogger);
         }
@@ -207,37 +208,47 @@ namespace Querier.Api.Domain.Services
 
                 // Load assembly
                 var assemblyLoadContext = new AssemblyLoadContext("DbContext");
-                var loadedAssembly = assemblyLoadContext.LoadFromStream(new MemoryStream(assemblyBytes));
-
-                // Create new connection
-                var endpoints = _endpointExtractor.ExtractFromAssembly(loadedAssembly);
-                var newConnection = new DBConnection
+                using (var assemblyMemoryStream = new MemoryStream(assemblyBytes))
                 {
-                    Name = connection.Name,
-                    ConnectionString = connection.ConnectionString,
-                    ConnectionType = connection.ConnectionType,
-                    Description = procedureDescription,
-                    AssemblyHash = hash,
-                    AssemblyDll = assemblyBytes,
-                    AssemblyPdb = pdbBytes,
-                    AssemblySourceZip = sourceZipBytes,
-                    ContextName = connectionNamespace + "." + contextName,
-                    ApiRoute = connection.ContextApiRoute,
-                    Endpoints = endpoints
-                };
+                    var loadedAssembly = assemblyLoadContext.LoadFromStream(assemblyMemoryStream);
+                    // Create new connection
+                    AssemblyLoader.LoadAssemblyFromByteArray(
+                        connection.Name, 
+                        connection.ConnectionString, 
+                        assemblyBytes,
+                        _serviceProvider,
+                        _partManager,
+                        _logger);
+                    
+                    var endpoints = _endpointExtractor.ExtractFromAssembly(loadedAssembly, connection.ConnectionString, connection.ConnectionType);
+                    var newConnection = new DBConnection
+                    {
+                        Name = connection.Name,
+                        ConnectionString = connection.ConnectionString,
+                        ConnectionType = connection.ConnectionType,
+                        Description = procedureDescription,
+                        AssemblyHash = hash,
+                        AssemblyDll = assemblyBytes,
+                        AssemblyPdb = pdbBytes,
+                        AssemblySourceZip = sourceZipBytes,
+                        ContextName = connectionNamespace + "." + contextName,
+                        ApiRoute = connection.ContextApiRoute,
+                        Endpoints = endpoints
+                    };
 
-                await _dbConnectionRepository.AddDbConnectionAsync(newConnection);
+                    await _dbConnectionRepository.AddDbConnectionAsync(newConnection);
 
-                result.State = DBConnectionState.Available;
-                result.Id = newConnection.Id;
-                AssemblyLoader.LoadAssemblyFromDbConnection(newConnection, _serviceProvider, _partManager, _logger);
+                    result.State = DBConnectionState.Available;
+                    result.Id = newConnection.Id;
+                    // AssemblyLoader.LoadAssemblyFromDbConnection(newConnection, _serviceProvider, _partManager, _logger);
                 
-                // Regenerate Swagger documentation
-                var swaggerProvider = _serviceProvider.GetRequiredService<ISwaggerProvider>();
-                AssemblyLoader.RegenerateSwagger(swaggerProvider, _logger);
+                    // Regenerate Swagger documentation
+                    var swaggerProvider = _serviceProvider.GetRequiredService<ISwaggerProvider>();
+                    AssemblyLoader.RegenerateSwagger(swaggerProvider, _logger);
                 
-                _logger.LogInformation("Successfully added database connection: {Name}", connection.Name);
-                return result;
+                    _logger.LogInformation("Successfully added database connection: {Name}", connection.Name);
+                    return result;
+                }
             }
             catch (Exception ex)
             {
