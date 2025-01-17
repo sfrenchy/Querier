@@ -197,6 +197,7 @@ public class JsonSchemaGeneratorService
                     var maxLength = efProperty.GetMaxLength();
                     if (maxLength.HasValue)
                     {
+                        metadata["maxLength"] = maxLength.Value;
                         schema["maxLength"] = maxLength.Value;
                     }
 
@@ -289,8 +290,12 @@ public class JsonSchemaGeneratorService
             if (stringLengthAttr != null)
             {
                 schema["maxLength"] = stringLengthAttr.MaximumLength;
+                metadata["maxLength"] = stringLengthAttr.MaximumLength;
                 if (stringLengthAttr.MinimumLength > 0)
+                {
                     schema["minLength"] = stringLengthAttr.MinimumLength;
+                    metadata["minLength"] = stringLengthAttr.MinimumLength;
+                }
             }
         }
 
