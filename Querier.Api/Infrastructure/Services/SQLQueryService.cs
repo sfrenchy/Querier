@@ -56,7 +56,8 @@ namespace Querier.Api.Infrastructure.Services
                             LastModifiedAt = q.LastModifiedAt,
                             IsPublic = q.IsPublic,
                             Parameters = q.Parameters,
-                            DBConnectionId = q.ConnectionId
+                            DBConnectionId = q.ConnectionId,
+                            OutputDescription = q.OutputDescription
                         }
                     ).ToListAsync();
 
@@ -199,17 +200,7 @@ namespace Querier.Api.Infrastructure.Services
 
                 DataTable dt = dbcontext.Database.RawSqlQuery(query.Query, parameters);
                 logger.LogDebug("Query execution successful, creating entity definition");
-
-                var entityDefinition = new DataStructureDefinitionDto
-                {
-                    Name = query.Name,
-                    Description = $"SQL Query result structure for {query.Name}",
-                    Type = "object",
-                    SourceType = DataSourceType.Entity,
-                    JsonSchema = new JsonSchemaGeneratorService(logger).GenerateFromDataTable(dt, query.Name)
-                };
-
-                outputDescription = JsonSerializer.Serialize(entityDefinition);
+                outputDescription = new JsonSchemaGeneratorService(logger).GenerateFromDataTable(dt, query.Name);
                 logger.LogInformation("Successfully validated and described query for {QueryName}", query.Name);
                 return true;
             }

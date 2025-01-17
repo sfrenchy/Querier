@@ -1,15 +1,14 @@
 using System;
-using System.Data;
-using System.Reflection;
-using System.Text.Json;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using Microsoft.Extensions.Logging;
-using System.Text.Json.Serialization;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
+using System.Linq;
+using System.Reflection;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.Extensions.Logging;
 
 namespace Querier.Api.Infrastructure.Services;
 
@@ -20,6 +19,10 @@ public class JsonSchemaGeneratorService
 {
     private readonly ILogger _logger;
     private IModel _efModel;
+    private readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        WriteIndented = false
+    };
 
     public JsonSchemaGeneratorService(ILogger logger)
     {
@@ -48,8 +51,7 @@ public class JsonSchemaGeneratorService
             };
 
             var properties = type.GetProperties()
-                .Where(p => p.GetCustomAttribute<NotMappedAttribute>() == null &&
-                           p.GetCustomAttribute<JsonIgnoreAttribute>() == null);
+                .Where(p => p.GetCustomAttribute<NotMappedAttribute>() == null);
 
             var requiredProperties = new List<string>();
 
@@ -69,7 +71,7 @@ public class JsonSchemaGeneratorService
                 schema["required"] = requiredProperties;
             }
 
-            return JsonSerializer.Serialize(schema);
+            return JsonSerializer.Serialize(schema, _jsonOptions);
         }
         catch (Exception ex)
         {
@@ -98,7 +100,7 @@ public class JsonSchemaGeneratorService
             {
                 var columnSchema = new Dictionary<string, object>
                 {
-                    ["type"] = GetJsonSchemaType(column.DataType),
+                    ["type"] = GetJsonSchemaType(column.DataType)
                 };
 
                 if (column.AllowDBNull)
@@ -135,7 +137,7 @@ public class JsonSchemaGeneratorService
                 ((Dictionary<string, object>)schema["properties"])[column.ColumnName] = columnSchema;
             }
 
-            return JsonSerializer.Serialize(schema);
+            return JsonSerializer.Serialize(schema, _jsonOptions);
         }
         catch (Exception ex)
         {
