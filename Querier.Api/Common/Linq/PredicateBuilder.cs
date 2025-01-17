@@ -66,9 +66,7 @@ namespace Querier.Api.Tools
             return Expression.Lambda<T>(merge(first.Body, secondBody), first.Parameters);
         }
 
-        public static IOrderedQueryable<T> OrderBy<T>(
-    this IQueryable<T> source,
-    string property)
+        public static IOrderedQueryable<T> OrderBy<T>(this IQueryable<T> source, string property)
         {
             return ApplyOrder(source, property, "OrderBy");
         }

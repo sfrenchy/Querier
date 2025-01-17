@@ -27,7 +27,7 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public class DataSourcesController(IEntityCrudService entityCrudService, ILogger<DataSourcesController> logger)
+    public class DataSourcesController(IDatasourcesService entityCrudService, ILogger<DataSourcesController> logger)
         : ControllerBase
     {
         /// <summary>
@@ -157,7 +157,7 @@ namespace Querier.Api.Controllers
         public IActionResult GetRecords(
             string contextName,
             string entityName,
-            [FromBody] PaginationParametersDto paginationParameters,
+            [FromBody] DataRequestParametersDto dataRequestParameters,
             [FromQuery] string orderBy = "")
         {
             try
@@ -170,9 +170,9 @@ namespace Querier.Api.Controllers
                 }
 
                 logger.LogInformation("Retrieving records for entity {EntityName} from context {ContextName} (Page: {PageNumber}, Size: {PageSize})", 
-                    entityName, contextName, paginationParameters.PageNumber, paginationParameters.PageSize);
+                    entityName, contextName, dataRequestParameters.PageNumber, dataRequestParameters.PageSize);
 
-                var result = entityCrudService.GetAll(contextName, entityName, paginationParameters, orderBy);
+                var result = entityCrudService.GetAll(contextName, entityName, dataRequestParameters);
                 logger.LogInformation("Successfully retrieved {Count} records for entity {EntityName}", 
                     result.Items.Count(), entityName);
                 return Ok(result);

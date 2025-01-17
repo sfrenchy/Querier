@@ -245,7 +245,7 @@ namespace Querier.Api.Infrastructure.Extensions
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             // Core services
-            services.AddScoped<IEntityCrudService, EntityCrudService>();
+            services.AddScoped<IDatasourcesService, DatasourcesService>();
             services.AddScoped<IWizardService, WizardService>();
             services.AddScoped<IDbConnectionService, DbConnectionService>();
             services.AddScoped<IEmailTemplateService, EmailTemplateService>();

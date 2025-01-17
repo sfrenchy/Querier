@@ -15,7 +15,7 @@ namespace $nameSpace$.Services
     #region $entity.Name$
     public interface I$entity.Name$Service : IDynamicContextEntityService
     {
-        Task<PagedResult<$entity.Name$Dto>> GetAllAsync(PaginationParametersDto? parameters = null);
+        Task<PagedResult<$entity.Name$Dto>> GetAllAsync(DataRequestParametersDto? parameters = null);
         Task<$entity.Name$Dto?> GetByIdAsync($entity.KeyType$ id);
         Task<$entity.Name$Dto> CreateAsync(Create$entity.Name$Dto createDto);
         Task<$entity.Name$Dto?> UpdateAsync($entity.KeyType$ id, Update$entity.Name$Dto updateDto);
@@ -65,7 +65,7 @@ namespace $nameSpace$.Services
             }$
         \}
 
-        public async Task<PagedResult<$entity.Name$Dto>> GetAllAsync(PaginationParametersDto? parameters = null)
+        public async Task<PagedResult<$entity.Name$Dto>> GetAllAsync(DataRequestParametersDto? parameters = null)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
             var query = context.$entity.PluralName$.AsQueryable();
@@ -79,7 +79,7 @@ namespace $nameSpace$.Services
             \}
                 
             var items = await query.ToListAsync();
-            return new PagedResult<$entity.Name$Dto>(items.Select(MapToDto), total);
+            return new PagedResult<$entity.Name$Dto>(items.Select(MapToDto), total, parameters);
         \}
 
         public async Task<$entity.Name$Dto?> GetByIdAsync($entity.KeyType$ id)

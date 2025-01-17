@@ -7,7 +7,7 @@ using Querier.Api.Domain.Common.Models;
 
 namespace Querier.Api.Application.Interfaces.Services
 {
-    public interface IEntityCrudService
+    public interface IDatasourcesService
     {
         /// <summary>
         /// Get the list of available EntityFrameworkCore contexts
@@ -69,7 +69,7 @@ namespace Querier.Api.Application.Interfaces.Services
         /// <returns>An enumerable that hold the datas for entity of the context</returns>
         public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilterDto> filters);
 
-        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, PaginationParametersDto pagination, string orderBy = "");
+        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, DataRequestParametersDto dataRequestParameters);
 
         /// <summary>
         /// Update an entity in a specific context

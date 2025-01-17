@@ -1,6 +1,8 @@
+using System.Collections.Generic;
+
 namespace Querier.Api.Domain.Common.Models
 {
-    public class PaginationParametersDto
+    public class DataRequestParametersDto
     {
         private const int MaxPageSize = 50;
         private int _pageSize = 10;
@@ -12,5 +14,12 @@ namespace Querier.Api.Domain.Common.Models
             get => _pageSize;
             set => _pageSize = value > MaxPageSize ? MaxPageSize : value;
         }
+
+        // Sorting
+        public List<OrderByParameter> OrderBy { get; set; } = new();
+
+        // Search
+        public string GlobalSearch { get; set; }
+        public List<ColumnSearch> ColumnSearches { get; set; } = new();
     }
 } 

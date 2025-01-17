@@ -282,11 +282,11 @@ namespace Querier.Api.Infrastructure.Services
             }
         }
 
-        public async Task<PagedResult<dynamic>> ExecuteQueryAsync(int id, Dictionary<string, object> parameters, int pageNumber = 1, int pageSize = 0)
+        public async Task<PagedResult<dynamic>> ExecuteQueryAsync(int id, DataRequestParametersWtihSQLParametersDto dataRequestParameters)
         {
             try
             {
-                logger.LogDebug("Executing SQL query with ID {QueryId}, Page {PageNumber}, Size {PageSize}", id, pageNumber, pageSize);
+                logger.LogDebug("Executing SQL query with ID {QueryId}, Page {PageNumber}, Size {PageSize}", id, dataRequestParameters.PageNumber, dataRequestParameters.PageSize);
 
                 var query = await GetQueryByIdAsync(id);
                 if (query == null)
@@ -299,26 +299,26 @@ namespace Querier.Api.Infrastructure.Services
                 var command = dbContext.Database.GetDbConnection().CreateCommand();
                 string sqlQuery = query.Query.TrimEnd(';');
 
-                if (pageSize > 0)
+                if (dataRequestParameters.PageSize > 0)
                 {
                     logger.LogDebug("Applying pagination to query");
                     sqlQuery = BuildPaginatedQuery(sqlQuery);
 
                     var skipParameter = command.CreateParameter();
                     skipParameter.ParameterName = "@Skip";
-                    skipParameter.Value = (pageNumber - 1) * pageSize;
+                    skipParameter.Value = (dataRequestParameters.PageNumber - 1) * dataRequestParameters.PageSize;
                     command.Parameters.Add(skipParameter);
 
                     var takeParameter = command.CreateParameter();
                     takeParameter.ParameterName = "@Take";
-                    takeParameter.Value = pageSize;
+                    takeParameter.Value = dataRequestParameters.PageSize;
                     command.Parameters.Add(takeParameter);
                 }
 
                 command.CommandText = sqlQuery;
                 command.CommandType = CommandType.Text;
 
-                foreach (var param in parameters)
+                foreach (var param in dataRequestParameters.Parameters)
                 {
                     var parameter = command.CreateParameter();
                     parameter.ParameterName = param.Key;
@@ -337,7 +337,7 @@ namespace Querier.Api.Infrastructure.Services
                 {
                     var row = new ExpandoObject() as IDictionary<string, object>;
 
-                    if (pageSize > 0 && totalCount == 0)
+                    if (dataRequestParameters.PageSize > 0 && totalCount == 0)
                     {
                         totalCount = Convert.ToInt32(result.GetValue(result.GetOrdinal("TotalCount")));
                     }
@@ -345,7 +345,7 @@ namespace Querier.Api.Infrastructure.Services
                     for (var i = 0; i < result.FieldCount; i++)
                     {
                         var columnName = result.GetName(i);
-                        if (pageSize == 0 || (columnName != "RowNum" && columnName != "TotalCount"))
+                        if (dataRequestParameters.PageSize == 0 || (columnName != "RowNum" && columnName != "TotalCount"))
                         {
                             row.Add(columnName, result.GetValue(i));
                         }
@@ -354,7 +354,7 @@ namespace Querier.Api.Infrastructure.Services
                     data.Add(row);
                 }
 
-                if (pageSize == 0)
+                if (dataRequestParameters.PageSize == 0)
                 {
                     totalCount = data.Count;
                 }
@@ -363,7 +363,7 @@ namespace Querier.Api.Infrastructure.Services
                     "Successfully executed SQL query with ID {QueryId}. Retrieved {Count} rows, Total {Total}", 
                     id, data.Count, totalCount);
 
-                        return new PagedResult<dynamic>(data, totalCount);
+                        return new PagedResult<dynamic>(data, totalCount, dataRequestParameters);
             }
             catch (Exception ex)
             {

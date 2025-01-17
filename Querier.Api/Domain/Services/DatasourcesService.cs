@@ -23,8 +23,8 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Querier.Api.Domain.Services
 {
-    public class EntityCrudService(IDbConnectionRepository dbConnectionRepository, ILogger<EntityCrudService> logger)
-        : IEntityCrudService
+    public class DatasourcesService(IDbConnectionRepository dbConnectionRepository, ILogger<DatasourcesService> logger)
+        : IDatasourcesService
     {
         public async Task<List<string>> GetContextsAsync()
         {
@@ -238,7 +238,7 @@ namespace Querier.Api.Domain.Services
         }
 
         public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, 
-            PaginationParametersDto pagination, string orderBy = "")
+            DataRequestParametersDto dataRequestParameters)
         {
             try
             {
@@ -252,23 +252,23 @@ namespace Querier.Api.Domain.Services
                     throw new ArgumentException("Entity type name is required", nameof(entityTypeFullname));
                 }
 
-                if (pagination == null)
+                if (dataRequestParameters == null)
                 {
-                    throw new ArgumentNullException(nameof(pagination));
+                    throw new ArgumentNullException(nameof(dataRequestParameters));
                 }
 
                 logger.LogInformation("Retrieving all entities of type {EntityType} from context {Context}", 
                     entityTypeFullname, contextTypeFullname);
 
-            Type reqType = Utils.GetType(entityTypeFullname);
-            if (reqType == null)
+                Type reqType = Utils.GetType(entityTypeFullname);
+                if (reqType == null)
                 {
                     var message = $"Entity \"{entityTypeFullname}\" is not handled in the \"{contextTypeFullname}\" context.";
                     logger.LogError(message);
                     throw new InvalidOperationException(message);
                 }
 
-            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
+                DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
                 if (targetContext == null)
                 {
                     throw new InvalidOperationException($"Context {contextTypeFullname} not found");
@@ -276,47 +276,102 @@ namespace Querier.Api.Domain.Services
 
                 targetContext.ChangeTracker.LazyLoadingEnabled = false;
 
-            var dbSet = targetContext.GetType()
-                .GetProperties()
-                .Where(p => p.PropertyType.Name.Contains("DbSet"))
-                .FirstOrDefault(p => p.PropertyType.GetGenericArguments().Any(a => a == reqType))
-                ?.GetValue(targetContext);
+                var dbSet = targetContext.GetType()
+                    .GetProperties()
+                    .Where(p => p.PropertyType.Name.Contains("DbSet"))
+                    .FirstOrDefault(p => p.PropertyType.GetGenericArguments().Any(a => a == reqType))
+                    ?.GetValue(targetContext);
 
-            if (dbSet == null)
+                if (dbSet == null)
                 {
                     var message = $"Entity \"{entityTypeFullname}\" is not handled by any DbSet in the \"{contextTypeFullname}\" context.";
                     logger.LogError(message);
                     throw new InvalidOperationException(message);
                 }
 
-            var query = ((IEnumerable<object>)dbSet);
-            
-                if (!string.IsNullOrEmpty(orderBy))
-            {
-                    logger.LogDebug("Applying ordering by {OrderBy}", orderBy);
-                query = query.OrderBy(x => x.GetType()
-                        .GetProperty(orderBy)
-                    ?.GetValue(x, null));
-            }
+                // Get the DbSet as IQueryable
+                var query = ((IQueryable<object>)dbSet);
 
-                IEnumerable<object> enumerableQuery = query as object[] ?? query.ToArray();
-                var totalCount = enumerableQuery.Count();
+                // Apply search filters
+                if (!string.IsNullOrEmpty(dataRequestParameters.GlobalSearch))
+                {
+                    logger.LogDebug("Applying global search filter: {Search}", dataRequestParameters.GlobalSearch);
+                    // Load data in memory for complex search operations
+                    var searchTerm = dataRequestParameters.GlobalSearch.ToLower();
+                    var searchResults = query.AsEnumerable()
+                        .Where(e => e.GetType()
+                        .GetProperties()
+                        .Where(p => p.PropertyType == typeof(string))
+                            .Any(p => ((string)p.GetValue(e, null) ?? string.Empty)
+                                .ToLower()
+                                .Contains(searchTerm)))
+                        .AsQueryable();
+                    query = searchResults;
+                }
+
+                // Apply column-specific searches
+                if (dataRequestParameters.ColumnSearches?.Any() == true)
+                {
+                    logger.LogDebug("Applying column-specific searches");
+                    var searchResults = query.AsEnumerable();
+                    foreach (var columnSearch in dataRequestParameters.ColumnSearches)
+                    {
+                        var searchTerm = columnSearch.Value.ToLower();
+                        var columnName = columnSearch.Column;
+                        searchResults = searchResults.Where(e => 
+                            ((string)e.GetType().GetProperty(columnName)?.GetValue(e, null) ?? string.Empty)
+                            .ToLower()
+                            .Contains(searchTerm));
+                    }
+                    query = searchResults.AsQueryable();
+                }
+
+                // Apply sorting
+                var sortedData = query.AsEnumerable();
+                if (dataRequestParameters.OrderBy?.Any() == true)
+                {
+                    logger.LogDebug("Applying sorting");
+                    var isFirst = true;
+                    IOrderedEnumerable<object> orderedData = null;
+
+                    foreach (var orderBy in dataRequestParameters.OrderBy)
+                    {
+                        if (isFirst)
+                        {
+                            orderedData = orderBy.IsDescending
+                            ? sortedData.OrderByDescending(e => GetPropertyValue(e, orderBy.Column))
+                            : sortedData.OrderBy(e => GetPropertyValue(e, orderBy.Column));
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            orderedData = orderBy.IsDescending
+                                ? orderedData.ThenByDescending(e => GetPropertyValue(e, orderBy.Column))
+                                : orderedData.ThenBy(e => GetPropertyValue(e, orderBy.Column));
+                        }
+                    }
+                    sortedData = orderedData ?? sortedData;
+                }
+
+                // Get total count before pagination
+                var totalCount = sortedData.Count();
                 logger.LogDebug("Total count before pagination: {Count}", totalCount);
 
-                var data = enumerableQuery
-                .Skip(pagination.PageNumber != 0 ? (pagination.PageNumber - 1) * pagination.PageSize : 0)
-                .Take(pagination.PageNumber != 0 ? pagination.PageSize : totalCount)
-                .Select(e => e.GetType()
-                    .GetProperties()
-                    .Where(p => p.PropertyType.Namespace == "System" || p.PropertyType.IsValueType)
-                    .ToDictionary(
-                        p => p.Name,
-                        p => p.GetValue(e)
-                    ));
+                // Apply pagination
+                var data = sortedData
+                    .Skip(dataRequestParameters.PageNumber != 0 ? (dataRequestParameters.PageNumber - 1) * dataRequestParameters.PageSize : 0)
+                    .Take(dataRequestParameters.PageNumber != 0 ? dataRequestParameters.PageSize : totalCount)
+                    .Select(e => e.GetType()
+                        .GetProperties()
+                        .Where(p => p.PropertyType.Namespace == "System" || p.PropertyType.IsValueType)
+                        .ToDictionary(
+                            p => p.Name,
+                            p => p.GetValue(e)
+                        ));
 
-                var result = new PagedResult<object>(data, totalCount);
+                var result = new PagedResult<object>(data, totalCount, dataRequestParameters);
                 logger.LogInformation("Retrieved {Count} entities of type {EntityType} (page {Page}, size {Size})", 
-                    result.Items.Count(), entityTypeFullname, pagination.PageNumber, pagination.PageSize);
+                    result.Items.Count(), entityTypeFullname, dataRequestParameters.PageNumber, dataRequestParameters.PageSize);
 
                 return result;
             }
@@ -476,6 +531,11 @@ namespace Querier.Api.Domain.Services
             }
 
             return result;
+        }
+
+        private static object GetPropertyValue(object obj, string propertyName)
+        {
+            return obj.GetType().GetProperty(propertyName)?.GetValue(obj, null) ?? DBNull.Value;
         }
     }
 }

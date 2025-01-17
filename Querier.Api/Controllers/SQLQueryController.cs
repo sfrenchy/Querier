@@ -281,28 +281,23 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<PagedResult<dynamic>>> ExecuteAsync(
             int id,
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 0,
-            [FromBody] Dictionary<string, object> parameters = null)
+            [FromBody] DataRequestParametersWtihSQLParametersDto parameters)
         {
             try
             {
                 logger.LogDebug("Executing SQL query with ID {QueryId}, Page {PageNumber}, Size {PageSize}", 
-                    id, pageNumber, pageSize);
+                    id, parameters.PageNumber, parameters.PageSize);
 
-                parameters ??= new Dictionary<string, object>();
                 logger.LogDebug("Query parameters: {@Parameters}", parameters);
 
                 var result = await sqlQueryService.ExecuteQueryAsync(
                     id, 
-                    parameters,
-                    pageNumber, 
-                    pageSize
+                    parameters
                 );
 
                 logger.LogInformation(
                     "Successfully executed SQL query with ID {QueryId}. Results retrieved on page {PageNumber}", 
-                    id, pageNumber);
+                    id, parameters.PageNumber);
                 
                 return Ok(result);
             }

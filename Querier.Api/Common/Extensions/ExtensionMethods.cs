@@ -484,145 +484,145 @@ namespace Querier.Api.Common.Extensions
                     return source;
                 }
 
-            var predicate = PredicateBuilder.True<DataRow>();
+                var predicate = PredicateBuilder.True<DataRow>();
                 foreach (var filter in filters)
-            {
-                string columnName = filter.ColumnMetadata["columnName"];
-                if (source.Columns.Contains(columnName))
                 {
+                    string columnName = filter.ColumnMetadata["columnName"];
+                    if (source.Columns.Contains(columnName))
+                    {
                         LOGGER.LogDebug("Processing filter for column {ColumnName} with operator {Operator}", columnName, filter.Operator);
                         
-                    int columnIndex = source.Columns.IndexOf(columnName);
-                    DataColumn column = source.Columns[columnIndex];
-                    Type columnType = column.DataType;
+                        int columnIndex = source.Columns.IndexOf(columnName);
+                        DataColumn column = source.Columns[columnIndex];
+                        Type columnType = column.DataType;
                         
                         try
                         {
-                    object value = columnType.GetValueFromString(filter.Operand);
+                            object value = columnType.GetValueFromString(filter.Operand);
                             LOGGER.LogDebug("Successfully converted filter value for column {ColumnName}", columnName);
 
-                    switch (columnType)
-                    {
-                        case Type when columnType == typeof(Int64):
-                            Int64 int64Value = (Int64) value;
-                            switch (filter.Operator)
+                            switch (columnType)
                             {
-                                case "EqualTo":
-                                    predicate = predicate.And(p => (Int64)p[columnName] == int64Value);
+                                case Type when columnType == typeof(Int64):
+                                    Int64 int64Value = (Int64) value;
+                                    switch (filter.Operator)
+                                    {
+                                        case "EqualTo":
+                                            predicate = predicate.And(p => (Int64)p[columnName] == int64Value);
+                                            break;
+                                        case "NotEqualTo":
+                                            predicate = predicate.And(p => (Int64)p[columnName] != int64Value);
+                                            break;
+                                        case "GreaterThan":
+                                            predicate = predicate.And(p => (Int64)p[columnName] > int64Value);
+                                            break;
+                                        case "LessThan":
+                                            predicate = predicate.And(p => (Int64)p[columnName] < int64Value);
+                                            break;
+                                        case "EqualOrGreaterThan":
+                                            predicate = predicate.And(p => (Int64)p[columnName] >= int64Value);
+                                            break;
+                                        case "EqualOrLessThan":
+                                            predicate = predicate.And(p => (Int64)p[columnName] <= int64Value);
+                                            break;
+                                    }
                                     break;
-                                case "NotEqualTo":
-                                    predicate = predicate.And(p => (Int64)p[columnName] != int64Value);
+                                case Type when columnType == typeof(int):
+                                    int intValue = (int) value;
+                                    switch (filter.Operator)
+                                    {
+                                        case "EqualTo":
+                                            predicate = predicate.And(p => (int)p[columnName] == intValue);
+                                            break;
+                                        case "NotEqualTo":
+                                            predicate = predicate.And(p => (int)p[columnName] != intValue);
+                                            break;
+                                        case "GreaterThan":
+                                            predicate = predicate.And(p => (int)p[columnName] > intValue);
+                                            break;
+                                        case "LessThan":
+                                            predicate = predicate.And(p => (int)p[columnName] < intValue);
+                                            break;
+                                        case "EqualOrGreaterThan":
+                                            predicate = predicate.And(p => (int)p[columnName] >= intValue);
+                                            break;
+                                        case "EqualOrLessThan":
+                                            predicate = predicate.And(p => (int)p[columnName] <= intValue);
+                                            break;
+                                    }
                                     break;
-                                case "GreaterThan":
-                                    predicate = predicate.And(p => (Int64)p[columnName] > int64Value);
+                                case Type when columnType == typeof(decimal):
+                                    decimal decimalValue = (decimal)value;
+                                    switch (filter.Operator)
+                                    {
+                                        case "EqualTo":
+                                            predicate = predicate.And(p => (decimal)p[columnName] == decimalValue);
+                                            break;
+                                        case "NotEqualTo":
+                                            predicate = predicate.And(p => (decimal)p[columnName] != decimalValue);
+                                            break;
+                                        case "GreaterThan":
+                                            predicate = predicate.And(p => (decimal)p[columnName] > decimalValue);
+                                            break;
+                                        case "LessThan":
+                                            predicate = predicate.And(p => (decimal)p[columnName] < decimalValue);
+                                            break;
+                                        case "EqualOrGreaterThan":
+                                            predicate = predicate.And(p => (decimal)p[columnName] >= decimalValue);
+                                            break;
+                                        case "EqualOrLessThan":
+                                            predicate = predicate.And(p => (decimal)p[columnName] <= decimalValue);
+                                            break;
+                                    }
                                     break;
-                                case "LessThan":
-                                    predicate = predicate.And(p => (Int64)p[columnName] < int64Value);
+                                case Type when columnType == typeof(DateTime):
+                                    DateTime dateTimeValue = (DateTime) value; 
+                                    switch (filter.Operator)
+                                    {
+                                        case "EqualTo":
+                                            predicate = predicate.And(p => (DateTime)p[columnName] == dateTimeValue);
+                                            break;
+                                        case "NotEqualTo":
+                                            predicate = predicate.And(p => (DateTime)p[columnName] != dateTimeValue);
+                                            break;
+                                        case "GreaterThan":
+                                            predicate = predicate.And(p => (DateTime)p[columnName] > dateTimeValue);
+                                            break;
+                                        case "LessThan":
+                                            predicate = predicate.And(p => (DateTime)p[columnName] < dateTimeValue);
+                                            break;
+                                        case "EqualOrGreaterThan":
+                                            predicate = predicate.And(p => (DateTime)p[columnName] >= dateTimeValue);
+                                            break;
+                                        case "EqualOrLessThan":
+                                            predicate = predicate.And(p => (DateTime)p[columnName] <= dateTimeValue);
+                                            break;
+                                    }
                                     break;
-                                case "EqualOrGreaterThan":
-                                    predicate = predicate.And(p => (Int64)p[columnName] >= int64Value);
-                                    break;
-                                case "EqualOrLessThan":
-                                    predicate = predicate.And(p => (Int64)p[columnName] <= int64Value);
-                                    break;
-                            }
-                            break;
-                         case Type when columnType == typeof(int):
-                            int intValue = (int) value;
-                            switch (filter.Operator)
-                            {
-                                case "EqualTo":
-                                    predicate = predicate.And(p => (int)p[columnName] == intValue);
-                                    break;
-                                case "NotEqualTo":
-                                    predicate = predicate.And(p => (int)p[columnName] != intValue);
-                                    break;
-                                case "GreaterThan":
-                                    predicate = predicate.And(p => (int)p[columnName] > intValue);
-                                    break;
-                                case "LessThan":
-                                    predicate = predicate.And(p => (int)p[columnName] < intValue);
-                                    break;
-                                case "EqualOrGreaterThan":
-                                    predicate = predicate.And(p => (int)p[columnName] >= intValue);
-                                    break;
-                                case "EqualOrLessThan":
-                                    predicate = predicate.And(p => (int)p[columnName] <= intValue);
-                                    break;
-                            }
-                            break;
-                        case Type when columnType == typeof(decimal):
-                            decimal decimalValue = (decimal)value;
-                            switch (filter.Operator)
-                            {
-                                case "EqualTo":
-                                    predicate = predicate.And(p => (decimal)p[columnName] == decimalValue);
-                                    break;
-                                case "NotEqualTo":
-                                    predicate = predicate.And(p => (decimal)p[columnName] != decimalValue);
-                                    break;
-                                case "GreaterThan":
-                                    predicate = predicate.And(p => (decimal)p[columnName] > decimalValue);
-                                    break;
-                                case "LessThan":
-                                    predicate = predicate.And(p => (decimal)p[columnName] < decimalValue);
-                                    break;
-                                case "EqualOrGreaterThan":
-                                    predicate = predicate.And(p => (decimal)p[columnName] >= decimalValue);
-                                    break;
-                                case "EqualOrLessThan":
-                                    predicate = predicate.And(p => (decimal)p[columnName] <= decimalValue);
-                                    break;
-                            }
-                            break;
-                        case Type when columnType == typeof(DateTime):
-                            DateTime dateTimeValue = (DateTime) value; 
-                            switch (filter.Operator)
-                            {
-                                case "EqualTo":
-                                    predicate = predicate.And(p => (DateTime)p[columnName] == dateTimeValue);
-                                    break;
-                                case "NotEqualTo":
-                                    predicate = predicate.And(p => (DateTime)p[columnName] != dateTimeValue);
-                                    break;
-                                case "GreaterThan":
-                                    predicate = predicate.And(p => (DateTime)p[columnName] > dateTimeValue);
-                                    break;
-                                case "LessThan":
-                                    predicate = predicate.And(p => (DateTime)p[columnName] < dateTimeValue);
-                                    break;
-                                case "EqualOrGreaterThan":
-                                    predicate = predicate.And(p => (DateTime)p[columnName] >= dateTimeValue);
-                                    break;
-                                case "EqualOrLessThan":
-                                    predicate = predicate.And(p => (DateTime)p[columnName] <= dateTimeValue);
-                                    break;
-                            }
-                            break;
-                        case Type when columnType == typeof(string):
-                            string stringValue = (string)value;
-                            switch (filter.Operator)
-                            {
-                                case "EqualTo":
-                                    predicate = predicate.And(p => (string)p[columnName] == stringValue);
-                                    break;
-                                case "Contains":
-                                    predicate = predicate.And(p => ((string)p[columnName]).Contains(stringValue));
-                                    break;
-                                case "BeginWith":
-                                    predicate = predicate.And(p => ((string)p[columnName]).StartsWith(stringValue));
-                                    break;
-                                case "EndWith":
-                                    predicate = predicate.And(p => ((string)p[columnName]).EndsWith(stringValue));
+                                case Type when columnType == typeof(string):
+                                    string stringValue = (string)value;
+                                    switch (filter.Operator)
+                                    {
+                                        case "EqualTo":
+                                            predicate = predicate.And(p => (string)p[columnName] == stringValue);
+                                            break;
+                                        case "Contains":
+                                            predicate = predicate.And(p => ((string)p[columnName]).Contains(stringValue));
+                                            break;
+                                        case "BeginWith":
+                                            predicate = predicate.And(p => ((string)p[columnName]).StartsWith(stringValue));
+                                            break;
+                                        case "EndWith":
+                                            predicate = predicate.And(p => ((string)p[columnName]).EndsWith(stringValue));
+                                            break;
+                                        default:
+                                            throw new NotImplementedException(
+                                                $"Operator {filter.Operator} is not implemented for type {columnType}");
+                                    }
                                     break;
                                 default:
-                                    throw new NotImplementedException(
-                                        $"Operator {filter.Operator} is not implemented for type {columnType}");
+                                    throw new NotImplementedException($"Type {columnType} filtering is not yet implemented");
                             }
-                            break;
-                        default:
-                            throw new NotImplementedException($"Type {columnType} filtering is not yet implemented");
-                    }
                         }
                         catch (Exception ex)
                         {
