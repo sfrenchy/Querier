@@ -153,7 +153,7 @@ namespace Querier.Api.Domain.Services
                                     Action = action.Name,
                                     Controller = controller.Name,
                                     HttpMethod = string.Join(", ", httpMethods),
-                                    Route = CombineRoutes(controllerRoute, actionRoute),
+                                    Route = CombineRoutes(controllerRoute.Replace("api/v1/", ""), actionRoute),
                                     Responses = GetResponses(action, contextTypeName, connectionString, connectionType).ToList(),
                                     Description = action.GetCustomAttribute<SummaryAttribute>()?.Summary ?? string.Empty,
                                     EntitySubjectJsonSchema = returnType != null ? _schemaGenerator.GenerateFromType(returnType, Utils.GetDbContextFromTypeName(contextTypeName, connectionString, connectionType)) : "{}"
