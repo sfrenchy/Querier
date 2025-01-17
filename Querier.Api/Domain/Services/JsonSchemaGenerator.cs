@@ -73,39 +73,39 @@ namespace Querier.Api.Domain.Services
         private string HandleGenericType(Type type)
         {
             try
-        {
-            var genericTypeDef = type.GetGenericTypeDefinition();
-            var genericArgs = type.GetGenericArguments();
+            {
+                var genericTypeDef = type.GetGenericTypeDefinition();
+                var genericArgs = type.GetGenericArguments();
 
                 _logger.LogTrace("Handling generic type: {TypeName} with {ArgCount} arguments", 
                     type.FullName, genericArgs.Length);
 
-            if (genericTypeDef == typeof(PagedResult<>))
+                if (genericTypeDef == typeof(PagedResult<>))
                 {
                     _logger.LogTrace("Processing PagedResult<T> for type: {TypeName}", genericArgs[0].FullName);
-                return HandlePagedResult(genericArgs[0]);
+                    return HandlePagedResult(genericArgs[0]);
                 }
 
-            if (typeof(IEnumerable).IsAssignableFrom(type))
+                if (typeof(IEnumerable).IsAssignableFrom(type))
                 {
                     _logger.LogTrace("Processing IEnumerable<T> for type: {TypeName}", genericArgs[0].FullName);
-                return HandleEnumerable(genericArgs[0]);
+                    return HandleEnumerable(genericArgs[0]);
                 }
 
-            if (genericTypeDef == typeof(Task<>))
+                if (genericTypeDef == typeof(Task<>))
                 {
                     _logger.LogTrace("Processing Task<T> for type: {TypeName}", genericArgs[0].FullName);
-                return GenerateSchema(genericArgs[0]);
+                    return GenerateSchema(genericArgs[0]);
                 }
 
-            if (genericTypeDef == typeof(Nullable<>))
+                if (genericTypeDef == typeof(Nullable<>))
                 {
                     _logger.LogTrace("Processing Nullable<T> for type: {TypeName}", genericArgs[0].FullName);
-                return HandleNullable(genericArgs[0]);
+                    return HandleNullable(genericArgs[0]);
                 }
 
                 _logger.LogTrace("No specific handler for generic type: {TypeName}", type.FullName);
-            return null;
+                return null;
             }
             catch (Exception ex)
             {

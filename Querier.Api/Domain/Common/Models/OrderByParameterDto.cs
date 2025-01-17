@@ -1,6 +1,6 @@
 namespace Querier.Api.Domain.Common.Models;
 
-public class OrderByParameter
+public class OrderByParameterDto
 {
     public string Column { get; set; }
     public bool IsDescending { get; set; }

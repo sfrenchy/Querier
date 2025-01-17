@@ -16,10 +16,10 @@ namespace Querier.Api.Domain.Common.Models
         }
 
         // Sorting
-        public List<OrderByParameter> OrderBy { get; set; } = new();
+        public List<OrderByParameterDto> OrderBy { get; set; } = new();
 
         // Search
         public string GlobalSearch { get; set; }
-        public List<ColumnSearch> ColumnSearches { get; set; } = new();
+        public List<ColumnSearchDto> ColumnSearches { get; set; } = new();
     }
 } 
