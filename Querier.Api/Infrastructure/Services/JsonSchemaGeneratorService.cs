@@ -60,12 +60,20 @@ public class JsonSchemaGeneratorService
 
             foreach (var prop in properties)
             {
-                var propSchema = GetPropertySchema(prop, type);
-                ((Dictionary<string, object>)schema["properties"])[prop.Name] = propSchema;
-
-                if (CustomAttributeExtensions.GetCustomAttribute<RequiredAttribute>(prop) != null)
+                try
                 {
-                    requiredProperties.Add(prop.Name);
+                    var propSchema = GetPropertySchema(prop, type);
+                    ((Dictionary<string, object>)schema["properties"])[prop.Name] = propSchema;
+
+                    if (CustomAttributeExtensions.GetCustomAttribute<RequiredAttribute>(prop) != null)
+                    {
+                        requiredProperties.Add(prop.Name);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Error generating schema for type {TypeName}", type.Name);
+                    throw;
                 }
             }
 
@@ -171,6 +179,11 @@ public class JsonSchemaGeneratorService
                 string typeString = CustomAttributeExtensions.GetCustomAttribute<DtoForAttribute>(containerType)
                     ?.EntityType;
                 containerType = Type.GetType(typeString);
+                if (containerType == null)
+                {
+                    _logger.LogError("Type {TypeString} not found in EF model", typeString);
+                    throw new Exception($"Type {typeString} not found in EF model");
+                }
             }
             var efEntityType = _efModel.FindEntityType(containerType);
             if (efEntityType != null)
