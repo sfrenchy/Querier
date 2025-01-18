@@ -82,7 +82,9 @@ namespace $nameSpace$.Services
         
                     query = query.Where(e =>
                             $entity.Properties: {property|
+                            $if(property.IsLinqToSqlSupportedType)$
                             e.$property.Name$.ToString().ToLower().Contains(searchTerm) ||
+                            $endif$
                             }$
                             false);
                 \}
