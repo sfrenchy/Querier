@@ -47,9 +47,9 @@ namespace Querier.Api.Domain.Services
                         IEnumerable<Type> enumerableTypes = types as Type[] ?? types.ToArray();
                         contexts.AddRange(enumerableTypes.Select(t => t.FullName));
                         logger.LogDebug("Found {Count} contexts in connection {Name}", enumerableTypes.Count(), dbConnection.Name);
-                }
-                catch (Exception ex)
-                {
+                    }
+                    catch (Exception ex)
+                    {
                         logger.LogError(ex, "Error loading assembly for context {Name}", dbConnection.Name);
                     }
                 }
@@ -184,14 +184,14 @@ namespace Querier.Api.Domain.Services
                     throw new InvalidOperationException(message);
                 }
 
-            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
+                DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
                 if (targetContext == null)
                 {
                     throw new InvalidOperationException($"Context {contextTypeFullname} not found");
                 }
 
-            object newEntity = Activator.CreateInstance(entityType);
-            dynamic modelEntity = JsonSerializer.Deserialize(entity.ToString(), entityType);
+                object newEntity = Activator.CreateInstance(entityType);
+                dynamic modelEntity = JsonSerializer.Deserialize(entity.ToString(), entityType);
 
                 logger.LogDebug("Mapping properties for new entity");
                 if (newEntity != null)
@@ -201,10 +201,10 @@ namespace Querier.Api.Domain.Services
                          p.GetCustomAttribute(typeof(JsonIgnoreAttribute)) == null))
                     {
                         try
-            {
-                string propertyName = pi.Name;
-                object value = modelEntity.GetType().GetProperty(propertyName).GetValue(modelEntity, null);
-                pi.SetValue(newEntity, value);
+                        {
+                            string propertyName = pi.Name;
+                            object value = modelEntity.GetType().GetProperty(propertyName).GetValue(modelEntity, null);
+                            pi.SetValue(newEntity, value);
                             logger.LogTrace("Mapped property {Property} with value {Value}", propertyName, value);
                         }
                         catch (Exception ex)
@@ -237,7 +237,7 @@ namespace Querier.Api.Domain.Services
             return 0;
         }
 
-        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, 
+        public DataPagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, 
             DataRequestParametersDto dataRequestParameters)
         {
             try
@@ -291,85 +291,7 @@ namespace Querier.Api.Domain.Services
 
                 // Get the DbSet as IQueryable
                 var query = ((IQueryable<object>)dbSet);
-
-                // Apply search filters
-                if (!string.IsNullOrEmpty(dataRequestParameters.GlobalSearch))
-                {
-                    logger.LogDebug("Applying global search filter: {Search}", dataRequestParameters.GlobalSearch);
-                    // Load data in memory for complex search operations
-                    var searchTerm = dataRequestParameters.GlobalSearch.ToLower();
-                    var searchResults = query.AsEnumerable()
-                        .Where(e => e.GetType()
-                        .GetProperties()
-                        .Where(p => p.PropertyType == typeof(string))
-                            .Any(p => ((string)p.GetValue(e, null) ?? string.Empty)
-                                .ToLower()
-                                .Contains(searchTerm)))
-                        .AsQueryable();
-                    query = searchResults;
-                }
-
-                // Apply column-specific searches
-                if (dataRequestParameters.ColumnSearches?.Any() == true)
-                {
-                    logger.LogDebug("Applying column-specific searches");
-                    var searchResults = query.AsEnumerable();
-                    foreach (var columnSearch in dataRequestParameters.ColumnSearches)
-                    {
-                        var searchTerm = columnSearch.Value.ToLower();
-                        var columnName = columnSearch.Column;
-                        searchResults = searchResults.Where(e => 
-                            ((string)e.GetType().GetProperty(columnName)?.GetValue(e, null) ?? string.Empty)
-                            .ToLower()
-                            .Contains(searchTerm));
-                    }
-                    query = searchResults.AsQueryable();
-                }
-
-                // Apply sorting
-                var sortedData = query.AsEnumerable();
-                if (dataRequestParameters.OrderBy?.Any() == true)
-                {
-                    logger.LogDebug("Applying sorting");
-                    var isFirst = true;
-                    IOrderedEnumerable<object> orderedData = null;
-
-                    foreach (var orderBy in dataRequestParameters.OrderBy)
-                    {
-                        if (isFirst)
-                        {
-                            orderedData = orderBy.IsDescending
-                            ? sortedData.OrderByDescending(e => GetPropertyValue(e, orderBy.Column))
-                            : sortedData.OrderBy(e => GetPropertyValue(e, orderBy.Column));
-                            isFirst = false;
-                        }
-                        else
-                        {
-                            orderedData = orderBy.IsDescending
-                                ? orderedData.ThenByDescending(e => GetPropertyValue(e, orderBy.Column))
-                                : orderedData.ThenBy(e => GetPropertyValue(e, orderBy.Column));
-                        }
-                    }
-                    sortedData = orderedData ?? sortedData;
-                }
-
-                // Get total count before pagination
-                var totalCount = sortedData.Count();
-                logger.LogDebug("Total count before pagination: {Count}", totalCount);
-
-                // Apply pagination
-                var data = sortedData
-                    .Skip(dataRequestParameters.PageNumber != 0 ? (dataRequestParameters.PageNumber - 1) * dataRequestParameters.PageSize : 0)
-                    .Take(dataRequestParameters.PageNumber != 0 ? dataRequestParameters.PageSize : totalCount)
-                    .Select(e => e.GetType()
-                        .GetProperties()
-                        .Where(p => p.PropertyType.Namespace == "System" || p.PropertyType.IsValueType)
-                        .ToDictionary(
-                            p => p.Name,
-                            p => p.GetValue(e)
-                        ));
-
-                var result = new PagedResult<object>(data, totalCount, dataRequestParameters);
+                var result = query.ApplyDataRequestParametersDto(dataRequestParameters);
                 logger.LogInformation("Retrieved {Count} entities of type {EntityType} (page {Page}, size {Size})", 
                     result.Items.Count(), entityTypeFullname, dataRequestParameters.PageNumber, dataRequestParameters.PageSize);
 
@@ -533,9 +455,6 @@ namespace Querier.Api.Domain.Services
             return result;
         }
 
-        private static object GetPropertyValue(object obj, string propertyName)
-        {
-            return obj.GetType().GetProperty(propertyName)?.GetValue(obj, null) ?? DBNull.Value;
-        }
+        
     }
 }

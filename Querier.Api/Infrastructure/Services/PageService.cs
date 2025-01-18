@@ -41,6 +41,8 @@ namespace Querier.Api.Infrastructure.Services
 
         public async Task<IEnumerable<PageDto>> GetAllAsync()
         {
+            
+            
             logger.LogInformation("Getting all pages");
             try
             {

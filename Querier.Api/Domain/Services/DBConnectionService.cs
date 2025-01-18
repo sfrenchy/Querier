@@ -411,7 +411,8 @@ namespace Querier.Api.Domain.Services
                 typeof(Microsoft.Extensions.Caching.Distributed.IDistributedCache),
                 typeof(Enumerable),
                 typeof(MemoryStream),
-                typeof(StreamReader)
+                typeof(StreamReader),
+                typeof(System.Linq.Dynamic.Core.DynamicClassFactory)
             };
 
             refs.AddRange(additionalAssemblies.Select(t => MetadataReference.CreateFromFile(t.Assembly.Location)));

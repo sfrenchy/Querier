@@ -237,7 +237,7 @@ namespace Querier.Api.Domain.Services
             return 0;
         }
 
-        public PagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, 
+        public DataPagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, 
             DataRequestParametersDto dataRequestParameters)
         {
             try
@@ -369,7 +369,7 @@ namespace Querier.Api.Domain.Services
                             p => p.GetValue(e)
                         ));
 
-                var result = new PagedResult<object>(data, totalCount, dataRequestParameters);
+                var result = new DataPagedResult<object>(data, totalCount, dataRequestParameters);
                 logger.LogInformation("Retrieved {Count} entities of type {EntityType} (page {Page}, size {Size})", 
                     result.Items.Count(), entityTypeFullname, dataRequestParameters.PageNumber, dataRequestParameters.PageSize);
 

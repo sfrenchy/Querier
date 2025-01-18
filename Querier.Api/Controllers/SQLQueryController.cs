@@ -276,10 +276,10 @@ namespace Querier.Api.Controllers
         /// <response code="400">If there's an error executing the query</response>
         /// <response code="404">If the query was not found</response>
         [HttpPost("{id}/execute")]
-        [ProducesResponseType(typeof(PagedResult<dynamic>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(DataPagedResult<dynamic>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<PagedResult<dynamic>>> ExecuteAsync(
+        public async Task<ActionResult<DataPagedResult<dynamic>>> ExecuteAsync(
             int id,
             [FromBody] DataRequestParametersWtihSQLParametersDto parameters)
         {

@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using $nameSpace$.DTOs;
 using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Domain.Common.Models;
+using Querier.Api.Common.Utilities;
 
 namespace $nameSpace$.Services
 {
@@ -15,7 +17,7 @@ namespace $nameSpace$.Services
     #region $entity.Name$
     public interface I$entity.Name$Service : IDynamicContextEntityService
     {
-        Task<PagedResult<$entity.Name$Dto>> GetAllAsync(DataRequestParametersDto? parameters = null);
+        Task<DataPagedResult<$entity.Name$Dto>> GetAllAsync(DataRequestParametersDto? parameters = null);
         Task<$entity.Name$Dto?> GetByIdAsync($entity.KeyType$ id);
         Task<$entity.Name$Dto> CreateAsync(Create$entity.Name$Dto createDto);
         Task<$entity.Name$Dto?> UpdateAsync($entity.KeyType$ id, Update$entity.Name$Dto updateDto);
@@ -65,21 +67,78 @@ namespace $nameSpace$.Services
             }$
         \}
 
-        public async Task<PagedResult<$entity.Name$Dto>> GetAllAsync(DataRequestParametersDto? parameters = null)
+        public async Task<DataPagedResult<$entity.Name$Dto>> GetAllAsync(DataRequestParametersDto? parameters = null)
         {
-            using var context = await _contextFactory.CreateDbContextAsync();
-            var query = context.$entity.PluralName$.AsQueryable();
-            
-            var total = await query.CountAsync();
-            
-            if (parameters != null)
+            await using (var context = await _contextFactory.CreateDbContextAsync())
             {
-                var skip = (parameters.PageNumber - 1) * parameters.PageSize;
-                query = query.Skip(skip).Take(parameters.PageSize);
-            \}
+                var query = context.$entity.PluralName$.AsQueryable();
                 
-            var items = await query.ToListAsync();
-            return new PagedResult<$entity.Name$Dto>(items.Select(MapToDto), total, parameters);
+                // Apply search filters
+                if (!string.IsNullOrEmpty(parameters.GlobalSearch))
+                {
+                    _logger.LogDebug("Applying global search filter: {Search\}", parameters.GlobalSearch);
+        
+                    var searchTerm = parameters.GlobalSearch.ToLower();
+        
+                    query = query.Where(e =>
+                            $entity.Properties: {property|
+                            e.$property.Name$.ToString().ToLower().Contains(searchTerm) ||
+                            }$
+                            false);
+                \}
+    
+                // Apply column-specific searches
+                if (parameters.ColumnSearches?.Any() == true)
+                {
+                    foreach (var columnSearch in parameters.ColumnSearches)
+                    {
+                        var searchTerm = columnSearch.Value.ToLower();
+                        var columnName = columnSearch.Column;
+                
+                        // Mappage explicite des colonnes
+                        query = columnName switch
+                        {
+                            $entity.Properties: {property|
+                            "$property.Name$" => query.Where(e => e.$property.Name$.ToString().ToLower().Contains(searchTerm)),
+                            }$
+                            _ => query // Ignorer les colonnes inconnues
+                        \};
+                    \}
+                \}
+                
+                var totalCount = await query.CountAsync();
+                
+                  // Apply sorting
+                  if (parameters.OrderBy?.Any() == true)
+                  {
+                      _logger.LogDebug("Applying sorting");
+                  
+                      foreach (var orderBy in parameters.OrderBy)
+                      {
+                          string direction = orderBy.IsDescending ? "descending" : "ascending";
+                          string column = orderBy.Column;
+                          var sortExpression = column + " " + direction;
+                  
+                          query = query.OrderBy(sortExpression);
+                      \}
+                  \}
+        
+                _logger.LogDebug("Total count before pagination: {Count\}", totalCount);
+        
+                // Apply pagination
+                var data = await query
+                    .Skip(parameters.PageNumber != 0 ? (parameters.PageNumber - 1) * parameters.PageSize : 0)
+                    .Take(parameters.PageNumber != 0 ? parameters.PageSize : totalCount)
+                    .ToListAsync();
+                    
+                var result = new DataPagedResult<$entity.Name$>(data.ToList(), totalCount, parameters);
+                
+                return new DataPagedResult<$entity.Name$Dto>(
+                                    result.Items.Select(MapToDto),
+                                    result.Total,
+                                    parameters
+                                );
+            \}
         \}
 
         public async Task<$entity.Name$Dto?> GetByIdAsync($entity.KeyType$ id)

@@ -282,7 +282,7 @@ namespace Querier.Api.Infrastructure.Services
             }
         }
 
-        public async Task<PagedResult<dynamic>> ExecuteQueryAsync(int id, DataRequestParametersWtihSQLParametersDto dataRequestParameters)
+        public async Task<DataPagedResult<dynamic>> ExecuteQueryAsync(int id, DataRequestParametersWtihSQLParametersDto dataRequestParameters)
         {
             try
             {
@@ -363,7 +363,7 @@ namespace Querier.Api.Infrastructure.Services
                     "Successfully executed SQL query with ID {QueryId}. Retrieved {Count} rows, Total {Total}", 
                     id, data.Count, totalCount);
 
-                        return new PagedResult<dynamic>(data, totalCount, dataRequestParameters);
+                        return new DataPagedResult<dynamic>(data, totalCount, dataRequestParameters);
             }
             catch (Exception ex)
             {

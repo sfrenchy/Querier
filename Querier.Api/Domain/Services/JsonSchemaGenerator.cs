@@ -80,7 +80,7 @@ namespace Querier.Api.Domain.Services
                 _logger.LogTrace("Handling generic type: {TypeName} with {ArgCount} arguments", 
                     type.FullName, genericArgs.Length);
 
-                if (genericTypeDef == typeof(PagedResult<>))
+                if (genericTypeDef == typeof(DataPagedResult<>))
                 {
                     _logger.LogTrace("Processing PagedResult<T> for type: {TypeName}", genericArgs[0].FullName);
                     return HandlePagedResult(genericArgs[0]);

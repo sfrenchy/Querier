@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Domain.Common.Enums;
+using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Entities.DBConnection;
 using Querier.Api.Infrastructure.Data.Context;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -249,6 +252,96 @@ namespace Querier.Api.Common.Utilities
                 LOGGER?.LogError(ex, "Error converting Unix timestamp {Timestamp} to DateTime", unixTimeStamp);
                 throw;
             }
+        }
+
+        public static DataPagedResult<T> ApplyDataRequestParametersDto<T>(this IQueryable<T> query,
+            DataRequestParametersDto? dataRequestParameters)
+        {
+            if (dataRequestParameters == null)
+            {
+                LOGGER?.LogError("Data request parameters is null");
+                throw new ArgumentNullException(nameof(dataRequestParameters));
+            }
+            // Apply search filters
+            if (!string.IsNullOrEmpty(dataRequestParameters.GlobalSearch))
+            {
+                LOGGER?.LogDebug("Applying global search filter: {Search}", dataRequestParameters.GlobalSearch);
+                // Load data in memory for complex search operations
+                var searchTerm = dataRequestParameters.GlobalSearch.ToLower();
+                var searchResults = query.AsEnumerable()
+                    .Where(e => e.GetType()
+                        .GetProperties()
+                        .Where(p => p.PropertyType == typeof(string))
+                        .Any(p => ((string)p.GetValue(e, null) ?? string.Empty)
+                            .ToLower()
+                            .Contains(searchTerm)))
+                    .AsQueryable();
+                query = searchResults;
+            }
+
+            // Apply column-specific searches
+            if (dataRequestParameters.ColumnSearches?.Any() == true)
+            {
+                LOGGER?.LogDebug("Applying column-specific searches");
+                var searchResults = query.AsEnumerable();
+                foreach (var columnSearch in dataRequestParameters.ColumnSearches)
+                {
+                    var searchTerm = columnSearch.Value.ToLower();
+                    var columnName = columnSearch.Column;
+                    searchResults = searchResults.Where(e =>
+                        ((string)e.GetType().GetProperty(columnName)?.GetValue(e, null) ?? string.Empty)
+                        .ToLower()
+                        .Contains(searchTerm));
+                }
+
+                query = searchResults.AsQueryable();
+            }
+
+            // Apply sorting
+            var sortedData = query.AsEnumerable();
+            
+            if (dataRequestParameters.OrderBy?.Any() == true)
+            {
+                LOGGER?.LogDebug("Applying sorting");
+                var isFirst = true;
+                IOrderedEnumerable<T> orderedData = null;
+
+                foreach (var orderBy in dataRequestParameters.OrderBy)
+                {
+                    if (isFirst)
+                    {
+                        orderedData = orderBy.IsDescending
+                            ? sortedData.OrderByDescending(e => GetPropertyValue(e, orderBy.Column))
+                            : sortedData.OrderBy(e => GetPropertyValue(e, orderBy.Column));
+                        isFirst = false;
+                    }
+                    else
+                    {
+                        orderedData = orderBy.IsDescending
+                            ? orderedData.ThenByDescending(e => GetPropertyValue(e, orderBy.Column))
+                            : orderedData.ThenBy(e => GetPropertyValue(e, orderBy.Column));
+                    }
+                }
+
+                sortedData = orderedData ?? sortedData;
+            }
+            
+            var totalCount = sortedData.Count();
+            LOGGER?.LogDebug("Total count before pagination: {Count}", totalCount);
+            
+            // Apply pagination
+            var data = sortedData
+                .Skip(dataRequestParameters.PageNumber != 0
+                    ? (dataRequestParameters.PageNumber - 1) * dataRequestParameters.PageSize
+                    : 0)
+                .Take(dataRequestParameters.PageNumber != 0 ? dataRequestParameters.PageSize : totalCount);
+            var result = new DataPagedResult<T>(data, totalCount, dataRequestParameters);
+            return result;
+        }
+        
+        public static object GetPropertyValue(object obj, string propertyName)
+        {
+            return obj.GetType().GetProperty(propertyName)?.GetValue(obj, null) ?? DBNull.Value;
         }
     }
 }

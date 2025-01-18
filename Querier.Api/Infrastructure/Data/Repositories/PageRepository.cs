@@ -37,6 +37,8 @@ namespace Querier.Api.Infrastructure.Data.Repositories
 
         public async Task<IEnumerable<Page>> GetAllAsync()
         {
+            
+            
             logger.LogDebug("Getting all pages");
             try
             {

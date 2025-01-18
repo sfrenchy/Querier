@@ -112,7 +112,7 @@ namespace Querier.Api.Common.Utilities
                         // Charger l'assembly depuis la mémoire
                         logger.LogDebug("Creating assembly load context for {AssemblyName}", assemblyName);
                         var assemblyLoadContext = new AssemblyLoadContext(connection.Name);
-                        var assembly = assemblyLoadContext.LoadFromStream(new MemoryStream(connection.AssemblyDll));
+                        var assembly = assemblyLoadContext.LoadFromStream(new MemoryStream(connection.AssemblyDll), new MemoryStream(connection.AssemblyPdb));
                         logger.LogInformation("Successfully loaded assembly {AssemblyName}", assemblyName);
 
                         LoadProcedureServiceAndEntityServicesAndAddMVCParts(

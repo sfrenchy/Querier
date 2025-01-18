@@ -41,6 +41,8 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(IEnumerable<PageDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<PageDto>>> GetAll()
         {
+            
+            
             logger.LogInformation("Getting all pages");
             try
             {

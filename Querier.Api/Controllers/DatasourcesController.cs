@@ -151,7 +151,7 @@ namespace Querier.Api.Controllers
         /// <response code="400">If the parameters are invalid</response>
         /// <response code="500">If an error occurs while retrieving records</response>
         [HttpPost("contexts/{contextName}/entities/{entityName}/records")]
-        [ProducesResponseType(typeof(PagedResult<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(DataPagedResult<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public IActionResult GetRecords(
