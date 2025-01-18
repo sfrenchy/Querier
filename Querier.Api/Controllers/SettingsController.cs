@@ -295,7 +295,7 @@ namespace Querier.Api.Controllers
                     Port = await _settingService.GetSettingValueIfExistsAsync("api:port", 5001, "The port of the URL to target API"),
                     AllowedHosts = await _settingService.GetSettingValueIfExistsAsync("api:allowedHosts", "*", "Semicolon-separated list of allowed host names"),
                     AllowedOrigins = await _settingService.GetSettingValueIfExistsAsync("api:allowedOrigins", "*", "Semicolon-separated list of allowed CORS origins"),
-                    AllowedMethods = await _settingService.GetSettingValueIfExistsAsync("api:allowedMethods", "GET,POST,DELETE,OPTIONS", "Semicolon-separated list of allowed HTTP methods for CORS"),
+                    AllowedMethods = await _settingService.GetSettingValueIfExistsAsync("api:allowedMethods", "GET,POST,DELETE,OPTIONS,PUT", "Semicolon-separated list of allowed HTTP methods for CORS"),
                     AllowedHeaders = await _settingService.GetSettingValueIfExistsAsync("api:allowedHeaders", "X-Request-Token,Accept,Content-Type,Authorization", "Semicolon-separated list of allowed HTTP headers for CORS"),
                     ResetPasswordTokenValidity = await _settingService.GetSettingValueIfExistsAsync("api:email:ResetPasswordTokenValidityLifeSpanMinutes", 15, "Validity period in minutes for password reset tokens"),
                     EmailConfirmationTokenValidity = await _settingService.GetSettingValueIfExistsAsync("api:email:confirmationTokenValidityLifeSpanDays", 2, "Validity period in minutes for email confirmation tokens"),
