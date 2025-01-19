@@ -59,22 +59,39 @@ namespace Querier.Api.Infrastructure.Database.Templates
                 List<string> supportedTypes = new List<string>()
                 {
                     "string",
+                    "string?",
                     "int",
+                    "int?",
                     "long",
+                    "long?",
                     "decimal",
+                    "decimal?",
                     "double",
+                    "double?",
                     "bool",
+                    "bool?",
                     "byte",
+                    "byte?",
                     "sbyte",
+                    "sbyte?",
                     "short",
+                    "short?",
                     "ushort",
+                    "ushort?",
                     "uint",
+                    "uint?",
                     "ulong",
+                    "ulong?",
                     "float",
+                    "float?",
                     "double",
+                    "double?",
                     "decimal",
+                    "decimal?",
                     "DateTime",
-                    "DateTimeOffset"
+                    "DateTime?",
+                    "DateTimeOffset",
+                    "DateTimeOffset?"
                 };
                 return supportedTypes.Contains(CSType);
             }
