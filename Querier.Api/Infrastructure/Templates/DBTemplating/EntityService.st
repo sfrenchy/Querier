@@ -119,16 +119,21 @@ namespace $nameSpace$.Services
                 // Apply column-specific searches
                 if (parameters.ColumnSearches?.Any() == true)
                 {
-                    foreach (var columnSearch in parameters.ColumnSearches)
+                    // Grouper les recherches par colonne
+                    var groupedSearches = parameters.ColumnSearches
+                        .GroupBy(cs => cs.Column)
+                        .ToDictionary(g => g.Key, g => g.Select(cs => cs.Value.ToLower()).ToList());
+
+                    foreach (var columnSearch in groupedSearches)
                     {
-                        var searchTerm = columnSearch.Value.ToLower();
-                        var columnName = columnSearch.Column;
+                        var columnName = columnSearch.Key;
+                        var searchTerms = columnSearch.Value;
                 
                         // Mappage explicite des colonnes
                         query = columnName switch
                         {
                             $entity.Properties: {property|
-                            "$property.Name$" => query.Where(e => e.$property.Name$.ToString().ToLower().Contains(searchTerm)),
+                            "$property.Name$" => query.Where(e => searchTerms.Any(term => e.$property.Name$.ToString().ToLower().Contains(term))),
                             }$
                             _ => query // Ignorer les colonnes inconnues
                         \};
