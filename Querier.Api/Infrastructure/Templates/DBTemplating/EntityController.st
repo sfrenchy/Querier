@@ -88,6 +88,15 @@ namespace $nameSpace$.Controllers
                 
             return NoContent();
         \}
+        
+        [HttpGet("columns/{columnName\}/values")]
+        [ProducesResponseType(typeof(List<string>), 200)]
+        public async Task<IActionResult> ColumnValues([FromRoute] string columnName)
+        {
+            _logger.LogInformation("ColumnValues $entity.Name$ [{columnName\}] action called");
+            var result = await _service.ColumnUniqueValuesAsync(columnName);
+            return Ok(result);
+        \}
     \}
     }$
 \} 

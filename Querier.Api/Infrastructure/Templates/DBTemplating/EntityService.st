@@ -22,6 +22,7 @@ namespace $nameSpace$.Services
         Task<$entity.Name$Dto> CreateAsync(Create$entity.Name$Dto createDto);
         Task<$entity.Name$Dto?> UpdateAsync($entity.KeyType$ id, Update$entity.Name$Dto updateDto);
         Task<bool> DeleteAsync($entity.KeyType$ id);
+        Task<List<string>> ColumnUniqueValuesAsync(string column);
     \}
 
     [DynamicContextEntity(ContextName="$nameSpace$", ServiceName="I$entity.Name$Service")]
@@ -67,6 +68,32 @@ namespace $nameSpace$.Services
             }$
         \}
 
+        public async Task<List<string>> ColumnUniqueValuesAsync(string column)
+        {
+            List<string> result = new List<string>(){\};
+            await using (var context = await _contextFactory.CreateDbContextAsync())
+            {
+                
+                switch(column)
+                {
+                    $entity.Properties: {property|
+                    case "$property.Name$":
+                    {
+                        result.AddRange(await context.$entity.PluralName$
+                            .Select(e => e.$property.Name$.ToString())
+                            .Distinct()
+                            .OrderBy(value => value)
+                            .ToListAsync());
+                        break;
+                    \}
+                    }$
+                    default:
+                        break;
+                \}
+            \}
+            return result;
+        \}
+        
         public async Task<DataPagedResult<$entity.Name$Dto>> GetAllAsync(DataRequestParametersDto? parameters = null)
         {
             await using (var context = await _contextFactory.CreateDbContextAsync())
