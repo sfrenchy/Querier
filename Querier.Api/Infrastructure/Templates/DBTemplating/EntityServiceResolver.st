@@ -35,6 +35,7 @@ namespace $nameSpace$.Services
                 options.EnableDetailedErrors();
                 options.EnableSensitiveDataLogging();
                 options.UseLazyLoadingProxies(false);
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
                 
                 // Configure the database provider based on the connection string
                 switch (connectionType)
