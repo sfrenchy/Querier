@@ -521,12 +521,12 @@ namespace Querier.Api.Controllers
         [HttpGet("{id}/endpoints")]
         [ProducesResponseType(typeof(List<DBConnectionEndpointInfoDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<List<DBConnectionEndpointInfoDto>>> GetEndpoints(int id)
+        public async Task<ActionResult<List<DBConnectionEndpointInfoDto>>> GetEndpoints([FromRoute] int id, [FromQuery] string? targetTable, [FromQuery] string? controller, [FromQuery] string? action)
         {
             try
             {
                 logger.LogInformation("Retrieving endpoints for connection ID: {Id}", id);
-                var endpoints = await dbConnectionService.GetEndpointsAsync(id);
+                var endpoints = await dbConnectionService.GetEndpointsAsync(id,  targetTable, controller, action);
                 logger.LogInformation("Successfully retrieved {Count} endpoints for connection ID: {Id}", 
                     endpoints.Count, id);
                 return Ok(endpoints);

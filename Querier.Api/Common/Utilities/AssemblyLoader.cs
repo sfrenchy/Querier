@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Entities.DBConnection;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -64,6 +65,7 @@ namespace Querier.Api.Common.Utilities
         public static void LoadAssemblyFromDbConnection(
             DBConnection connection,
             IServiceProvider serviceProvider,
+            IServiceCollection services,
             ApplicationPartManager partManager,
             ILogger logger)
         {
@@ -79,6 +81,12 @@ namespace Querier.Api.Common.Utilities
                 {
                     logger.LogError("ServiceProvider parameter is null");
                     throw new ArgumentNullException(nameof(serviceProvider));
+                }
+
+                if (services == null)
+                {
+                    logger.LogError("Services parameter is null");
+                    throw new ArgumentNullException(nameof(services));
                 }
 
                 if (partManager == null)
@@ -119,8 +127,10 @@ namespace Querier.Api.Common.Utilities
                             assembly,
                             assemblyName,
                             connection.Name,
+                            connection.ConnectionType,
                             connection.ConnectionString,
                             serviceProvider,
+                            services,
                             partManager,
                             logger
                             );
@@ -147,8 +157,10 @@ namespace Querier.Api.Common.Utilities
             Assembly assembly, 
             string assemblyName,
             string connectionName,
+            DbConnectionType connectionType,
             string connectionString,
             IServiceProvider serviceProvider,
+            IServiceCollection services,
             ApplicationPartManager partManager,
             ILogger logger)
         {
@@ -163,9 +175,7 @@ namespace Querier.Api.Common.Utilities
 
                 if (resolver != null)
                 {
-                    resolver.ConfigureServices(
-                        (IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)),
-                        connectionString);
+                    resolver.ConfigureServices(services, connectionString);
                     var dynamicContextListService =
                         serviceProvider.GetRequiredService<IDynamicContextList>();
                     logger.LogInformation("Adding DynamicContext {Name} for procedures", connectionName);
@@ -174,8 +184,7 @@ namespace Querier.Api.Common.Utilities
                     foreach (KeyValuePair<Type, Type> service in resolver.ProceduresServices)
                     {
                         logger.LogInformation("Registering procedure service {ServiceType}", service.Key);
-                        serviceProvider.GetRequiredService<IServiceCollection>()
-                            .AddSingleton(service.Key, service.Value);
+                        services.AddSingleton(service.Key, service.Value);
                     }
                 }
             }
@@ -190,17 +199,15 @@ namespace Querier.Api.Common.Utilities
 
                 if (resolver != null)
                 {
-                    resolver.ConfigureServices(
-                        (IServiceCollection)serviceProvider.GetService(typeof(IServiceCollection)),
-                        connectionString);
+                    resolver.ConfigureServices(services, connectionType, connectionString, logger);
                     logger.LogInformation("Adding DynamicContext {Name} for entities", connectionName);
 
-                    foreach (KeyValuePair<Type, Type> service in resolver.EntityServices)
-                    {
-                        logger.LogInformation("Registering entity service {ServiceType}", service.Key);
-                        serviceProvider.GetRequiredService<IServiceCollection>()
-                            .AddScoped(service.Key, service.Value);
-                    }
+                    // foreach (KeyValuePair<Type, Type> service in resolver.EntityServices)
+                    // {
+                    //     logger.LogInformation("Registering entity service {ServiceType}", service.Key);
+                    //     serviceProvider.GetRequiredService<IServiceCollection>()
+                    //         .AddScoped(service.Key, service.Value);
+                    // }
                 }
             }
             // Ajouter les contrôleurs dynamiquement
@@ -232,9 +239,11 @@ namespace Querier.Api.Common.Utilities
 
         public static void LoadAssemblyFromByteArray(
             string connectionName,
+            DbConnectionType connectionType,
             string connectionString,
             byte[] assemblyBytes,
             IServiceProvider serviceProvider,
+            IServiceCollection services,
             ApplicationPartManager partManager,
             ILogger logger)
         {
@@ -244,6 +253,12 @@ namespace Querier.Api.Common.Utilities
                 {
                     logger.LogError("ServiceProvider parameter is null");
                     throw new ArgumentNullException(nameof(serviceProvider));
+                }
+
+                if (services == null)
+                {
+                    logger.LogError("Services parameter is null");
+                    throw new ArgumentNullException(nameof(services));
                 }
 
                 if (partManager == null)
@@ -267,7 +282,7 @@ namespace Querier.Api.Common.Utilities
                         var assemblyLoadContext = new AssemblyLoadContext(connectionName);
                         var assembly = assemblyLoadContext.LoadFromStream(new MemoryStream(assemblyBytes));
                         logger.LogInformation("Successfully loaded assembly {AssemblyName}", assemblyName);
-                        LoadProcedureServiceAndEntityServicesAndAddMVCParts(assembly, assemblyName, connectionName, connectionString, serviceProvider, partManager, logger);
+                        LoadProcedureServiceAndEntityServicesAndAddMVCParts(assembly, assemblyName, connectionName, connectionType, connectionString, serviceProvider, services, partManager, logger);
                     }
                     catch (Exception ex)
                     {

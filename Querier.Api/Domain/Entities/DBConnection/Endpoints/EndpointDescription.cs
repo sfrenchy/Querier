@@ -25,6 +25,9 @@ namespace Querier.Api.Domain.Entities.QDBConnection.Endpoints
         public virtual DBConnection.DBConnection DBConnection { get; set; }
 
         [Required]
+        public string TargetTable { get; set; }
+        
+        [Required]
         public string Controller { get; set; }
 
         [Required]

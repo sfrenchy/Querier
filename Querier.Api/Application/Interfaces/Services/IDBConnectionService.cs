@@ -14,7 +14,7 @@ namespace Querier.Api.Application.Interfaces.Services
         Task<DBConnectionQueryAnalysisDto> GetQueryObjectsAsync(int connectionId, string query);
         Task<List<DBConnectionDatabaseServerInfoDto>> EnumerateServersAsync(string databaseType);
         Task<SourceDownload> GetConnectionSourcesAsync(int connectionId);
-        Task<List<DBConnectionEndpointInfoDto>> GetEndpointsAsync(int connectionId);
+        Task<List<DBConnectionEndpointInfoDto>> GetEndpointsAsync(int connectionId, string? targetTable, string? controller, string? action);
         Task<List<DBConnectionControllerInfoDto>> GetControllersAsync(int connectionId);
         Task<DBConnectionDto> GetByIdAsync(int id);
     }

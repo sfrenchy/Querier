@@ -7,12 +7,14 @@ using Microsoft.Extensions.Logging;
 using $nameSpace$.DTOs;
 using $nameSpace$.Services;
 using Querier.Api.Domain.Common.Models;
+using Querier.Api.Domain.Common.Attributes;
 
 namespace $nameSpace$.Controllers
 {
     $entityList: {entity|
     [Authorize]
     [ApiController]
+    [ControllerFor(Table = "$entity.PluralName$")]
     [Route("api/v1/$contextRoute$/$entity.Name$")]
     public class $entity.Name$Controller : ControllerBase
     {

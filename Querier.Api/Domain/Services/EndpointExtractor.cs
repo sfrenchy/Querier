@@ -8,8 +8,10 @@ using Microsoft.Extensions.Logging;
 using Querier.Api.Domain.Entities.QDBConnection.Endpoints;
 using Querier.Api.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Querier.Api.Common.Utilities;
+using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Domain.Common.Enums;
 
 namespace Querier.Api.Domain.Services
@@ -19,12 +21,14 @@ namespace Querier.Api.Domain.Services
         private readonly JsonSchemaGeneratorService _schemaGenerator;
         private readonly ILogger<EndpointExtractor> _logger;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceCollection _serviceCollection;
 
-        public EndpointExtractor(JsonSchemaGeneratorService schemaGenerator, ILogger<EndpointExtractor> logger, IServiceProvider serviceProvider)
+        public EndpointExtractor(JsonSchemaGeneratorService schemaGenerator, ILogger<EndpointExtractor> logger, IServiceProvider serviceProvider, IServiceCollection serviceCollection)
         {
             _schemaGenerator = schemaGenerator ?? throw new ArgumentNullException(nameof(schemaGenerator));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+            _serviceCollection = serviceCollection;
         }
 
         private string GetDbContextTypeName(Assembly assembly)
@@ -50,7 +54,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private DbContext GetDbContextForType(Type type)
+        private DbContext GetDbContextForType(DbContext context, Type type)
         {
             try
             {
@@ -111,6 +115,11 @@ namespace Querier.Api.Domain.Services
                 var endpoints = new List<EndpointDescription>();
                 var controllers = assembly.GetTypes().Where(t => typeof(ControllerBase).IsAssignableFrom(t));
                 var contextTypeName = GetDbContextTypeName(assembly);
+                var dbContextType = assembly.GetTypes()
+                    .FirstOrDefault(t => !t.IsAbstract && typeof(DbContext).IsAssignableFrom(t));
+
+                DbContext dbContext = Utils.GetDbContextFromTypeName(dbContextType.FullName, connectionString, connectionType);
+                
                 foreach (var controller in controllers)
                 {
                     try
@@ -119,7 +128,8 @@ namespace Querier.Api.Domain.Services
                         _logger.LogDebug("Processing controller: {ControllerName}", controller.Name);
                         var controllerRoute = controller.GetCustomAttributes<RouteAttribute>()
                             .FirstOrDefault()?.Template ?? string.Empty;
-                        
+                        var controllerTargetTable = controller.GetCustomAttributes<ControllerFor>()
+                            .FirstOrDefault()?.Table ?? string.Empty;
                         foreach (var action in controller.GetMethods())
                         {
                             try
@@ -153,7 +163,9 @@ namespace Querier.Api.Domain.Services
                                     Action = action.Name,
                                     Controller = controller.Name,
                                     HttpMethod = string.Join(", ", httpMethods),
+                                    TargetTable = controllerTargetTable,
                                     Route = CombineRoutes(controllerRoute.Replace("api/v1/", ""), actionRoute),
+                                    Parameters = GetParameters(dbContext, action).ToList(),
                                     Responses = GetResponses(action, contextTypeName, connectionString, connectionType).ToList(),
                                     Description = action.GetCustomAttribute<SummaryAttribute>()?.Summary ?? string.Empty,
                                     EntitySubjectJsonSchema = returnType != null ? _schemaGenerator.GenerateFromType(returnType, Utils.GetDbContextFromTypeName(contextTypeName, connectionString, connectionType)) : "{}"
@@ -228,13 +240,13 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private IEnumerable<EndpointParameter> GetParameters(MethodInfo action)
+        private IEnumerable<EndpointParameter> GetParameters(DbContext dbContext, MethodInfo action)
         {
             try
             {
                 _logger.LogTrace("Getting parameters for action: {ActionName}", action.Name);
                 var parameters = new List<EndpointParameter>();
-
+                
                 foreach (var param in action.GetParameters())
                 {
                     try
@@ -251,7 +263,7 @@ namespace Querier.Api.Domain.Services
                             Description = param.GetCustomAttribute<SummaryAttribute>()?.Summary ?? string.Empty,
                             IsRequired = required != null || !param.IsOptional,
                             Source = GetParameterSource(fromBody, fromQuery, fromRoute),
-                            JsonSchema = _schemaGenerator.GenerateFromType(param.ParameterType, GetDbContextForType(param.ParameterType))
+                            JsonSchema = _schemaGenerator.GenerateFromType(param.ParameterType, dbContext)
                         };
 
                         _logger.LogTrace("Added parameter {ParameterName} of type {ParameterType} for action {ActionName}", 

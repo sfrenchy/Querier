@@ -337,7 +337,7 @@ namespace Querier.Api.Infrastructure.Extensions
                 foreach(var connection in apiDbContext.DBConnections.ToList())
                 {
                     logger.LogDebug("Loading assembly for connection: {ConnectionName}", connection.Name);
-                    AssemblyLoader.LoadAssemblyFromDbConnection(connection, serviceProvider, mvc.PartManager, logger);
+                    AssemblyLoader.LoadAssemblyFromDbConnection(connection, serviceProvider, services, mvc.PartManager, logger);
                 }
 
                 logger.LogDebug("Regenerating Swagger documentation");

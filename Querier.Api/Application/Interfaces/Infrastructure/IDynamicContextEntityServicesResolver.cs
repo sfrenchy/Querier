@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Querier.Api.Domain.Common.Enums;
 
 namespace Querier.Api.Application.Interfaces.Infrastructure
 {
@@ -27,6 +29,6 @@ namespace Querier.Api.Application.Interfaces.Infrastructure
         /// <summary>
         /// Configure les services pour le contexte dynamique
         /// </summary>
-        void ConfigureServices(IServiceCollection services, string connectionString);
+        void ConfigureServices(IServiceCollection services, DbConnectionType ConnectionType, string connectionString, ILogger logger);
     }
 } 

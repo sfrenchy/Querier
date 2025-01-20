@@ -37,6 +37,7 @@ namespace Querier.Api.Domain.Services
         private readonly IDbConnectionRepository _dbConnectionRepository;
         private readonly ILogger<DbConnectionService> _logger;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceCollection _services;
         private readonly ApplicationPartManager _partManager;
         private readonly EndpointExtractor _endpointExtractor;
         private readonly DatabaseServerDiscovery _serverDiscovery;
@@ -45,6 +46,7 @@ namespace Querier.Api.Domain.Services
         public DbConnectionService(
             IDbConnectionRepository dbConnectionRepository,
             IServiceProvider serviceProvider,
+            IServiceCollection services,
             ILogger<DbConnectionService> logger,
             ApplicationPartManager partManager,
             ILogger<DatabaseServerDiscovery> serverDiscoveryLogger,
@@ -55,9 +57,10 @@ namespace Querier.Api.Domain.Services
             _logger = logger;
             _dbConnectionRepository = dbConnectionRepository;
             _serviceProvider = serviceProvider;
+            _services = services;
             _partManager = partManager;
             var jsonSchemaGenerator = new JsonSchemaGeneratorService(jsonSchemaGeneratorLogger);
-            _endpointExtractor = new EndpointExtractor(jsonSchemaGenerator, endpointExtractorLogger, serviceProvider);
+            _endpointExtractor = new EndpointExtractor(jsonSchemaGenerator, endpointExtractorLogger, serviceProvider, services);
             _serverDiscovery = new DatabaseServerDiscovery(serverDiscoveryLogger);
             _schemaExtractor = new DatabaseSchemaExtractor(schemaExtractorLogger);
         }
@@ -214,9 +217,11 @@ namespace Querier.Api.Domain.Services
                     // Create new connection
                     AssemblyLoader.LoadAssemblyFromByteArray(
                         connection.Name, 
+                        connection.ConnectionType,
                         connection.ConnectionString, 
                         assemblyBytes,
                         _serviceProvider,
+                        _services,
                         _partManager,
                         _logger);
                     
@@ -525,7 +530,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task<List<DBConnectionEndpointInfoDto>> GetEndpointsAsync(int connectionId)
+        public async Task<List<DBConnectionEndpointInfoDto>> GetEndpointsAsync(int connectionId, string? targetTable, string? controller, string? action)
         {
             try
             {
@@ -538,7 +543,23 @@ namespace Querier.Api.Domain.Services
                     throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
                 }
 
-                var endpoints = connection.Endpoints.Select(e => new DBConnectionEndpointInfoDto
+                var endpointsEntity = connection.Endpoints;
+                if (controller != null)
+                {
+                    endpointsEntity = endpointsEntity.Where(e => e.Controller == controller).ToList();
+                }
+
+                if (targetTable != null)
+                {
+                    endpointsEntity = endpointsEntity.Where(e => e.TargetTable == targetTable).ToList();
+                }
+
+                if (action != null)
+                {
+                    endpointsEntity = endpointsEntity.Where(e => e.Action == action).ToList();
+                }
+                
+                var endpoints = endpointsEntity.Select(e => new DBConnectionEndpointInfoDto
                 {
                     Controller = e.Controller,
                     Action = e.Action,
