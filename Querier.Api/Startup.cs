@@ -155,6 +155,7 @@ namespace Querier.Api
                 app.UseHealthChecks("/healthcheck")
                    .UseStaticFiles();
 
+                app.UseDynamicAssemblies();
                 _logger.LogInformation("Application configuration completed successfully");
             }
             catch (Exception ex)

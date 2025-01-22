@@ -34,6 +34,10 @@ using Querier.Api.Infrastructure.Swagger.Helpers;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerUI;
+using Querier.Api.Domain.Common.Enums;
+using Querier.Api.Domain.Entities.DBConnection;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Querier.Api.Infrastructure.Extensions
 {
@@ -414,6 +418,60 @@ namespace Querier.Api.Infrastructure.Extensions
             return services;
         }
 
+        public static void UseDynamicAssemblies(this IApplicationBuilder app)
+        {
+            var logger = app.ApplicationServices.GetRequiredService<ILogger<IApplicationBuilder>>();
+            logger.LogInformation("Loading dynamic assemblies from database");
+
+            try
+            {
+                using var scope = app.ApplicationServices.CreateScope();
+                var dbConnectionRepository = scope.ServiceProvider.GetRequiredService<IDbConnectionRepository>();
+                var assemblyManager = scope.ServiceProvider.GetRequiredService<IAssemblyManagerService>();
+
+                // Récupérer toutes les connexions de la base de données
+                var connections = dbConnectionRepository.GetAllDbConnectionsAsync().GetAwaiter().GetResult();
+                logger.LogInformation("Found {Count} database connections to load", connections.Count);
+
+                foreach (var connection in connections)
+                {
+                    try
+                    {
+                        if (connection.AssemblyDll == null || connection.AssemblyPdb == null)
+                        {
+                            logger.LogWarning("Connection {Name} has no assembly data", connection.Name);
+                            continue;
+                        }
+
+                        // Charger l'assembly
+                        logger.LogInformation("Loading assembly for connection {Name}", connection.Name);
+                        var container = assemblyManager.LoadAssemblyAsync(connection).GetAwaiter().GetResult();
+                        
+                        if (container != null)
+                        {
+                            logger.LogInformation("Successfully loaded assembly for connection {Name}", connection.Name);
+                        }
+                        else
+                        {
+                            logger.LogWarning("Failed to load assembly for connection {Name}", connection.Name);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error loading assembly for connection {Name}", connection.Name);
+                        // Continue avec la prochaine connexion même en cas d'erreur
+                    }
+                }
+
+                logger.LogInformation("Finished loading dynamic assemblies");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error loading dynamic assemblies");
+                throw;
+            }
+        }
+        
         public static void UseCustomSwagger(this IApplicationBuilder app)
         {
             app.UseStaticFiles();

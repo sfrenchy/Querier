@@ -159,7 +159,7 @@ namespace Querier.Api.Infrastructure.Services
                     connection.ConnectionString);
 
                 _serviceContainers.TryAdd(connection.Name, container);
-
+                await RegenerateSwaggerAsync();
                 return container;
             }
             catch (Exception ex)
