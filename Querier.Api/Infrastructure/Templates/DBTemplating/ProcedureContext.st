@@ -1,5 +1,4 @@
-using $nameSpace$.ProcedureResultSets;
-using $nameSpace$.ProcedureParameters;
+using $nameSpace$;
 using Microsoft.Data.SqlClient;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -53,41 +52,41 @@ namespace $nameSpace$
         }
 
         $procedureList: {procedure|
-            [DisplayName("$procedure.Name$")]
-            public virtual async $procedure.CSReturnSignature$ $procedure.CSName$Async($procedure.CSParameterSignature$)
+        [DisplayName("$procedure.Name$")]
+        public virtual async $procedure.CSReturnSignature$ $procedure.CSName$Async($procedure.CSParameterSignature$)
+        {
+            var parameterreturnValue = new SqlParameter
             {
-                var parameterreturnValue = new SqlParameter
-                {
-                    ParameterName = "returnValue",
-                    Direction = System.Data.ParameterDirection.Output,
-                    SqlDbType = System.Data.SqlDbType.Int,
-                \};
+                ParameterName = "returnValue",
+                Direction = System.Data.ParameterDirection.Output,
+                SqlDbType = System.Data.SqlDbType.Int,
+            \};
 
-                var sqlParameters = new []
-                {
-                    $procedure.Parameters: {parameter|
-                        new SqlParameter
-                        {
-                            ParameterName = "$parameter.Name$",
-                            Value = paramObject.$parameter.CSName$ ?? Convert.DBNull,
-                            SqlDbType = $parameter.SqlParameterType$
-                        \},
-                    }$
-                    parameterreturnValue
-                \};
+            var sqlParameters = new []
+            {
+                $procedure.Parameters: {parameter|
+                    new SqlParameter
+                    {
+                        ParameterName = "$parameter.Name$",
+                        Value = inputDto.$parameter.CSName$ ?? Convert.DBNull,
+                        SqlDbType = $parameter.SqlParameterType$
+                    \},
+                }$
+                parameterreturnValue
+            \};
 
-                $if (procedure.HasOutput)$
-                    var _ = await _context.SqlQueryAsync<$procedure.CSName$Result>("EXEC @returnValue = [dbo].[$procedure.Name$] $procedure.InlineParameters$", sqlParameters, cancellationToken);
-                $else$
-                    await _context.SqlQueryAsync<object>("EXEC @returnValue = [dbo].[$procedure.Name$] $procedure.InlineParameters$", sqlParameters, cancellationToken);
-                $endif$
+            $if (procedure.HasOutput)$
+                var _ = await _context.SqlQueryAsync<$procedure.CSName$Dto>("EXEC @returnValue = [dbo].[$procedure.Name$] $procedure.InlineParameters$", sqlParameters, cancellationToken);
+            $else$
+                await _context.SqlQueryAsync<object>("EXEC @returnValue = [dbo].[$procedure.Name$] $procedure.InlineParameters$", sqlParameters, cancellationToken);
+            $endif$
 
-                returnValue?.SetValue(parameterreturnValue.Value);
+            returnValue?.SetValue(parameterreturnValue.Value);
 
-                $if (procedure.HasOutput)$
-                return _;
-                $endif$
-            \}
+            $if (procedure.HasOutput)$
+            return _;
+            $endif$
+        \}
         }$
     \}
 \}

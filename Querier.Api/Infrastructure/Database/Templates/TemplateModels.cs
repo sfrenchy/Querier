@@ -96,5 +96,8 @@ namespace Querier.Api.Infrastructure.Database.Templates
                 return supportedTypes.Contains(CSType);
             }
         }
+
+        public bool IsForeignKey { get; set; }
+        public bool IsEntityKey => IsKey && !IsForeignKey;
     }
 } 

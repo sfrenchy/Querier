@@ -77,7 +77,7 @@ namespace Querier.Api.Domain.Entities.QDBConnection
                 string result = "OutputParameter<int> returnValue = null, CancellationToken cancellationToken = default";
                 if (HasParameters)
                 {
-                    result = $"{CSName}Params paramObject, {result}";
+                    result = $"{CSName}InputDto inputDto, {result}";
                 }
                 return result;
             }
@@ -89,7 +89,7 @@ namespace Querier.Api.Domain.Entities.QDBConnection
             {
                 if (!HasOutput)
                     return "Task";
-                return $"Task<List<{CSName}Result>>";
+                return $"Task<List<{CSName}Dto>>";
             }
         }
     }

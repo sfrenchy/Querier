@@ -175,17 +175,17 @@ namespace Querier.Api.Common.Utilities
 
                 if (resolver != null)
                 {
-                    resolver.ConfigureServices(services, connectionString);
-                    var dynamicContextListService =
-                        serviceProvider.GetRequiredService<IDynamicContextList>();
-                    logger.LogInformation("Adding DynamicContext {Name} for procedures", connectionName);
-                    dynamicContextListService.DynamicContexts.Add(connectionName, resolver);
-
-                    foreach (KeyValuePair<Type, Type> service in resolver.ProceduresServices)
-                    {
-                        logger.LogInformation("Registering procedure service {ServiceType}", service.Key);
-                        services.AddSingleton(service.Key, service.Value);
-                    }
+                    // resolver.ConfigureServices(services, connectionString);
+                    // var dynamicContextListService =
+                    //     serviceProvider.GetRequiredService<IDynamicContextList>();
+                    // logger.LogInformation("Adding DynamicContext {Name} for procedures", connectionName);
+                    // dynamicContextListService.DynamicContexts.Add(connectionName, resolver);
+                    //
+                    // foreach (KeyValuePair<Type, Type> service in resolver.ProceduresServices)
+                    // {
+                    //     logger.LogInformation("Registering procedure service {ServiceType}", service.Key);
+                    //     services.AddSingleton(service.Key, service.Value);
+                    // }
                 }
             }
             // Load entity services
@@ -199,8 +199,8 @@ namespace Querier.Api.Common.Utilities
 
                 if (resolver != null)
                 {
-                    resolver.ConfigureServices(services, connectionType, connectionString, logger);
-                    logger.LogInformation("Adding DynamicContext {Name} for entities", connectionName);
+                    //resolver.ConfigureServices(services, connectionType, connectionString, logger);
+                    //logger.LogInformation("Adding DynamicContext {Name} for entities", connectionName);
 
                     // foreach (KeyValuePair<Type, Type> service in resolver.EntityServices)
                     // {

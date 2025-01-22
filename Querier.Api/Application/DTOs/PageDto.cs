@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Data.Entity.Core.Objects.DataClasses;
 using System.Linq;
 using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Entities.Auth;

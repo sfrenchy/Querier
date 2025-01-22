@@ -140,7 +140,8 @@ namespace Querier.Api.Domain.Services
                     ContextNamespace = connectionNamespace,
                     ModelNamespace = connectionNamespace,
                     SuppressConnectionStringWarning = true,
-                    SuppressOnConfiguring = true
+                    SuppressOnConfiguring = true,
+                    UseDataAnnotations = true
                 };
 
                 var scaffoldedModelSources = scaffolder.ScaffoldModel(connection.ConnectionString, dbOpts, modelOpts, codeGenOpts);
@@ -162,20 +163,20 @@ namespace Querier.Api.Domain.Services
                     srcZipContent.Add(addFile.Path, addFile.Code);
                 }
 
+                List<Entities.QDBConnection.StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
+                procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
+
+                var procedureModel = new StoredProcedureTemplateModel
+                {
+                    NameSpace = connectionNamespace,
+                    ContextNameSpace = contextName,
+                    ContextRoute = connection.ContextApiRoute,
+                    ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
+                };
+                
                 // if scaffolding OK => Generate a common DB Schema representation for stored procedure
                 if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == DbConnectionType.SqlServer)
                 {
-                    List<Entities.QDBConnection.StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
-                    procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
-
-                    var procedureModel = new StoredProcedureTemplateModel
-                    {
-                        NameSpace = connectionNamespace,
-                        ContextNameSpace = contextName,
-                        ContextRoute = connection.ContextApiRoute,
-                        ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
-                    };
-
                     GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
                 }
 
@@ -187,8 +188,8 @@ namespace Querier.Api.Domain.Services
                     ContextRoute = connection.ContextApiRoute,
                     EntityList = ExtractEntityMetadata(scaffoldedModelSources)
                 };
-
-                GenerateEntityFiles(entityModel, srcZipContent, sourceFiles);
+                
+                GenerateEntityFiles(procedureModel, entityModel, srcZipContent, sourceFiles);
 
                 // Create source zip
                 byte[] sourceZipBytes = CreateSourceZip(srcZipContent);
@@ -266,24 +267,28 @@ namespace Querier.Api.Domain.Services
         {
             var templates = new[]
             {
-                ("ProcedureParameters", "ProcedureParameters\\ProcedureParameters.cs"),
-                ("ProcedureResultSet", "ProcedureResultSet\\ProcedureResultSet.cs"),
-                ("ProcedureReportRequests", "ProcedureReportRequests\\ProcedureReportRequests.cs"),
-                ("ProcedureContext", "ProcedureContext\\ProcedureContext.cs"),
-                ("ProcedureService", "ProcedureService\\ProcedureService.cs"),
-                ("ProcedureServiceResolver", "ProcedureServiceResolver\\ProcedureServiceResolver.cs"),
-                ("ProcedureController", "ProcedureController\\ProcedureController.cs")
+                ("DynamicContextExceptions", "Exceptions\\DynamicContextExceptions.cs"),
+                ("ProcedureContext", "Context\\ProcedureContext.cs"),
+                ("ProcedureController", "Controllers\\ProcedureController.cs"),
+                ("ProcedureDto", "DTOs\\ProcedureDtos.cs"),
+                ("ProcedureInputDto", "DTOs\\ProcedureInputDtos.cs"),
+                ("ProcedureReportRequests", "Reports\\ProcedureReportRequests.cs"),
+                ("ProcedureRepository", "Repositories\\ProcedureRepository.cs"),
+                ("ProcedureService", "Services\\ProcedureService.cs"),
+                ("ProcedureServiceResolver", "Services\\ProcedureServiceResolver.cs"),
+                
             };
 
             foreach (var (templateName, outputPath) in templates)
             {
+                _logger.LogDebug($"Processing template {templateName}");
                 var template = new Template(File.ReadAllText(
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
                 ), '$', '$');
 
                 template.Add("nameSpace", model.NameSpace);
                 template.Add("contextNameSpace", model.ContextNameSpace);
-                template.Add("procedureList", templateName == "ProcedureResultSet" 
+                template.Add("procedureList", templateName == "ProcedureDto" 
                     ? model.ProcedureList.Where(s => s.HasOutput).ToList() 
                     : model.ProcedureList);
 
@@ -296,22 +301,28 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private void GenerateEntityFiles(TemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateEntityFiles(StoredProcedureTemplateModel procedureModel, TemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
         {
             var templates = new[]
             {
-                ("EntityDto", "DTOs\\EntityDtos.cs"),
-                ("EntityService", "Services\\EntityServices.cs"),
-                ("EntityController", "Controllers\\EntityControllers.cs"),
-                ("EntityServiceResolver", "Services\\EntityServiceResolver.cs")
+                ("DynamicServiceContainer", "Services\\DynamicServiceContainer.cs"),
+                ("EntityController","Controllers\\EntityController.cs"),
+                ("EntityDto","Entities\\EntityDto.cs"),
+                ("EntityRepository","Repositories\\EntityRepository.cs"),
+                ("EntityService","Services\\EntityService.cs"),
+                ("EntityServiceResolver","Services\\EntityServiceResolver.cs"),
             };
 
             foreach (var (templateName, outputPath) in templates)
             {
+                _logger.LogDebug($"Processing template {templateName}");
                 var template = new Template(File.ReadAllText(
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
                 ), '$', '$');
 
+                template.Add("procedureList", templateName == "ProcedureDto" 
+                    ? procedureModel.ProcedureList.Where(s => s.HasOutput).ToList() 
+                    : procedureModel.ProcedureList);
                 template.Add("nameSpace", model.NameSpace);
                 template.Add("contextNameSpace", model.ContextNameSpace);
                 template.Add("entityList", model.EntityList);
@@ -417,7 +428,8 @@ namespace Querier.Api.Domain.Services
                 typeof(Enumerable),
                 typeof(MemoryStream),
                 typeof(StreamReader),
-                typeof(System.Linq.Dynamic.Core.DynamicClassFactory)
+                typeof(System.Linq.Dynamic.Core.DynamicClassFactory),
+                typeof(MySqlConnector.MySqlConnection)
             };
 
             refs.AddRange(additionalAssemblies.Select(t => MetadataReference.CreateFromFile(t.Assembly.Location)));
@@ -670,7 +682,33 @@ namespace Querier.Api.Domain.Services
                     PluralName = pluralizer.Pluralize(entityName),
                     Properties = new List<TemplateProperty>()
                 };
+                List<string> keys = new List<string>();
+                List<string> foreignKeys = new List<string>();
 
+                foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
+                {
+                    var keyAttributes = property.AttributeLists
+                        .SelectMany(al => al.Attributes)
+                        .Where(a => a.Name.ToString() == "Key")
+                        .Select(a => property.Identifier.Text)
+                        .ToList();
+                    
+                    keys.AddRange(keyAttributes);
+                }
+                
+                foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
+                {
+                    var foreignKeyAttributes = property.AttributeLists
+                        .SelectMany(al => al.Attributes)
+                        .Where(a => a.Name.ToString() == "ForeignKey")
+                        .SelectMany(a => a.ArgumentList.Arguments)
+                        .Select(a => a.Expression.ToString().Replace("\"", "")).ToList();
+                    
+                    foreach (var foreignKey in foreignKeyAttributes)
+                        if (!keys.Contains(foreignKey))
+                            foreignKeys.Add(foreignKey);
+                }
+                    
                 foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
                 {
                     var attributes = property.AttributeLists
@@ -678,9 +716,9 @@ namespace Querier.Api.Domain.Services
                         .Select(a => a.Name.ToString())
                         .ToList();
 
-                    var isKey = attributes.Contains("Key") || 
-                               property.Identifier.Text.Equals("Id", StringComparison.OrdinalIgnoreCase) ||
-                               property.Identifier.Text.EndsWith("Id", StringComparison.OrdinalIgnoreCase);
+                    var isKey = keys.Contains(property.Identifier.Text);
+
+                    var isForeignKey = foreignKeys.Contains(property.Identifier.Text);
 
                     var isRequired = attributes.Contains("Required");
                     var isAutoGenerated = attributes.Contains("DatabaseGenerated") && 
@@ -696,7 +734,8 @@ namespace Querier.Api.Domain.Services
                         CSType = property.Type.ToString(),
                         IsKey = isKey,
                         IsRequired = isRequired,
-                        IsAutoGenerated = isAutoGenerated
+                        IsAutoGenerated = isAutoGenerated,
+                        IsForeignKey = isForeignKey
                     };
 
                     entity.Properties.Add(prop);

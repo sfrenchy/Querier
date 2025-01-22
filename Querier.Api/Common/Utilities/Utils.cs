@@ -182,6 +182,10 @@ namespace Querier.Api.Common.Utilities
             }
         }
 
+        public static string ComputeMd5Hash(string str)
+        {
+            return ComputeMd5Hash(Encoding.UTF8.GetBytes(str));
+        }
         public static string ComputeMd5Hash(byte[] objectAsBytes)
         {
             if (objectAsBytes == null)

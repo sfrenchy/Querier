@@ -1,120 +1,138 @@
-using $nameSpace$;
-using $nameSpace$.ProcedureParameters;
-using $nameSpace$.ProcedureReportRequests;
-using $nameSpace$.ProcedureResultSets;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System;
-using System.Linq;
 using System.IO;
+using $nameSpace$.Repositories;
+using $nameSpace$.Exceptions;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Infrastructure.Database.Services.Base;
-
+using Querier.Api.Infrastructure.Database.Parameters;
 
 namespace $nameSpace$.Services
 {
     $procedureList: {procedure|
     #region $procedure.Name$
-    public interface I$procedure.CSName$Service $if (procedure.HasParameters && procedure.HasOutput)$: IDynamicContextProcedureWithParamsAndResult$endif$ $if (procedure.HasParameters && !procedure.HasOutput)$: IDynamicContextProcedureWithParams$endif$
+    /// <summary>
+    /// Service interface for $procedure.CSName$ stored procedure
+    /// </summary>
+    public interface I$procedure.CSName$Service
     {
-        Task$if (procedure.HasOutput)$<List<$procedure.CSName$Result>?>$endif$ ExecuteAsync($if (procedure.HasParameters)$$procedure.CSName$Params parameters$endif$);
-        $if (procedure.HasOutput)$
-        List<string> GetSummableColumns();
-        $endif$
+        /// <summary>
+        /// Executes the $procedure.CSName$ stored procedure
+        /// </summary>
+        /// <param name="parameters">The parameters for the stored procedure</param>
+        /// <returns>A list of results from the stored procedure execution</returns>
+        Task<List<$procedure.CSName$Dto>> ExecuteAsync($procedure.CSName$InputDto parameters);
     \}
 
     [DynamicContextProcedure(ContextName="$nameSpace$", ServiceName="I$procedure.CSName$Service")]
-    public partial class StoredProcedure$procedure.CSName$Service : $if (procedure.HasOutput)$DynamicContextServiceBaseWithResult$else$DynamicContextServiceBase$endif$, I$procedure.CSName$Service
+    public class $procedure.CSName$Service : DynamicContextServiceBase, I$procedure.CSName$Service
     {
-        protected readonly IDbContextFactory<$contextNameSpace$> _contextFactory;
-        protected readonly IDistributedCache _memoryCache;
-        protected readonly ILogger<StoredProcedure$procedure.CSName$Service> _logger;
+        private readonly I$procedure.CSName$Repository _repository;
+        private readonly IDistributedCache _cache;
+        private readonly ILogger<$procedure.CSName$Service> _logger;
+        private static readonly DistributedCacheEntryOptions _cacheOptions = new() {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
+            SlidingExpiration = TimeSpan.FromMinutes(10)
+        \};
 
-        public StoredProcedure$procedure.CSName$Service(IDbContextFactory<$contextNameSpace$> contextFactory, ILogger<StoredProcedure$procedure.CSName$Service> logger, IDistributedCache memoryCache)
+        public $procedure.CSName$Service(
+            I$procedure.CSName$Repository repository,
+            IDistributedCache cache,
+            ILogger<$procedure.CSName$Service> logger)
         {
-            _logger = logger;
-            _contextFactory = contextFactory;
-            _memoryCache = memoryCache;
-        \}
-
-        $if (procedure.HasParameters && !procedure.HasOutput)$
-        public async Task ExecuteAsync(Dictionary<string, object> parameters)
-        {
-            $procedure.CSName$Params p = new $procedure.CSName$Params();
-
-            $procedure.Parameters: {parameter|
-            p.$parameter.CSName$ = GetParameterValue<$parameter.CSType$>(parameters["$parameter.CSName$"]);
-            }$
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             
-            await ExecuteAsync(p);
+            _logger.LogDebug("Initializing $procedure.CSName$Service");
         \}
-        $endif$
 
-        $if (procedure.HasParameters && procedure.HasOutput)$
-        public async Task<List<dynamic>?> ExecuteAsync(Dictionary<string, object> parameters)
-        {
-            $procedure.CSName$Params p = new $procedure.CSName$Params();
-
-            $procedure.Parameters: {parameter|
-            p.$parameter.CSName$ = GetParameterValue<$parameter.CSType$>(parameters["$parameter.CSName$"]);
-            }$
-            
-            return ((IEnumerable<dynamic>) await ExecuteAsync(p)).ToList();
-        \}
-        $endif$
-
-        public virtual async Task$if (procedure.HasOutput)$<List<$procedure.CSName$Result>?>$endif$ ExecuteAsync($if (procedure.HasParameters)$$procedure.CSName$Params parameters$endif$)
-        {
-            _logger.LogInformation("$procedure.CSName$ExecuteAsync");
-            using (var context = _contextFactory.CreateDbContext())
-            {
-            $if (procedure.HasOutput)$
-                var _ = new List<$procedure.CSName$Result>();
-                var cacheKey = "$procedure.CSName$ExecuteAsync"$if (procedure.HasParameters)$ + Utils.ComputeMd5Hash(Utils.ObjectToByteArray(parameters))$endif$;
-                byte[] objectFromCache = await _memoryCache.GetAsync(cacheKey);
-                DateTime s = DateTime.Now;
-                if (objectFromCache == null)
-                {
-                    _logger.LogInformation("$procedure.CSName$ExecuteAsync: Cache miss");
-                    _ = await context.Procedures.$procedure.CSName$Async($if (procedure.HasParameters)$parameters$endif$);
-                    _logger.LogInformation(\$"$procedure.CSName$ExecuteAsync: Time to get datas:", (DateTime.Now - s).TotalSeconds);
-                    await _memoryCache.SetAsync(cacheKey, Utils.ObjectToByteArray(_), DefaultDistributedCacheExpiryOptions);
+        private async Task<T> ExecuteCacheOperationAsync<T>(string operation, string cacheKey, Func<Task<T>> databaseOperation) {
+            try {
+                var cachedData = await _cache.GetAsync(cacheKey);
+                if (cachedData != null) {
+                    _logger.LogDebug("Cache hit for key: " + cacheKey);
+                    using var stream = new MemoryStream(cachedData);
+                    using var reader = new StreamReader(stream);
+                    return JsonConvert.DeserializeObject<T>(await reader.ReadToEndAsync()) 
+                        ?? throw new CacheOperationException("Deserialize", "Failed to deserialize cached data");
                 \}
-                else
-                {
-                    _logger.LogInformation("$procedure.CSName$ExecuteAsync: Cache hit");
-                    using (StreamReader sr = new StreamReader(new MemoryStream(objectFromCache)))
-                    {
-                        _ = JsonConvert.DeserializeObject<List<$procedure.CSName$Result>>(sr.ReadToEnd());
-                        _logger.LogInformation(\$"$procedure.CSName$ExecuteAsync: Time to get datas:", (DateTime.Now - s).TotalSeconds);
+
+                _logger.LogDebug("Cache miss for key: " + cacheKey);
+                var startTime = DateTime.UtcNow;
+
+                var result = await databaseOperation();
+
+                var executionTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                _logger.LogDebug("Operation executed in " + executionTime.ToString() + "ms");
+
+                if (result != null) {
+                    try {
+                        var serializedData = JsonConvert.SerializeObject(result);
+                        await _cache.SetAsync(
+                            cacheKey,
+                            System.Text.Encoding.UTF8.GetBytes(serializedData),
+                            _cacheOptions
+                        );
+                    \}
+                    catch (Exception ex) {
+                        _logger.LogWarning(ex, "Failed to cache result for key: " + cacheKey);
                     \}
                 \}
-                return _;
+
+                return result;
             \}
-            $else$
-                await context.Procedures.$procedure.CSName$Async($if (procedure.HasParameters)$parameters$endif$);
+            catch (Exception ex) when (ex is not DynamicContextException) {
+                throw new CacheOperationException(operation, "Cache operation failed", ex);
+            \}
+        \}
+
+        public async Task<List<$procedure.CSName$Dto>> ExecuteAsync($procedure.CSName$InputDto parameters) {
+            if (parameters == null) {
+                throw new EntityValidationException("$procedure.CSName$", "Parameters cannot be null");
+            \}
+
+            // Validate required parameters
+            $procedure.Parameters: {param|
+            $if(!param.IsOutput && !param.IsNullable)$
+            if (parameters.$param.CSName$ == null) {
+                throw new EntityValidationException("$procedure.CSName$", "Parameter $param.Name$ is required");
             \}
             $endif$
-        \}
-
-        $if (procedure.HasOutput)$
-        public override List<string> GetSummableColumns()
-        {
-            return new List<string> {
-            $procedure.SummableOutputColumns:{summableOutputColumn|
-                "$summableOutputColumn$",
             }$
-            \};
+
+            try {
+                var cacheKey = "$procedure.CSName$_" + Utils.ComputeMd5Hash(JsonConvert.SerializeObject(parameters));
+                return await ExecuteCacheOperationAsync("Execute", cacheKey, async () => {
+                    try {
+                        var results = await _repository.ExecuteAsync(parameters);
+                        return results ?? new List<$procedure.CSName$Dto>();
+                    \}
+                    catch (Exception ex) {
+                        throw new StoredProcedureException(
+                            "$procedure.CSName$",
+                            "Failed to execute stored procedure",
+                            ex
+                        );
+                    \}
+                \});
+            \}
+            catch (Exception ex) when (ex is not DynamicContextException) {
+                throw new StoredProcedureException(
+                    "$procedure.CSName$",
+                    "An unexpected error occurred while executing the stored procedure",
+                    ex
+                );
+            \}
         \}
-        $endif$
     \}
     #endregion
-
     }$
 \}
