@@ -37,5 +37,10 @@ namespace Querier.Api.Application.Interfaces.Infrastructure
         /// Valide que tous les services nécessaires sont correctement configurés
         /// </summary>
         bool ValidateConfiguration();
+
+        /// <summary>
+        /// Gets the service provider for this container
+        /// </summary>
+        IServiceProvider ServiceProvider { get; }
     }
 }

@@ -2,10 +2,11 @@ namespace Querier.Api.Domain.Common.Enums
 {
     public enum DBConnectionState
     {
-        None,
-        ConnectionError,
-        Connected,
-        CompilationError,
-        Available
+        Unknown = 0,
+        Connected = 1,
+        ConnectionError = 2,
+        CompilationError = 3,
+        Available = 4,
+        LoadError = 5
     }
 }

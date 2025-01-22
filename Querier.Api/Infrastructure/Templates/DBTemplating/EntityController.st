@@ -10,6 +10,7 @@ using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Common.Attributes;
 using Microsoft.AspNetCore.Http;
 using $nameSpace$.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace $nameSpace$.Controllers
 {
@@ -43,11 +44,11 @@ namespace $nameSpace$.Controllers
         /// <response code="200">Returns the paged list of entities</response>
         /// <response code="400">If the parameters are invalid</response>
         /// <response code="500">If there was an internal server error</response>
-        [HttpGet]
+        [HttpPost("records")]
         [ProducesResponseType(typeof(DataPagedResult<$entity.Name$Dto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<DataPagedResult<$entity.Name$Dto>>> GetAll([FromQuery] DataRequestParametersDto parameters)
+        public async Task<ActionResult<DataPagedResult<$entity.Name$Dto>>> GetAll([FromBody] DataRequestParametersDto parameters)
         {
             try
             {
@@ -270,7 +271,7 @@ namespace $nameSpace$.Controllers
         /// <response code="200">Returns the list of unique values</response>
         /// <response code="400">If the column name is invalid</response>
         /// <response code="500">If there was an internal server error</response>
-        [HttpGet("unique-values/{column\}")]
+        [HttpGet("columns/{columnName\}/values")]
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]

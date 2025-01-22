@@ -10,7 +10,7 @@ namespace Querier.Api.Application.Interfaces.Infrastructure
     /// <summary>
     /// Gère le cycle de vie des assemblies dynamiques et leurs conteneurs de services
     /// </summary>
-    public interface IAssemblyManager
+    public interface IAssemblyManagerService
     {
         /// <summary>
         /// Charge une assembly à partir d'une connexion de base de données
@@ -28,6 +28,16 @@ namespace Querier.Api.Application.Interfaces.Infrastructure
         /// <param name="assemblyBytes">Contenu de l'assembly</param>
         /// <returns>Le conteneur de services pour l'assembly chargée</returns>
         Task<IDynamicContextServiceContainer> LoadAssemblyAsync(string name, DbConnectionType connectionType, string connectionString, byte[] assemblyBytes);
+
+        /// <summary>
+        /// Charge une assembly à partir d'un fichier
+        /// </summary>
+        /// <param name="name">Nom de l'assembly</param>
+        /// <param name="connectionType">Type de connexion</param>
+        /// <param name="connectionString">Chaîne de connexion</param>
+        /// <param name="assemblyPath">Chemin du fichier de l'assembly</param>
+        /// <returns>Le conteneur de services pour l'assembly chargée</returns>
+        Task<IDynamicContextServiceContainer> LoadAssemblyFromFileAsync(string name, DbConnectionType connectionType, string connectionString, string assemblyPath);
 
         /// <summary>
         /// Décharge une assembly
@@ -48,10 +58,5 @@ namespace Querier.Api.Application.Interfaces.Infrastructure
         /// <param name="name">Nom de l'assembly</param>
         /// <returns>True si l'assembly est chargée, false sinon</returns>
         bool IsAssemblyLoaded(string name);
-
-        /// <summary>
-        /// Régénère la documentation Swagger pour toutes les assemblies chargées
-        /// </summary>
-        Task RegenerateSwaggerAsync();
     }
 } 

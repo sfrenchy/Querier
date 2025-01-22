@@ -15,67 +15,81 @@ namespace $nameSpace$
     /// </summary>
     public class $contextNameSpace$ServiceContainer : IDynamicContextServiceContainer
     {
-        private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger _logger;
+        private readonly IServiceCollection _services;
+        private IServiceProvider _serviceProvider;
         private readonly Dictionary<Type, Type> _entityServices;
         private readonly Dictionary<string, Type> _entityNameService;
         private readonly Dictionary<Type, Type> _proceduresServices;
         private readonly Dictionary<string, Type> _procedureNameService;
-        private readonly ILogger _logger;
 
-        public $contextNameSpace$ServiceContainer(IServiceProvider serviceProvider, ILogger logger)
+        public $contextNameSpace$ServiceContainer(IServiceCollection services, ILogger logger)
         {
-            _serviceProvider = serviceProvider;
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _services = services ?? throw new ArgumentNullException(nameof(services));
             _entityServices = new Dictionary<Type, Type>();
             _entityNameService = new Dictionary<string, Type>();
             _proceduresServices = new Dictionary<Type, Type>();
             _procedureNameService = new Dictionary<string, Type>();
-        \}
+        }
+
+        public IServiceProvider ServiceProvider => _serviceProvider;
 
         public T GetService<T>() where T : class
         {
+            EnsureServiceProvider();
             return _serviceProvider.GetService<T>();
-        \}
+        }
 
         public IEnumerable<T> GetServices<T>() where T : class
         {
+            EnsureServiceProvider();
             return _serviceProvider.GetServices<T>();
-        \}
+        }
 
         public IServiceScope CreateScope()
         {
+            EnsureServiceProvider();
             return _serviceProvider.CreateScope();
-        \}
+        }
+
+        private void EnsureServiceProvider()
+        {
+            if (_serviceProvider == null)
+            {
+                throw new InvalidOperationException("Service provider not initialized. Call ConfigureServices first.");
+            }
+        }
 
         public Type GetEntityServiceType(string entityName)
         {
             return _entityNameService.TryGetValue(entityName, out Type serviceType) ? serviceType : null;
-        \}
+        }
 
         public void RegisterEntityServiceType(string entityName, Type serviceType)
         {
             _entityNameService[entityName] = serviceType;
-        \}
+        }
 
         public bool HasEntityService(string entityName)
         {
             return _entityNameService.ContainsKey(entityName);
-        \}
+        }
 
         public Type GetProcedureServiceType(string procedureName)
         {
             return _procedureNameService.TryGetValue(procedureName, out Type serviceType) ? serviceType : null;
-        \}
+        }
 
         public void RegisterProcedureServiceType(string procedureName, Type serviceType)
         {
             _procedureNameService[procedureName] = serviceType;
-        \}
+        }
 
         public bool HasProcedureService(string procedureName)
         {
             return _procedureNameService.ContainsKey(procedureName);
-        \}
+        }
 
         public void ConfigureServices(IServiceCollection services, DbConnectionType connectionType, string connectionString, ILogger logger)
         {
@@ -91,50 +105,77 @@ namespace $nameSpace$
                         {
                             sqlOptions.EnableRetryOnFailure(3);
                             sqlOptions.CommandTimeout(30);
-                        \});
+                        });
                         break;
                     case DbConnectionType.MySql:
                         options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), mySqlOptions =>
                         {
                             mySqlOptions.EnableRetryOnFailure(3);
                             mySqlOptions.CommandTimeout(30);
-                        \});
+                        });
                         break;
                     case DbConnectionType.PgSql:
                         options.UseNpgsql(connectionString, npgsqlOptions =>
                         {
                             npgsqlOptions.EnableRetryOnFailure(3);
                             npgsqlOptions.CommandTimeout(30);
-                        \});
+                        });
                         break;
                     default:
                         throw new ArgumentException("Type de connexion non supporté : " + connectionType.ToString());
-                \}
-            \});
+                }
+            });
 
             // Enregistrement des repositories
             $entityList: {entity|
-            services.AddScoped<I$entity.Name$Repository, $entity.Name$Repository>();
+            services.AddTransient<I$entity.Name$Repository, $entity.Name$Repository>();
             }$
 
+            $procedureList: {procedure|
+            services.AddTransient<I$procedure.CSName$Repository, $procedure.CSName$Repository>();
+            }$
+            
             // Enregistrement des services
             $entityList: {entity|
-            services.AddScoped<I$entity.Name$Service, $entity.Name$Service>();
+            services.AddTransient<I$entity.Name$Service, $entity.Name$Service>();
             RegisterEntityServiceType("$entity.Name$", typeof(I$entity.Name$Service));
             }$
 
             $procedureList: {procedure|
-            services.AddScoped<I$procedure.CSName$Service, $procedure.CSName$Service>();
+            services.AddTransient<I$procedure.CSName$Service, $procedure.CSName$Service>();
             RegisterProcedureServiceType("$procedure.CSName$", typeof(I$procedure.CSName$Service));
             }$
 
             _logger.LogInformation("Configuration des services terminée pour " + typeof($contextNameSpace$ServiceContainer).Name);
-        \}
+
+            // Construction du service provider après la configuration complète
+            _serviceProvider = services.BuildServiceProvider();
+        }
 
         public bool ValidateConfiguration()
         {
             try
             {
+                _logger.LogInformation("Validating service container configuration");
+                
+                // Vérifier que les services essentiels sont disponibles
+                var requiredServices = new[]
+                {
+                    typeof(ILogger),
+                    typeof(IServiceProvider),
+                    // Ajouter d'autres services requis ici
+                };
+
+                foreach (var serviceType in requiredServices)
+                {
+                    var service = _serviceProvider.GetService(serviceType);
+                    if (service == null)
+                    {
+                        _logger.LogError("Required service " + serviceType.Name + " is not registered");
+                        return false;
+                    }
+                }
+
                 // Vérification de l'accès au DbContext
                 using var scope = CreateScope();
                 var dbContext = scope.ServiceProvider.GetService<$contextNameSpace$>();
@@ -142,7 +183,7 @@ namespace $nameSpace$
                 {
                     _logger.LogError("DbContext non configuré");
                     return false;
-                \}
+                }
 
                 // Vérification des services d'entités
                 foreach (var entityName in _entityNameService.Keys)
@@ -150,10 +191,10 @@ namespace $nameSpace$
                     var serviceType = GetEntityServiceType(entityName);
                     if (serviceType == null)
                     {
-                        _logger.LogError("Service d'entité non trouvé pour {EntityName}", entityName);
+                        _logger.LogError("Service d'entité non trouvé pour " + entityName);
                         return false;
-                    \}
-                \}
+                    }
+                }
 
                 // Vérification des services de procédures
                 foreach (var procedureName in _procedureNameService.Keys)
@@ -161,19 +202,19 @@ namespace $nameSpace$
                     var serviceType = GetProcedureServiceType(procedureName);
                     if (serviceType == null)
                     {
-                        _logger.LogError("Service de procédure non trouvé pour {ProcedureName}", procedureName);
+                        _logger.LogError("Service de procédure non trouvé pour " + procedureName);
                         return false;
-                    \}
-                \}
+                    }
+                }
 
-                _logger.LogInformation("Validation de la configuration réussie");
+                _logger.LogInformation("Service container configuration is valid");
                 return true;
-            \}
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erreur lors de la validation de la configuration");
+                _logger.LogError(ex, "Error validating service container configuration");
                 return false;
-            \}
-        \}
-    \}
-\}
+            }
+        }
+    }
+}

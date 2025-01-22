@@ -2,6 +2,7 @@ using System;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -51,7 +52,16 @@ namespace Querier.Api
 
                 // Configuration des contrôleurs et CORS
                 _logger.LogInformation("Configuring controllers and CORS");
-                services.AddControllers()
+
+                // Enregistrer notre activateur de contrôleur dynamique
+                services.AddDynamicControllerActivator();
+
+                services.AddControllers(options =>
+                {
+                    // Configurer MVC pour utiliser notre activateur
+                    var activator = services.BuildServiceProvider().GetRequiredService<IControllerActivator>();
+                    options.EnableEndpointRouting = true;
+                })
                        .AddNewtonsoftJson(options => {
                            options.SerializerSettings.ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver();
                            options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Include;
@@ -76,7 +86,7 @@ namespace Querier.Api
 
                 // Chargement dynamique des assemblies depuis la base de données
                 _logger.LogInformation("Loading dynamic assemblies");
-                await services.AddDynamicAssemblies(_configuration);
+                //await services.AddDynamicAssemblies(_configuration);
 
                 _logger.LogInformation("Services configuration completed successfully");
             }

@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Application.Interfaces.Repositories;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Common.Utilities;
@@ -245,6 +248,7 @@ namespace Querier.Api.Infrastructure.Extensions
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             // Core services
+            services.AddSingleton<IAssemblyManagerService, AssemblyManagerService>();
             services.AddScoped<IDatasourcesService, DatasourcesService>();
             services.AddScoped<IWizardService, WizardService>();
             services.AddScoped<IDbConnectionService, DbConnectionService>();
@@ -316,39 +320,6 @@ namespace Querier.Api.Infrastructure.Extensions
             }
 
             return services;
-        }
-
-        public static async Task AddDynamicAssemblies(this IServiceCollection services, IConfiguration configuration)
-        {
-            var logger = services.BuildServiceProvider().GetRequiredService<ILogger<Startup>>();
-            logger.LogInformation("Loading dynamic assemblies");
-
-            try
-            {
-                var optionsBuilder = new DbContextOptionsBuilder<ApiDbContext>();
-                var serviceProvider = services.BuildServiceProvider();
-                var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
-                var dbLogger = loggerFactory.CreateLogger<ApiDbContext>();
-
-                await using var apiDbContext = new ApiDbContext(optionsBuilder.Options, configuration, dbLogger);
-                var swaggerProvider = serviceProvider.GetRequiredService<ISwaggerProvider>();
-                var mvc = services.AddControllers();
-
-                foreach(var connection in apiDbContext.DBConnections.ToList())
-                {
-                    logger.LogDebug("Loading assembly for connection: {ConnectionName}", connection.Name);
-                    AssemblyLoader.LoadAssemblyFromDbConnection(connection, serviceProvider, services, mvc.PartManager, logger);
-                }
-
-                logger.LogDebug("Regenerating Swagger documentation");
-                AssemblyLoader.RegenerateSwagger(swaggerProvider, logger);
-                logger.LogInformation("Dynamic assemblies loaded successfully");
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to load dynamic assemblies");
-                throw;
-            }
         }
 
         public static IServiceCollection AddCustomSwagger(this IServiceCollection services)
@@ -680,6 +651,21 @@ namespace Querier.Api.Infrastructure.Extensions
                     </style>
                 ";
             });
+        }
+
+        public static IServiceCollection AddDynamicControllerActivator(this IServiceCollection services)
+        {
+            // Supprimer l'enregistrement existant de IControllerActivator s'il existe
+            var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IControllerActivator));
+            if (descriptor != null)
+            {
+                services.Remove(descriptor);
+            }
+            
+            // Enregistrer notre activateur comme l'implémentation unique
+            services.AddSingleton<IControllerActivator, DynamicControllerActivator>();
+            
+            return services;
         }
     }
 } 
