@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.Interfaces.Repositories;
+using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Entities.Menu;
 using Querier.Api.Infrastructure.Data.Context;
 
@@ -193,6 +194,75 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting maximum order value for row ID: {RowId}", rowId);
+                throw;
+            }
+        }
+
+        public async Task<DataPagedResult<Card>> GetByRowIdPagedAsync(int rowId, DataRequestParametersDto parameters)
+        {
+            try
+            {
+                _logger.LogDebug("Retrieving paged cards for row ID: {RowId}, Page: {PageNumber}, Size: {PageSize}", 
+                    rowId, parameters.PageNumber, parameters.PageSize);
+                
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var query = context.Cards
+                    .AsNoTracking()
+                    .AsSplitQuery()
+                    .Include(c => c.CardTranslations)
+                    .Where(c => c.RowId == rowId);
+
+                // Apply global search if specified
+                if (!string.IsNullOrWhiteSpace(parameters.GlobalSearch))
+                {
+                    var search = parameters.GlobalSearch.ToLower();
+                    query = query.Where(c => c.CardTranslations.Any(ct => 
+                        ct.Title.ToLower().Contains(search)));
+                }
+
+                // Apply column searches if any
+                if (parameters.ColumnSearches?.Any() == true)
+                {
+                    foreach (var columnSearch in parameters.ColumnSearches)
+                    {
+                        // Add specific column search logic here if needed
+                        // Example: query = query.Where(...);
+                    }
+                }
+
+                // Apply ordering
+                if (parameters.OrderBy?.Any() == true)
+                {
+                    // Apply custom ordering if specified
+                    foreach (var orderBy in parameters.OrderBy)
+                    {
+                        // Add specific ordering logic here if needed
+                        // Example: query = query.OrderBy(...)
+                    }
+                }
+                else
+                {
+                    // Default ordering by Order field
+                    query = query.OrderBy(c => c.Order);
+                }
+
+                // Get total count
+                var total = await query.CountAsync();
+
+                // Apply pagination
+                var items = await query
+                    .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+                    .Take(parameters.PageSize)
+                    .ToListAsync();
+
+                _logger.LogDebug("Retrieved {Count} cards from total {Total} for row ID: {RowId}", 
+                    items.Count, total, rowId);
+
+                return new DataPagedResult<Card>(items, total, parameters);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving paged cards for row ID: {RowId}", rowId);
                 throw;
             }
         }

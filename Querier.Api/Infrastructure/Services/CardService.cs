@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories;
 using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Infrastructure.Services
@@ -236,6 +237,28 @@ namespace Querier.Api.Infrastructure.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error reordering cards in row ID: {RowId}", rowId);
+                throw;
+            }
+        }
+
+        public async Task<DataPagedResult<CardDto>> GetByRowIdPagedAsync(int rowId, DataRequestParametersDto parameters)
+        {
+            try
+            {
+                logger.LogInformation("Retrieving paged cards for row ID: {RowId}, Page: {PageNumber}, Size: {PageSize}", 
+                    rowId, parameters.PageNumber, parameters.PageSize);
+                
+                var result = await repository.GetByRowIdPagedAsync(rowId, parameters);
+                var dtos = result.Items.Select(CardDto.FromEntity).ToList();
+                
+                logger.LogInformation("Retrieved {Count} cards from total {Total} for row ID: {RowId}", 
+                    dtos.Count, result.Total, rowId);
+                
+                return new DataPagedResult<CardDto>(dtos, result.Total, parameters);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving paged cards for row ID: {RowId}", rowId);
                 throw;
             }
         }

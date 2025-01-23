@@ -369,6 +369,9 @@ namespace Querier.Api.Infrastructure.Data.Context
                       .WithMany(p => p.Rows)
                       .HasForeignKey(d => d.PageId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                // Index pour l'ordre des lignes dans une page
+                entity.HasIndex(e => new { e.PageId, e.Order });
             });
 
             modelBuilder.Entity<Card>(entity =>
@@ -382,6 +385,10 @@ namespace Querier.Api.Infrastructure.Data.Context
                       .WithMany(r => r.Cards)
                       .HasForeignKey(d => d.RowId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                // Index composé pour optimiser GetByRowIdAsync et GetByRowIdPagedAsync
+                entity.HasIndex(e => new { e.RowId, e.Order })
+                      .HasDatabaseName("IX_Cards_RowId_Order");
             });
 
             modelBuilder.Entity<CardTranslation>(entity =>
@@ -395,6 +402,10 @@ namespace Querier.Api.Infrastructure.Data.Context
                     .WithMany(p => p.CardTranslations)
                     .HasForeignKey(d => d.CardId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                // Index pour optimiser la recherche sur le titre
+                entity.HasIndex(e => e.Title)
+                      .HasDatabaseName("IX_CardTranslations_Title");
             });
         }
 

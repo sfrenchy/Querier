@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Domain.Common.Models;
 
 namespace Querier.Api.Controllers
 {
@@ -27,8 +28,17 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public class CardController(ICardService service, ILogger<CardController> logger) : ControllerBase
+    public class CardController : ControllerBase
     {
+        private readonly ICardService service;
+        private readonly ILogger<CardController> logger;
+
+        public CardController(ICardService service, ILogger<CardController> logger)
+        {
+            this.service = service ?? throw new ArgumentNullException(nameof(service));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
         /// <summary>
         /// Gets a card by its ID
         /// </summary>
@@ -82,6 +92,36 @@ namespace Querier.Api.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error retrieving cards for row ID: {RowId}", rowId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets paged cards for a specific row
+        /// </summary>
+        /// <param name="rowId">The ID of the row</param>
+        /// <param name="parameters">The pagination parameters</param>
+        /// <returns>Paged list of cards in the row</returns>
+        /// <response code="200">Returns the paged list of cards</response>
+        [HttpPost("row/{rowId}/paged")]
+        [ProducesResponseType(typeof(DataPagedResult<CardDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<DataPagedResult<CardDto>>> GetByRowIdPaged(
+            [FromRoute] int rowId,
+            [FromBody] DataRequestParametersDto parameters)
+        {
+            try
+            {
+                logger.LogInformation("Retrieving paged cards for row ID: {RowId}, Page: {PageNumber}, Size: {PageSize}", 
+                    rowId, parameters.PageNumber, parameters.PageSize);
+                
+                var result = await service.GetByRowIdPagedAsync(rowId, parameters);
+                
+                logger.LogInformation("Successfully retrieved paged cards for row ID: {RowId}", rowId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving paged cards for row ID: {RowId}", rowId);
                 throw;
             }
         }

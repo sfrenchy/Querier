@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Entities.Menu;
 
 namespace Querier.Api.Application.Interfaces.Repositories
@@ -8,6 +9,7 @@ namespace Querier.Api.Application.Interfaces.Repositories
     {
         Task<Card> GetByIdAsync(int id);
         Task<IEnumerable<Card>> GetByRowIdAsync(int rowId);
+        Task<DataPagedResult<Card>> GetByRowIdPagedAsync(int rowId, DataRequestParametersDto parameters);
         Task<Card> CreateAsync(Card card);
         Task<Card> UpdateAsync(Card card);
         Task<bool> DeleteAsync(int id);
