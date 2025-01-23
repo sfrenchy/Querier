@@ -1,32 +1,25 @@
 using System;
-using System.Collections.Generic;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Querier.Api.Application.Interfaces.Infrastructure
 {
     /// <summary>
-    /// Interface pour le résolveur de services d'entités générés dynamiquement
+    /// Interface pour la résolution des services d'entités
     /// </summary>
     public interface IDynamicContextEntityServicesResolver
     {
         /// <summary>
-        /// Mapping entre les interfaces de service et leurs implémentations
+        /// Obtient le type de service d'entité pour le nom spécifié
         /// </summary>
-        Dictionary<Type, Type> EntityServices { get; }
+        Type GetEntityServiceType(string entityName);
 
         /// <summary>
-        /// Mapping entre les noms d'entités et leurs interfaces de service
+        /// Enregistre un mapping de type de service d'entité
         /// </summary>
-        Dictionary<string, Type> EntityNameService { get; }
+        void RegisterEntityServiceType(string entityName, Type serviceType);
 
         /// <summary>
-        /// Nom du contexte dynamique
+        /// Vérifie si un service d'entité existe pour le nom spécifié
         /// </summary>
-        string DynamicContextName { get; }
-
-        /// <summary>
-        /// Configure les services pour le contexte dynamique
-        /// </summary>
-        void ConfigureServices(IServiceCollection services, string connectionString);
+        bool HasEntityService(string entityName);
     }
 } 

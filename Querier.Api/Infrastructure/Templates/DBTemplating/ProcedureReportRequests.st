@@ -1,10 +1,11 @@
-using $nameSpace$.ProcedureParameters;
-namespace $nameSpace$.ProcedureReportRequests
+using $nameSpace$;
+
+namespace $nameSpace$.Reports
 {
     $procedureList: {procedure|
         public partial class $procedure.CSName$ReportRequest
         {
-            public $procedure.CSName$Params ProcedureParams { get; set; \}
+            public $procedure.CSName$InputDto Parameters { get; set; \}
         \}
     }$
 \}

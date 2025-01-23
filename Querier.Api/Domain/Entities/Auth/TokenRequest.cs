@@ -2,7 +2,7 @@
 
 namespace Querier.Api.Domain.Entities.Auth
 {
-    public class TokenRequest
+    public class RefreshTokenDto
     {
         [Required]
         public string Token { get; set; }

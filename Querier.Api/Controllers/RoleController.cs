@@ -1,12 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Querier.Api.Application.DTOs.Requests.Role;
-using Querier.Api.Application.DTOs.Responses.Role;
-using Querier.Api.Application.Interfaces.Services.Role;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Querier.Api.Application.DTOs;
+using Querier.Api.Application.Interfaces.Services;
 
 namespace Querier.Api.Controllers
 {
@@ -40,29 +41,82 @@ namespace Querier.Api.Controllers
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-    public class RoleController : ControllerBase
+    public class RoleController(
+        IRoleService roleService,
+        IUserService userService,
+        ILogger<RoleController> logger)
+        : ControllerBase
     {
-        private readonly IRoleService _svc;
-
-        public RoleController(IRoleService svc)
-        {
-            _svc = svc;
-        }
-
         /// <summary>
         /// Retrieves all roles in the system
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     GET /api/v1/role/getall
+        ///     GET /api/v1/role
         /// </remarks>
         /// <returns>List of all roles</returns>
         /// <response code="200">Returns the list of roles</response>
-        [HttpGet("GetAll")]
-        [ProducesResponseType(typeof(List<RoleResponse>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAllAsync()
+        [HttpGet]
+        [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
+        public IActionResult GetAllAsync()
         {
-            return Ok(await _svc.GetAll());
+            try
+            {
+                logger.LogDebug("Retrieving all roles");
+                var roles = roleService.GetAll();
+                logger.LogInformation("Successfully retrieved {Count} roles", roles.Count());
+                return Ok(roles);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while retrieving all roles");
+                return Problem(
+                    title: "Error retrieving roles",
+                    detail: "An unexpected error occurred while retrieving the roles",
+                    statusCode: 500
+                );
+            }
+        }
+
+        /// <summary>
+        /// Retrieves a role by its ID
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///     GET /api/v1/role/1
+        /// </remarks>
+        /// <param name="id">The unique identifier of the role</param>
+        /// <returns>The role details</returns>
+        /// <response code="200">Returns the requested role</response>
+        /// <response code="404">If the role was not found</response>
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(RoleDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetByIdAsync(string id)
+        {
+            try
+            {
+                logger.LogDebug("Retrieving role with ID: {RoleId}", id);
+                var role = await roleService.GetByIdAsync(id);
+                
+                if (role == null)
+                {
+                    logger.LogWarning("Role not found with ID: {RoleId}", id);
+                    return NotFound(new { message = $"Role with ID {id} not found" });
+                }
+
+                logger.LogInformation("Successfully retrieved role: {RoleId}", id);
+                return Ok(role);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving role with ID: {RoleId}", id);
+                return Problem(
+                    title: "Error retrieving role",
+                    detail: "An unexpected error occurred while retrieving the role",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -70,64 +124,176 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     POST /api/v1/role/addrole
+        ///     POST /api/v1/role
         ///     {
         ///         "name": "Administrator",
         ///         "description": "Full system access"
         ///     }
         /// </remarks>
         /// <param name="role">The role details to create</param>
-        /// <returns>Success indicator</returns>
-        /// <response code="200">Role was successfully created</response>
+        /// <returns>The created role</returns>
+        /// <response code="201">Role was successfully created</response>
         /// <response code="400">If the request data is invalid</response>
-        [HttpPost("AddRole")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> AddRoleAsync(RoleRequest role)
+        [HttpPost]
+        [ProducesResponseType(typeof(RoleDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateAsync(RoleCreateDto role)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            return Ok(await _svc.Add(role));
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    logger.LogWarning("Invalid role creation request. Validation errors: {Errors}", 
+                        string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                    return BadRequest(ModelState);
+                }
+
+                logger.LogDebug("Creating new role with name: {RoleName}", role.Name);
+                var createdRole = await roleService.AddAsync(role);
+                logger.LogInformation("Role created successfully: {RoleName}", role.Name);
+                return Created($"/api/v1/role/{createdRole.Id}", createdRole);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while creating role: {RoleName}", role?.Name);
+                return Problem(
+                    title: "Error creating role",
+                    detail: "An unexpected error occurred while creating the role",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
         /// Updates an existing role
         /// </summary>
         /// <remarks>
+        /// This endpoint updates an existing role. The operation is idempotent - multiple identical requests will have the same effect as a single request.
+        /// 
         /// Sample request:
-        ///     POST /api/v1/role/updaterole
+        ///     PUT /api/v1/role/1
         ///     {
         ///         "id": "1",
         ///         "name": "Modified Role",
         ///         "description": "Updated description"
         ///     }
+        /// 
+        /// Sample response:
+        ///     204 No Content
+        /// 
+        /// Error responses:
+        ///     400 Bad Request
+        ///     {
+        ///         "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+        ///         "title": "Bad Request",
+        ///         "status": 400,
+        ///         "detail": "The request is invalid",
+        ///         "errors": {
+        ///             "name": ["The Name field is required"]
+        ///         }
+        ///     }
         /// </remarks>
+        /// <param name="id">The ID of the role to update</param>
         /// <param name="role">The updated role information</param>
-        /// <returns>Success indicator</returns>
-        [HttpPost("UpdateRole")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateRoleAsync(RoleRequest role)
+        /// <returns>No content if successful</returns>
+        /// <response code="204">If the role was successfully updated</response>
+        /// <response code="400">If the request data is invalid</response>
+        /// <response code="404">If the role was not found</response>
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateAsync(string id, RoleDto role)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            return Ok(await _svc.Edit(role));
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    logger.LogWarning("Invalid role update request. Validation errors: {Errors}", 
+                        string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                    return BadRequest(ModelState);
+                }
+
+                if (role.Id != id)
+                {
+                    logger.LogWarning("ID mismatch in role update request. URL ID: {UrlId}, Body ID: {BodyId}", id, role.Id);
+                    return BadRequest(new { message = "ID in URL must match ID in request body" });
+                }
+
+                logger.LogDebug("Updating role: {RoleId} - {RoleName}", role.Id, role.Name);
+                var result = await roleService.UpdateAsync(role);
+                if (!result)
+                {
+                    logger.LogWarning("Role not found for update: {RoleId}", role.Id);
+                    return NotFound(new { message = $"Role with ID {role.Id} not found" });
+                }
+
+                logger.LogInformation("Role updated successfully: {RoleId} - {RoleName}", role.Id, role.Name);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while updating role: {RoleId} - {RoleName}", role?.Id, role?.Name);
+                return Problem(
+                    title: "Error updating role",
+                    detail: "An unexpected error occurred while updating the role",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
         /// Deletes a role by its ID
         /// </summary>
         /// <remarks>
+        /// This endpoint permanently deletes a role. This operation cannot be undone.
+        /// 
         /// Sample request:
-        ///     DELETE /api/v1/role/deleterole/1
+        ///     DELETE /api/v1/role/1
+        /// 
+        /// Sample response:
+        ///     204 No Content
+        /// 
+        /// Error responses:
+        ///     404 Not Found
+        ///     {
+        ///         "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+        ///         "title": "Not Found",
+        ///         "status": 404,
+        ///         "detail": "Role with ID 1 not found"
+        ///     }
         /// </remarks>
         /// <param name="id">The ID of the role to delete</param>
-        /// <returns>Success indicator</returns>
-        [HttpDelete("DeleteRole/{id}")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        public async Task<IActionResult> DeleteRoleAsync(string id)
+        /// <returns>No content if successful</returns>
+        /// <response code="204">If the role was successfully deleted</response>
+        /// <response code="404">If the role was not found</response>
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteAsync(string id)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            return Ok(await _svc.Delete(id));
+            try
+            {
+                logger.LogDebug("Attempting to delete role: {RoleId}", id);
+                var result = await roleService.DeleteByIdAsync(id);
+                if (!result)
+                {
+                    logger.LogWarning("Role not found for deletion: {RoleId}", id);
+                    return NotFound(new { message = $"Role with ID {id} not found" });
+                }
+
+                logger.LogInformation("Role deleted successfully: {RoleId}", id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while deleting role: {RoleId}", id);
+                return Problem(
+                    title: "Error deleting role",
+                    detail: "An unexpected error occurred while deleting the role",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -135,15 +301,31 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     GET /api/v1/role/getrolesforuser/123
+        ///     GET /api/v1/role/user/123
         /// </remarks>
-        /// <param name="idUser">The user's ID</param>
+        /// <param name="userId">The user's ID</param>
         /// <returns>List of roles assigned to the user</returns>
-        [HttpGet("GetRolesForUser/{idUser}")]
-        [ProducesResponseType(typeof(List<RoleResponse>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetRolesForUser(string idUser)
+        [HttpGet("user/{userId}")]
+        [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetRolesForUser(string userId)
         {
-            return Ok(await _svc.GetRolesForUser(idUser));
+            try
+            {
+                logger.LogDebug("Retrieving roles for user: {UserId}", userId);
+                var roles = await roleService.GetRolesForUserAsync(userId);
+                logger.LogInformation("Successfully retrieved {Count} roles for user: {UserId}", roles.Count(), userId);
+                return Ok(roles);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while retrieving roles for user: {UserId}", userId);
+                return Problem(
+                    title: "Error retrieving user roles",
+                    detail: "An unexpected error occurred while retrieving the user's roles",
+                    statusCode: 500
+                );
+            }
         }
 
         /// <summary>
@@ -151,15 +333,36 @@ namespace Querier.Api.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        ///     GET /api/v1/role/getcurrentuserroles
+        ///     GET /api/v1/role/me
         /// </remarks>
         /// <returns>List of roles for the current user</returns>
-        [HttpGet("GetCurrentUserRoles")]
-        [ProducesResponseType(typeof(List<RoleResponse>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetCurrentUserRole()
+        [HttpGet("me")]
+        [ProducesResponseType(typeof(List<RoleDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCurrentUserRoles()
         {
-            var userId = this.User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value;
-            return Ok(await _svc.GetRolesForUser(userId));
+            try
+            {
+                logger.LogDebug("Retrieving roles for current user");
+                var user = await userService.GetCurrentUserAsync(User);
+                if (user == null)
+                {
+                    logger.LogWarning("Current user not found");
+                    return NotFound(new { message = "Current user not found" });
+                }
+
+                logger.LogInformation("Successfully retrieved roles for current user: {UserEmail}", user.Email);
+                return Ok(user.Roles);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while retrieving roles for current user");
+                return Problem(
+                    title: "Error retrieving current user roles",
+                    detail: "An unexpected error occurred while retrieving the current user's roles",
+                    statusCode: 500
+                );
+            }
         }
     }
 }

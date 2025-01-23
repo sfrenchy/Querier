@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-
 namespace Querier.Api.Domain.Entities
 {
     public class SQLQuery
@@ -15,9 +14,9 @@ namespace Querier.Api.Domain.Entities
         public bool IsPublic { get; set; }
         public Dictionary<string, object> Parameters { get; set; }
         
-        // Ajout de la relation avec QDBConnection
+        // Ajout de la relation avec DBConnection
         public int ConnectionId { get; set; }
-        public virtual QDBConnection.QDBConnection Connection { get; set; }
+        public virtual DBConnection.DBConnection Connection { get; set; }
         public string OutputDescription { get; set; }
     }
 } 

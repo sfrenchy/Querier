@@ -2,26 +2,21 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Querier.Api.Application.DTOs.Menu.Responses;
-using Querier.Api.Application.Interfaces.Services.Menu;
+using Microsoft.Extensions.Logging;
+using Querier.Api.Application.DTOs;
+using Querier.Api.Application.Interfaces.Services;
 
 namespace Querier.Api.Controllers
 {
     /// <summary>
-    /// Controller for managing page layouts
+    /// Controller for managing application layouts
     /// </summary>
     /// <remarks>
     /// This controller provides endpoints for:
-    /// - Retrieving complete page layouts with rows and cards
-    /// - Updating entire page layouts
-    /// - Deleting page layouts
-    /// 
-    /// ## Authentication
-    /// All endpoints in this controller require authentication.
-    /// Use a valid JWT token in the Authorization header:
-    /// ```
-    /// Authorization: Bearer {your-jwt-token}
-    /// ```
+    /// - Managing page layouts
+    /// - Handling layout templates
+    /// - Customizing layout settings
+    /// - Layout persistence
     /// </remarks>
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -32,10 +27,12 @@ namespace Querier.Api.Controllers
     public class LayoutController : ControllerBase
     {
         private readonly ILayoutService _layoutService;
+        private readonly ILogger<LayoutController> _logger;
 
-        public LayoutController(ILayoutService layoutService)
+        public LayoutController(ILayoutService layoutService, ILogger<LayoutController> logger)
         {
             _layoutService = layoutService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -52,13 +49,27 @@ namespace Querier.Api.Controllers
         /// <response code="200">Returns the requested layout</response>
         /// <response code="404">If the page was not found</response>
         [HttpGet("{pageId}")]
-        [ProducesResponseType(typeof(LayoutResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<LayoutResponse>> GetLayout(int pageId)
+        public async Task<ActionResult<LayoutDto>> GetLayout(int pageId)
         {
-            var layout = await _layoutService.GetLayoutAsync(pageId);
-            if (layout == null) return NotFound();
-            return Ok(layout);
+            _logger.LogInformation("Getting layout for page {PageId}", pageId);
+            try
+            {
+                var layout = await _layoutService.GetLayoutAsync(pageId);
+                if (layout == null)
+                {
+                    _logger.LogWarning("Layout not found for page {PageId}", pageId);
+                    return NotFound(new { message = $"Layout not found for page {pageId}" });
+                }
+                _logger.LogInformation("Successfully retrieved layout for page {PageId}", pageId);
+                return Ok(layout);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error getting layout for page {PageId}", pageId);
+                return StatusCode(500, new { message = "An error occurred while retrieving the layout" });
+            }
         }
 
         /// <summary>
@@ -98,13 +109,41 @@ namespace Querier.Api.Controllers
         /// <response code="404">If the page was not found</response>
         /// <response code="400">If the layout data is invalid</response>
         [HttpPut("{pageId}")]
-        [ProducesResponseType(typeof(LayoutResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LayoutDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<LayoutResponse>> UpdateLayout(int pageId, [FromBody] LayoutResponse layout)
+        public async Task<ActionResult<LayoutDto>> UpdateLayout(int pageId, [FromBody] LayoutDto layout)
         {
-            var updatedLayout = await _layoutService.UpdateLayoutAsync(pageId, layout);
-            return Ok(updatedLayout);
+            _logger.LogInformation("Updating layout for page {PageId}", pageId);
+            
+            if (layout == null)
+            {
+                _logger.LogWarning("Invalid layout data provided for page {PageId}", pageId);
+                return BadRequest(new { message = "Layout data cannot be null" });
+            }
+
+            if (pageId != layout.PageId)
+            {
+                _logger.LogWarning("Mismatched page IDs: URL {UrlPageId} vs Body {BodyPageId}", pageId, layout.PageId);
+                return BadRequest(new { message = "Page ID in URL does not match the one in request body" });
+            }
+
+            try
+            {
+                var updatedLayout = await _layoutService.UpdateLayoutAsync(pageId, layout);
+                if (updatedLayout == null)
+                {
+                    _logger.LogWarning("Layout not found for update on page {PageId}", pageId);
+                    return NotFound(new { message = $"Layout not found for page {pageId}" });
+                }
+                _logger.LogInformation("Successfully updated layout for page {PageId}", pageId);
+                return Ok(updatedLayout);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error updating layout for page {PageId}", pageId);
+                return StatusCode(500, new { message = "An error occurred while updating the layout" });
+            }
         }
 
         /// <summary>
@@ -126,9 +165,23 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteLayout(int pageId)
         {
-            var result = await _layoutService.DeleteLayoutAsync(pageId);
-            if (!result) return NotFound();
-            return NoContent();
+            _logger.LogInformation("Deleting layout for page {PageId}", pageId);
+            try
+            {
+                var result = await _layoutService.DeleteLayoutAsync(pageId);
+                if (!result)
+                {
+                    _logger.LogWarning("Layout not found for deletion on page {PageId}", pageId);
+                    return NotFound(new { message = $"Layout not found for page {pageId}" });
+                }
+                _logger.LogInformation("Successfully deleted layout for page {PageId}", pageId);
+                return NoContent();
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting layout for page {PageId}", pageId);
+                return StatusCode(500, new { message = "An error occurred while deleting the layout" });
+            }
         }
     }
 } 

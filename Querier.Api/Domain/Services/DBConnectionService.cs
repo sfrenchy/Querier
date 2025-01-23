@@ -6,70 +6,73 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Antlr4.StringTemplate;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Npgsql;
-using Querier.Api.Application.DTOs.Requests.DBConnection;
-using Querier.Api.Application.DTOs.Responses.DBConnection;
+using Querier.Api.Application.DTOs;
+using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Enums;
-using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Domain.Entities.DBConnection;
 using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Templates;
+using Querier.Api.Infrastructure.Services;
 using Swashbuckle.AspNetCore.Swagger;
-using System.Security.Cryptography;
-using QDBConnection = Querier.Api.Domain.Entities.QDBConnection.QDBConnection;
-using ParamInfo = Querier.Api.Application.DTOs.Responses.DBConnection.ParameterInfo;
 
 namespace Querier.Api.Domain.Services
 {
-    public class DBConnectionService : IDBConnectionService
+    public class DbConnectionService : IDbConnectionService
     {
-        private readonly IDbContextFactory<ApiDbContext> _apiDbContextFactory;
-        private readonly IDynamicContextList _dynamicContextList;
-        private readonly ILogger<DBConnectionService> _logger;
+        private readonly IDbConnectionRepository _dbConnectionRepository;
+        private readonly ILogger<DbConnectionService> _logger;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceCollection _services;
         private readonly ApplicationPartManager _partManager;
-        private readonly JsonSchemaGenerator _jsonSchemaGenerator;
         private readonly EndpointExtractor _endpointExtractor;
         private readonly DatabaseServerDiscovery _serverDiscovery;
         private readonly DatabaseSchemaExtractor _schemaExtractor;
+        private readonly IAssemblyManagerService _assemblyManager;
 
-        public DBConnectionService(
-            IDynamicContextList dynamicContextList,
-            IDbContextFactory<ApiDbContext> apiDbContextFactory,
+        public DbConnectionService(
+            IDbConnectionRepository dbConnectionRepository,
             IServiceProvider serviceProvider,
-            ILogger<DBConnectionService> logger,
+            IServiceCollection services,
+            ILogger<DbConnectionService> logger,
             ApplicationPartManager partManager,
             ILogger<DatabaseServerDiscovery> serverDiscoveryLogger,
-            ILogger<DatabaseSchemaExtractor> schemaExtractorLogger)
+            ILogger<DatabaseSchemaExtractor> schemaExtractorLogger,
+            ILogger<JsonSchemaGenerator> jsonSchemaGeneratorLogger,
+            ILogger<EndpointExtractor> endpointExtractorLogger,
+            IAssemblyManagerService assemblyManager)
         {
             _logger = logger;
-            _apiDbContextFactory = apiDbContextFactory;
+            _dbConnectionRepository = dbConnectionRepository;
             _serviceProvider = serviceProvider;
-            _dynamicContextList = dynamicContextList;
+            _services = services;
             _partManager = partManager;
-            _jsonSchemaGenerator = new JsonSchemaGenerator();
-            _endpointExtractor = new EndpointExtractor(_jsonSchemaGenerator);
+            _assemblyManager = assemblyManager;
+            var jsonSchemaGenerator = new JsonSchemaGeneratorService(jsonSchemaGeneratorLogger);
+            _endpointExtractor = new EndpointExtractor(jsonSchemaGenerator, endpointExtractorLogger, serviceProvider, services);
             _serverDiscovery = new DatabaseServerDiscovery(serverDiscoveryLogger);
             _schemaExtractor = new DatabaseSchemaExtractor(schemaExtractorLogger);
         }
 
-        public async Task<AddDBConnectionResponse> AddConnectionAsync(AddDBConnectionRequest connection)
+        public async Task<DBConnectionCreateResultDto> AddConnectionAsync(DBConnectionCreateDto connection)
         {
-            AddDBConnectionResponse result = new AddDBConnectionResponse();
+            _logger.LogDebug("Adding new database connection: {Name}", connection.Name);
+            DBConnectionCreateResultDto result = new DBConnectionCreateResultDto();
             string connectionNamespace = "";
             string contextName = "";
             string procedureDescription = "";
@@ -78,87 +81,93 @@ namespace Querier.Api.Domain.Services
             {
                 switch (connection.ConnectionType)
                 {
-                    case QDBConnectionType.SqlServer:
-                        using (SqlConnection c = new SqlConnection(connection.ConnectionString))
+                    case DbConnectionType.SqlServer:
+                        await using (SqlConnection c = new SqlConnection(connection.ConnectionString))
                         {
+                            _logger.LogDebug("Testing SQL Server connection for: {Name}", connection.Name);
                             c.Open();
                             connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
-                            result.State = QDBConnectionState.Connected;
+                            result.State = DBConnectionState.Connected;
+                            _logger.LogInformation("Successfully connected to SQL Server for: {Name}", connection.Name);
                         }
                         break;
-                    case QDBConnectionType.MySQL:
-                        using (MySqlConnection c = new MySqlConnection(connection.ConnectionString))
+                    case DbConnectionType.MySql:
+                        await using (MySqlConnection c = new MySqlConnection(connection.ConnectionString))
                         {
+                            _logger.LogDebug("Testing MySQL connection for: {Name}", connection.Name);
                             c.Open();
                             connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
-                            result.State = QDBConnectionState.Connected;
+                            result.State = DBConnectionState.Connected;
+                            _logger.LogInformation("Successfully connected to MySQL for: {Name}", connection.Name);
                         }
                         break;
-                    case QDBConnectionType.PgSQL:
-                        using (NpgsqlConnection c = new NpgsqlConnection(connection.ConnectionString))
+                    case DbConnectionType.PgSql:
+                        await using (NpgsqlConnection c = new NpgsqlConnection(connection.ConnectionString))
                         {
+                            _logger.LogDebug("Testing PostgreSQL connection for: {Name}", connection.Name);
                             c.Open();
                             connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
                             contextName = $"{c.Database}Context";
-                            result.State = QDBConnectionState.Connected;
+                            result.State = DBConnectionState.Connected;
+                            _logger.LogInformation("Successfully connected to PostgreSQL for: {Name}", connection.Name);
                         }
                         break;
                 }
             }
             catch (Exception ex)
             {
-                result.State = QDBConnectionState.ConnectionError;
+                _logger.LogError(ex, "Connection error for database: {Name}", connection.Name);
+                result.State = DBConnectionState.ConnectionError;
                 result.Messages.Add(ex.Message);
                 return result;
             }
 
-            // if acces to db OK => scaffolding context
-            IReverseEngineerScaffolder scaffolder = connection.ConnectionType switch
+            try
             {
-                QDBConnectionType.SqlServer => DatabaseScaffolderFactory.CreateMssqlScaffolder(),
-                QDBConnectionType.MySQL => DatabaseScaffolderFactory.CreateMySQLScaffolder(),
-                QDBConnectionType.PgSQL => DatabaseScaffolderFactory.CreatePgSQLScaffolder(),
-                _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
-            };
+                _logger.LogDebug("Creating scaffolder for database type: {Type}", connection.ConnectionType);
+                IReverseEngineerScaffolder scaffolder = connection.ConnectionType switch
+                {
+                    DbConnectionType.SqlServer => DatabaseScaffolderFactory.CreateMssqlScaffolder(),
+                    DbConnectionType.MySql => DatabaseScaffolderFactory.CreateMySQLScaffolder(),
+                    DbConnectionType.PgSql => DatabaseScaffolderFactory.CreatePgSQLScaffolder(),
+                    _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
+                };
 
-            var dbOpts = new DatabaseModelFactoryOptions();
-            var modelOpts = new ModelReverseEngineerOptions();
-            var codeGenOpts = new ModelCodeGenerationOptions()
-            {
-                RootNamespace = connectionNamespace,
-                ContextName = contextName,
-                ContextNamespace = connectionNamespace,
-                ModelNamespace = connectionNamespace,
-                SuppressConnectionStringWarning = true,
-                SuppressOnConfiguring = true
-            };
+                var dbOpts = new DatabaseModelFactoryOptions();
+                var modelOpts = new ModelReverseEngineerOptions();
+                var codeGenOpts = new ModelCodeGenerationOptions()
+                {
+                    RootNamespace = connectionNamespace,
+                    ContextName = contextName,
+                    ContextNamespace = connectionNamespace,
+                    ModelNamespace = connectionNamespace,
+                    SuppressConnectionStringWarning = true,
+                    SuppressOnConfiguring = true,
+                    UseDataAnnotations = true
+                };
 
-            var scaffoldedModelSources = scaffolder.ScaffoldModel(connection.ConnectionString, dbOpts, modelOpts, codeGenOpts);
+                var scaffoldedModelSources = scaffolder.ScaffoldModel(connection.ConnectionString, dbOpts, modelOpts, codeGenOpts);
 
-            var contextFile = connection.ConnectionType switch
-            {
-                QDBConnectionType.SqlServer => scaffoldedModelSources.ContextFile.Code.Replace(".UseSqlServer", ".UseLazyLoadingProxies().UseSqlServer"),
-                QDBConnectionType.MySQL => scaffoldedModelSources.ContextFile.Code.Replace(".UseMySql", ".UseLazyLoadingProxies().UseMySql"),
-                QDBConnectionType.PgSQL => scaffoldedModelSources.ContextFile.Code.Replace(".UseNpgsql", ".UseLazyLoadingProxies().UseNpgsql"),
-                _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
-            };
+                var contextFile = connection.ConnectionType switch
+                {
+                    DbConnectionType.SqlServer => scaffoldedModelSources.ContextFile.Code.Replace(".UseSqlServer", ".UseLazyLoadingProxies().UseSqlServer"),
+                    DbConnectionType.MySql => scaffoldedModelSources.ContextFile.Code.Replace(".UseMySql", ".UseLazyLoadingProxies().UseMySql"),
+                    DbConnectionType.PgSql => scaffoldedModelSources.ContextFile.Code.Replace(".UseNpgsql", ".UseLazyLoadingProxies().UseNpgsql"),
+                    _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
+                };
 
-            var sourceFiles = new List<string> { contextFile };
-            sourceFiles.AddRange(scaffoldedModelSources.AdditionalFiles.Select(f => f.Code));
+                var sourceFiles = new List<string> { contextFile };
+                sourceFiles.AddRange(scaffoldedModelSources.AdditionalFiles.Select(f => f.Code));
 
-            Dictionary<string, string> srcZipContent = new Dictionary<string, string>();
-            srcZipContent.Add(scaffoldedModelSources.ContextFile.Path, scaffoldedModelSources.ContextFile.Code);
-            foreach (var addFile in scaffoldedModelSources.AdditionalFiles)
-            {
-                srcZipContent.Add(addFile.Path, addFile.Code);
-            }
+                Dictionary<string, string> srcZipContent = new Dictionary<string, string> { { scaffoldedModelSources.ContextFile.Path, scaffoldedModelSources.ContextFile.Code } };
+                foreach (var addFile in scaffoldedModelSources.AdditionalFiles)
+                {
+                    srcZipContent.Add(addFile.Path, addFile.Code);
+                }
 
-            // if scaffolding OK => Generate a common DB Schema representation for stored procedure
-            if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == QDBConnectionType.SqlServer)
-            {
-                List<Querier.Api.Domain.Entities.QDBConnection.StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
+                List<Entities.QDBConnection.StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
                 procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
 
                 var procedureModel = new StoredProcedureTemplateModel
@@ -168,99 +177,112 @@ namespace Querier.Api.Domain.Services
                     ContextRoute = connection.ContextApiRoute,
                     ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
                 };
+                
+                // if scaffolding OK => Generate a common DB Schema representation for stored procedure
+                if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == DbConnectionType.SqlServer)
+                {
+                    GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
+                }
 
-                await GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
-            }
+                // Extract entity metadata from scaffolded model
+                var entityModel = new TemplateModel
+                {
+                    NameSpace = connectionNamespace,
+                    ContextNameSpace = contextName,
+                    ContextRoute = connection.ContextApiRoute,
+                    EntityList = ExtractEntityMetadata(scaffoldedModelSources)
+                };
+                
+                GenerateEntityFiles(procedureModel, entityModel, srcZipContent, sourceFiles);
 
-            // Extract entity metadata from scaffolded model
-            var entityModel = new TemplateModel
-            {
-                NameSpace = connectionNamespace,
-                ContextNameSpace = contextName,
-                ContextRoute = connection.ContextApiRoute,
-                EntityList = ExtractEntityMetadata(scaffoldedModelSources)
-            };
+                // Create source zip
+                byte[] sourceZipBytes = CreateSourceZip(srcZipContent);
 
-            await GenerateEntityFiles(entityModel, srcZipContent, sourceFiles);
+                if (!Directory.Exists("Assemblies"))
+                    Directory.CreateDirectory("Assemblies");
+                string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
+                await File.WriteAllBytesAsync(srcPath, sourceZipBytes);
 
-            // Create source zip
-            byte[] sourceZipBytes = await CreateSourceZip(srcZipContent);
+                // Compile generated sources
+                var (assemblyBytes, pdbBytes) = CompileAssembly(connection.Name, sourceFiles);
+                if (assemblyBytes == null)
+                {
+                    result.State = DBConnectionState.CompilationError;
+                    return result;
+                }
 
-            if (!Directory.Exists("Assemblies"))
-                Directory.CreateDirectory("Assemblies");
-            string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
-            File.WriteAllBytes(srcPath, sourceZipBytes);
+                // Calculate assembly hash
+                var hash = ComputeAssemblyHash(assemblyBytes);
 
-            // Compile generated sources
-            var (assemblyBytes, pdbBytes) = await CompileAssembly(connection.Name, sourceFiles);
-            if (assemblyBytes == null)
-            {
-                result.State = QDBConnectionState.CompilationError;
+                // Load assembly and configure services
+                var container = await _assemblyManager.LoadAssemblyAsync(
+                    connection.Name,
+                    connection.ConnectionType,
+                    connection.ConnectionString,
+                    assemblyBytes);
+
+                if (container == null)
+                {
+                    result.State = DBConnectionState.LoadError;
+                    return result;
+                }
+
+                var endpoints = _endpointExtractor.ExtractFromAssembly(container.GetType().Assembly, connection.ConnectionString, connection.ConnectionType);
+                var newConnection = new DBConnection
+                {
+                    Name = connection.Name,
+                    ConnectionString = connection.ConnectionString,
+                    ConnectionType = connection.ConnectionType,
+                    Description = procedureDescription,
+                    AssemblyHash = hash,
+                    AssemblyDll = assemblyBytes,
+                    AssemblyPdb = pdbBytes,
+                    AssemblySourceZip = sourceZipBytes,
+                    ContextName = connectionNamespace + "." + contextName,
+                    ApiRoute = connection.ContextApiRoute,
+                    Endpoints = endpoints
+                };
+
+                await _dbConnectionRepository.AddDbConnectionAsync(newConnection);
+
+                result.State = DBConnectionState.Available;
+                result.Id = newConnection.Id;
+
                 return result;
             }
-
-            // Calculate assembly hash
-            var hash = ComputeAssemblyHash(assemblyBytes);
-
-            // Load assembly
-            var assemblyLoadContext = new AssemblyLoadContext("DbContext", false);
-            var loadedAssembly = assemblyLoadContext.LoadFromStream(new MemoryStream(assemblyBytes));
-
-            // Create new connection
-            var endpoints = _endpointExtractor.ExtractFromAssembly(loadedAssembly);
-            var newConnection = new QDBConnection
+            catch (Exception ex)
             {
-                Name = connection.Name,
-                ConnectionString = connection.ConnectionString,
-                ConnectionType = connection.ConnectionType,
-                Description = procedureDescription,
-                AssemblyHash = hash,
-                AssemblyDll = assemblyBytes,
-                AssemblyPdb = pdbBytes,
-                AssemblySourceZip = sourceZipBytes,
-                ContextName = connectionNamespace + "." + contextName,
-                ApiRoute = connection.ContextApiRoute,
-                Endpoints = endpoints
-            };
-
-            using (var apiDbContext = _apiDbContextFactory.CreateDbContext())
-            {
-                apiDbContext.QDBConnections.Add(newConnection);
-                await apiDbContext.SaveChangesAsync();
+                _logger.LogError(ex, "Error during scaffolding for database: {Name}", connection.Name);
+                throw;
             }
-
-            result.State = QDBConnectionState.Available;
-            await AssemblyLoader.LoadAssemblyFromQDBConnection(newConnection, _serviceProvider, _partManager, _logger);
-            
-            // Regenerate Swagger documentation
-            var swaggerProvider = _serviceProvider.GetRequiredService<ISwaggerProvider>();
-            AssemblyLoader.RegenerateSwagger(swaggerProvider, _logger);
-            
-            return result;
         }
 
-        private async Task GenerateProcedureFiles(StoredProcedureTemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateProcedureFiles(StoredProcedureTemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
         {
             var templates = new[]
             {
-                ("ProcedureParameters", "ProcedureParameters\\ProcedureParameters.cs"),
-                ("ProcedureResultSet", "ProcedureResultSet\\ProcedureResultSet.cs"),
-                ("ProcedureReportRequests", "ProcedureReportRequests\\ProcedureReportRequests.cs"),
-                ("ProcedureContext", "ProcedureContext\\ProcedureContext.cs"),
-                ("ProcedureService", "ProcedureService\\ProcedureService.cs"),
-                ("ProcedureServiceResolver", "ProcedureServiceResolver\\ProcedureServiceResolver.cs"),
-                ("ProcedureController", "ProcedureController\\ProcedureController.cs")
+                ("DynamicContextExceptions", "Exceptions\\DynamicContextExceptions.cs"),
+                ("ProcedureContext", "Context\\ProcedureContext.cs"),
+                ("ProcedureController", "Controllers\\ProcedureController.cs"),
+                ("ProcedureDto", "DTOs\\ProcedureDtos.cs"),
+                ("ProcedureInputDto", "DTOs\\ProcedureInputDtos.cs"),
+                ("ProcedureReportRequests", "Reports\\ProcedureReportRequests.cs"),
+                ("ProcedureRepository", "Repositories\\ProcedureRepository.cs"),
+                ("ProcedureService", "Services\\ProcedureService.cs"),
+                ("ProcedureServiceResolver", "Services\\ProcedureServiceResolver.cs"),
+                
             };
 
             foreach (var (templateName, outputPath) in templates)
             {
+                _logger.LogDebug($"Processing template {templateName}");
                 var template = new Template(File.ReadAllText(
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
                 ), '$', '$');
 
                 template.Add("nameSpace", model.NameSpace);
                 template.Add("contextNameSpace", model.ContextNameSpace);
-                template.Add("procedureList", templateName == "ProcedureResultSet" 
+                template.Add("procedureList", templateName == "ProcedureDto" 
                     ? model.ProcedureList.Where(s => s.HasOutput).ToList() 
                     : model.ProcedureList);
 
@@ -273,22 +295,28 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private async Task GenerateEntityFiles(TemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateEntityFiles(StoredProcedureTemplateModel procedureModel, TemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
         {
             var templates = new[]
             {
-                ("EntityDto", "DTOs\\EntityDtos.cs"),
-                ("EntityService", "Services\\EntityServices.cs"),
-                ("EntityController", "Controllers\\EntityControllers.cs"),
-                ("EntityServiceResolver", "Services\\EntityServiceResolver.cs")
+                ("DynamicServiceContainer", "Services\\DynamicServiceContainer.cs"),
+                ("EntityController","Controllers\\EntityController.cs"),
+                ("EntityDto","Entities\\EntityDto.cs"),
+                ("EntityRepository","Repositories\\EntityRepository.cs"),
+                ("EntityService","Services\\EntityService.cs"),
+                ("EntityServiceResolver","Services\\EntityServiceResolver.cs"),
             };
 
             foreach (var (templateName, outputPath) in templates)
             {
+                _logger.LogDebug($"Processing template {templateName}");
                 var template = new Template(File.ReadAllText(
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
                 ), '$', '$');
 
+                template.Add("procedureList", templateName == "ProcedureDto" 
+                    ? procedureModel.ProcedureList.Where(s => s.HasOutput).ToList() 
+                    : procedureModel.ProcedureList);
                 template.Add("nameSpace", model.NameSpace);
                 template.Add("contextNameSpace", model.ContextNameSpace);
                 template.Add("entityList", model.EntityList);
@@ -302,7 +330,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private async Task<byte[]> CreateSourceZip(Dictionary<string, string> srcZipContent)
+        private byte[] CreateSourceZip(Dictionary<string, string> srcZipContent)
         {
             using var sourceStream = new MemoryStream();
             using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Create))
@@ -319,7 +347,7 @@ namespace Querier.Api.Domain.Services
             return sourceStream.ToArray();
         }
 
-        private async Task<(byte[] assemblyBytes, byte[] pdbBytes)> CompileAssembly(string contextName, List<string> sourceFiles)
+        private (byte[] assemblyBytes, byte[] pdbBytes) CompileAssembly(string contextName, List<string> sourceFiles)
         {
             var peStream = new MemoryStream();
             var pdbStream = new MemoryStream();
@@ -391,9 +419,11 @@ namespace Querier.Api.Domain.Services
                 typeof(List<>),
                 typeof(Infrastructure.Database.Parameters.OutputParameter<>),
                 typeof(Microsoft.Extensions.Caching.Distributed.IDistributedCache),
-                typeof(System.Linq.Enumerable),
+                typeof(Enumerable),
                 typeof(MemoryStream),
-                typeof(StreamReader)
+                typeof(StreamReader),
+                typeof(System.Linq.Dynamic.Core.DynamicClassFactory),
+                typeof(MySqlConnector.MySqlConnection)
             };
 
             refs.AddRange(additionalAssemblies.Select(t => MetadataReference.CreateFromFile(t.Assembly.Location)));
@@ -402,130 +432,221 @@ namespace Querier.Api.Domain.Services
             return refs;
         }
 
-        public async Task<DeleteDBConnectionResponse> DeleteDBConnectionAsync(DeleteDBConnectionRequest request)
+        public async Task DeleteDbConnectionAsync(int dbConnectionId)
         {
-            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-            var toDelete = apiDbContext.QDBConnections.Find(request.DBConnectionId);
-            if (toDelete == null)
-                throw new KeyNotFoundException($"Connection with ID {request.DBConnectionId} not found");
-
-            int toDeleteId = toDelete.Id;
-            apiDbContext.QDBConnections.Remove(toDelete);
-            await apiDbContext.SaveChangesAsync();
-
-            return new DeleteDBConnectionResponse { DeletedDBConnectionId = toDeleteId };
-        }
-
-        public async Task<List<QDBConnectionResponse>> GetAll()
-        {
-            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-            return await apiDbContext.QDBConnections
-                .Select(c => new QDBConnectionResponse
+            try
+            {
+                _logger.LogDebug("Deleting database connection with ID: {Id}", dbConnectionId);
+                var connection = await _dbConnectionRepository.FindByIdAsync(dbConnectionId);
+                
+                if (connection == null)
                 {
-                    ApiRoute = c.ApiRoute,
-                    ConnectionString = c.ConnectionString,
-                    ConnectionType = c.ConnectionType.ToString(),
-                    Id = c.Id,
-                    Name = c.Name
-                })
-                .ToListAsync();
+                    _logger.LogWarning("Database connection not found with ID: {Id}", dbConnectionId);
+                    throw new KeyNotFoundException($"Connection with ID {dbConnectionId} not found");
+                }
+
+                // Décharger l'assembly si elle est chargée
+                if (_assemblyManager.IsAssemblyLoaded(connection.Name))
+                {
+                    await _assemblyManager.UnloadAssemblyAsync(connection.Name);
+                }
+
+                await _dbConnectionRepository.DeleteDbConnectionAsync(dbConnectionId);
+                _logger.LogInformation("Successfully deleted database connection with ID: {Id}", dbConnectionId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting database connection with ID: {Id}", dbConnectionId);
+                throw;
+            }
         }
 
-        public async Task<DatabaseSchemaResponse> GetDatabaseSchema(int connectionId)
+        public async Task<List<DBConnectionDto>> GetAllAsync()
         {
-            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-            var connection = await apiDbContext.QDBConnections.FindAsync(connectionId);
-            
-            if (connection == null)
-                throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
-
-            return await _schemaExtractor.ExtractSchema(connection.ConnectionType, connection.ConnectionString);
+            try
+            {
+                _logger.LogDebug("Retrieving all database connections");
+                var list = await _dbConnectionRepository.GetAllDbConnectionsAsync();
+                _logger.LogInformation("Successfully retrieved {Count} database connections", list.Count);
+                return list.Select(DBConnectionDto.FromEntity).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving all database connections");
+                throw;
+            }
         }
 
-        public async Task<List<DatabaseServerInfo>> EnumerateServersAsync(string databaseType)
+        public async Task<DBConnectionDatabaseSchemaDto> GetDatabaseSchemaAsync(int connectionId)
         {
-            return await _serverDiscovery.EnumerateServersAsync(databaseType);
+            try
+            {
+                _logger.LogDebug("Retrieving database schema for connection ID: {Id}", connectionId);
+                var connection = await _dbConnectionRepository.FindByIdAsync(connectionId);
+                
+                if (connection == null)
+                {
+                    _logger.LogWarning("Database connection not found with ID: {Id}", connectionId);
+                    throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
+                }
+
+                var schema = await _schemaExtractor.ExtractSchema(connection.ConnectionType, connection.ConnectionString);
+                _logger.LogInformation("Successfully retrieved schema for connection ID: {Id}", connectionId);
+                return schema;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving database schema for connection ID: {Id}", connectionId);
+                throw;
+            }
+        }
+
+        public async Task<List<DBConnectionDatabaseServerInfoDto>> EnumerateServersAsync(string databaseType)
+        {
+            try
+            {
+                _logger.LogDebug("Enumerating servers for database type: {Type}", databaseType);
+                var servers = await _serverDiscovery.EnumerateServersAsync(databaseType);
+                _logger.LogInformation("Successfully enumerated {Count} servers for type: {Type}", servers.Count, databaseType);
+                return servers;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error enumerating servers for database type: {Type}", databaseType);
+                throw;
+            }
         }
 
         public async Task<SourceDownload> GetConnectionSourcesAsync(int connectionId)
         {
-            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-            var connection = await apiDbContext.QDBConnections.FindAsync(connectionId);
-            
-            if (connection == null)
-                throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
-
-            if (connection.AssemblySourceZip == null)
-                throw new InvalidOperationException($"No source code available for connection {connectionId}");
-
-            return new SourceDownload
+            try
             {
-                Content = connection.AssemblySourceZip,
-                FileName = $"{connection.Name}.DynamicContext.Sources.zip"
-            };
+                _logger.LogDebug("Retrieving sources for connection ID: {Id}", connectionId);
+                var connection = await _dbConnectionRepository.FindByIdAsync(connectionId);
+                
+                if (connection == null)
+                {
+                    _logger.LogWarning("Database connection not found with ID: {Id}", connectionId);
+                    throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
+                }
+
+                if (connection.AssemblySourceZip == null)
+                {
+                    _logger.LogWarning("No source code available for connection ID: {Id}", connectionId);
+                    throw new InvalidOperationException($"No source code available for connection {connectionId}");
+                }
+
+                _logger.LogInformation("Successfully retrieved sources for connection ID: {Id}", connectionId);
+                return new SourceDownload
+                {
+                    Content = connection.AssemblySourceZip,
+                    FileName = $"{connection.Name}.DynamicContext.Sources.zip"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving sources for connection ID: {Id}", connectionId);
+                throw;
+            }
         }
 
-        public async Task<List<EndpointInfoResponse>> GetEndpointsAsync(int connectionId)
+        public async Task<List<DBConnectionEndpointInfoDto>> GetEndpointsAsync(int connectionId, string? targetTable, string? controller, string? action)
         {
-            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-            var connection = await apiDbContext.QDBConnections
-                .Include(c => c.Endpoints)
-                    .ThenInclude(e => e.Parameters)
-                .Include(c => c.Endpoints)
-                    .ThenInclude(e => e.Responses)
-                .FirstOrDefaultAsync(c => c.Id == connectionId);
-
-            if (connection == null)
-                throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
-
-            return connection.Endpoints.Select(e => new EndpointInfoResponse
+            try
             {
-                Controller = e.Controller,
-                Action = e.Action,
-                Route = e.Route,
-                HttpMethod = e.HttpMethod,
-                Description = e.Description,
-                Parameters = e.Parameters.Select(p => new ParamInfo
+                _logger.LogDebug("Retrieving endpoints for connection ID: {Id}", connectionId);
+                var endpoints = await _dbConnectionRepository.FindEndpointsAsync(connectionId, controller, targetTable, action);
+                
+                var endpointDtos = endpoints.Select(e => new DBConnectionEndpointInfoDto
                 {
-                    Name = p.Name,
-                    Type = p.Type,
-                    Description = p.Description,
-                    IsRequired = p.IsRequired,
-                    Source = p.Source,
-                    JsonSchema = p.JsonSchema
-                }).ToList(),
-                Responses = e.Responses.Select(r => new ResponseInfo
-                {
-                    StatusCode = r.StatusCode,
-                    Type = r.Type,
-                    Description = r.Description,
-                    JsonSchema = r.JsonSchema
-                }).ToList()
-            }).ToList();
+                    Controller = e.Controller,
+                    Action = e.Action,
+                    Route = e.Route,
+                    HttpMethod = e.HttpMethod,
+                    Description = e.Description,
+                    Parameters = e.Parameters.Select(p => new DBConnectionEndpointRequestInfoDto
+                    {
+                        Name = p.Name,
+                        Type = p.Type,
+                        Description = p.Description,
+                        IsRequired = p.IsRequired,
+                        Source = p.Source,
+                        JsonSchema = p.JsonSchema
+                    }).ToList(),
+                    Responses = e.Responses.Select(r => new DBConnectionEndpointResponseInfoDto
+                    {
+                        StatusCode = r.StatusCode,
+                        Type = r.Type,
+                        Description = r.Description,
+                        JsonSchema = r.JsonSchema
+                    }).ToList()
+                }).ToList();
+
+                _logger.LogInformation("Successfully retrieved {Count} endpoints for connection ID: {Id}", endpointDtos.Count, connectionId);
+                return endpointDtos;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving endpoints for connection ID: {Id}", connectionId);
+                throw;
+            }
         }
 
-        public async Task<List<ControllerInfoResponse>> GetControllersAsync(int connectionId)
+        public async Task<List<DBConnectionControllerInfoDto>> GetControllersAsync(int connectionId)
         {
-            using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-            var connection = await apiDbContext.QDBConnections
-                .Include(c => c.Endpoints)
-                    .ThenInclude(e => e.Responses)
-                .FirstOrDefaultAsync(c => c.Id == connectionId);
-
-            if (connection == null)
-                throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
-
-            return connection.Endpoints
-                .GroupBy(e => e.Controller)
-                .Select(g => new ControllerInfoResponse
+            try
+            {
+                _logger.LogDebug("Retrieving controllers for connection ID: {Id}", connectionId);
+                var connection = await _dbConnectionRepository.FindByIdWithControllersAsync(connectionId);
+                
+                if (connection == null)
                 {
-                    Name = g.Key.Replace("Controller",""),
-                    Route = g.First().Route.Replace("Controller",""),
-                    HttpGetJsonSchema = g.FirstOrDefault(e => e.HttpMethod == "GET")
-                        ?.Responses.FirstOrDefault(r => r.StatusCode == 200)
-                        ?.JsonSchema
-                })
-                .ToList();
+                    _logger.LogWarning("Database connection not found with ID: {Id}", connectionId);
+                    throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
+                }
+
+                var controllers = connection.Endpoints
+                    .GroupBy(e => e.Controller)
+                    .Select(g => new DBConnectionControllerInfoDto
+                    {
+                        Name = g.Key.Replace("Controller",""),
+                        Route = g.First().Route.Replace("Controller",""),
+                        HttpGetJsonSchema = g.FirstOrDefault(e => e.HttpMethod == "GET")
+                            ?.EntitySubjectJsonSchema
+                    })
+                    .ToList();
+
+                _logger.LogInformation("Successfully retrieved {Count} controllers for connection ID: {Id}", controllers.Count, connectionId);
+                return controllers;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving controllers for connection ID: {Id}", connectionId);
+                throw;
+            }
+        }
+
+        public async Task<DBConnectionDto> GetByIdAsync(int id)
+        {
+            try
+            {
+                _logger.LogDebug("Retrieving database connection with ID: {Id}", id);
+                var connection = await _dbConnectionRepository.FindByIdAsync(id);
+
+                if (connection == null)
+                {
+                    _logger.LogWarning("Database connection not found with ID: {Id}", id);
+                    return null;
+                }
+
+                _logger.LogInformation("Successfully retrieved database connection: {Id}", id);
+                return DBConnectionDto.FromEntity(connection);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving database connection with ID: {Id}", id);
+                throw;
+            }
         }
 
         private List<TemplateEntityMetadata> ExtractEntityMetadata(ScaffoldedModel scaffoldedModel)
@@ -547,7 +668,33 @@ namespace Querier.Api.Domain.Services
                     PluralName = pluralizer.Pluralize(entityName),
                     Properties = new List<TemplateProperty>()
                 };
+                List<string> keys = new List<string>();
+                List<string> foreignKeys = new List<string>();
 
+                foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
+                {
+                    var keyAttributes = property.AttributeLists
+                        .SelectMany(al => al.Attributes)
+                        .Where(a => a.Name.ToString() == "Key")
+                        .Select(a => property.Identifier.Text)
+                        .ToList();
+                    
+                    keys.AddRange(keyAttributes);
+                }
+                
+                foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
+                {
+                    var foreignKeyAttributes = property.AttributeLists
+                        .SelectMany(al => al.Attributes)
+                        .Where(a => a.Name.ToString() == "ForeignKey")
+                        .SelectMany(a => a.ArgumentList.Arguments)
+                        .Select(a => a.Expression.ToString().Replace("\"", "")).ToList();
+                    
+                    foreach (var foreignKey in foreignKeyAttributes)
+                        if (!keys.Contains(foreignKey))
+                            foreignKeys.Add(foreignKey);
+                }
+                    
                 foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
                 {
                     var attributes = property.AttributeLists
@@ -555,9 +702,9 @@ namespace Querier.Api.Domain.Services
                         .Select(a => a.Name.ToString())
                         .ToList();
 
-                    var isKey = attributes.Contains("Key") || 
-                               property.Identifier.Text.Equals("Id", StringComparison.OrdinalIgnoreCase) ||
-                               property.Identifier.Text.EndsWith("Id", StringComparison.OrdinalIgnoreCase);
+                    var isKey = keys.Contains(property.Identifier.Text);
+
+                    var isForeignKey = foreignKeys.Contains(property.Identifier.Text);
 
                     var isRequired = attributes.Contains("Required");
                     var isAutoGenerated = attributes.Contains("DatabaseGenerated") && 
@@ -573,7 +720,8 @@ namespace Querier.Api.Domain.Services
                         CSType = property.Type.ToString(),
                         IsKey = isKey,
                         IsRequired = isRequired,
-                        IsAutoGenerated = isAutoGenerated
+                        IsAutoGenerated = isAutoGenerated,
+                        IsForeignKey = isForeignKey
                     };
 
                     entity.Properties.Add(prop);
@@ -612,7 +760,7 @@ namespace Querier.Api.Domain.Services
             return entities;
         }
 
-        private List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(List<Querier.Api.Domain.Entities.QDBConnection.StoredProcedure> procedures)
+        private List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(List<Entities.QDBConnection.StoredProcedure> procedures)
         {
             return procedures.Select(p => new StoredProcedureMetadata
             {
@@ -646,19 +794,21 @@ namespace Querier.Api.Domain.Services
             public string FileName { get; set; }
         }
 
-        public async Task<QueryAnalysisResponse> GetQueryObjects(int connectionId, string objectType)
+        public async Task<DBConnectionQueryAnalysisDto> GetQueryObjectsAsync(int connectionId, string objectType)
         {
             try
             {
-                using var apiDbContext = await _apiDbContextFactory.CreateDbContextAsync();
-                var connection = await apiDbContext.QDBConnections.FindAsync(connectionId);
+                _logger.LogDebug("Analyzing query objects for connection ID: {Id}, type: {Type}", connectionId, objectType);
+                var connection = await _dbConnectionRepository.FindByIdAsync(connectionId);
                 
                 if (connection == null)
+                {
+                    _logger.LogWarning("Database connection not found with ID: {Id}", connectionId);
                     throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
+                }
 
                 var schema = await _schemaExtractor.ExtractSchema(connection.ConnectionType, connection.ConnectionString);
-
-                var response = new QueryAnalysisResponse();
+                var response = new DBConnectionQueryAnalysisDto();
 
                 switch (objectType.ToLowerInvariant())
                 {
@@ -675,24 +825,18 @@ namespace Querier.Api.Domain.Services
                         response.UserFunctions = schema.UserFunctions.Select(f => $"{f.Schema}.{f.Name}").ToList();
                         break;
                     default:
+                        _logger.LogWarning("Invalid object type requested: {Type}", objectType);
                         throw new ArgumentException($"Invalid object type: {objectType}");
                 }
 
+                _logger.LogInformation("Successfully analyzed query objects for connection ID: {Id}, type: {Type}", connectionId, objectType);
                 return response;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting query objects for connection {ConnectionId}", connectionId);
+                _logger.LogError(ex, "Error analyzing query objects for connection ID: {Id}, type: {Type}", connectionId, objectType);
                 throw;
             }
-        }
-
-        private string GetParameterSource(FromBodyAttribute fromBody, FromQueryAttribute fromQuery, FromRouteAttribute fromRoute)
-        {
-            if (fromBody != null) return "FromBody";
-            if (fromQuery != null) return "FromQuery";
-            if (fromRoute != null) return "FromRoute";
-            return "FromQuery";
         }
     }
 }

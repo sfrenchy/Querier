@@ -1,136 +1,302 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Querier.Api.Domain.Common.Metadata;
-using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Application.DTOs;
+using Querier.Api.Application.Interfaces.Repositories;
+using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Common.Extensions;
+using Querier.Api.Domain.Entities;
 
 namespace Querier.Api.Domain.Services
 {
-
-    public class SettingService : ISettingService
+    public class SettingService(
+        ISettingRepository settingRepository,
+        ILogger<SettingService> logger)
+        : ISettingService
     {
-        private readonly ApiDbContext _context;
-        private readonly ILogger<SettingService> _logger;
-
-        public SettingService(ApiDbContext context, ILogger<SettingService> logger)
-        {
-            _context = context;
-            _logger = logger;
-        }
-
-        public async Task<QSetting> GetSettings()
-        {
-            return await _context.QSettings.FirstOrDefaultAsync();
-        }
-
-        public async Task<QSetting> UpdateSetting(QSetting setting)
-        {
-            _context.QSettings.Update(setting);
-            await _context.SaveChangesAsync();
-            return setting;
-        }
-
-        public async Task<QSetting> Configure(QSetting setting)
-        {
-            return await UpdateSetting(setting);
-        }
-
-        public async Task<bool> GetIsConfigured()
+        public async Task<IEnumerable<SettingDto>> GetSettingsAsync()
         {
             try
             {
-                var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == "api:isConfigured");
-                if (setting == null) return false;
-                return setting.Value.ToLower() == "true";
+                logger.LogInformation("Retrieving all settings");
+                var settings = await settingRepository.ListAsync();
+                var enumerable = settings.ToList();
+                var dtos = enumerable.Select(SettingDto.FromEntity);
+                logger.LogInformation("Successfully retrieved {Count} settings", enumerable.Count());
+                return dtos;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logger.LogError(ex, "Failed to retrieve settings");
+                throw;
+            }
+        }
+
+        public async Task<SettingDto> UpdateSettingAsync(SettingDto setting)
+        {
+            try
+            {
+                logger.LogInformation("Attempting to update setting: {Name}", setting.Name);
+
+                if (setting == null)
+                {
+                    logger.LogError("UpdateSettingAsync called with null setting");
+                    throw new ArgumentNullException(nameof(setting));
+                }
+
+                var entity = await settingRepository.GetByIdAsync(setting.Id);
+                if (entity == null)
+                {
+                    logger.LogWarning("Setting not found with ID: {Id}", setting.Id);
+                    throw new KeyNotFoundException($"Setting with ID {setting.Id} not found");
+                }
+
+                var updatedEntity = await settingRepository.UpdateAsync(entity);
+                logger.LogInformation("Successfully updated setting: {Name}", setting.Name);
+                return SettingDto.FromEntity(updatedEntity);
+            }
+            catch (Exception ex) when (ex is not ArgumentNullException && ex is not KeyNotFoundException)
+            {
+                logger.LogError(ex, "Failed to update setting: {Name}", setting?.Name);
+                throw;
+            }
+        }
+
+        public async Task<bool> GetApiIsConfiguredAsync()
+        {
+            try
+            {
+                logger.LogInformation("Checking if API is configured");
+                var settings = await settingRepository.ListAsync();
+                var setting = settings.FirstOrDefault(s => s.Name == "api:isConfigured");
+                
+                if (setting == null)
+                {
+                    logger.LogInformation("API configuration setting not found, returning false");
+                    return false;
+                }
+
+                var isConfigured = setting.Value.ToLower() == "true";
+                logger.LogInformation("API configuration status: {IsConfigured}", isConfigured);
+                return isConfigured;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error checking API configuration status");
                 return false;
             }
         }
 
-        public async Task<T> GetSettingValue<T>(string name)
+        public async Task<T> GetSettingValueAsync<T>(string name)
         {
-            return await GetSettingValue<T>(name, default);
+            return await GetSettingValueAsync<T>(name, default);
         }
 
-        public async Task<T> GetSettingValue<T>(string name, T defaultValue)
+        public async Task<T> GetSettingValueAsync<T>(string name, T defaultValue)
         {
             try
             {
-                var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == name);
-                if (setting == null) return defaultValue;
-                if (typeof(T) == typeof(bool)) return (T)(object)(setting.Value.ToLower() == "true");
-                return (T)Convert.ChangeType(setting.Value, typeof(T));
+                logger.LogDebug("Retrieving setting value: {Name}", name);
+
+                if (string.IsNullOrEmpty(name))
+                {
+                    logger.LogWarning("GetSettingValueAsync called with null or empty name");
+                    return defaultValue;
+                }
+
+                var settings = await settingRepository.ListAsync();
+                var setting = settings.FirstOrDefault(s => s.Name == name);
+
+                if (setting == null)
+                {
+                    logger.LogDebug("Setting {Name} not found, returning default value", name);
+                    return defaultValue;
+                }
+
+                try
+                {
+                    if (typeof(T) == typeof(bool))
+                    {
+                        return (T)(object)(setting.Value.ToLower() == "true");
+                    }
+
+                    var convertedValue = (T)Convert.ChangeType(setting.Value, typeof(T));
+                    logger.LogDebug("Successfully retrieved setting {Name} with value {Value}", name, convertedValue);
+                    return convertedValue;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to convert setting {Name} to type {Type}, returning default value", 
+                        name, typeof(T).Name);
+                    return defaultValue;
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logger.LogError(ex, "Unexpected error retrieving setting {Name}", name);
                 return defaultValue;
             }
         }
 
-        public async Task<QSetting> CreateSetting(string name, string value)
-        {
-            var setting = new QSetting
-            {
-                Name = name,
-                Value = value
-            };
-
-            _context.QSettings.Add(setting);
-            await _context.SaveChangesAsync();
-
-            return setting;
-        }
-
-        public async Task<string> GetSettingValue(string name, string defaultValue = null)
+        public async Task<SettingDto> CreateSettingAsync(SettingDto dto)
         {
             try
             {
-                var setting = await _context.QSettings
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(s => s.Name == name);
+                logger.LogInformation("Attempting to create new setting: {Name}", dto.Name);
 
-                if (setting == null && defaultValue != null)
+                if (dto == null)
                 {
-                    // Créer le paramètre avec la valeur par défaut
-                    setting = await CreateSetting(name, defaultValue);
-                    return setting.Value;
+                    logger.LogError("CreateSettingAsync called with null DTO");
+                    throw new ArgumentNullException(nameof(dto));
                 }
 
-                return setting?.Value;
+                if (string.IsNullOrEmpty(dto.Name))
+                {
+                    logger.LogError("Cannot create setting with null or empty name");
+                    throw new ArgumentException("Setting name cannot be null or empty", nameof(dto.Name));
+                }
+
+                var newSetting = new Setting
+                {
+                    Name = dto.Name,
+                    Value = dto.Value,
+                    Description = dto.Description,
+                    Type = dto.Type.ToString()
+                };
+
+                await settingRepository.AddAsync(newSetting);
+                logger.LogInformation("Successfully created setting: {Name}", dto.Name);
+
+                return SettingDto.FromEntity(newSetting);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not ArgumentNullException && ex is not ArgumentException)
             {
-                _logger.LogError(ex, $"Error getting setting value for {name}");
-                return null;
+                logger.LogError(ex, "Failed to create setting: {Name}", dto?.Name);
+                throw;
             }
         }
 
-        public async Task<QSetting> UpdateSettingIfExists(string name, string value)
+        public async Task<T> GetSettingValueIfExistsAsync<T>(string name, T defaultValue, string description = "")
         {
-            var setting = await _context.QSettings.FirstOrDefaultAsync(s => s.Name == name);
-            if (setting != null)
+            try
             {
-                setting.Value = value;
-                await _context.SaveChangesAsync();
+                logger.LogDebug("Retrieving or creating setting: {Name}", name);
+
+                if (string.IsNullOrEmpty(name))
+                {
+                    logger.LogWarning("GetSettingValueIfExistsAsync called with null or empty name");
+                    throw new ArgumentException("Setting name cannot be null or empty", nameof(name));
+                }
+
+                var settings = await settingRepository.ListAsync();
+                var setting = settings.FirstOrDefault(s => s.Name == name);
+
+                if (setting == null)
+                {
+                    logger.LogInformation("Setting {Name} not found, creating with default value", name);
+                    
+                    var newSetting = new Setting
+                    {
+                        Name = name,
+                        Value = defaultValue?.ToString(),
+                        Description = description,
+                        Type = typeof(T).ToString()
+                    };
+
+                    await settingRepository.AddAsync(newSetting);
+                    return (T)Convert.ChangeType(newSetting.Value, typeof(T));
+                }
+
+                var convertedValue = (T)Convert.ChangeType(setting.Value, typeof(T));
+                logger.LogDebug("Successfully retrieved existing setting {Name} with value {Value}", name, convertedValue);
+                return convertedValue;
             }
-            else
+            catch (Exception ex) when (ex is not ArgumentException)
             {
-                setting = new QSetting { Name = name, Value = value };
-                _context.QSettings.Add(setting);
-                await _context.SaveChangesAsync();
+                logger.LogError(ex, "Failed to retrieve or create setting: {Name}", name);
+                throw;
             }
-            return setting;
         }
 
-        public async Task UpdateSettings(Dictionary<string, string> settings)
+        public async Task UpdateSettingIfExistsAsync<T>(string name, T value)
         {
-            foreach (var (name, value) in settings)
+            try
             {
-                await UpdateSettingIfExists(name, value);
+                logger.LogInformation("Attempting to update or create setting: {Name}", name);
+
+                if (string.IsNullOrEmpty(name))
+                {
+                    logger.LogError("UpdateSettingIfExistsAsync called with null or empty name");
+                    throw new ArgumentException("Setting name cannot be null or empty", nameof(name));
+                }
+
+                var settings = await settingRepository.ListAsync();
+                var setting = settings.FirstOrDefault(s => s.Name == name);
+
+                if (setting != null)
+                {
+                    if (typeof(T).ToString() != setting.Type)
+                    {
+                        var error = $"Type mismatch for setting {name}, existing type: {setting.Type}, new type: {typeof(T)}";
+                        logger.LogError(error);
+                        throw new InvalidOperationException(error);
+                    }
+
+                    setting.Value = value?.ToString();
+                    await settingRepository.UpdateAsync(setting);
+                    logger.LogInformation("Successfully updated existing setting: {Name}", name);
+                }
+                else
+                {
+                    setting = new Setting
+                    {
+                        Name = name,
+                        Value = value?.ToString(),
+                        Type = typeof(T).ToString()
+                    };
+                    await settingRepository.AddAsync(setting);
+                    logger.LogInformation("Successfully created new setting: {Name}", name);
+                }
+            }
+            catch (Exception ex) when (ex is not ArgumentException && ex is not InvalidOperationException)
+            {
+                logger.LogError(ex, "Failed to update or create setting: {Name}", name);
+                throw;
+            }
+        }
+
+        public async Task UpdateSettings(Dictionary<string, dynamic> settings)
+        {
+            try
+            {
+                logger.LogInformation("Updating multiple settings. Count: {Count}", settings.Count);
+
+                if (settings == null)
+                {
+                    logger.LogError("UpdateSettings called with null dictionary");
+                    throw new ArgumentNullException(nameof(settings));
+                }
+
+                foreach (var (name, value) in settings)
+                {
+                    try
+                    {
+                        await UpdateSettingIfExistsAsync(name, value.Item1);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Failed to update setting {Name}, continuing with remaining settings", name);
+                    }
+                }
+
+                logger.LogInformation("Completed updating multiple settings");
+            }
+            catch (Exception ex) when (ex is not ArgumentNullException)
+            {
+                logger.LogError(ex, "Failed to update multiple settings");
+                throw;
             }
         }
     }
