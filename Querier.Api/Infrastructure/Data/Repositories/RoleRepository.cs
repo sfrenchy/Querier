@@ -17,7 +17,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             try
             {
                 logger.LogInformation("Retrieving all roles");
-                var roles = roleManager.Roles.ToList();
+                var roles = roleManager.Roles.AsNoTracking().ToList();
                 logger.LogInformation("Retrieved {Count} roles", roles.Count);
                 return roles;
             }
@@ -151,7 +151,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 }
 
                 logger.LogInformation("Getting role with ID {RoleId}", id);
-                var role = await roleManager.FindByIdAsync(id);
+                var role = await roleManager.Roles.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id);
                 
                 if (role == null)
                 {

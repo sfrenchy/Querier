@@ -18,6 +18,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             try
             {
                 var row = await context.Rows
+                    .AsNoTracking()
                     .Include(r => r.Cards)
                     .FirstOrDefaultAsync(r => r.Id == id);
 
@@ -45,6 +46,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             try
             {
                 var rows = await context.Rows
+                    .AsNoTracking()
                     .Include(r => r.Cards)
                     .Where(r => r.PageId == pageId)
                     .OrderBy(r => r.Order)
@@ -156,6 +158,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             try
             {
                 var maxOrder = await context.Rows
+                    .AsNoTracking()
                     .Where(r => r.PageId == pageId)
                     .MaxAsync(r => (int?)r.Order) ?? 0;
 

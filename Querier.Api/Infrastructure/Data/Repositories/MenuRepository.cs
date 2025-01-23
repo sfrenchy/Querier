@@ -16,6 +16,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             try
             {
                 var categories = await context.Menus
+                    .AsNoTracking()
                     .Include(x => x.Translations)
                     .ToListAsync();
 
@@ -35,6 +36,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             try
             {
                 var category = await context.Menus
+                    .AsNoTracking()
                     .Include(x => x.Translations)
                     .FirstOrDefaultAsync(x => x.Id == id);
 

@@ -17,7 +17,9 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             logger.LogDebug("Getting page by ID {PageId}", id);
             try
             {
-                var page = await context.Pages.FindAsync(id);
+                var page = await context.Pages
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.Id == id);
                 if (page == null)
                 {
                     logger.LogWarning("Page {PageId} not found", id);
@@ -37,12 +39,12 @@ namespace Querier.Api.Infrastructure.Data.Repositories
 
         public async Task<IEnumerable<Page>> GetAllAsync()
         {
-            
-            
             logger.LogDebug("Getting all pages");
             try
             {
-                var pages = await context.Pages.ToListAsync();
+                var pages = await context.Pages
+                    .AsNoTracking()
+                    .ToListAsync();
                 logger.LogDebug("Retrieved {Count} pages", pages.Count);
                 return pages;
             }
@@ -158,6 +160,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             try
             {
                 var pages = await context.Pages
+                    .AsNoTracking()
                     .Where(p => p.MenuId == menuId)
                     .ToListAsync();
                 logger.LogDebug("Retrieved {Count} pages for menu {MenuId}", pages.Count, menuId);

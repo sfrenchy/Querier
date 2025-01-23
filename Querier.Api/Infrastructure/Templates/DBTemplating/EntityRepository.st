@@ -135,7 +135,7 @@ namespace $nameSpace$.Repositories
                 var skip = pageNumber != 0 ? (pageNumber - 1) * pageSize : 0;
 
                 _logger.LogDebug("Applying pagination: Skip=" + skip.ToString() + ", Take=" + pageSize.ToString());
-                var data = await query.Skip(skip).Take(pageSize).ToListAsync();
+                var data = await query.AsNoTracking().Skip(skip).Take(pageSize).ToListAsync();
 
                 _logger.LogInformation("Successfully retrieved " + data.Count().ToString() + " $entity.Name$ records");
                 return new DataPagedResult<$entity.Name$>(data, totalCount, parameters);
@@ -154,7 +154,7 @@ namespace $nameSpace$.Repositories
             try
             {
                 await using var context = await _contextFactory.CreateDbContextAsync();
-                var entity = await context.$entity.PluralName$.FindAsync(id);
+                var entity = await context.$entity.PluralName$.AsNoTracking().FirstOrDefaultAsync(e => e.$entity.KeyName$ == id);
 
                 if (entity == null)
                 {
@@ -302,6 +302,7 @@ namespace $nameSpace$.Repositories
                     {
                         _logger.LogDebug("Fetching unique values for $property.Name$");
                         result.AddRange(await context.$entity.PluralName$
+                            .AsNoTracking()
                             .Select(e => e.$property.Name$.ToString())
                             .Distinct()
                             .OrderBy(value => value)

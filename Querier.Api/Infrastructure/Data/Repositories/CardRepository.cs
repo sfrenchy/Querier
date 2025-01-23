@@ -18,6 +18,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             {
                 logger.LogDebug("Retrieving card with ID: {Id}", id);
                 var card = await context.Cards
+                    .AsNoTracking()
                     .Include(c => c.CardTranslations)
                     .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -43,6 +44,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             {
                 logger.LogDebug("Retrieving cards for row ID: {RowId}", rowId);
                 var cards = await context.Cards
+                    .AsNoTracking()
                     .Include(c => c.CardTranslations)
                     .Where(c => c.RowId == rowId)
                     .OrderBy(c => c.Order)
@@ -164,6 +166,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             {
                 logger.LogDebug("Getting maximum order value for row ID: {RowId}", rowId);
                 var maxOrder = await context.Cards
+                    .AsNoTracking()
                     .Where(c => c.RowId == rowId)
                     .MaxAsync(c => (int?)c.Order) ?? 0;
 

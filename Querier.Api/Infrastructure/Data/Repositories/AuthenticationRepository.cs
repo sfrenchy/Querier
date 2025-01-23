@@ -62,7 +62,9 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 logger.LogDebug("Retrieving refresh token: {Token}", refreshToken);
 
                 await using var context = await contextFactory.CreateDbContextAsync();
-                var token = await context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == refreshToken);
+                var token = await context.RefreshTokens
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Token == refreshToken);
 
                 if (token == null)
                 {

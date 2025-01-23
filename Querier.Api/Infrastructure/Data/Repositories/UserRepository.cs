@@ -43,7 +43,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 }
 
                 var rolesString = await userManager.GetRolesAsync(user);
-                var result = roleManager.Roles.Where(r => rolesString.Contains(r.Name)).ToList();
+                var result = roleManager.Roles.AsNoTracking().Where(r => rolesString.Contains(r.Name)).ToList();
                 logger.LogInformation("Successfully retrieved user and roles for ID/Email: {Id}", id);
                 return (user, result);
             }
@@ -107,6 +107,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 
                 // Charge les associations utilisateur-rôle existantes avec leurs rôles
                 user.UserRoles = await context.Set<ApiUserRole>()
+                    .AsNoTracking()
                     .Include(ur => ur.Role)
                     .Where(ur => ur.UserId == user.Id)
                     .ToListAsync();
@@ -260,7 +261,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             try
             {
                 logger.LogInformation("Retrieving all users");
-                var users = await userManager.Users.ToListAsync();
+                var users = await userManager.Users.AsNoTracking().ToListAsync();
                 logger.LogInformation("Successfully retrieved {Count} users", users.Count);
                 return users;
             }
@@ -434,7 +435,8 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             {
                 logger.LogInformation("Retrieving roles for user: {Email}", user.Email);
                 var roleNames = await userManager.GetRolesAsync(user);
-                var roles = roleManager.Roles.Where(r => roleNames.Contains(r.Name)).ToList();
+
+                var roles = roleManager.Roles.AsNoTracking().Where(r => roleNames.Contains(r.Name)).ToList();
                 logger.LogInformation("Successfully retrieved {Count} roles for user: {Email}", roles.Count, user.Email);
                 return roles;
             }

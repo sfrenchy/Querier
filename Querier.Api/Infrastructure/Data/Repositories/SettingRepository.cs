@@ -28,7 +28,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             {
                 _logger.LogDebug("Retrieving all settings");
                 using var context = await _contextFactory.CreateDbContextAsync();
-                var settings = await context.Settings.ToListAsync();
+                var settings = await context.Settings.AsNoTracking().ToListAsync();
                 _logger.LogDebug("Successfully retrieved {Count} settings", settings.Count);
                 return settings;
             }
@@ -46,7 +46,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 _logger.LogDebug("Retrieving setting with ID: {Id}", settingId);
 
                 using var context = await _contextFactory.CreateDbContextAsync();
-                var setting = await context.Settings.SingleOrDefaultAsync(s => s.Id == settingId);
+                var setting = await context.Settings.AsNoTracking().SingleOrDefaultAsync(s => s.Id == settingId);
 
                 if (setting == null)
                 {
