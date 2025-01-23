@@ -95,6 +95,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             try
             {
                 var existingPage = await context.Pages
+                    .AsSplitQuery()
                     .Include(p => p.PageTranslations)
                     .FirstOrDefaultAsync(p => p.Id == id);
                 

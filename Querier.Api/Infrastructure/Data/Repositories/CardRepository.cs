@@ -19,6 +19,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 logger.LogDebug("Retrieving card with ID: {Id}", id);
                 var card = await context.Cards
                     .AsNoTracking()
+                    .AsSplitQuery()
                     .Include(c => c.CardTranslations)
                     .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -45,6 +46,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 logger.LogDebug("Retrieving cards for row ID: {RowId}", rowId);
                 var cards = await context.Cards
                     .AsNoTracking()
+                    .AsSplitQuery()
                     .Include(c => c.CardTranslations)
                     .Where(c => c.RowId == rowId)
                     .OrderBy(c => c.Order)

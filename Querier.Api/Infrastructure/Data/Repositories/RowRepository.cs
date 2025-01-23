@@ -19,6 +19,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             {
                 var row = await context.Rows
                     .AsNoTracking()
+                    .AsSplitQuery()
                     .Include(r => r.Cards)
                     .FirstOrDefaultAsync(r => r.Id == id);
 
@@ -47,6 +48,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             {
                 var rows = await context.Rows
                     .AsNoTracking()
+                    .AsSplitQuery()
                     .Include(r => r.Cards)
                     .Where(r => r.PageId == pageId)
                     .OrderBy(r => r.Order)
