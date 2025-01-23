@@ -29,6 +29,7 @@ namespace Querier.Api.Infrastructure.Services
         private readonly ConcurrentDictionary<string, IDynamicContextServiceContainer> _serviceContainers;
         private readonly ConcurrentDictionary<string, ServiceCollection> _assemblyServices;
         private readonly ConcurrentDictionary<string, IServiceProvider> _assemblyServiceProviders;
+        private readonly ConcurrentDictionary<string, string> _normalizedNameCache;
 
         public AssemblyManagerService(
             ILogger<AssemblyManagerService> logger,
@@ -44,10 +45,35 @@ namespace Querier.Api.Infrastructure.Services
             _serviceContainers = new ConcurrentDictionary<string, IDynamicContextServiceContainer>();
             _assemblyServices = new ConcurrentDictionary<string, ServiceCollection>();
             _assemblyServiceProviders = new ConcurrentDictionary<string, IServiceProvider>();
+            _normalizedNameCache = new ConcurrentDictionary<string, string>();
+        }
+
+        public string GetNormalizedAssemblyName(string assemblyName)
+        {
+            if (string.IsNullOrEmpty(assemblyName))
+                throw new ArgumentException("Assembly name cannot be null or empty", nameof(assemblyName));
+
+            return _normalizedNameCache.GetOrAdd(assemblyName, name =>
+            {
+                // Enlever l'extension .dll si présente
+                if (name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    name = name.Substring(0, name.Length - 4);
+                }
+
+                // Si le nom contient _DataContext, le retirer
+                if (name.EndsWith("_DataContext", StringComparison.OrdinalIgnoreCase))
+                {
+                    name = name.Substring(0, name.Length - 12);
+                }
+
+                return name;
+            });
         }
 
         private IServiceCollection CreateServiceCollectionForAssembly(string name)
         {
+            var normalizedName = GetNormalizedAssemblyName(name);
             var services = new ServiceCollection();
             
             // Ajouter ServiceCollection comme singleton pour IServiceCollection
@@ -56,7 +82,7 @@ namespace Querier.Api.Infrastructure.Services
             // Ajouter les services de logging
             var loggerFactory = _services.BuildServiceProvider().GetRequiredService<ILoggerFactory>();
             services.AddSingleton(loggerFactory);
-            services.AddSingleton<ILogger>(sp => loggerFactory.CreateLogger(name));
+            services.AddSingleton<ILogger>(sp => loggerFactory.CreateLogger(normalizedName));
             services.AddLogging();
 
             // Ajouter les services de cache
@@ -130,18 +156,19 @@ namespace Querier.Api.Infrastructure.Services
                     throw new ArgumentNullException(nameof(connection));
                 }
 
-                _logger.LogInformation("Loading assembly for connection: {ConnectionName}", connection.Name);
+                var normalizedName = GetNormalizedAssemblyName(connection.Name);
+                _logger.LogInformation("Loading assembly for connection: {ConnectionName}", normalizedName);
 
                 // Vérifier si l'assembly est déjà chargée
-                if (IsAssemblyLoaded(connection.Name))
+                if (IsAssemblyLoaded(normalizedName))
                 {
-                    _logger.LogInformation("Assembly already loaded for {ConnectionName}", connection.Name);
-                    return GetServiceContainer(connection.Name);
+                    _logger.LogInformation("Assembly already loaded for {ConnectionName}", normalizedName);
+                    return GetServiceContainer(normalizedName);
                 }
 
                 // Créer un nouveau contexte de chargement pour l'assembly
-                var loadContext = new AssemblyLoadContext(connection.Name, isCollectible: true);
-                _loadContexts.TryAdd(connection.Name, loadContext);
+                var loadContext = new AssemblyLoadContext(normalizedName, isCollectible: true);
+                _loadContexts.TryAdd(normalizedName, loadContext);
 
                 // Charger l'assembly
                 Assembly assembly;
@@ -153,12 +180,12 @@ namespace Querier.Api.Infrastructure.Services
 
                 // Configurer les services et créer le conteneur
                 var container = await ConfigureServicesAndCreateContainer(
-                    connection.Name,
+                    normalizedName,
                     assembly,
                     connection.ConnectionType,
                     connection.ConnectionString);
 
-                _serviceContainers.TryAdd(connection.Name, container);
+                _serviceContainers.TryAdd(normalizedName, container);
                 await RegenerateSwaggerAsync();
                 return container;
             }
@@ -182,21 +209,22 @@ namespace Querier.Api.Infrastructure.Services
                 if (assemblyBytes == null)
                     throw new ArgumentNullException(nameof(assemblyBytes));
 
-                _logger.LogInformation("Loading assembly from bytes for {Name}", name);
+                var normalizedName = GetNormalizedAssemblyName(name);
+                _logger.LogInformation("Loading assembly from bytes for {Name}", normalizedName);
 
-                if (IsAssemblyLoaded(name))
+                if (IsAssemblyLoaded(normalizedName))
                 {
-                    _logger.LogInformation("Assembly already loaded for {Name}", name);
-                    return GetServiceContainer(name);
+                    _logger.LogInformation("Assembly already loaded for {Name}", normalizedName);
+                    return GetServiceContainer(normalizedName);
                 }
 
-                var loadContext = new AssemblyLoadContext(name, isCollectible: true);
-                _loadContexts.TryAdd(name, loadContext);
+                var loadContext = new AssemblyLoadContext(normalizedName, isCollectible: true);
+                _loadContexts.TryAdd(normalizedName, loadContext);
 
                 var assembly = loadContext.LoadFromStream(new MemoryStream(assemblyBytes));
-                var container = await ConfigureServicesAndCreateContainer(name, assembly, connectionType, connectionString);
+                var container = await ConfigureServicesAndCreateContainer(normalizedName, assembly, connectionType, connectionString);
                 
-                _serviceContainers.TryAdd(name, container);
+                _serviceContainers.TryAdd(normalizedName, container);
                 await RegenerateSwaggerAsync();
 
                 return container;

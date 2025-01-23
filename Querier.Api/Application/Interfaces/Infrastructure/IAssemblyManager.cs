@@ -13,6 +13,13 @@ namespace Querier.Api.Application.Interfaces.Infrastructure
     public interface IAssemblyManagerService
     {
         /// <summary>
+        /// Normalise le nom d'une assembly en retirant les suffixes et extensions non nécessaires
+        /// </summary>
+        /// <param name="assemblyName">Nom de l'assembly à normaliser</param>
+        /// <returns>Le nom normalisé de l'assembly</returns>
+        string GetNormalizedAssemblyName(string assemblyName);
+
+        /// <summary>
         /// Charge une assembly à partir d'une connexion de base de données
         /// </summary>
         /// <param name="connection">La connexion de base de données</param>
