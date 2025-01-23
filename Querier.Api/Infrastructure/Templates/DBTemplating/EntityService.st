@@ -79,6 +79,7 @@ namespace $nameSpace$.Services
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
             SlidingExpiration = TimeSpan.FromMinutes(10)
         \};
+        private const string CACHE_VERSION_KEY = "$entity.Name$_CacheVersion";
 
         public $entity.Name$Service(
             I$entity.Name$Repository repository,
@@ -189,11 +190,25 @@ namespace $nameSpace$.Services
             \}
         \}
 
-        public async Task<DataPagedResult<$entity.Name$Dto>> GetAllAsync(DataRequestParametersDto? parameters = null) {
-            parameters ??= new DataRequestParametersDto();
+        private async Task InvalidateCollectionCacheAsync()
+        {
+            try 
+            {
+                // Increment version to invalidate all cached queries
+                var version = await _cache.GetStringAsync(CACHE_VERSION_KEY) ?? "0";
+                var newVersion = (int.Parse(version) + 1).ToString();
+                await _cache.SetStringAsync(CACHE_VERSION_KEY, newVersion, _cacheOptions);
+            \}
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to invalidate collection cache");
+            \}
+        \}
 
+        public async Task<DataPagedResult<$entity.Name$Dto>> GetAllAsync(DataRequestParametersDto? parameters = null) {
             try {
-                var cacheKey = "$entity.Name$_GetAll_" + Utils.ComputeMd5Hash(JsonConvert.SerializeObject(parameters));
+                var version = await _cache.GetStringAsync(CACHE_VERSION_KEY) ?? "0";
+                var cacheKey = "$entity.Name$_GetAll_" + version + "_" + Utils.ComputeMd5Hash(JsonConvert.SerializeObject(parameters));
                 return await ExecuteCacheOperationAsync("GetAll", cacheKey, async () => {
                     var entitiesResult = await _repository.GetAllAsync(parameters);
                     return new DataPagedResult<$entity.Name$Dto>(
@@ -214,7 +229,7 @@ namespace $nameSpace$.Services
             \}
 
             try {
-                var cacheKey = "$entity.Name$_GetById_id" + id.ToString();
+                var cacheKey = "$entity.Name$_GetById_" + id.ToString();
                 var result = await ExecuteCacheOperationAsync<$entity.Name$Dto?>("GetById", cacheKey, async () => {
                     var entity = await _repository.GetByIdAsync(id);
                     if (entity == null) {
@@ -238,6 +253,10 @@ namespace $nameSpace$.Services
             try {
                 var entity = MapToEntity(createDto);
                 var result = await _repository.CreateAsync(entity);
+                
+                // Invalidate collection cache
+                await InvalidateCollectionCacheAsync();
+                
                 _logger.LogInformation("Created new $entity.Name$ with id " + result.$entity.KeyName$.ToString());
                 return MapToDto(result);
             \}
@@ -262,9 +281,12 @@ namespace $nameSpace$.Services
                     throw new EntityNotFoundException("$entity.Name$", id);
                 \}
 
-                // Invalidate cache
+                // Invalidate individual cache
                 var cacheKey = "$entity.Name$_GetById_" + id.ToString();
                 await _cache.RemoveAsync(cacheKey);
+
+                // Invalidate collection cache
+                await InvalidateCollectionCacheAsync();
 
                 _logger.LogInformation("Updated $entity.Name$ with id " + id.ToString());
                 return MapToDto(result);
@@ -286,9 +308,12 @@ namespace $nameSpace$.Services
                     throw new EntityNotFoundException("$entity.Name$", id);
                 \}
 
-                // Invalidate cache
+                // Invalidate individual cache
                 var cacheKey = "$entity.Name$_GetById_" + id.ToString();
                 await _cache.RemoveAsync(cacheKey);
+
+                // Invalidate collection cache
+                await InvalidateCollectionCacheAsync();
 
                 _logger.LogInformation("Deleted $entity.Name$ with id " + id.ToString());
                 return true;
