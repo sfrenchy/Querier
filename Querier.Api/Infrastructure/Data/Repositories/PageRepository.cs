@@ -10,47 +10,58 @@ using System.Linq;
 
 namespace Querier.Api.Infrastructure.Data.Repositories
 {
-    public class PageRepository(ApiDbContext context, ILogger<PageRepository> logger) : IPageRepository
+    public class PageRepository : IPageRepository
     {
+        private readonly IDbContextFactory<ApiDbContext> _contextFactory;
+        private readonly ILogger<PageRepository> _logger;
+
+        public PageRepository(IDbContextFactory<ApiDbContext> contextFactory, ILogger<PageRepository> logger)
+        {
+            _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
         public async Task<Page> GetByIdAsync(int id)
         {
-            logger.LogDebug("Getting page by ID {PageId}", id);
+            _logger.LogDebug("Getting page by ID {PageId}", id);
             try
             {
+                using var context = await _contextFactory.CreateDbContextAsync();
                 var page = await context.Pages
                     .AsNoTracking()
                     .FirstOrDefaultAsync(p => p.Id == id);
                 if (page == null)
                 {
-                    logger.LogWarning("Page {PageId} not found", id);
+                    _logger.LogWarning("Page {PageId} not found", id);
                 }
                 else
                 {
-                    logger.LogDebug("Successfully retrieved page {PageId}", id);
+                    _logger.LogDebug("Successfully retrieved page {PageId}", id);
                 }
                 return page;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving page {PageId}", id);
+                _logger.LogError(ex, "Error retrieving page {PageId}", id);
                 throw;
             }
         }
 
         public async Task<IEnumerable<Page>> GetAllAsync()
         {
-            logger.LogDebug("Getting all pages");
+            _logger.LogDebug("Getting all pages");
             try
             {
+                using var context = await _contextFactory.CreateDbContextAsync();
                 var pages = await context.Pages
                     .AsNoTracking()
                     .ToListAsync();
-                logger.LogDebug("Retrieved {Count} pages", pages.Count);
+                _logger.LogDebug("Retrieved {Count} pages", pages.Count);
                 return pages;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving all pages");
+                _logger.LogError(ex, "Error retrieving all pages");
                 throw;
             }
         }
@@ -59,26 +70,27 @@ namespace Querier.Api.Infrastructure.Data.Repositories
         {
             if (page == null)
             {
-                logger.LogError("Attempted to create a null page");
+                _logger.LogError("Attempted to create a null page");
                 throw new ArgumentNullException(nameof(page));
             }
 
-            logger.LogDebug("Creating new page");
+            _logger.LogDebug("Creating new page");
             try
             {
+                using var context = await _contextFactory.CreateDbContextAsync();
                 context.Pages.Add(page);
                 await context.SaveChangesAsync();
-                logger.LogInformation("Successfully created page {PageId}", page.Id);
+                _logger.LogInformation("Successfully created page {PageId}", page.Id);
                 return page;
             }
             catch (DbUpdateException ex)
             {
-                logger.LogError(ex, "Database error while creating page");
+                _logger.LogError(ex, "Database error while creating page");
                 throw;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error creating page");
+                _logger.LogError(ex, "Error creating page");
                 throw;
             }
         }
@@ -87,13 +99,14 @@ namespace Querier.Api.Infrastructure.Data.Repositories
         {
             if (page == null)
             {
-                logger.LogError("Attempted to update page {PageId} with null data", id);
+                _logger.LogError("Attempted to update page {PageId} with null data", id);
                 throw new ArgumentNullException(nameof(page));
             }
 
-            logger.LogDebug("Updating page {PageId}", id);
+            _logger.LogDebug("Updating page {PageId}", id);
             try
             {
+                using var context = await _contextFactory.CreateDbContextAsync();
                 var existingPage = await context.Pages
                     .AsSplitQuery()
                     .Include(p => p.PageTranslations)
@@ -101,75 +114,81 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 
                 if (existingPage == null)
                 {
-                    logger.LogWarning("Page {PageId} not found for update", id);
+                    _logger.LogWarning("Page {PageId} not found for update", id);
                     return null;
                 }
 
                 await context.SaveChangesAsync();
-                logger.LogInformation("Successfully updated page {PageId}", id);
+                _logger.LogInformation("Successfully updated page {PageId}", id);
                 return existingPage;
             }
             catch (DbUpdateConcurrencyException ex)
             {
-                logger.LogError(ex, "Concurrency error while updating page {PageId}", id);
+                _logger.LogError(ex, "Concurrency error while updating page {PageId}", id);
                 throw;
             }
             catch (DbUpdateException ex)
             {
-                logger.LogError(ex, "Database error while updating page {PageId}", id);
+                _logger.LogError(ex, "Database error while updating page {PageId}", id);
                 throw;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error updating page {PageId}", id);
+                _logger.LogError(ex, "Error updating page {PageId}", id);
                 throw;
             }
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            logger.LogDebug("Deleting page {PageId}", id);
+            _logger.LogDebug("Deleting page {PageId}", id);
             try
             {
-                var page = await GetByIdAsync(id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var page = await context.Pages.FindAsync(id);
                 if (page == null)
                 {
-                    logger.LogWarning("Cannot delete page {PageId} - not found", id);
+                    _logger.LogWarning("Cannot delete page {PageId} - not found", id);
                     return false;
                 }
 
                 context.Pages.Remove(page);
                 await context.SaveChangesAsync();
-                logger.LogInformation("Successfully deleted page {PageId}", id);
+                _logger.LogInformation("Successfully deleted page {PageId}", id);
                 return true;
             }
             catch (DbUpdateException ex)
             {
-                logger.LogError(ex, "Database error while deleting page {PageId}", id);
+                _logger.LogError(ex, "Database error while deleting page {PageId}", id);
                 throw;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error deleting page {PageId}", id);
+                _logger.LogError(ex, "Error deleting page {PageId}", id);
                 throw;
             }
         }
 
         public async Task<IEnumerable<Page>> GetAllByMenuIdAsync(int menuId)
         {
-            logger.LogDebug("Getting pages for menu {MenuId}", menuId);
+            _logger.LogDebug("Getting pages for menu {MenuId}", menuId);
             try
             {
+                using var context = await _contextFactory.CreateDbContextAsync();
                 var pages = await context.Pages
                     .AsNoTracking()
+                    .AsSplitQuery()
+                    .Include(p => p.PageTranslations)
+                    .Include(p => p.Rows)
                     .Where(p => p.MenuId == menuId)
+                    .OrderBy(p => p.Order)
                     .ToListAsync();
-                logger.LogDebug("Retrieved {Count} pages for menu {MenuId}", pages.Count, menuId);
+                _logger.LogDebug("Retrieved {Count} pages for menu {MenuId}", pages.Count, menuId);
                 return pages;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving pages for menu {MenuId}", menuId);
+                _logger.LogError(ex, "Error retrieving pages for menu {MenuId}", menuId);
                 throw;
             }
         }

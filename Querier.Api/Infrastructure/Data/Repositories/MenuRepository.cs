@@ -1,149 +1,187 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.Interfaces.Repositories;
+using Querier.Api.Domain.Entities.Menu;
 using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api.Infrastructure.Data.Repositories
 {
-    public class MenuRepository(ApiDbContext context, ILogger<MenuRepository> logger) : IMenuRepository
+    public class MenuRepository : IMenuRepository
     {
-        public async Task<List<Domain.Entities.Menu.Menu>> GetAllAsync()
+        private readonly IDbContextFactory<ApiDbContext> _contextFactory;
+        private readonly ILogger<MenuRepository> _logger;
+
+        public MenuRepository(IDbContextFactory<ApiDbContext> contextFactory, ILogger<MenuRepository> logger)
         {
-            logger.LogDebug("Getting all menu categories");
+            _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public async Task<Menu> GetByIdAsync(int id)
+        {
             try
             {
-                var categories = await context.Menus
+                _logger.LogDebug("Retrieving menu with ID: {Id}", id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var menu = await context.Menus
                     .AsNoTracking()
-                    .Include(x => x.Translations)
+                    .AsSplitQuery()
+                    .Include(m => m.Translations)
+                    .Include(m => m.Pages)
+                    .FirstOrDefaultAsync(m => m.Id == id);
+
+                if (menu == null)
+                {
+                    _logger.LogWarning("Menu not found with ID: {Id}", id);
+                    return null;
+                }
+
+                _logger.LogDebug("Successfully retrieved menu with ID: {Id}", id);
+                return menu;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving menu with ID: {Id}", id);
+                throw;
+            }
+        }
+
+        public async Task<List<Menu>> GetAllAsync()
+        {
+            try
+            {
+                _logger.LogDebug("Retrieving all menus");
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var menus = await context.Menus
+                    .AsNoTracking()
+                    .AsSplitQuery()
+                    .Include(m => m.Translations)
+                    .Include(m => m.Pages)
+                    .OrderBy(m => m.Order)
                     .ToListAsync();
 
-                logger.LogDebug("Retrieved {Count} menu categories", categories.Count);
-                return categories;
+                _logger.LogDebug("Retrieved {Count} menus", menus.Count);
+                return menus;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving all menu categories");
+                _logger.LogError(ex, "Error retrieving all menus");
                 throw;
             }
         }
 
-        public async Task<Domain.Entities.Menu.Menu> GetByIdAsync(int id)
+        public async Task<Menu> CreateAsync(Menu menu)
         {
-            logger.LogDebug("Getting menu category {CategoryId}", id);
             try
             {
-                var category = await context.Menus
-                    .AsNoTracking()
-                    .Include(x => x.Translations)
-                    .FirstOrDefaultAsync(x => x.Id == id);
+                ArgumentNullException.ThrowIfNull(menu);
 
-                if (category == null)
-                {
-                    logger.LogWarning("Menu category {CategoryId} not found", id);
-                }
-                else
-                {
-                    logger.LogDebug("Successfully retrieved menu category {CategoryId}", id);
-                }
-
-                return category;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error retrieving menu category {CategoryId}", id);
-                throw;
-            }
-        }
-
-        public async Task<Domain.Entities.Menu.Menu> CreateAsync(Domain.Entities.Menu.Menu category)
-        {
-            if (category == null)
-            {
-                logger.LogError("Attempted to create a null menu category");
-                throw new ArgumentNullException(nameof(category));
-            }
-
-            logger.LogDebug("Creating new menu category");
-            try
-            {
-                await context.Menus.AddAsync(category);
+                _logger.LogInformation("Creating new menu");
+                using var context = await _contextFactory.CreateDbContextAsync();
+                await context.Menus.AddAsync(menu);
                 await context.SaveChangesAsync();
-                logger.LogInformation("Successfully created menu category {CategoryId}", category.Id);
-                return category;
+
+                _logger.LogInformation("Successfully created menu with ID: {Id}", menu.Id);
+                return menu;
             }
             catch (DbUpdateException ex)
             {
-                logger.LogError(ex, "Database error while creating menu category");
+                _logger.LogError(ex, "Database error occurred while creating menu");
                 throw;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error creating menu category");
+                _logger.LogError(ex, "Error creating menu");
                 throw;
             }
         }
 
-        public async Task<Domain.Entities.Menu.Menu> UpdateAsync(Domain.Entities.Menu.Menu category)
+        public async Task<Menu> UpdateAsync(Menu menu)
         {
-            if (category == null)
-            {
-                logger.LogError("Attempted to update a null menu category");
-                throw new ArgumentNullException(nameof(category));
-            }
-
-            logger.LogDebug("Updating menu category {CategoryId}", category.Id);
             try
             {
-                context.Menus.Update(category);
+                ArgumentNullException.ThrowIfNull(menu);
+
+                _logger.LogInformation("Updating menu with ID: {Id}", menu.Id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+
+                var exists = await context.Menus.AnyAsync(m => m.Id == menu.Id);
+                if (!exists)
+                {
+                    _logger.LogWarning("Cannot update menu: Menu not found with ID: {Id}", menu.Id);
+                    throw new InvalidOperationException($"Menu with ID {menu.Id} does not exist");
+                }
+
+                context.Menus.Update(menu);
                 await context.SaveChangesAsync();
-                logger.LogInformation("Successfully updated menu category {CategoryId}", category.Id);
-                return category;
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                logger.LogError(ex, "Concurrency error while updating menu category {CategoryId}", category.Id);
-                throw;
+
+                _logger.LogInformation("Successfully updated menu with ID: {Id}", menu.Id);
+                return menu;
             }
             catch (DbUpdateException ex)
             {
-                logger.LogError(ex, "Database error while updating menu category {CategoryId}", category.Id);
+                _logger.LogError(ex, "Database error occurred while updating menu with ID: {Id}", menu?.Id);
                 throw;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error updating menu category {CategoryId}", category.Id);
+                _logger.LogError(ex, "Error updating menu with ID: {Id}", menu?.Id);
                 throw;
             }
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            logger.LogDebug("Deleting menu category {CategoryId}", id);
             try
             {
-                var category = await context.Menus.FindAsync(id);
-                if (category == null)
+                _logger.LogInformation("Deleting menu with ID: {Id}", id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+
+                var menu = await context.Menus.FindAsync(id);
+                if (menu == null)
                 {
-                    logger.LogWarning("Cannot delete menu category {CategoryId} - not found", id);
+                    _logger.LogWarning("Cannot delete menu: Menu not found with ID: {Id}", id);
                     return false;
                 }
 
-                context.Menus.Remove(category);
+                context.Menus.Remove(menu);
                 await context.SaveChangesAsync();
-                logger.LogInformation("Successfully deleted menu category {CategoryId}", id);
+
+                _logger.LogInformation("Successfully deleted menu with ID: {Id}", id);
                 return true;
             }
             catch (DbUpdateException ex)
             {
-                logger.LogError(ex, "Database error while deleting menu category {CategoryId}", id);
+                _logger.LogError(ex, "Database error occurred while deleting menu with ID: {Id}", id);
                 throw;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error deleting menu category {CategoryId}", id);
+                _logger.LogError(ex, "Error deleting menu with ID: {Id}", id);
+                throw;
+            }
+        }
+
+        public async Task<int> GetMaxOrderAsync()
+        {
+            try
+            {
+                _logger.LogDebug("Getting maximum order value for menus");
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var maxOrder = await context.Menus
+                    .AsNoTracking()
+                    .MaxAsync(m => (int?)m.Order) ?? 0;
+
+                _logger.LogDebug("Maximum order value for menus is: {MaxOrder}", maxOrder);
+                return maxOrder;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting maximum order value for menus");
                 throw;
             }
         }

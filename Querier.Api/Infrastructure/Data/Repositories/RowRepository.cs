@@ -10,13 +10,23 @@ using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api.Infrastructure.Data.Repositories
 {
-    public class RowRepository(ApiDbContext context, ILogger<RowRepository> logger) : IRowRepository
+    public class RowRepository : IRowRepository
     {
+        private readonly IDbContextFactory<ApiDbContext> _contextFactory;
+        private readonly ILogger<RowRepository> _logger;
+
+        public RowRepository(IDbContextFactory<ApiDbContext> contextFactory, ILogger<RowRepository> logger)
+        {
+            _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
         public async Task<Row> GetByIdAsync(int id)
         {
-            logger.LogDebug("Getting row by ID {RowId}", id);
             try
             {
+                _logger.LogDebug("Retrieving row with ID: {Id}", id);
+                using var context = await _contextFactory.CreateDbContextAsync();
                 var row = await context.Rows
                     .AsNoTracking()
                     .AsSplitQuery()
@@ -25,27 +35,26 @@ namespace Querier.Api.Infrastructure.Data.Repositories
 
                 if (row == null)
                 {
-                    logger.LogWarning("Row {RowId} not found", id);
-                }
-                else
-                {
-                    logger.LogDebug("Successfully retrieved row {RowId}", id);
+                    _logger.LogWarning("Row not found with ID: {Id}", id);
+                    return null;
                 }
 
+                _logger.LogDebug("Successfully retrieved row with ID: {Id}", id);
                 return row;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving row {RowId}", id);
+                _logger.LogError(ex, "Error retrieving row with ID: {Id}", id);
                 throw;
             }
         }
 
         public async Task<IEnumerable<Row>> GetByPageIdAsync(int pageId)
         {
-            logger.LogDebug("Getting rows for page {PageId}", pageId);
             try
             {
+                _logger.LogDebug("Retrieving rows for page ID: {PageId}", pageId);
+                using var context = await _contextFactory.CreateDbContextAsync();
                 var rows = await context.Rows
                     .AsNoTracking()
                     .AsSplitQuery()
@@ -54,122 +63,136 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                     .OrderBy(r => r.Order)
                     .ToListAsync();
 
-                logger.LogDebug("Retrieved {RowCount} rows for page {PageId}", rows.Count, pageId);
+                _logger.LogDebug("Retrieved {Count} rows for page ID: {PageId}", rows.Count, pageId);
                 return rows;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving rows for page {PageId}", pageId);
+                _logger.LogError(ex, "Error retrieving rows for page ID: {PageId}", pageId);
                 throw;
             }
         }
 
         public async Task<Row> CreateAsync(Row row)
         {
-            if (row == null)
-            {
-                logger.LogError("Attempted to create a null row");
-                throw new ArgumentNullException(nameof(row));
-            }
-
-            logger.LogDebug("Creating new row for page {PageId}", row.PageId);
             try
             {
+                ArgumentNullException.ThrowIfNull(row);
+
+                _logger.LogInformation("Creating new row for page ID: {PageId}", row.PageId);
+                using var context = await _contextFactory.CreateDbContextAsync();
+                
+                // Validate page exists
+                var pageExists = await context.Pages.AnyAsync(p => p.Id == row.PageId);
+                if (!pageExists)
+                {
+                    _logger.LogWarning("Cannot create row: Page not found with ID: {PageId}", row.PageId);
+                    throw new InvalidOperationException($"Page with ID {row.PageId} does not exist");
+                }
+
                 await context.Rows.AddAsync(row);
                 await context.SaveChangesAsync();
-                logger.LogInformation("Successfully created row {RowId} for page {PageId}", row.Id, row.PageId);
+
+                _logger.LogInformation("Successfully created row with ID: {Id} in page: {PageId}", 
+                    row.Id, row.PageId);
                 return row;
             }
             catch (DbUpdateException ex)
             {
-                logger.LogError(ex, "Database error while creating row for page {PageId}", row.PageId);
+                _logger.LogError(ex, "Database error occurred while creating row for page ID: {PageId}", 
+                    row?.PageId);
                 throw;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error creating row for page {PageId}", row.PageId);
+                _logger.LogError(ex, "Error creating row for page ID: {PageId}", row?.PageId);
                 throw;
             }
         }
 
         public async Task<Row> UpdateAsync(Row row)
         {
-            if (row == null)
-            {
-                logger.LogError("Attempted to update a null row");
-                throw new ArgumentNullException(nameof(row));
-            }
-
-            logger.LogDebug("Updating row {RowId}", row.Id);
             try
             {
+                ArgumentNullException.ThrowIfNull(row);
+
+                _logger.LogInformation("Updating row with ID: {Id}", row.Id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+
+                var exists = await context.Rows.AnyAsync(r => r.Id == row.Id);
+                if (!exists)
+                {
+                    _logger.LogWarning("Cannot update row: Row not found with ID: {Id}", row.Id);
+                    throw new InvalidOperationException($"Row with ID {row.Id} does not exist");
+                }
+
                 context.Rows.Update(row);
                 await context.SaveChangesAsync();
-                logger.LogInformation("Successfully updated row {RowId}", row.Id);
+
+                _logger.LogInformation("Successfully updated row with ID: {Id}", row.Id);
                 return row;
-            }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                logger.LogError(ex, "Concurrency error while updating row {RowId}", row.Id);
-                throw;
             }
             catch (DbUpdateException ex)
             {
-                logger.LogError(ex, "Database error while updating row {RowId}", row.Id);
+                _logger.LogError(ex, "Database error occurred while updating row with ID: {Id}", row?.Id);
                 throw;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error updating row {RowId}", row.Id);
+                _logger.LogError(ex, "Error updating row with ID: {Id}", row?.Id);
                 throw;
             }
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            logger.LogDebug("Deleting row {RowId}", id);
             try
             {
-                var row = await GetByIdAsync(id);
+                _logger.LogInformation("Deleting row with ID: {Id}", id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+
+                var row = await context.Rows.FindAsync(id);
                 if (row == null)
                 {
-                    logger.LogWarning("Cannot delete row {RowId} - not found", id);
+                    _logger.LogWarning("Cannot delete row: Row not found with ID: {Id}", id);
                     return false;
                 }
 
                 context.Rows.Remove(row);
                 await context.SaveChangesAsync();
-                logger.LogInformation("Successfully deleted row {RowId}", id);
+
+                _logger.LogInformation("Successfully deleted row with ID: {Id}", id);
                 return true;
             }
             catch (DbUpdateException ex)
             {
-                logger.LogError(ex, "Database error while deleting row {RowId}", id);
+                _logger.LogError(ex, "Database error occurred while deleting row with ID: {Id}", id);
                 throw;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error deleting row {RowId}", id);
+                _logger.LogError(ex, "Error deleting row with ID: {Id}", id);
                 throw;
             }
         }
 
         public async Task<int> GetMaxOrderInPageAsync(int pageId)
         {
-            logger.LogDebug("Getting max order for page {PageId}", pageId);
             try
             {
+                _logger.LogDebug("Getting maximum order value for page ID: {PageId}", pageId);
+                using var context = await _contextFactory.CreateDbContextAsync();
                 var maxOrder = await context.Rows
                     .AsNoTracking()
                     .Where(r => r.PageId == pageId)
                     .MaxAsync(r => (int?)r.Order) ?? 0;
 
-                logger.LogDebug("Max order for page {PageId} is {MaxOrder}", pageId, maxOrder);
+                _logger.LogDebug("Maximum order value for page ID {PageId} is: {MaxOrder}", pageId, maxOrder);
                 return maxOrder;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error getting max order for page {PageId}", pageId);
+                _logger.LogError(ex, "Error getting maximum order value for page ID: {PageId}", pageId);
                 throw;
             }
         }
