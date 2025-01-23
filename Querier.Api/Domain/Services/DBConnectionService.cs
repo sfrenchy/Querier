@@ -555,31 +555,9 @@ namespace Querier.Api.Domain.Services
             try
             {
                 _logger.LogDebug("Retrieving endpoints for connection ID: {Id}", connectionId);
-                var connection = await _dbConnectionRepository.FindByIdAsync(connectionId);
+                var endpoints = await _dbConnectionRepository.FindEndpointsAsync(connectionId, controller, targetTable, action);
                 
-                if (connection == null)
-                {
-                    _logger.LogWarning("Database connection not found with ID: {Id}", connectionId);
-                    throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
-                }
-
-                var endpointsEntity = connection.Endpoints;
-                if (controller != null)
-                {
-                    endpointsEntity = endpointsEntity.Where(e => e.Controller == controller).ToList();
-                }
-
-                if (targetTable != null)
-                {
-                    endpointsEntity = endpointsEntity.Where(e => e.TargetTable == targetTable).ToList();
-                }
-
-                if (action != null)
-                {
-                    endpointsEntity = endpointsEntity.Where(e => e.Action == action).ToList();
-                }
-                
-                var endpoints = endpointsEntity.Select(e => new DBConnectionEndpointInfoDto
+                var endpointDtos = endpoints.Select(e => new DBConnectionEndpointInfoDto
                 {
                     Controller = e.Controller,
                     Action = e.Action,
@@ -604,8 +582,8 @@ namespace Querier.Api.Domain.Services
                     }).ToList()
                 }).ToList();
 
-                _logger.LogInformation("Successfully retrieved {Count} endpoints for connection ID: {Id}", endpoints.Count, connectionId);
-                return endpoints;
+                _logger.LogInformation("Successfully retrieved {Count} endpoints for connection ID: {Id}", endpointDtos.Count, connectionId);
+                return endpointDtos;
             }
             catch (Exception ex)
             {
@@ -619,7 +597,7 @@ namespace Querier.Api.Domain.Services
             try
             {
                 _logger.LogDebug("Retrieving controllers for connection ID: {Id}", connectionId);
-                var connection = await _dbConnectionRepository.FindByIdAsync(connectionId);
+                var connection = await _dbConnectionRepository.FindByIdWithControllersAsync(connectionId);
                 
                 if (connection == null)
                 {

@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Entities.DBConnection;
+using Querier.Api.Domain.Entities.QDBConnection.Endpoints;
 using Querier.Api.Infrastructure.Data.Context;
 
 namespace Querier.Api.Infrastructure.Data.Repositories
@@ -144,6 +146,94 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error finding database connection with ID: {Id}", dbConnectionId);
+                throw;
+            }
+        }
+
+        public async Task<DBConnection?> FindByIdWithControllersAsync(int dbConnectionId)
+        {
+            try
+            {
+                _logger.LogInformation("Finding database connection with controllers for ID: {Id}", dbConnectionId);
+
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var connection = await context.DBConnections
+                    .AsNoTracking()
+                    .AsSplitQuery()
+                    .Where(c => c.Id == dbConnectionId)
+                    .Select(c => new DBConnection
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Endpoints = c.Endpoints.Select(e => new EndpointDescription
+                        {
+                            Controller = e.Controller,
+                            Route = e.Route,
+                            HttpMethod = e.HttpMethod,
+                            EntitySubjectJsonSchema = e.EntitySubjectJsonSchema
+                        }).ToList()
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (connection == null)
+                {
+                    _logger.LogWarning("Database connection not found with ID: {Id}", dbConnectionId);
+                    return null;
+                }
+
+                _logger.LogInformation("Successfully found database connection with controllers: {Name} with ID: {Id}", 
+                    connection.Name, dbConnectionId);
+                return connection;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error finding database connection with controllers for ID: {Id}", dbConnectionId);
+                throw;
+            }
+        }
+
+        public async Task<List<EndpointDescription>> FindEndpointsAsync(int dbConnectionId, string? controller = null, string? targetTable = null, string? action = null)
+        {
+            try
+            {
+                _logger.LogInformation("Finding endpoints for connection ID: {Id} with filters - Controller: {Controller}, Table: {Table}, Action: {Action}", 
+                    dbConnectionId, controller, targetTable, action);
+
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var query = context.DBConnections
+                    .AsNoTracking()
+                    .Where(c => c.Id == dbConnectionId)
+                    .SelectMany(c => c.Endpoints)
+                    .AsQueryable();
+
+                if (!string.IsNullOrEmpty(controller))
+                {
+                    query = query.Where(e => e.Controller == controller);
+                }
+
+                if (!string.IsNullOrEmpty(targetTable))
+                {
+                    query = query.Where(e => e.TargetTable == targetTable);
+                }
+
+                if (!string.IsNullOrEmpty(action))
+                {
+                    query = query.Where(e => e.Action == action);
+                }
+
+                var endpoints = await query
+                    .AsSplitQuery()
+                    .Include(e => e.Parameters)
+                    .Include(e => e.Responses)
+                    .ToListAsync();
+
+                _logger.LogInformation("Successfully found {Count} endpoints for connection ID: {Id}", 
+                    endpoints.Count, dbConnectionId);
+                return endpoints;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error finding endpoints for connection ID: {Id}", dbConnectionId);
                 throw;
             }
         }
