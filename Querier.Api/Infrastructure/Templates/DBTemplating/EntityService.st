@@ -254,7 +254,7 @@ namespace $nameSpace$.Services
                                 foreignKeyDataDto.ForeignKey = "$fk.Name$";
                                 foreignKeyDataDto.Values = foreignKeyData.Items.Select(i =>
                                     new ForeignKeyValueDto()
-                                        { Id = i.ToString(), Value = Utils.FormatForeignKeyValue(i, include) \});
+                                        { Id = i.KeyIdsAsString(), Value = Utils.FormatForeignKeyValue(i, include) \});
                                 
                                 resultForeignKeys.Add(foreignKeyDataDto);
                                 break;

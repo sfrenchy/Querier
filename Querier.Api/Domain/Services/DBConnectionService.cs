@@ -704,7 +704,8 @@ namespace Querier.Api.Domain.Services
                         var inverseProperty = property.AttributeLists
                             .SelectMany(al => al.Attributes)
                             .FirstOrDefault(a => a.Name.ToString() == "InverseProperty");
-                        if (inverseProperty != null)
+                        var foreignKeyIsCurrentPrimaryKey = navigationProperty.ArgumentList.Arguments.Any(a => keys.Contains(a.Expression.ToString().Replace("\"", "")));
+                        if (inverseProperty != null && !foreignKeyIsCurrentPrimaryKey)
                         {
                             bool inverseTargetIsCurrent = inverseProperty.ArgumentList.Arguments.Any(a =>
                                 a.Expression.ToString().Replace("\"", "") == pluralizer.Pluralize(entityName));
@@ -722,6 +723,7 @@ namespace Querier.Api.Domain.Services
                                     var fk = new TemplateForeignKey
                                     {
                                         Name = foreignKeys.LastOrDefault() ?? property.Identifier.Text,
+                                        NamePlural = pluralizer.Pluralize(foreignKeys.LastOrDefault() ?? property.Identifier.Text),
                                         ReferencedEntityPlural = pluralizer.Pluralize(actualType),
                                         ReferencedEntitySingular = actualType,
                                         ReferencedColumn =

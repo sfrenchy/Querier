@@ -29,6 +29,17 @@ namespace $nameSpace$.DTOs
         $if(property.Range)$[Range($property.Range.Min$, $property.Range.Max$, ErrorMessage = "The $property.Name$ field must be between $property.Range.Min$ and $property.Range.Max$.")]$endif$
         public $property.CSType$ $property.Name$ { get; set; \}
         }$
+        
+        public string KeyIdsAsString()
+        {
+            List<string> keys = new List<string>();
+            $entity.Properties: {property|
+             $if(property.IsKey)$
+                keys.Add($property.Name$.ToString());
+             $endif$
+            }$
+            return string.Join(",", keys);
+        \}
     \}
 
     /// <summary>
