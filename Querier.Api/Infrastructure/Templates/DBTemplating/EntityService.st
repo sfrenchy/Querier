@@ -235,11 +235,12 @@ namespace $nameSpace$.Services
                             $entity.ForeignKeys: {fk|
                             case "$fk.Name$":
                             {
-                                _logger.LogWarning("Handling foreign key " + include.ForeignKey + " for entity Orders");
+                                _logger.LogInformation("Handling foreign key " + include.ForeignKey + " for entity Orders");
                                 List<ColumnSearchDto> searchDto = entitiesResult.Items
                                                                         .Select(i => i.$fk.Name$)
                                                                         .Select(i => new ColumnSearchDto() { Column = "$fk.Name$", Value = i.ToString() \})
                                                                         .ToList();
+                                _logger.LogInformation("Ids for $fk.Name$:" + string.Join(",", searchDto.Select(s => s.Value)));
                                 var foreignKeyData = await _$fk.ReferencedEntitySingular$Service.GetAllAsync(new DataRequestParametersDto()
                                 {
                                     Includes = new List<ForeignKeyIncludeDto>(),
