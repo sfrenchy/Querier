@@ -347,5 +347,50 @@ namespace Querier.Api.Common.Utilities
         {
             return obj.GetType().GetProperty(propertyName)?.GetValue(obj, null) ?? DBNull.Value;
         }
+
+        public static string FormatForeignKeyValue(object entity, ForeignKeyIncludeDto includeConfig)
+        {
+            try
+            {
+                if (entity == null)
+                {
+                    LOGGER?.LogWarning("Entity is null when formatting foreign key value");
+                    return string.Empty;
+                }
+
+                if (!string.IsNullOrEmpty(includeConfig.DisplayFormat))
+                {
+                    LOGGER?.LogTrace("Formatting using display format: {Format}", includeConfig.DisplayFormat);
+                    // Remplacer les placeholders {PropertyName} par les valeurs des propriétés
+                    return System.Text.RegularExpressions.Regex.Replace(
+                        includeConfig.DisplayFormat,
+                        @"\{([^}]+)\}",
+                        match =>
+                        {
+                            var propertyName = match.Groups[1].Value;
+                            var value = GetPropertyValue(entity, propertyName);
+                            return value?.ToString() ?? string.Empty;
+                        });
+                }
+                
+                if (includeConfig.DisplayColumns?.Any() == true)
+                {
+                    LOGGER?.LogTrace("Formatting using display columns: {Columns}", 
+                        string.Join(", ", includeConfig.DisplayColumns));
+                    // Concaténer les valeurs des colonnes spécifiées
+                    return string.Join(" ", includeConfig.DisplayColumns
+                        .Select(col => GetPropertyValue(entity, col)?.ToString() ?? string.Empty)
+                        .Where(v => !string.IsNullOrEmpty(v)));
+                }
+
+                LOGGER?.LogWarning("No display format or columns specified for foreign key formatting");
+                return entity.ToString() ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                LOGGER?.LogError(ex, "Error formatting foreign key value");
+                return string.Empty;
+            }
+        }
     }
 }
