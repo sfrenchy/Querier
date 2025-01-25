@@ -269,8 +269,6 @@ namespace Querier.Api.Domain.Services
                 ("ProcedureReportRequests", "Reports\\ProcedureReportRequests.cs"),
                 ("ProcedureRepository", "Repositories\\ProcedureRepository.cs"),
                 ("ProcedureService", "Services\\ProcedureService.cs"),
-                ("ProcedureServiceResolver", "Services\\ProcedureServiceResolver.cs"),
-                
             };
 
             foreach (var (templateName, outputPath) in templates)
@@ -304,7 +302,6 @@ namespace Querier.Api.Domain.Services
                 ("EntityDto","Entities\\EntityDto.cs"),
                 ("EntityRepository","Repositories\\EntityRepository.cs"),
                 ("EntityService","Services\\EntityService.cs"),
-                ("EntityServiceResolver","Services\\EntityServiceResolver.cs"),
             };
 
             foreach (var (templateName, outputPath) in templates)
@@ -651,10 +648,11 @@ namespace Querier.Api.Domain.Services
 
         private List<TemplateEntityMetadata> ExtractEntityMetadata(ScaffoldedModel scaffoldedModel)
         {
-            var entities = new List<TemplateEntityMetadata>();
             var entityFiles = scaffoldedModel.AdditionalFiles.Where(f => !f.Path.EndsWith("Context.cs"));
             var pluralizer = new Bricelam.EntityFrameworkCore.Design.Pluralizer();
 
+            // Première passe : extraire toutes les entités et leurs propriétés
+            var entityMap = new Dictionary<string, TemplateEntityMetadata>();
             foreach (var entityFile in entityFiles)
             {
                 var syntaxTree = CSharpSyntaxTree.ParseText(entityFile.Code);
@@ -666,7 +664,8 @@ namespace Querier.Api.Domain.Services
                 {
                     Name = entityName,
                     PluralName = pluralizer.Pluralize(entityName),
-                    Properties = new List<TemplateProperty>()
+                    Properties = new List<TemplateProperty>(),
+                    ForeignKeys = new List<TemplateForeignKey>()
                 };
                 List<string> keys = new List<string>();
                 List<string> foreignKeys = new List<string>();
@@ -682,6 +681,7 @@ namespace Querier.Api.Domain.Services
                     keys.AddRange(keyAttributes);
                 }
                 
+                // Extraire les clés étrangères et leurs références
                 foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
                 {
                     var foreignKeyAttributes = property.AttributeLists
@@ -693,6 +693,49 @@ namespace Querier.Api.Domain.Services
                     foreach (var foreignKey in foreignKeyAttributes)
                         if (!keys.Contains(foreignKey))
                             foreignKeys.Add(foreignKey);
+
+                    // Chercher les attributs de navigation
+                    var navigationProperty = property.AttributeLists
+                        .SelectMany(al => al.Attributes)
+                        .FirstOrDefault(a => /*a.Name.ToString() == "InverseProperty" ||*/ a.Name.ToString() == "ForeignKey");
+
+                    if (navigationProperty != null)
+                    {
+                        var inverseProperty = property.AttributeLists
+                            .SelectMany(al => al.Attributes)
+                            .FirstOrDefault(a => a.Name.ToString() == "InverseProperty");
+                        var foreignKeyIsCurrentPrimaryKey = navigationProperty.ArgumentList.Arguments.Any(a => keys.Contains(a.Expression.ToString().Replace("\"", "")));
+                        if (inverseProperty != null && !foreignKeyIsCurrentPrimaryKey)
+                        {
+                            bool inverseTargetIsCurrent = inverseProperty.ArgumentList.Arguments.Any(a =>
+                                a.Expression.ToString().Replace("\"", "") == pluralizer.Pluralize(entityName));
+                            if (inverseTargetIsCurrent)
+                            {
+                                var referencedType = property.Type.ToString().TrimEnd('?');
+                                if (referencedType != entityName) // Éviter les auto-références
+                                {
+                                    var isCollection = referencedType.StartsWith("ICollection<") ||
+                                                       referencedType.StartsWith("List<");
+                                    var actualType = isCollection
+                                        ? referencedType.Substring(referencedType.IndexOf('<') + 1).TrimEnd('>')
+                                        : referencedType;
+
+                                    var fk = new TemplateForeignKey
+                                    {
+                                        Name = foreignKeys.LastOrDefault() ?? property.Identifier.Text,
+                                        NamePlural = pluralizer.Pluralize(foreignKeys.LastOrDefault() ?? property.Identifier.Text),
+                                        ReferencedEntityPlural = pluralizer.Pluralize(actualType),
+                                        ReferencedEntitySingular = actualType,
+                                        ReferencedColumn =
+                                            "Id", // Par défaut, peut être mis à jour dans la deuxième passe
+                                        IsCollection = isCollection
+                                    };
+                                    if (!entity.ForeignKeys.Any(f => f.Name == fk.Name))
+                                        entity.ForeignKeys.Add(fk);
+                                }
+                            }
+                        }
+                    }
                 }
                     
                 foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
@@ -703,9 +746,7 @@ namespace Querier.Api.Domain.Services
                         .ToList();
 
                     var isKey = keys.Contains(property.Identifier.Text);
-
                     var isForeignKey = foreignKeys.Contains(property.Identifier.Text);
-
                     var isRequired = attributes.Contains("Required");
                     var isAutoGenerated = attributes.Contains("DatabaseGenerated") && 
                         property.AttributeLists
@@ -754,10 +795,22 @@ namespace Querier.Api.Domain.Services
                     }
                 }
 
-                entities.Add(entity);
+                entityMap[entityName] = entity;
             }
 
-            return entities;
+            // Deuxième passe : mettre à jour les colonnes référencées des clés étrangères
+            foreach (var entity in entityMap.Values)
+            {
+                foreach (var fk in entity.ForeignKeys)
+                {
+                    if (entityMap.TryGetValue(fk.ReferencedEntitySingular, out var referencedEntity))
+                    {
+                        fk.ReferencedColumn = referencedEntity.KeyName;
+                    }
+                }
+            }
+
+            return entityMap.Values.ToList();
         }
 
         private List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(List<Entities.QDBConnection.StoredProcedure> procedures)

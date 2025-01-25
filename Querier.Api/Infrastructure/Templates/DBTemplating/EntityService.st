@@ -14,6 +14,7 @@ using Querier.Api.Common.Utilities;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.IO;
+using Querier.Api.Application.DTOs;
 using $nameSpace$.Exceptions;
 
 namespace $nameSpace$.Services
@@ -73,6 +74,9 @@ namespace $nameSpace$.Services
     public class $entity.Name$Service : I$entity.Name$Service
     {
         private readonly I$entity.Name$Repository _repository;
+        $entity.ForeignKeys: {fk|
+        private readonly I$fk.ReferencedEntitySingular$Service _$fk.ReferencedEntitySingular$Service;
+        }$
         private readonly IDistributedCache _cache;
         private readonly ILogger<$entity.Name$Service> _logger;
         private static readonly DistributedCacheEntryOptions _cacheOptions = new() {
@@ -83,10 +87,16 @@ namespace $nameSpace$.Services
 
         public $entity.Name$Service(
             I$entity.Name$Repository repository,
+            $entity.ForeignKeys: {fk|
+            I$fk.ReferencedEntitySingular$Service $fk.ReferencedEntitySingular$Service,
+            }$
             IDistributedCache cache,
             ILogger<$entity.Name$Service> logger)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            $entity.ForeignKeys: {fk|
+            _$fk.ReferencedEntitySingular$Service = $fk.ReferencedEntitySingular$Service ?? throw new ArgumentNullException(nameof($fk.ReferencedEntitySingular$Service));
+            }$
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _logger.LogDebug("Initializing $entity.Name$Service");
@@ -211,10 +221,53 @@ namespace $nameSpace$.Services
                 var cacheKey = "$entity.Name$_GetAll_" + version + "_" + Utils.ComputeMd5Hash(JsonConvert.SerializeObject(parameters));
                 return await ExecuteCacheOperationAsync("GetAll", cacheKey, async () => {
                     var entitiesResult = await _repository.GetAllAsync(parameters);
+
+                    List<ForeignKeyDataDto> resultForeignKeys = new List<ForeignKeyDataDto>();
+                    
+                    foreach (ForeignKeyIncludeDto include in parameters.Includes)
+                    {
+                        ForeignKeyDataDto foreignKeyDataDto = new ForeignKeyDataDto();
+                        switch (include.ForeignKey)
+                        {
+                            default:
+                                _logger.LogWarning("Unknown foreign key " + include.ForeignKey + " requested for entity $entity.Name$");
+                                break;
+                            $entity.ForeignKeys: {fk|
+                            case "$fk.Name$":
+                            {
+                                _logger.LogInformation("Handling foreign key " + include.ForeignKey + " for entity Orders");
+                                List<ColumnSearchDto> searchDto = entitiesResult.Items
+                                                                        .Select(i => i.$fk.Name$)
+                                                                        .Select(i => new ColumnSearchDto() { Column = "$fk.Name$", Value = i.ToString() \})
+                                                                        .ToList();
+                                _logger.LogInformation("Ids for $fk.Name$:" + string.Join(",", searchDto.Select(s => s.Value)));
+                                var foreignKeyData = await _$fk.ReferencedEntitySingular$Service.GetAllAsync(new DataRequestParametersDto()
+                                {
+                                    Includes = new List<ForeignKeyIncludeDto>(),
+                                    ColumnSearches = searchDto,
+                                    GlobalSearch = "",
+                                    OrderBy = new List<OrderByParameterDto>(),
+                                    PageNumber = 0,
+                                    PageSize = 0
+                                \});
+                                
+                                foreignKeyDataDto.ForeignKey = "$fk.Name$";
+                                foreignKeyDataDto.Values = foreignKeyData.Items.Select(i =>
+                                    new ForeignKeyValueDto()
+                                        { Id = i.KeyIdsAsString(), Value = Utils.FormatForeignKeyValue(i, include) \});
+                                
+                                resultForeignKeys.Add(foreignKeyDataDto);
+                                break;
+                            \}
+                            }$
+                        \}
+                    \}
+
                     return new DataPagedResult<$entity.Name$Dto>(
                         entitiesResult.Items.Select(e => MapToDto(e)),
                         entitiesResult.Total,
-                        parameters
+                        parameters,
+                        resultForeignKeys
                     );
                 \});
             \}

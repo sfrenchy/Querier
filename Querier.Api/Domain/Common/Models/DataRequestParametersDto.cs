@@ -21,5 +21,8 @@ namespace Querier.Api.Domain.Common.Models
         // Search
         public string GlobalSearch { get; set; }
         public List<ColumnSearchDto> ColumnSearches { get; set; } = new();
+
+        // Foreign Keys
+        public List<ForeignKeyIncludeDto> Includes { get; set; } = new();
     }
 } 

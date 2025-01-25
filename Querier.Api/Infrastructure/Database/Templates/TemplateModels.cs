@@ -19,6 +19,16 @@ namespace Querier.Api.Infrastructure.Database.Templates
         public List<StoredProcedureMetadata> ProcedureList { get; set; } = new();
     }
 
+    public class TemplateForeignKey
+    {
+        public string Name { get; set; }
+        public string NamePlural { get; set; }
+        public string ReferencedEntityPlural { get; set; }
+        public string ReferencedEntitySingular { get; set; }
+        public string ReferencedColumn { get; set; }
+        public bool IsCollection { get; set; }
+    }
+
     public class TemplateEntityMetadata
     {
         public string Name { get; set; }
@@ -26,6 +36,7 @@ namespace Querier.Api.Infrastructure.Database.Templates
         public string KeyType { get; set; }
         public string KeyName { get; set; }
         public List<TemplateProperty> Properties { get; set; } = new();
+        public List<TemplateForeignKey> ForeignKeys { get; set; } = new();
     }
 
     public class StoredProcedureMetadata

@@ -135,10 +135,15 @@ namespace $nameSpace$.Repositories
                 var skip = pageNumber != 0 ? (pageNumber - 1) * pageSize : 0;
 
                 _logger.LogDebug("Applying pagination: Skip=" + skip.ToString() + ", Take=" + pageSize.ToString());
-                var data = await query.AsNoTracking().Skip(skip).Take(pageSize).ToListAsync();
+                
+                var data = query.AsNoTracking();
 
-                _logger.LogInformation("Successfully retrieved " + data.Count().ToString() + " $entity.Name$ records");
-                return new DataPagedResult<$entity.Name$>(data, totalCount, parameters);
+                if (skip != 0 && pageSize != 0)
+                    data = data.Skip(skip).Take(pageSize);
+
+                var result = await data.ToListAsync();
+                _logger.LogInformation("Successfully retrieved " + result.Count().ToString() + " $entity.Name$ records");
+                return new DataPagedResult<$entity.Name$>(result, totalCount, parameters);
             \}
             catch (Exception ex)
             {
