@@ -170,7 +170,16 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                             Controller = e.Controller,
                             Route = e.Route,
                             HttpMethod = e.HttpMethod,
-                            EntitySubjectJsonSchema = e.EntitySubjectJsonSchema
+                            EntitySubjectJsonSchema = e.EntitySubjectJsonSchema,
+                            Parameters = e.Parameters.Select(p => new EndpointParameter
+                            {
+                                Name = p.Name,
+                                Type = p.Type,
+                                Description = p.Description,
+                                IsRequired = p.IsRequired,
+                                Source = p.Source,
+                                JsonSchema = p.JsonSchema
+                            }).ToList()
                         }).ToList()
                     })
                     .FirstOrDefaultAsync();

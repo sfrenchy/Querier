@@ -18,6 +18,8 @@ namespace Querier.Api.Application.DTOs
         /// <summary>
         /// JSON Schema definition for the GET response structure
         /// </summary>
-        public string HttpGetJsonSchema { get; set; }
+        public string ResponseEntityJsonSchema { get; set; }
+        
+        public string ParameterJsonSchema { get; set; }
     }
 } 

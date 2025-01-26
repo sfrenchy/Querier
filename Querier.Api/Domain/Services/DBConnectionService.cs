@@ -605,24 +605,29 @@ namespace Querier.Api.Domain.Services
                     throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
                 }
 
-                var tableControllers = connection.Endpoints.Where(e => !string.IsNullOrEmpty(e.TargetTable))
+                var tableControllers = connection.Endpoints
+                    .Where(e => !string.IsNullOrEmpty(e.TargetTable))
                     .GroupBy(e => e.Controller)
                     .Select(g => new DBConnectionControllerInfoDto
                     {
                         Name = g.Key.Replace("Controller",""),
                         Route = g.First().Route.Replace("Controller",""),
-                        HttpGetJsonSchema = g.FirstOrDefault(e => e.HttpMethod == "GET")
-                            ?.EntitySubjectJsonSchema
+                        ResponseEntityJsonSchema = g.FirstOrDefault(e => e.HttpMethod == "GET")
+                            ?.EntitySubjectJsonSchema,
+                        ParameterJsonSchema = ""
                     })
                     .ToList();
-                var procedureControllers = connection.Endpoints.Where(e => string.IsNullOrEmpty(e.TargetTable))
+                var procedureControllers = connection.Endpoints
+                    .Where(e => string.IsNullOrEmpty(e.TargetTable))
                     .GroupBy(e => e.Controller)
                     .Select(g => new DBConnectionControllerInfoDto
                     {
                         Name = g.Key.Replace("Controller",""),
                         Route = g.First().Route.Replace("Controller",""),
-                        HttpGetJsonSchema = g.FirstOrDefault(e => e.HttpMethod == "POST")
-                            ?.EntitySubjectJsonSchema
+                        ResponseEntityJsonSchema = g.FirstOrDefault(e => e.HttpMethod == "POST")
+                            ?.EntitySubjectJsonSchema,
+                        ParameterJsonSchema = g.FirstOrDefault(e => e.HttpMethod == "POST")
+                            ?.Parameters.FirstOrDefault()?.JsonSchema
                     })
                     .ToList();
 
