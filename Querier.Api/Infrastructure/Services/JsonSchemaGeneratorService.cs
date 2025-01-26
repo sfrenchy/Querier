@@ -162,7 +162,18 @@ public class JsonSchemaGeneratorService
         var schema = new Dictionary<string, object>();
         var type = Nullable.GetUnderlyingType(propertyInfo.PropertyType) ?? propertyInfo.PropertyType;
 
-        schema["type"] = GetJsonSchemaType(type);
+        var typeInfo = GetJsonSchemaType(type);
+        if (typeInfo is Dictionary<string, object> typeDict)
+        {
+            foreach (var kvp in typeDict)
+            {
+                schema[kvp.Key] = kvp.Value;
+            }
+        }
+        else
+        {
+            schema["type"] = typeInfo;
+        }
         
         if (Nullable.GetUnderlyingType(propertyInfo.PropertyType) != null)
         {
@@ -349,7 +360,7 @@ public class JsonSchemaGeneratorService
         return schema;
     }
 
-    private string GetJsonSchemaType(Type type)
+    private object GetJsonSchemaType(Type type)
     {
         if (type == typeof(string))
             return "string";
@@ -360,7 +371,29 @@ public class JsonSchemaGeneratorService
         if (type == typeof(bool))
             return "boolean";
         if (type == typeof(DateTime))
-            return "string"; // with format: date-time
+        {
+            return new Dictionary<string, object>
+            {
+                ["type"] = "string",
+                ["format"] = "date-time"
+            };
+        }
+        if (type == typeof(TimeOnly))
+        {
+            return new Dictionary<string, object>
+            {
+                ["type"] = "string",
+                ["format"] = "time"
+            };
+        }
+        if (type == typeof(DateOnly))
+        {
+            return new Dictionary<string, object>
+            {
+                ["type"] = "string",
+                ["format"] = "date"
+            };
+        }
         if (type.IsArray || typeof(System.Collections.IEnumerable).IsAssignableFrom(type))
             return "array";
         return "object";
