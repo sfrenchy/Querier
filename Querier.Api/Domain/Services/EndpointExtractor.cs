@@ -315,7 +315,7 @@ namespace Querier.Api.Domain.Services
 
                 // Add success responses
                 var produces = action.GetCustomAttributes<ProducesResponseTypeAttribute>(true);
-                foreach (var response in produces)
+                foreach (var response in produces.Where(p => p.StatusCode == 200))
                 {
                     Type targetType = GetIntrinsicType(response.Type);
                     responses.Add(new EndpointResponse
@@ -341,14 +341,14 @@ namespace Querier.Api.Domain.Services
                     });
                 }
 
-                // Add error response
-                responses.Add(new EndpointResponse
-                {
-                    StatusCode = 400,
-                    Description = "Bad Request",
-                    JsonSchema = GenerateErrorSchema(),
-                    Type = "ErrorResponse"
-                });
+                // // Add error response
+                // responses.Add(new EndpointResponse
+                // {
+                //     StatusCode = 400,
+                //     Description = "Bad Request",
+                //     JsonSchema = GenerateErrorSchema(),
+                //     Type = "ErrorResponse"
+                // });
                 _logger.LogTrace("Added error response for action {ActionName}", action.Name);
 
                 return responses;

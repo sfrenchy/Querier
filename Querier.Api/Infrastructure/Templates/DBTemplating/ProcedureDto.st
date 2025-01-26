@@ -15,7 +15,7 @@ namespace $nameSpace$ {
     /// </remarks>
     [DtoFor(StoredProcedure = "$procedure.Name$", DtoType = DtoType.OutputDto)]
     public class $procedure.CSName$Dto {
-        $procedure.Columns: {column|
+        $procedure.OutputSet: {column|
         /// <summary>
         /// Gets or sets the $column.Name$ column value
         /// </summary>
@@ -28,7 +28,7 @@ namespace $nameSpace$ {
         $if(column.RegexPattern)$[RegularExpression(@"$column.RegexPattern$", ErrorMessage = "The $column.Name$ field format is invalid.")]$endif$
         $if(column.Range)$[Range($column.Range.Min$, $column.Range.Max$, ErrorMessage = "The $column.Name$ field must be between $column.Range.Min$ and $column.Range.Max$.")]$endif$
         $if(column.IsSummable)$[Summable]$endif$
-        public $column.Type$ $column.Name$ { get; set; \}
+        public $column.CSType$ $column.Name$ { get; set; \}
 
         }$
     \}

@@ -605,7 +605,7 @@ namespace Querier.Api.Domain.Services
                     throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
                 }
 
-                var controllers = connection.Endpoints
+                var tableControllers = connection.Endpoints.Where(e => !string.IsNullOrEmpty(e.TargetTable))
                     .GroupBy(e => e.Controller)
                     .Select(g => new DBConnectionControllerInfoDto
                     {
@@ -615,9 +615,24 @@ namespace Querier.Api.Domain.Services
                             ?.EntitySubjectJsonSchema
                     })
                     .ToList();
+                var procedureControllers = connection.Endpoints.Where(e => string.IsNullOrEmpty(e.TargetTable))
+                    .GroupBy(e => e.Controller)
+                    .Select(g => new DBConnectionControllerInfoDto
+                    {
+                        Name = g.Key.Replace("Controller",""),
+                        Route = g.First().Route.Replace("Controller",""),
+                        HttpGetJsonSchema = g.FirstOrDefault(e => e.HttpMethod == "POST")
+                            ?.EntitySubjectJsonSchema
+                    })
+                    .ToList();
 
-                _logger.LogInformation("Successfully retrieved {Count} controllers for connection ID: {Id}", controllers.Count, connectionId);
-                return controllers;
+                List<DBConnectionControllerInfoDto> controllerDtos = new List<DBConnectionControllerInfoDto>();
+                controllerDtos.AddRange(tableControllers);
+                controllerDtos.AddRange(procedureControllers);
+                
+                _logger.LogInformation("Successfully retrieved {Count} controllers for connection ID: {Id}", controllerDtos.Count, connectionId);
+                
+                return controllerDtos;
             }
             catch (Exception ex)
             {
