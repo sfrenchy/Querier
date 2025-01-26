@@ -13,6 +13,8 @@ using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Infrastructure.Database.Services.Base;
 using Querier.Api.Infrastructure.Database.Parameters;
+using Querier.Api.Domain.Common.Models;
+using Querier.Api.Application.DTOs;
 
 namespace $nameSpace$.Services
 {
@@ -28,7 +30,7 @@ namespace $nameSpace$.Services
         /// </summary>
         /// <param name="parameters">The parameters for the stored procedure</param>
         /// <returns>A list of results from the stored procedure execution</returns>
-        Task<List<$procedure.CSName$Dto>> ExecuteAsync($procedure.CSName$InputDto parameters);
+        Task<DataPagedResult<$procedure.CSName$Dto>> ExecuteAsync($procedure.CSName$InputDto parameters);
     \}
 
     [DynamicContextProcedure(ContextName="$nameSpace$", ServiceName="I$procedure.CSName$Service")]
@@ -94,7 +96,7 @@ namespace $nameSpace$.Services
             \}
         \}
 
-        public async Task<List<$procedure.CSName$Dto>> ExecuteAsync($procedure.CSName$InputDto parameters) {
+        public async Task<DataPagedResult<$procedure.CSName$Dto>> ExecuteAsync($procedure.CSName$InputDto parameters) {
             if (parameters == null) {
                 throw new EntityValidationException("$procedure.CSName$", "Parameters cannot be null");
             \}
@@ -113,7 +115,12 @@ namespace $nameSpace$.Services
                 return await ExecuteCacheOperationAsync("Execute", cacheKey, async () => {
                     try {
                         var results = await _repository.ExecuteAsync($if(procedure.HasParameters)$parameters$endif$);
-                        return results ?? new List<$procedure.CSName$Dto>();
+                        return new DataPagedResult<$procedure.CSName$Dto>(
+                            results,
+                            results.Count(),
+                            new DataRequestParametersDto(),
+                            new List<ForeignKeyDataDto>()
+                        );
                     \}
                     catch (Exception ex) {
                         throw new StoredProcedureException(
