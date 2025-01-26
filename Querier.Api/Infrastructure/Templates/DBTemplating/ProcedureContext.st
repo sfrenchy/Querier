@@ -53,7 +53,7 @@ namespace $nameSpace$
 
         $procedureList: {procedure|
         [DisplayName("$procedure.Name$")]
-        public virtual async $procedure.CSReturnSignature$ $procedure.CSName$Async($procedure.CSParameterSignature$)
+        public virtual async Task<List<$procedure.CSName$Dto>> $procedure.CSName$Async($if(procedure.HasParameters)$$procedure.CSName$InputDto inputDto, $endif$OutputParameter<int> returnValue = null, CancellationToken cancellationToken = default)
         {
             var parameterreturnValue = new SqlParameter
             {
@@ -64,6 +64,7 @@ namespace $nameSpace$
 
             var sqlParameters = new []
             {
+                $if(procedure.HasParameters)$
                 $procedure.Parameters: {parameter|
                     new SqlParameter
                     {
@@ -72,6 +73,7 @@ namespace $nameSpace$
                         SqlDbType = $parameter.SqlParameterType$
                     \},
                 }$
+                $endif$
                 parameterreturnValue
             \};
 

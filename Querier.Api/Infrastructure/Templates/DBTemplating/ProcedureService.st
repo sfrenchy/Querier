@@ -112,7 +112,7 @@ namespace $nameSpace$.Services
                 var cacheKey = "$procedure.CSName$_" + Utils.ComputeMd5Hash(JsonConvert.SerializeObject(parameters));
                 return await ExecuteCacheOperationAsync("Execute", cacheKey, async () => {
                     try {
-                        var results = await _repository.ExecuteAsync(parameters);
+                        var results = await _repository.ExecuteAsync($if(procedure.HasParameters)$parameters$endif$);
                         return results ?? new List<$procedure.CSName$Dto>();
                     \}
                     catch (Exception ex) {

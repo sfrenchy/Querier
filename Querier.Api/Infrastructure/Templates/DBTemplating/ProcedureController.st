@@ -100,6 +100,7 @@ namespace $nameSpace$.Controllers {
             try {
                 var metadata = new Dictionary<string, object> {
                     ["name"] = "$procedure.Name$",
+                    $if(procedure.HasParameters)$
                     ["parameters"] = new[] {
                         $procedure.Parameters: {param|
                         new {
@@ -110,6 +111,7 @@ namespace $nameSpace$.Controllers {
                         \},
                         }$
                     \},
+                    $endif$
                     ["resultColumns"] = new[] {
                         $procedure.OutputSet: {column|
                         new {

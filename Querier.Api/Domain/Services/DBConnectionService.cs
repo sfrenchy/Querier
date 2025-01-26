@@ -44,6 +44,7 @@ namespace Querier.Api.Domain.Services
         private readonly DatabaseServerDiscovery _serverDiscovery;
         private readonly DatabaseSchemaExtractor _schemaExtractor;
         private readonly IAssemblyManagerService _assemblyManager;
+        private readonly DatabaseToCSharpConverter _databaseToCSharpConverter;
 
         public DbConnectionService(
             IDbConnectionRepository dbConnectionRepository,
@@ -55,6 +56,7 @@ namespace Querier.Api.Domain.Services
             ILogger<DatabaseSchemaExtractor> schemaExtractorLogger,
             ILogger<JsonSchemaGenerator> jsonSchemaGeneratorLogger,
             ILogger<EndpointExtractor> endpointExtractorLogger,
+            ILogger<DatabaseToCSharpConverter> databaseToCSharpConverterLogger,
             IAssemblyManagerService assemblyManager)
         {
             _logger = logger;
@@ -67,6 +69,7 @@ namespace Querier.Api.Domain.Services
             _endpointExtractor = new EndpointExtractor(jsonSchemaGenerator, endpointExtractorLogger, serviceProvider, services);
             _serverDiscovery = new DatabaseServerDiscovery(serverDiscoveryLogger);
             _schemaExtractor = new DatabaseSchemaExtractor(schemaExtractorLogger);
+            _databaseToCSharpConverter = new DatabaseToCSharpConverter(databaseToCSharpConverterLogger);
         }
 
         public async Task<DBConnectionCreateResultDto> AddConnectionAsync(DBConnectionCreateDto connection)
@@ -166,8 +169,8 @@ namespace Querier.Api.Domain.Services
                 {
                     srcZipContent.Add(addFile.Path, addFile.Code);
                 }
-
-                List<Entities.QDBConnection.StoredProcedure> storedProcedures = DatabaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
+                
+                List<Entities.QDBConnection.StoredProcedure> storedProcedures = _databaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
                 procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
 
                 var procedureModel = new StoredProcedureTemplateModel

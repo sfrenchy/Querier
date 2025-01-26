@@ -18,7 +18,11 @@ namespace $nameSpace$.Repositories
         /// <summary>
         /// Executes the $procedure.CSName$ stored procedure
         /// </summary>
+        $if(procedure.HasParameters)$
         Task<List<$procedure.CSName$Dto>> ExecuteAsync($procedure.CSName$InputDto parameters);
+        $else$
+        Task<List<$procedure.CSName$Dto>> ExecuteAsync();
+        $endif$
     \}
 
     /// <summary>
@@ -38,6 +42,7 @@ namespace $nameSpace$.Repositories
             _logger.LogDebug("Initializing $procedure.CSName$Repository");
         \}
 
+        $if(procedure.HasParameters)$
         public async Task<List<$procedure.CSName$Dto>> ExecuteAsync($procedure.CSName$InputDto parameters)
         {
             if (parameters == null)
@@ -47,11 +52,20 @@ namespace $nameSpace$.Repositories
             \}
 
             _logger.LogDebug("Executing $procedure.CSName$ stored procedure with parameters: " + parameters.ToString());
+        $else$
+        public async Task<List<$procedure.CSName$Dto>> ExecuteAsync()
+        {
+            _logger.LogDebug("Executing $procedure.CSName$ stored procedure");
+        $endif$
 
             try
             {
                 await using var context = await _contextFactory.CreateDbContextAsync();
+                $if(procedure.HasParameters)$
                 return await context.Procedures.$procedure.CSName$Async(parameters);
+                $else$
+                return await context.Procedures.$procedure.CSName$Async();
+                $endif$
             \}
             catch (Exception ex)
             {

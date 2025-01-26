@@ -151,34 +151,34 @@ namespace Querier.Api.Domain.Services
             while (await reader.ReadAsync())
                 {
                     try
-            {
-                var schema = reader.GetString(0);
-                var tableName = reader.GetString(1);
-
-                if (currentTableName != tableName || currentSchema != schema)
-                {
-                    currentTable = new DBConnectionTableDescriptionDto
                     {
-                        Name = tableName,
-                        Schema = schema
-                    };
-                    response.Tables.Add(currentTable);
-                    currentTableName = tableName;
-                    currentSchema = schema;
+                        var schema = reader.GetString(0);
+                        var tableName = reader.GetString(1);
+
+                        if (currentTableName != tableName || currentSchema != schema)
+                        {
+                            currentTable = new DBConnectionTableDescriptionDto
+                            {
+                                Name = tableName,
+                                Schema = schema
+                            };
+                            response.Tables.Add(currentTable);
+                            currentTableName = tableName;
+                            currentSchema = schema;
                             tableCount++;
                             _logger.LogTrace("Processing table {Schema}.{Table}", schema, tableName);
-                }
+                        }
 
-                currentTable.Columns.Add(new DBConnectionColumnDescriptionDto
-                {
-                    Name = reader.GetString(2),
-                    DataType = reader.GetString(3),
-                    IsNullable = reader.GetString(4) == "YES",
-                    IsPrimaryKey = reader.GetInt32(5) == 1,
-                    IsForeignKey = reader.GetInt32(6) == 1,
-                    ForeignKeyTable = !reader.IsDBNull(7) ? reader.GetString(7) : null,
-                    ForeignKeyColumn = !reader.IsDBNull(8) ? reader.GetString(8) : null
-                });
+                        currentTable.Columns.Add(new DBConnectionColumnDescriptionDto
+                        {
+                            Name = reader.GetString(2),
+                            DataType = reader.GetString(3),
+                            IsNullable = reader.GetString(4) == "YES",
+                            IsPrimaryKey = reader.GetInt32(5) == 1,
+                            IsForeignKey = reader.GetInt32(6) == 1,
+                            ForeignKeyTable = !reader.IsDBNull(7) ? reader.GetString(7) : null,
+                            ForeignKeyColumn = !reader.IsDBNull(8) ? reader.GetString(8) : null
+                        });
                         columnCount++;
                     }
                     catch (Exception ex)
