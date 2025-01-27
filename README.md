@@ -90,4 +90,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Related Projects
 
-- [Querier Angular Frontend](link-to-frontend-repo) - The Angular frontend application for Querier
+- [Querier Angular Frontend](https://github.com/sfrenchy/ngQuerier) - The Angular frontend application for Querier
