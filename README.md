@@ -1,38 +1,22 @@
-WIP: Work In Progress
+# Querier API
 
-# Querier
-
-Querier is a dynamic dashboard builder and database management system built with Flutter and .NET Core. It allows users to create, customize and manage interactive dashboards with various types of cards (charts, tables, metrics, etc.) while providing a robust database connection management system.
+This repository contains the API part of the Querier project, a dynamic dashboard builder and database management system. The frontend part is developed separately using Angular and Flutter.
 
 ## Features
-
-- **Dynamic Dashboard Builder**
-  - Drag and drop interface
-  - Customizable layouts with rows and cards
-  - Multiple card types (tables, charts, metrics)
-  - Responsive design
-
-- **User Management**
-  - Role-based access control
-  - User authentication
-  - Profile management
 
 - **Database Management**
   - Multiple database type support (MySQL, PostgreSQL, SQL Server)
   - Connection string management
   - Automatic API generation for stored procedures
+  - Dynamic query execution
 
-- **Internationalization**
-  - Multi-language support (English, French)
-  - Translatable interface elements
+- **API Features**
+  - RESTful endpoints for dashboard management
+  - Database connection handling
+  - JSON Schema generation for dynamic forms
+  - Secure authentication and authorization
 
 ## Tech Stack
-
-### Frontend
-- Flutter
-- Bloc pattern for state management
-- Provider for dependency injection
-- Material Design
 
 ### Backend
 - .NET Core 8.0
@@ -44,61 +28,40 @@ Querier is a dynamic dashboard builder and database management system built with
 ## Getting Started
 
 ### Prerequisites
-- Flutter SDK (latest stable version)
 - .NET Core SDK 8.0
-- IDE (VS Code, Android Studio, or Visual Studio)
+- IDE (Visual Studio, VS Code)
+- SQL Server/MySQL/PostgreSQL (for connecting to external databases)
 
 ### Installation
 
 1. Clone the repository
-
-bash
+```bash
 git clone https://github.com/yourusername/querier.git
+```
 
 2. Backend setup
-
-bash
+```bash
 cd Querier.Api
 dotnet restore
 dotnet run
-
-3. Frontend setup
-
-bash
-cd querier
-flutter pub get
-flutter run
+```
 
 ## Project Structure
 
-querier/
-├── lib/
-│ ├── api/ # API client and endpoints
-│ ├── blocs/ # Global blocs
-│ ├── models/ # Data models
-│ ├── pages/ # Application screens
-│ ├── providers/ # Provider classes
-│ ├── widgets/ # Reusable widgets
-│ └── main.dart # Application entry point
-│
+```
 Querier.Api/
-├── Controllers/ # API endpoints
-├── Domain/ # Domain models and interfaces
+├── Controllers/     # API endpoints
+├── Domain/         # Domain models and interfaces
+│   ├── Models/     # Business entities
+│   └── Services/   # Service interfaces
 ├── Infrastructure/ # Implementation of domain interfaces
-└── Application/ # Application services and DTOs
-
+│   ├── Data/      # Repositories and database context
+│   └── Services/  # Service implementations
+└── Application/   # Application services and DTOs
+```
 
 ## Architecture
 
-### Frontend
-The Flutter application follows the BLoC (Business Logic Component) pattern:
-- **Models**: Data classes representing the domain entities
-- **BLoCs**: Handle business logic and state management
-- **Widgets**: Reusable UI components
-- **Pages**: Application screens composed of widgets
-- **Providers**: Handle dependency injection and global state
-
-### Backend
 The .NET Core application follows Clean Architecture principles:
 - **Domain Layer**: Contains business entities and interfaces
 - **Application Layer**: Contains business logic and service interfaces
@@ -107,16 +70,11 @@ The .NET Core application follows Clean Architecture principles:
 
 ## Development
 
-### Adding a New Card Type
-1. Define the card type in `lib/models/card_type.dart`
-2. Create a new widget in `lib/widgets/cards/`
-3. Add configuration options in `lib/widgets/cards/common_card_config_form.dart`
-4. Update the card factory in `lib/widgets/cards/dynamic_card_widget.dart`
-
-### Adding a New Language
-1. Add new translations in `lib/l10n/app_*.arb`
-2. Update supported locales in `lib/main.dart`
-3. Regenerate localizations using `flutter gen-l10n`
+### Adding New Features
+1. Define the domain models and interfaces in the Domain layer
+2. Implement the business logic in the Application layer
+3. Add infrastructure implementations as needed
+4. Create API endpoints in the Controllers
 
 ## Contributing
 
@@ -130,8 +88,6 @@ The .NET Core application follows Clean Architecture principles:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
+## Related Projects
 
-- Flutter team for the amazing framework
-- .NET team for the robust backend framework
-- All contributors who have helped shape this project
+- [Querier Angular Frontend](link-to-frontend-repo) - The Angular frontend application for Querier
