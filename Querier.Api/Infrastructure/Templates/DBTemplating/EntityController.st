@@ -275,11 +275,11 @@ namespace $nameSpace$.Controllers
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<List<string>>> GetUniqueValues(string column)
+        public async Task<ActionResult<List<string>>> GetUniqueValues([FromRoute] string columnName)
         {
             try
             {
-                var result = await _service.ColumnUniqueValuesAsync(column);
+                var result = await _service.ColumnUniqueValuesAsync(columnName);
                 return Ok(result);
             \}
             catch (EntityValidationException ex)
@@ -294,7 +294,7 @@ namespace $nameSpace$.Controllers
             \}
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting unique values for column " + column);
+                _logger.LogError(ex, "Error getting unique values for column " + columnName);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
                 {
                     Title = "Internal Server Error",
