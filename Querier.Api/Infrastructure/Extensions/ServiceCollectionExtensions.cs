@@ -437,12 +437,6 @@ namespace Querier.Api.Infrastructure.Extensions
                 {
                     try
                     {
-                        if (connection.AssemblyDll == null || connection.AssemblyPdb == null)
-                        {
-                            logger.LogWarning("Connection {Name} has no assembly data", connection.Name);
-                            continue;
-                        }
-
                         // Charger l'assembly
                         logger.LogInformation("Loading assembly for connection {Name}", connection.Name);
                         var container = assemblyManager.LoadAssemblyAsync(connection).GetAwaiter().GetResult();

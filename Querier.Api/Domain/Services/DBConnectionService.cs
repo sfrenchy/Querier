@@ -45,7 +45,8 @@ namespace Querier.Api.Domain.Services
         private readonly DatabaseSchemaExtractor _schemaExtractor;
         private readonly IAssemblyManagerService _assemblyManager;
         private readonly DatabaseToCSharpConverter _databaseToCSharpConverter;
-
+        private readonly IEncryptionService _encryptionService;
+        
         public DbConnectionService(
             IDbConnectionRepository dbConnectionRepository,
             IServiceProvider serviceProvider,
@@ -57,7 +58,8 @@ namespace Querier.Api.Domain.Services
             ILogger<JsonSchemaGenerator> jsonSchemaGeneratorLogger,
             ILogger<EndpointExtractor> endpointExtractorLogger,
             ILogger<DatabaseToCSharpConverter> databaseToCSharpConverterLogger,
-            IAssemblyManagerService assemblyManager)
+            IAssemblyManagerService assemblyManager,
+            IEncryptionService encryptionService)
         {
             _logger = logger;
             _dbConnectionRepository = dbConnectionRepository;
@@ -70,6 +72,7 @@ namespace Querier.Api.Domain.Services
             _serverDiscovery = new DatabaseServerDiscovery(serverDiscoveryLogger);
             _schemaExtractor = new DatabaseSchemaExtractor(schemaExtractorLogger);
             _databaseToCSharpConverter = new DatabaseToCSharpConverter(databaseToCSharpConverterLogger);
+            _encryptionService = encryptionService;
         }
 
         public async Task<DBConnectionCreateResultDto> AddConnectionAsync(DBConnectionCreateDto connection)
@@ -80,12 +83,17 @@ namespace Querier.Api.Domain.Services
             string contextName = "";
             string procedureDescription = "";
 
+            // Construire la chaîne de connexion à partir des paramètres
+            var connectionString = BuildConnectionString(connection.ConnectionType, connection.Parameters);
             try
             {
+                
+
+                // Tester la connexion
                 switch (connection.ConnectionType)
                 {
                     case DbConnectionType.SqlServer:
-                        await using (SqlConnection c = new SqlConnection(connection.ConnectionString))
+                        await using (SqlConnection c = new SqlConnection(connectionString))
                         {
                             _logger.LogDebug("Testing SQL Server connection for: {Name}", connection.Name);
                             c.Open();
@@ -96,7 +104,7 @@ namespace Querier.Api.Domain.Services
                         }
                         break;
                     case DbConnectionType.MySql:
-                        await using (MySqlConnection c = new MySqlConnection(connection.ConnectionString))
+                        await using (MySqlConnection c = new MySqlConnection(connectionString))
                         {
                             _logger.LogDebug("Testing MySQL connection for: {Name}", connection.Name);
                             c.Open();
@@ -107,7 +115,7 @@ namespace Querier.Api.Domain.Services
                         }
                         break;
                     case DbConnectionType.PgSql:
-                        await using (NpgsqlConnection c = new NpgsqlConnection(connection.ConnectionString))
+                        await using (NpgsqlConnection c = new NpgsqlConnection(connectionString))
                         {
                             _logger.LogDebug("Testing PostgreSQL connection for: {Name}", connection.Name);
                             c.Open();
@@ -151,7 +159,7 @@ namespace Querier.Api.Domain.Services
                     UseDataAnnotations = true
                 };
 
-                var scaffoldedModelSources = scaffolder.ScaffoldModel(connection.ConnectionString, dbOpts, modelOpts, codeGenOpts);
+                var scaffoldedModelSources = scaffolder.ScaffoldModel(connectionString, dbOpts, modelOpts, codeGenOpts);
 
                 var contextFile = connection.ConnectionType switch
                 {
@@ -170,14 +178,14 @@ namespace Querier.Api.Domain.Services
                     srcZipContent.Add(addFile.Path, addFile.Code);
                 }
                 
-                List<Entities.QDBConnection.StoredProcedure> storedProcedures = _databaseToCSharpConverter.ToProcedureList(connection.ConnectionString);
+                List<Entities.QDBConnection.StoredProcedure> storedProcedures = _databaseToCSharpConverter.ToProcedureList(connectionString);
                 procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
 
                 var procedureModel = new StoredProcedureTemplateModel
                 {
                     NameSpace = connectionNamespace,
                     ContextNameSpace = contextName,
-                    ContextRoute = connection.ContextApiRoute,
+                    ContextRoute = connection.ApiRoute,
                     ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
                 };
                 
@@ -192,7 +200,7 @@ namespace Querier.Api.Domain.Services
                 {
                     NameSpace = connectionNamespace,
                     ContextNameSpace = contextName,
-                    ContextRoute = connection.ContextApiRoute,
+                    ContextRoute = connection.ApiRoute,
                     EntityList = ExtractEntityMetadata(scaffoldedModelSources)
                 };
                 
@@ -221,7 +229,7 @@ namespace Querier.Api.Domain.Services
                 var container = await _assemblyManager.LoadAssemblyAsync(
                     connection.Name,
                     connection.ConnectionType,
-                    connection.ConnectionString,
+                    connectionString,
                     assemblyBytes);
 
                 if (container == null)
@@ -230,11 +238,20 @@ namespace Querier.Api.Domain.Services
                     return result;
                 }
 
-                var endpoints = _endpointExtractor.ExtractFromAssembly(container.GetType().Assembly, connection.ConnectionString, connection.ConnectionType);
+                
+                
+                var endpoints = _endpointExtractor.ExtractFromAssembly(container.GetType().Assembly, connectionString, connection.ConnectionType);
+
+                foreach (var p in connection.Parameters)
+                {
+                    if (p.IsEncrypted)
+                        p.Value = await _encryptionService.EncryptAsync(p.Value);
+                }
+                
                 var newConnection = new DBConnection
                 {
                     Name = connection.Name,
-                    ConnectionString = connection.ConnectionString,
+                    ConnectionString = "",
                     ConnectionType = connection.ConnectionType,
                     Description = procedureDescription,
                     AssemblyHash = hash,
@@ -242,8 +259,14 @@ namespace Querier.Api.Domain.Services
                     AssemblyPdb = pdbBytes,
                     AssemblySourceZip = sourceZipBytes,
                     ContextName = connectionNamespace + "." + contextName,
-                    ApiRoute = connection.ContextApiRoute,
-                    Endpoints = endpoints
+                    ApiRoute = connection.ApiRoute,
+                    Endpoints = endpoints,
+                    Parameters = connection.Parameters.Select(p => new ConnectionStringParameter()
+                    {
+                        Key = p.Key,
+                        IsEncrypted = p.IsEncrypted,
+                        StoredValue = p.Value
+                    }).ToList()
                 };
 
                 await _dbConnectionRepository.AddDbConnectionAsync(newConnection);
@@ -466,9 +489,9 @@ namespace Querier.Api.Domain.Services
             try
             {
                 _logger.LogDebug("Retrieving all database connections");
-                var list = await _dbConnectionRepository.GetAllDbConnectionsAsync();
-                _logger.LogInformation("Successfully retrieved {Count} database connections", list.Count);
-                return list.Select(DBConnectionDto.FromEntity).ToList();
+                var connections = await _dbConnectionRepository.GetAllDbConnectionsAsync();
+                _logger.LogInformation("Successfully retrieved {Count} database connections", connections.Count);
+                return connections;
             }
             catch (Exception ex)
             {
@@ -490,7 +513,13 @@ namespace Querier.Api.Domain.Services
                     throw new KeyNotFoundException($"Connection with ID {connectionId} not found");
                 }
 
-                var schema = await _schemaExtractor.ExtractSchema(connection.ConnectionType, connection.ConnectionString);
+                var connectionString = BuildConnectionString(connection.ConnectionType, connection.Parameters.Select(p => new ConnectionStringParameterCreateDto
+                {
+                    Key = p.Key,
+                    Value = p.StoredValue,
+                    IsEncrypted = p.IsEncrypted
+                }));
+                var schema = await _schemaExtractor.ExtractSchema(connection.ConnectionType, connectionString);
                 _logger.LogInformation("Successfully retrieved schema for connection ID: {Id}", connectionId);
                 return schema;
             }
@@ -913,6 +942,18 @@ namespace Querier.Api.Domain.Services
                 _logger.LogError(ex, "Error analyzing query objects for connection ID: {Id}, type: {Type}", connectionId, objectType);
                 throw;
             }
+        }
+
+        private string BuildConnectionString(DbConnectionType connectionType, IEnumerable<ConnectionStringParameterCreateDto> parameters)
+        {
+            var builder = new System.Data.Common.DbConnectionStringBuilder();
+            
+            foreach (var param in parameters.Where(p => !string.IsNullOrEmpty(p.Value)))
+            {
+                builder[param.Key] = param.Value;
+            }
+
+            return builder.ConnectionString;
         }
     }
 }

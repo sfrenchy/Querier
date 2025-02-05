@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Entities.DBConnection;
 using Querier.Api.Domain.Entities.QDBConnection.Endpoints;
+using System.Linq;
 
 namespace Querier.Api.Application.DTOs
 {
@@ -27,11 +28,6 @@ namespace Querier.Api.Application.DTOs
         public string Name { get; set; }
 
         /// <summary>
-        /// Connection string used to connect to the database
-        /// </summary>
-        public string ConnectionString { get; set; }
-
-        /// <summary>
         /// API route associated with this database connection
         /// </summary>
         public string ApiRoute { get; set; }
@@ -42,23 +38,24 @@ namespace Querier.Api.Application.DTOs
         public string ContextName { get; set; }
         
         public string Description { get; set; }
-        
+        public List<DBConnectionStringParameterDto> Parameters { get; set; }
+            
         /// <summary>
         /// Creates a DBConnectionDto from a domain entity
         /// </summary>
         /// <param name="connection">The domain entity to convert</param>
         /// <returns>A new DBConnectionDto instance</returns>
-        public static DBConnectionDto FromEntity(Domain.Entities.DBConnection.DBConnection connection)
+        public static DBConnectionDto FromEntity(DBConnection connection)
         {
-            return new DBConnectionDto()
+            return new DBConnectionDto
             {
+                Id = connection.Id,
                 Name = connection.Name,
-                ConnectionString = connection.ConnectionString,
-                ConnectionType = Enum.Parse<DbConnectionType>(connection.ConnectionType.ToString()),
+                ConnectionType = connection.ConnectionType,
+                Parameters = connection.Parameters.Select(p => DBConnectionStringParameterDto.FromEntity(p)).ToList(),
                 ApiRoute = connection.ApiRoute,
                 ContextName = connection.ContextName,
-                Description = connection.Description,
-                Id = connection.Id
+                Description = connection.Description
             };
         }
     }

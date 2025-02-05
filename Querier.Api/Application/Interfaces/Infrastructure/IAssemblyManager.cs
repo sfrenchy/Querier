@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Entities.DBConnection;
 
@@ -24,7 +25,7 @@ namespace Querier.Api.Application.Interfaces.Infrastructure
         /// </summary>
         /// <param name="connection">La connexion de base de données</param>
         /// <returns>Le conteneur de services pour l'assembly chargée</returns>
-        Task<IDynamicContextServiceContainer> LoadAssemblyAsync(DBConnection connection);
+        Task<IDynamicContextServiceContainer> LoadAssemblyAsync(DBConnectionDto connection);
 
         /// <summary>
         /// Charge une assembly à partir de bytes

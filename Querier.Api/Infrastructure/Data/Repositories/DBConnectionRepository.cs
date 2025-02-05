@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Entities.DBConnection;
 using Querier.Api.Domain.Entities.QDBConnection.Endpoints;
@@ -88,7 +89,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<List<DBConnection>> GetAllDbConnectionsAsync()
+        public async Task<List<DBConnectionDto>> GetAllDbConnectionsAsync()
         {
             try
             {
@@ -105,7 +106,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                     .ToListAsync();
 
                 _logger.LogInformation("Successfully retrieved {Count} database connections", connections.Count);
-                return connections;
+                return connections.Select(DBConnectionDto.FromEntity).ToList();
             }
             catch (Exception ex)
             {
@@ -245,6 +246,18 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 _logger.LogError(ex, "Error finding endpoints for connection ID: {Id}", dbConnectionId);
                 throw;
             }
+        }
+
+        public async Task<byte[]> GetDLLStreamAsync(int connectionId)
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            return (await context.DBConnections.FirstAsync(c => c.Id == connectionId)).AssemblyDll;
+        }
+        
+        public async Task<byte[]> GetPDBStreamAsync(int connectionId)
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            return (await context.DBConnections.FirstAsync(c => c.Id == connectionId)).AssemblyPdb;
         }
     }
 }

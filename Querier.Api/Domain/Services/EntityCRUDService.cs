@@ -40,16 +40,17 @@ namespace Querier.Api.Domain.Services
                     try
                     {
                         logger.LogTrace("Loading assembly for connection {Name}", dbConnection.Name);
-                    var assembly = Assembly.Load(dbConnection.AssemblyDll);
-                    var types = assembly.GetTypes()
-                        .Where(t => t.IsAssignableTo(typeof(DbContext)));
+                        
+                        var assembly = Assembly.Load(await dbConnectionRepository.GetDLLStreamAsync(dbConnection.Id));
+                        var types = assembly.GetTypes()
+                            .Where(t => t.IsAssignableTo(typeof(DbContext)));
 
                         IEnumerable<Type> enumerableTypes = types as Type[] ?? types.ToArray();
                         contexts.AddRange(enumerableTypes.Select(t => t.FullName));
                         logger.LogDebug("Found {Count} contexts in connection {Name}", enumerableTypes.Count(), dbConnection.Name);
-                }
-                catch (Exception ex)
-                {
+                    }
+                    catch (Exception ex)
+                    {
                         logger.LogError(ex, "Error loading assembly for context {Name}", dbConnection.Name);
                     }
                 }
