@@ -92,7 +92,7 @@ namespace Querier.Api.Application.DTOs
                 {
                     Id = sqlQuery.ConnectionId,
                     Name = sqlQuery.Connection.Name,
-                    ConnectionString = sqlQuery.Connection.ConnectionString,
+                    //ConnectionString = sqlQuery.Connection.ConnectionString,
                     ConnectionType = Enum.Parse<DbConnectionType>(sqlQuery.Connection.ConnectionType.ToString()),
                     ApiRoute = sqlQuery.Connection.ApiRoute
                 },

@@ -13,6 +13,7 @@ using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Services;
 using Querier.Api.Infrastructure.Data.Context;
 using Querier.Api.Infrastructure.Extensions;
+using Querier.Api.Infrastructure.Services;
 
 namespace Querier.Api
 {
@@ -83,6 +84,9 @@ namespace Querier.Api
                 services.AddHealthChecks();
                 services.AddSignalR();
                 services.AddSingleton<IDynamicContextList, DynamicContextList>(_ => DynamicContextList.Instance);
+
+                // Enregistrement du service d'encryption
+                services.AddScoped<IEncryptionService, AesEncryptionService>();
 
                 // Chargement dynamique des assemblies depuis la base de données
                 _logger.LogInformation("Loading dynamic assemblies");

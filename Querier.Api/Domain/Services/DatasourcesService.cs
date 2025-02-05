@@ -40,9 +40,9 @@ namespace Querier.Api.Domain.Services
                     try
                     {
                         logger.LogTrace("Loading assembly for connection {Name}", dbConnection.Name);
-                    var assembly = Assembly.Load(dbConnection.AssemblyDll);
-                    var types = assembly.GetTypes()
-                        .Where(t => t.IsAssignableTo(typeof(DbContext)));
+                        var assembly = Assembly.Load(await dbConnectionRepository.GetDLLStreamAsync(dbConnection.Id));
+                        var types = assembly.GetTypes()
+                            .Where(t => t.IsAssignableTo(typeof(DbContext)));
 
                         IEnumerable<Type> enumerableTypes = types as Type[] ?? types.ToArray();
                         contexts.AddRange(enumerableTypes.Select(t => t.FullName));

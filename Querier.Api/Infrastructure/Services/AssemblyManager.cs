@@ -13,7 +13,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Infrastructure;
+using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Entities.DBConnection;
 
@@ -30,11 +32,13 @@ namespace Querier.Api.Infrastructure.Services
         private readonly ConcurrentDictionary<string, ServiceCollection> _assemblyServices;
         private readonly ConcurrentDictionary<string, IServiceProvider> _assemblyServiceProviders;
         private readonly ConcurrentDictionary<string, string> _normalizedNameCache;
-
+        private readonly IDbConnectionRepository _dbConnectionRepository;
+        
         public AssemblyManagerService(
             ILogger<AssemblyManagerService> logger,
             IServiceProvider serviceProvider,
             IServiceCollection services,
+            IDbConnectionRepository dbConnectionRepository,
             ApplicationPartManager partManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -46,6 +50,7 @@ namespace Querier.Api.Infrastructure.Services
             _assemblyServices = new ConcurrentDictionary<string, ServiceCollection>();
             _assemblyServiceProviders = new ConcurrentDictionary<string, IServiceProvider>();
             _normalizedNameCache = new ConcurrentDictionary<string, string>();
+            _dbConnectionRepository = dbConnectionRepository;
         }
 
         public string GetNormalizedAssemblyName(string assemblyName)
@@ -146,7 +151,7 @@ namespace Querier.Api.Infrastructure.Services
             }
         }
 
-        public async Task<IDynamicContextServiceContainer> LoadAssemblyAsync(DBConnection connection)
+        public async Task<IDynamicContextServiceContainer> LoadAssemblyAsync(DBConnectionDto connection)
         {
             try
             {
@@ -172,18 +177,19 @@ namespace Querier.Api.Infrastructure.Services
 
                 // Charger l'assembly
                 Assembly assembly;
-                using (var assemblyStream = new MemoryStream(connection.AssemblyDll))
-                using (var pdbStream = new MemoryStream(connection.AssemblyPdb))
+                using (var assemblyStream = new MemoryStream(await _dbConnectionRepository.GetDLLStreamAsync(connection.Id)))
+                using (var pdbStream = new MemoryStream(await _dbConnectionRepository.GetPDBStreamAsync(connection.Id)))
                 {
                     assembly = loadContext.LoadFromStream(assemblyStream, pdbStream);
                 }
 
+                string connectionString = string.Join(';', connection.Parameters);
                 // Configurer les services et créer le conteneur
                 var container = await ConfigureServicesAndCreateContainer(
                     normalizedName,
                     assembly,
                     connection.ConnectionType,
-                    connection.ConnectionString);
+                    connectionString);
 
                 _serviceContainers.TryAdd(normalizedName, container);
                 await RegenerateSwaggerAsync();
