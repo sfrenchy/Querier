@@ -188,7 +188,10 @@ namespace Querier.Api.Infrastructure.Services
                 }
 
                 int dbConnectionId = query.DBConnectionId;
-                using var dbcontext = dbConnectionService.GetDbContextByIdAsync(dbConnectionId).GetAwaiter().GetResult();
+                
+                var targetContextFactory = dbConnectionService.GetDbContextFactoryByIdAsync(dbConnectionId).GetAwaiter().GetResult();
+                using var dbcontext = targetContextFactory.CreateDbContext();
+                
                 var parameters = new List<DbParameter>();
                 if (sampleParameters != null)
                 {
@@ -300,7 +303,8 @@ namespace Querier.Api.Infrastructure.Services
                     throw new NotFoundException("Query not found");
                 }
 
-                await using var dbContext = await dbConnectionService.GetDbContextByIdAsync(query.DBConnectionId);
+                var targetContextFactory = await dbConnectionService.GetDbContextFactoryByIdAsync(query.DBConnectionId);
+                await using var dbContext = await targetContextFactory.CreateDbContextAsync();
                 var command = dbContext.Database.GetDbConnection().CreateCommand();
                 string sqlQuery = query.Query.TrimEnd(';');
 

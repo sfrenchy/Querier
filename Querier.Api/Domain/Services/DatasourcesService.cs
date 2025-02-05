@@ -76,7 +76,10 @@ namespace Querier.Api.Domain.Services
 
                 logger.LogInformation("Getting entities for context: {Context}", contextTypeFullname);
                 List<DataStructureDefinitionDto> result = new List<DataStructureDefinitionDto>();
-                using DbContext targetContext = await connectionService.GetDbContextByContextTypeFullNameAsync(contextTypeFullname);
+                
+                var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+                using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+                
                 if (targetContext == null)
                 {
                     logger.LogWarning("Context not found: {Context}", contextTypeFullname);
@@ -184,7 +187,9 @@ namespace Querier.Api.Domain.Services
                     throw new InvalidOperationException(message);
                 }
 
-                using DbContext targetContext = await connectionService.GetDbContextByContextTypeFullNameAsync(contextTypeFullname);
+                var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+                using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+                
                 if (targetContext == null)
                 {
                     throw new InvalidOperationException($"Context {contextTypeFullname} not found");
@@ -268,7 +273,9 @@ namespace Querier.Api.Domain.Services
                     throw new InvalidOperationException(message);
                 }
 
-                using DbContext targetContext = await connectionService.GetDbContextByContextTypeFullNameAsync(contextTypeFullname);
+                var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+                using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+                
                 if (targetContext == null)
                 {
                     throw new InvalidOperationException($"Context {contextTypeFullname} not found");
@@ -310,8 +317,9 @@ namespace Querier.Api.Domain.Services
             if (reqType == null)
                 throw new Exception($"Entity \"{entityTypeFullname}\" is not handled in the \"{contextTypeFullname}\" context.");
 
-            using DbContext targetContext = await connectionService.GetDbContextByContextTypeFullNameAsync(contextTypeFullname);
-            
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+
             PropertyInfo contextProperty = targetContext.GetType().GetProperties().Where(p => p.PropertyType.Name.Contains("DbSet")).FirstOrDefault(p => p.PropertyType.GetGenericArguments().Any(a => a == reqType));
             if (contextProperty == null)
                 throw new Exception($"Entity \"{entityTypeFullname}\" is not handled by any DbSet in the \"{contextTypeFullname}\" context.");
@@ -325,7 +333,8 @@ namespace Querier.Api.Domain.Services
 
         public async Task<DataTable> GetDatatableFromSql(string contextTypeFullname, string sqlQuery, List<DataFilterDto> filters)
         {
-            using DbContext targetContext = await connectionService.GetDbContextByContextTypeFullNameAsync(contextTypeFullname);
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
             DataTable dt = targetContext.Database.RawSqlQuery(sqlQuery);
             return dt.Filter(filters);
         }
@@ -347,8 +356,9 @@ namespace Querier.Api.Domain.Services
             if (keyProperty == null)
                 throw new Exception($"Entity \"{entityFullname}\" has no defined Key attribute defined in the datamart context.");
 
-            using DbContext targetContext = await connectionService.GetDbContextByContextTypeFullNameAsync(contextTypeFullname);
-            
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+
             object modelEntity = JsonSerializer.Deserialize(entity.ToString() ?? throw new InvalidOperationException(), entityType);
             if (modelEntity != null)
             {
@@ -383,8 +393,9 @@ namespace Querier.Api.Domain.Services
             if (keyProperty == null)
                 throw new Exception($"Entity \"{entityFullname}\" has no defined Key attribute defined in the datamart context.");
 
-            using DbContext targetContext = await connectionService.GetDbContextByContextTypeFullNameAsync(contextTypeFullname);
-            
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+
             object modelEntity = JsonSerializer.Deserialize(entity.ToString() ?? string.Empty, entityType);
             if (modelEntity != null)
             {
@@ -409,8 +420,9 @@ namespace Querier.Api.Domain.Services
             if (keyProperty == null)
                 throw new Exception($"Entity \"{entityFullname}\" has no defined Key attribute defined in the datamart context.");
 
-            using DbContext targetContext = await connectionService.GetDbContextByContextTypeFullNameAsync(contextTypeFullname);
-            
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+
             object entityKey = Convert.ChangeType(entityIdentifier, keyProperty.PropertyType);
             object existingEntity = targetContext.Find(entityType, entityKey);
 
@@ -426,7 +438,9 @@ namespace Querier.Api.Domain.Services
                 Datas = []
             };
             
-            using DbContext targetContext = await connectionService.GetDbContextByContextTypeFullNameAsync(request.ContextTypeName);
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(request.ContextTypeName);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+            
             try
             {
                 DataTable dt = targetContext.Database.RawSqlQuery(request.SqlQuery);

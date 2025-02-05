@@ -16,6 +16,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -31,6 +32,7 @@ using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Templates;
 using Querier.Api.Infrastructure.Services;
 using Swashbuckle.AspNetCore.Swagger;
+using System.Collections.Concurrent;
 
 namespace Querier.Api.Domain.Services
 {
@@ -47,6 +49,8 @@ namespace Querier.Api.Domain.Services
         private readonly IAssemblyManagerService _assemblyManager;
         private readonly DatabaseToCSharpConverter _databaseToCSharpConverter;
         private readonly IEncryptionService _encryptionService;
+        private readonly ConcurrentDictionary<string, IDbContextFactory<DbContext>> _contextFactoryCache = new();
+        private readonly ConcurrentDictionary<int, IDbContextFactory<DbContext>> _contextFactoryByIdCache = new();
         
         public DbConnectionService(
             IDbConnectionRepository dbConnectionRepository,
@@ -239,7 +243,7 @@ namespace Querier.Api.Domain.Services
                     return result;
                 }
 
-                using DbContext newDbContext = Utils.GetDbContextFromTypeName(contextName, connectionString, connection.ConnectionType);
+                using DbContext newDbContext = Utils.GetDbContextFromTypeName(connectionNamespace + "." + contextName, connectionString, connection.ConnectionType);
                 
                 var endpoints = _endpointExtractor.ExtractFromAssembly(container.GetType().Assembly, newDbContext,connectionString, connection.ConnectionType);
 
@@ -1031,6 +1035,146 @@ namespace Querier.Api.Domain.Services
             }
 
             return builder.ConnectionString;
+        }
+
+        public async Task<IDbContextFactory<DbContext>> GetDbContextFactoryByContextTypeFullNameAsync(string contextTypeFullName)
+        {
+            return await _contextFactoryCache.GetOrAddAsync(contextTypeFullName, async key =>
+            {
+                _logger.LogDebug("Cache miss for context type: {ContextTypeName}, creating new factory", key);
+                DBConnection connection = await _dbConnectionRepository.FindByContextNameAsync(key);
+                return await CreateDbContextFactoryAsync(connection);
+            });
+        }
+        
+        public async Task<IDbContextFactory<DbContext>> GetDbContextFactoryByIdAsync(int id)
+        {
+            return await _contextFactoryByIdCache.GetOrAddAsync(id, async key =>
+            {
+                _logger.LogDebug("Cache miss for connection ID: {Id}, creating new factory", key);
+                var connection = await _dbConnectionRepository.FindByIdAsync(key);
+                return await CreateDbContextFactoryAsync(connection);
+            });
+        }
+
+        private async Task<IDbContextFactory<DbContext>> CreateDbContextFactoryAsync(DBConnection connection)
+        {
+            try
+            {
+                _logger.LogDebug("Creating DbContextFactory for connection: {Name}", connection.Name);
+                
+                var contextTypes = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(assembly => assembly.GetTypes())
+                    .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == connection.ContextName)
+                    .ToList();
+
+                if (!contextTypes.Any())
+                {
+                    _logger.LogError("No DbContext found with type name: {ContextTypeName}", connection.ContextName);
+                    throw new InvalidOperationException($"No DbContext found with type name {connection.ContextName}");
+                }
+
+                var contextType = contextTypes.First();
+                var scope = ServiceActivator.GetScope();
+
+                // Construire la chaîne de connexion
+                string connectionString = string.Join(';', connection.Parameters.Where(p => !p.IsEncrypted).Select(p => p.Key + "=" + p.StoredValue));
+                foreach (var cryptedParameter in connection.Parameters.Where(p => p.IsEncrypted))
+                {
+                    string uncryptedParameterValue = await _encryptionService.DecryptAsync(cryptedParameter.StoredValue);
+                    connectionString += $";{cryptedParameter.Key}={uncryptedParameterValue}";
+                }
+
+                // Créer le type générique de DbContextOptionsBuilder
+                var optionsBuilderType = typeof(DbContextOptionsBuilder<>).MakeGenericType(contextType);
+                var optionsBuilder = (DbContextOptionsBuilder)Activator.CreateInstance(optionsBuilderType);
+
+                // Configurer les options selon le type de base de données
+                switch (connection.ConnectionType)
+                {
+                    case DbConnectionType.SqlServer:
+                        _logger.LogDebug("Configuring SQL Server connection factory");
+                        optionsBuilder.UseSqlServer(connectionString, 
+                            options => options.EnableRetryOnFailure());
+                        break;
+
+                    case DbConnectionType.MySql:
+                        _logger.LogDebug("Configuring MySQL connection factory");
+                        optionsBuilder.UseMySql(connectionString,
+                            ServerVersion.AutoDetect(connectionString),
+                            options => options.EnableRetryOnFailure());
+                        break;
+
+                    case DbConnectionType.PgSql:
+                        _logger.LogDebug("Configuring PostgreSQL connection factory");
+                        optionsBuilder.UseNpgsql(connectionString,
+                            options => options.EnableRetryOnFailure());
+                        break;
+
+                    default:
+                        _logger.LogError("Unsupported database type: {ConnectionType}", connection.ConnectionType);
+                        throw new NotSupportedException($"Database type {connection.ConnectionType} not supported");
+                }
+
+                // Créer le type générique de DbContextFactory
+                var factoryType = typeof(PooledDbContextFactory<>).MakeGenericType(contextType);
+                
+                // Créer la factory avec le type spécifique
+                var factory = Activator.CreateInstance(
+                    factoryType, 
+                    optionsBuilder.Options,
+                    1024);
+
+                // Créer un wrapper qui convertit la factory spécifique en IDbContextFactory<DbContext>
+                return new DbContextFactoryWrapper(factory, contextType);
+            }
+            catch (Exception ex) when (ex is not InvalidOperationException && ex is not NotSupportedException)
+            {
+                _logger.LogError(ex, "Error creating DbContextFactory for connection: {Name}", connection.Name);
+                throw;
+            }
+        }
+
+        // Classe wrapper pour gérer la conversion de type
+        private class DbContextFactoryWrapper : IDbContextFactory<DbContext>
+        {
+            private readonly object _innerFactory;
+            private readonly Type _contextType;
+            private readonly MethodInfo _createDbContextMethod;
+
+            public DbContextFactoryWrapper(object factory, Type contextType)
+            {
+                _innerFactory = factory;
+                _contextType = contextType;
+                
+                // Obtenir la méthode CreateDbContext de la factory typée
+                var factoryType = typeof(IDbContextFactory<>).MakeGenericType(_contextType);
+                _createDbContextMethod = factoryType.GetMethod("CreateDbContext");
+            }
+
+            public DbContext CreateDbContext()
+            {
+                // Invoquer la méthode CreateDbContext sur la factory typée
+                return (DbContext)_createDbContextMethod.Invoke(_innerFactory, null);
+            }
+        }
+    }
+
+    // Extension method pour ConcurrentDictionary avec support async
+    public static class ConcurrentDictionaryExtensions
+    {
+        public static async Task<TValue> GetOrAddAsync<TKey, TValue>(
+            this ConcurrentDictionary<TKey, TValue> dictionary,
+            TKey key,
+            Func<TKey, Task<TValue>> valueFactory)
+        {
+            if (dictionary.TryGetValue(key, out TValue value))
+            {
+                return value;
+            }
+
+            value = await valueFactory(key);
+            return dictionary.GetOrAdd(key, value);
         }
     }
 }

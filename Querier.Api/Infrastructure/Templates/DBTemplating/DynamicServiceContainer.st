@@ -96,7 +96,7 @@ namespace $nameSpace$
             _logger.LogInformation("Configuration des services pour " + typeof($contextNameSpace$ServiceContainer).Name);
 
             // Configuration du DbContext
-            services.AddDbContextFactory<$contextNameSpace$>(options =>
+            services.AddPooledDbContextFactory<$contextNameSpace$>(options =>
             {
                 switch (connectionType)
                 {

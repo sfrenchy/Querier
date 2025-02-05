@@ -18,7 +18,7 @@ namespace Querier.Api.Application.Interfaces.Services
         Task<List<DBConnectionEndpointInfoDto>> GetEndpointsAsync(int connectionId, string? targetTable, string? controller, string? action);
         Task<List<DBConnectionControllerInfoDto>> GetControllersAsync(int connectionId);
         Task<DBConnectionDto> GetByIdAsync(int id);
-        Task<DbContext> GetDbContextByIdAsync(int id);
-        Task<DbContext> GetDbContextByContextTypeFullNameAsync(string contextFullname);
+        Task<IDbContextFactory<DbContext>> GetDbContextFactoryByContextTypeFullNameAsync(string contextTypeFullName);
+        Task<IDbContextFactory<DbContext>> GetDbContextFactoryByIdAsync(int id);
     }
 }
