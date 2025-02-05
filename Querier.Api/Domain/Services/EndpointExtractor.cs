@@ -105,7 +105,7 @@ namespace Querier.Api.Domain.Services
             return type;
         }
 
-        public List<EndpointDescription> ExtractFromAssembly(Assembly assembly, string connectionString, DbConnectionType connectionType)
+        public List<EndpointDescription> ExtractFromAssembly(Assembly assembly, DbContext dbContext, string connectionString, DbConnectionType connectionType)
         {
             try
             {
@@ -118,8 +118,6 @@ namespace Querier.Api.Domain.Services
                 var dbContextType = assembly.GetTypes()
                     .FirstOrDefault(t => !t.IsAbstract && typeof(DbContext).IsAssignableFrom(t));
 
-                DbContext dbContext = Utils.GetDbContextFromTypeName(dbContextType.FullName, connectionString, connectionType);
-                
                 foreach (var controller in controllers)
                 {
                     try
@@ -166,9 +164,9 @@ namespace Querier.Api.Domain.Services
                                     TargetTable = controllerTargetTable,
                                     Route = CombineRoutes(controllerRoute.Replace("api/v1/", ""), actionRoute),
                                     Parameters = GetParameters(dbContext, action).ToList(),
-                                    Responses = GetResponses(action, contextTypeName, connectionString, connectionType).ToList(),
+                                    Responses = GetResponses(action, dbContext, connectionString, connectionType).ToList(),
                                     Description = action.GetCustomAttribute<SummaryAttribute>()?.Summary ?? string.Empty,
-                                    EntitySubjectJsonSchema = returnType != null ? _schemaGenerator.GenerateFromType(returnType, Utils.GetDbContextFromTypeName(contextTypeName, connectionString, connectionType)) : "{}"
+                                    EntitySubjectJsonSchema = returnType != null ? _schemaGenerator.GenerateFromType(returnType, dbContext) : "{}"
                                 };
 
                                 _logger.LogDebug("Extracted endpoint {EndpointName} with {ParameterCount} parameters and {ResponseCount} responses", 
@@ -306,7 +304,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private IEnumerable<EndpointResponse> GetResponses(MethodInfo action, string contextTypeName, string connectionString, DbConnectionType connectionType)
+        private IEnumerable<EndpointResponse> GetResponses(MethodInfo action, DbContext dbContext, string connectionString, DbConnectionType connectionType)
         {
             try
             {
@@ -322,7 +320,7 @@ namespace Querier.Api.Domain.Services
                     {
                         StatusCode = response.StatusCode,
                         Description = GetResponseDescription(response.StatusCode),
-                        JsonSchema = _schemaGenerator.GenerateFromType(targetType, Utils.GetDbContextFromTypeName(contextTypeName, connectionString, connectionType)),
+                        JsonSchema = _schemaGenerator.GenerateFromType(targetType, dbContext),
                         Type = response.Type?.Name ?? "void"
                     });
                     _logger.LogTrace("Added response with status code {StatusCode} for action {ActionName}", 

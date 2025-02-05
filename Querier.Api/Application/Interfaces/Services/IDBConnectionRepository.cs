@@ -17,5 +17,6 @@ namespace Querier.Api.Application.Interfaces.Services
         Task<List<EndpointDescription>> FindEndpointsAsync(int dbConnectionId, string? controller = null, string? targetTable = null, string? action = null);
         public Task<byte[]> GetDLLStreamAsync(int connectionId);
         public Task<byte[]> GetPDBStreamAsync(int connectionId);
+        public Task<DBConnection> FindByContextNameAsync(string contextTypeName);
     }
 }

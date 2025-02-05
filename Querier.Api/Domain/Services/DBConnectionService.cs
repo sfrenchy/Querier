@@ -15,6 +15,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -238,9 +239,9 @@ namespace Querier.Api.Domain.Services
                     return result;
                 }
 
+                using DbContext newDbContext = Utils.GetDbContextFromTypeName(contextName, connectionString, connection.ConnectionType);
                 
-                
-                var endpoints = _endpointExtractor.ExtractFromAssembly(container.GetType().Assembly, connectionString, connection.ConnectionType);
+                var endpoints = _endpointExtractor.ExtractFromAssembly(container.GetType().Assembly, newDbContext,connectionString, connection.ConnectionType);
 
                 foreach (var p in connection.Parameters)
                 {
@@ -694,6 +695,82 @@ namespace Querier.Api.Domain.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving database connection with ID: {Id}", id);
+                throw;
+            }
+        }
+
+        public async Task<DbContext> GetDbContextByContextTypeFullNameAsync(string contextTypeFullName)
+        {
+            DBConnection connection = await _dbConnectionRepository.FindByContextNameAsync(contextTypeFullName);
+            return await GetDbContextByIdAsync(connection.Id);
+        }
+        public async Task<DbContext> GetDbContextByIdAsync(int id)
+        {
+            try
+            {
+                //_logger.LogDebug($"Get DbContext for DBConnection {id}");
+                var connection = await _dbConnectionRepository.FindByIdAsync(id); 
+                var contextTypes = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(assembly => assembly.GetTypes())
+                    .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == connection.ContextName)
+                    .ToList();
+                if (!contextTypes.Any())
+                {
+                    _logger.LogError("No DbContext found with type name: {ContextTypeName}", connection.ContextName);
+                    throw new InvalidOperationException($"No DbContext found with type name {connection.ContextName}");
+                }
+
+                var contextType = contextTypes.First();
+                var scope = ServiceActivator.GetScope();
+                
+                // Try to get from DI first
+                _logger.LogTrace("Attempting to get context from DI container");
+                if (scope.ServiceProvider.GetService(contextType) is DbContext context)
+                {
+                    _logger.LogDebug("Successfully retrieved context from DI container");
+                    return context;
+                }
+                string connectionString = string.Join(';', connection.Parameters.Where(p => !p.IsEncrypted).Select(p => p.Key + "=" + p.StoredValue));
+                foreach (var cryptedParameter in connection.Parameters.Where(p => p.IsEncrypted))
+                {
+                    string uncryptedParameterValue = _encryptionService.DecryptAsync(cryptedParameter.StoredValue).GetAwaiter().GetResult();
+                    connectionString += $";{cryptedParameter.Key}={uncryptedParameterValue}";
+                }
+
+                // Create options with the correct connection string
+                _logger.LogTrace("Creating context options with connection string");
+                var optionsBuilderType = typeof(DbContextOptionsBuilder<>).MakeGenericType(contextType);
+                var optionsBuilder = (DbContextOptionsBuilder)Activator.CreateInstance(optionsBuilderType);
+
+                switch (connection.ConnectionType)
+                {
+                    case DbConnectionType.SqlServer:
+                        _logger.LogDebug("Configuring SQL Server connection");
+                        if (optionsBuilder != null) optionsBuilder.UseSqlServer(connectionString);
+                        break;
+                    case DbConnectionType.MySql:
+                        _logger.LogDebug("Configuring MySQL connection");
+                        if (optionsBuilder != null)
+                            optionsBuilder.UseMySql(connectionString,
+                                ServerVersion.AutoDetect(connectionString));
+                        break;
+                    case DbConnectionType.PgSql:
+                        _logger.LogDebug("Configuring PostgresSQL connection");
+                        if (optionsBuilder != null) optionsBuilder.UseNpgsql(connectionString);
+                        break;
+                    default:
+                        _logger.LogError("Unsupported database type: {ConnectionType}", connection.ConnectionType);
+                        throw new NotSupportedException($"Database type {connection.ConnectionType} not supported");
+                }
+
+                _logger.LogDebug("Creating new instance of context type: {ContextType}", contextType.Name);
+                if (optionsBuilder != null)
+                    return (DbContext)Activator.CreateInstance(contextType, optionsBuilder.Options);
+                throw new Exception($"Unable to create optionBuilder for connection {id}");
+            }
+            catch (Exception ex) when (ex is not InvalidOperationException && ex is not NotSupportedException)
+            {
+                _logger.LogError(ex, $"Error creating DbContext for type connection: {id}");
                 throw;
             }
         }

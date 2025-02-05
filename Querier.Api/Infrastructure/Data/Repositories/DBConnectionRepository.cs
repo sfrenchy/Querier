@@ -128,6 +128,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                         .ThenInclude(e => e.Parameters)
                     .Include(c => c.Endpoints)
                         .ThenInclude(e => e.Responses)
+                    .Include(c => c.Parameters)
                     .FirstOrDefaultAsync(c => c.Id == dbConnectionId);
 
                 if (connection == null)
@@ -258,6 +259,42 @@ namespace Querier.Api.Infrastructure.Data.Repositories
         {
             await using var context = await _contextFactory.CreateDbContextAsync();
             return (await context.DBConnections.FirstAsync(c => c.Id == connectionId)).AssemblyPdb;
+        }
+
+        public async Task<DBConnection> FindByContextNameAsync(string contextTypeName)
+        {
+            try
+            {
+                _logger.LogInformation("Finding database connection with ContextTypeName: {contextTypeName}", contextTypeName);
+
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var connection = await context.DBConnections
+                    .AsNoTracking()
+                    .Include(c => c.Endpoints)
+                    .ThenInclude(e => e.Parameters)
+                    .Include(c => c.Endpoints)
+                    .ThenInclude(e => e.Responses)
+                    .FirstOrDefaultAsync(c => c.ContextName == contextTypeName);
+
+                if (connection == null)
+                {
+                    _logger.LogWarning("Database connection not found with ContextTypeName: {contextTypeName}", contextTypeName);
+                    throw new KeyNotFoundException($"Connection with ContextName {contextTypeName} not found");
+                }
+
+                _logger.LogInformation("Successfully found database connection: {Name} with ContextName: {contextName}", 
+                    connection.Name, contextTypeName);
+                return connection;
+            }
+            catch (KeyNotFoundException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error finding database connection with ContextName: {ContextName}", contextTypeName);
+                throw;
+            }
         }
     }
 }

@@ -11,6 +11,7 @@ using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Entities.DBConnection;
 using Querier.Api.Infrastructure.Data.Context;
+using Querier.Api.Infrastructure.Services;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Querier.Api.Common.Utilities
@@ -64,17 +65,23 @@ namespace Querier.Api.Common.Utilities
                 {
                     // Get the connection string from the database
                     LOGGER?.LogTrace("Getting connection string from database");
-                    var apiDbContextFactory =
-                        scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApiDbContext>>();
+                    var apiDbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApiDbContext>>();
+                    var encryptionService = scope.ServiceProvider.GetRequiredService<IEncryptionService>();
                     using var apiDbContext = apiDbContextFactory.CreateDbContext();
-                    var dbConnection = apiDbContext.DBConnections.FirstOrDefault(c => c.ContextName == contextTypeName);
+                    var dbConnection = apiDbContext.DBConnections.Include(dbConnection => dbConnection.Parameters).FirstOrDefault(c => c.ContextName == contextTypeName);
 
                     if (dbConnection == null)
                     {
                         LOGGER?.LogError("No connection found for context: {ContextTypeName}", contextTypeName);
                         throw new InvalidOperationException($"No connection found for context {contextTypeName}");
                     }
-                    connectionString = dbConnection.ConnectionString;
+                    connectionString = string.Join(';', dbConnection.Parameters.Where(p => !p.IsEncrypted).Select(p => p.Key + "=" + p.StoredValue));
+                    foreach (var cryptedParameter in dbConnection.Parameters.Where(p => p.IsEncrypted))
+                    {
+                        string uncryptedParameterValue = encryptionService.DecryptAsync(cryptedParameter.StoredValue).GetAwaiter().GetResult();
+                        connectionString += $";{cryptedParameter.Key}={uncryptedParameterValue}";
+                    }
+                    connectionString = connectionString;
                     connectionType = dbConnection.ConnectionType;
                 }
 

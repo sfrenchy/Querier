@@ -22,7 +22,8 @@ using Querier.Api.Domain.Common.Enums;
 namespace Querier.Api.Infrastructure.Services
 {
     public class SqlQueryService(
-        ApiDbContext context,
+        IDbContextFactory<ApiDbContext> contextFactory,
+        IDbConnectionService dbConnectionService,
         IUserService userService,
         IHttpContextAccessor httpContextAccessor,
         ILogger<SqlQueryService> logger)
@@ -42,6 +43,7 @@ namespace Querier.Api.Infrastructure.Services
                 }
 
                 ApiUserDto userDto = await userService.GetByEmailAsync(userMail);
+                using var context = await contextFactory.CreateDbContextAsync();
                 IEnumerable<SqlQueryDto> queries = await context.SQLQueries
                     .Where(q => q.IsPublic || q.CreatedBy == userDto.Id)
                     .OrderByDescending(q => q.CreatedAt)
@@ -81,7 +83,7 @@ namespace Querier.Api.Infrastructure.Services
             try
             {
                 logger.LogDebug("Getting SQL query with ID {QueryId}", id);
-
+                using var context = await contextFactory.CreateDbContextAsync();
                 var query = await context.SQLQueries
                 .Include(q => q.Connection)
                     .FirstOrDefaultAsync(q => q.Id == id);
@@ -122,6 +124,7 @@ namespace Querier.Api.Infrastructure.Services
                     query.CreatedBy = currentUser?.Id;
                 }
 
+                using var context = await contextFactory.CreateDbContextAsync();
                 query.DBConnection = DBConnectionDto.FromEntity(await context.DBConnections.FindAsync(query.DBConnectionId));
 
                 if (query.DBConnection == null)
@@ -173,9 +176,10 @@ namespace Querier.Api.Infrastructure.Services
             try
             {
                 logger.LogDebug("Validating and describing query for {QueryName}", query.Name);
-
+                
                 if (query.DBConnection == null)
                 {
+                    using var context = contextFactory.CreateDbContext();
                     query.DBConnection = DBConnectionDto.FromEntity(context.DBConnections.Find(query.DBConnectionId));
                     if (query.DBConnection == null)
                     {
@@ -183,7 +187,8 @@ namespace Querier.Api.Infrastructure.Services
                     }
                 }
 
-                using var dbcontext = Utils.GetDbContextFromTypeName(query.DBConnection.ContextName);
+                int dbConnectionId = query.DBConnectionId;
+                using var dbcontext = dbConnectionService.GetDbContextByIdAsync(dbConnectionId).GetAwaiter().GetResult();
                 var parameters = new List<DbParameter>();
                 if (sampleParameters != null)
                 {
@@ -223,7 +228,7 @@ namespace Querier.Api.Infrastructure.Services
                     logger.LogWarning("Query DTO is null");
                     throw new ArgumentNullException(nameof(query));
                 }
-
+                using var context = await contextFactory.CreateDbContextAsync();
                 var existingQuery = await context.SQLQueries.FindAsync(query.Id);
                 if (existingQuery == null)
                 {
@@ -263,7 +268,7 @@ namespace Querier.Api.Infrastructure.Services
             try
             {
                 logger.LogDebug("Deleting SQL query with ID {QueryId}", id);
-
+                using var context = await contextFactory.CreateDbContextAsync();
                 var query = await context.SQLQueries.FindAsync(id);
                 if (query == null)
                 {
@@ -295,7 +300,7 @@ namespace Querier.Api.Infrastructure.Services
                     throw new NotFoundException("Query not found");
                 }
 
-                await using var dbContext = Utils.GetDbContextFromTypeName(query.DBConnection.ContextName);
+                await using var dbContext = await dbConnectionService.GetDbContextByIdAsync(query.DBConnectionId);
                 var command = dbContext.Database.GetDbConnection().CreateCommand();
                 string sqlQuery = query.Query.TrimEnd(';');
 

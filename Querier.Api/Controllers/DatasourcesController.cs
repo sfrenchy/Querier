@@ -67,7 +67,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(DataStructureDefinitionDto[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult GetEntities(string contextName)
+        public async Task<IActionResult> GetEntities(string contextName)
         {
             try
             {
@@ -78,7 +78,7 @@ namespace Querier.Api.Controllers
                 }
 
                 logger.LogInformation("Retrieving entities for context: {ContextName}", contextName);
-                var entities = entityCrudService.GetEntities(contextName);
+                var entities = await entityCrudService.GetEntities(contextName);
                 logger.LogInformation("Successfully retrieved {Count} entities from context {ContextName}", 
                     entities.Count, contextName);
                 return Ok(entities);
@@ -154,7 +154,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(DataPagedResult<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult GetRecords(
+        public async Task<IActionResult> GetRecords(
             string contextName,
             string entityName,
             [FromBody] DataRequestParametersDto dataRequestParameters,
@@ -172,7 +172,7 @@ namespace Querier.Api.Controllers
                 logger.LogInformation("Retrieving records for entity {EntityName} from context {ContextName} (Page: {PageNumber}, Size: {PageSize})", 
                     entityName, contextName, dataRequestParameters.PageNumber, dataRequestParameters.PageSize);
 
-                var result = entityCrudService.GetAll(contextName, entityName, dataRequestParameters);
+                var result = await entityCrudService.GetAll(contextName, entityName, dataRequestParameters);
                 logger.LogInformation("Successfully retrieved {Count} records for entity {EntityName}", 
                     result.Items.Count(), entityName);
                 return Ok(result);
@@ -376,7 +376,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(SqlQueryResultDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult AnalyzeQuery(string contextName, [FromBody] EntityCRUDExecuteSQLQueryDto request)
+        public async Task<IActionResult> AnalyzeQuery(string contextName, [FromBody] EntityCRUDExecuteSQLQueryDto request)
         {
             try
             {
@@ -387,7 +387,7 @@ namespace Querier.Api.Controllers
                 }
 
                 logger.LogInformation("Analyzing SQL query in context {ContextName}", contextName);
-                var result = entityCrudService.GetSqlQueryEntityDefinition(request);
+                var result = await entityCrudService.GetSqlQueryEntityDefinition(request);
 
                 if (!result.QuerySuccessful)
                 {
