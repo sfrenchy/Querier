@@ -113,20 +113,20 @@ namespace Querier.Api.Common.Extensions
 
             if (data.Count > 0)
             {
-                    var properties = TypeDescriptor.GetProperties(data[0].GetType());
+                var properties = TypeDescriptor.GetProperties(data[0].GetType());
                 foreach (PropertyDescriptor prop in properties)
-                    {
-                        var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-                        table.Columns.Add(prop.Name, type);
-                    }
+                {
+                    var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                    table.Columns.Add(prop.Name, type);
+                }
 
                 foreach (T item in data)
                 {
-                        var row = table.NewRow();
+                    var row = table.NewRow();
                     foreach (PropertyDescriptor prop in properties)
-                        {
+                    {
                         row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
-                        }
+                    }
                     table.Rows.Add(row);
                 }
             }
@@ -169,15 +169,15 @@ namespace Querier.Api.Common.Extensions
             try
             {
                 LOGGER.LogDebug("Executing raw SQL query: {Sql}", sql);
-            var dt = new DataTable();
-            using (var command = database.GetDbConnection().CreateCommand())
-            {
+                var dt = new DataTable();
+                using (var command = database.GetDbConnection().CreateCommand())
+                {
                     command.Connection!.Open();
-                command.CommandText = sql;
+                    command.CommandText = sql;
                     command.CommandType = commandType;
 
                     if (commandTimeOutInSeconds.HasValue)
-                {
+                    {
                         command.CommandTimeout = commandTimeOutInSeconds.Value;
                     }
 
@@ -189,12 +189,12 @@ namespace Querier.Api.Common.Extensions
                     
                     using (var reader = command.ExecuteReader())
                     {
-                    dt.Load(reader);
+                        dt.Load(reader);
+                    }
                 }
-            }
 
                 LOGGER.LogInformation("Successfully executed raw SQL query. Returned {RowCount} rows", dt.Rows.Count);
-            return dt;
+                return dt;
             }
             catch (Exception ex)
             {

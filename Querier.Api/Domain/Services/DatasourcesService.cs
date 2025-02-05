@@ -16,6 +16,7 @@ using Querier.Api.Common.Extensions;
 using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Common.Models;
+using Querier.Api.Domain.Entities.DBConnection;
 using Querier.Api.Tools;
 using Querier.Api.Infrastructure.Services;
 using DataTable = System.Data.DataTable;
@@ -23,7 +24,7 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Querier.Api.Domain.Services
 {
-    public class DatasourcesService(IDbConnectionRepository dbConnectionRepository, ILogger<DatasourcesService> logger)
+    public class DatasourcesService(IDbConnectionRepository dbConnectionRepository, IDbConnectionService connectionService, ILogger<DatasourcesService> logger)
         : IDatasourcesService
     {
         public async Task<List<string>> GetContextsAsync()
@@ -64,7 +65,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public List<DataStructureDefinitionDto> GetEntities(string contextTypeFullname)
+        public async Task<List<DataStructureDefinitionDto>> GetEntities(string contextTypeFullname)
         {
             try
             {
@@ -76,7 +77,9 @@ namespace Querier.Api.Domain.Services
                 logger.LogInformation("Getting entities for context: {Context}", contextTypeFullname);
                 List<DataStructureDefinitionDto> result = new List<DataStructureDefinitionDto>();
                 
-                DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
+                var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+                using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+                
                 if (targetContext == null)
                 {
                     logger.LogWarning("Context not found: {Context}", contextTypeFullname);
@@ -114,7 +117,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public DataStructureDefinitionDto GetEntity(string contextTypeFullname, string entityFullname)
+        public async Task<DataStructureDefinitionDto> GetEntity(string contextTypeFullname, string entityFullname)
         {
             try
             {
@@ -131,7 +134,7 @@ namespace Querier.Api.Domain.Services
                 logger.LogInformation("Getting entity {Entity} from context {Context}", 
                     entityFullname, contextTypeFullname);
 
-                var entities = GetEntities(contextTypeFullname);
+                var entities = await GetEntities(contextTypeFullname);
                 var entity = entities.FirstOrDefault(e => e.Name == entityFullname);
 
                 if (entity == null)
@@ -154,7 +157,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public int Create(string contextTypeFullname, string entityTypeFullname, dynamic entity)
+        public async Task<int> Create(string contextTypeFullname, string entityTypeFullname, dynamic entity)
         {
             try
             {
@@ -176,15 +179,17 @@ namespace Querier.Api.Domain.Services
                 logger.LogInformation("Creating new entity of type {EntityType} in context {Context}", 
                     entityTypeFullname, contextTypeFullname);
 
-            Type entityType = Utils.GetType(entityTypeFullname);
-            if (entityType == null)
+                Type entityType = Utils.GetType(entityTypeFullname);
+                if (entityType == null)
                 {
                     var message = $"Entity \"{entityTypeFullname}\" is not handled in the {contextTypeFullname} context.";
                     logger.LogError(message);
                     throw new InvalidOperationException(message);
                 }
 
-                DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
+                var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+                using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+                
                 if (targetContext == null)
                 {
                     throw new InvalidOperationException($"Context {contextTypeFullname} not found");
@@ -237,7 +242,7 @@ namespace Querier.Api.Domain.Services
             return 0;
         }
 
-        public DataPagedResult<object> GetAll(string contextTypeFullname, string entityTypeFullname, 
+        public async Task<DataPagedResult<object>> GetAll(string contextTypeFullname, string entityTypeFullname, 
             DataRequestParametersDto dataRequestParameters)
         {
             try
@@ -268,7 +273,9 @@ namespace Querier.Api.Domain.Services
                     throw new InvalidOperationException(message);
                 }
 
-                DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
+                var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+                using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+                
                 if (targetContext == null)
                 {
                     throw new InvalidOperationException($"Context {contextTypeFullname} not found");
@@ -304,45 +311,42 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilterDto> filters)
-        {
-            return Read(contextTypeFullname, entityTypeFullname, filters, out _);
-        }
-
-        public IEnumerable<object> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilterDto> filters, out Type entityType)
+        public async Task<IEnumerable<object>> Read(string contextTypeFullname, string entityTypeFullname, List<DataFilterDto> filters)
         {
             Type reqType = Utils.GetType(entityTypeFullname);
             if (reqType == null)
                 throw new Exception($"Entity \"{entityTypeFullname}\" is not handled in the \"{contextTypeFullname}\" context.");
 
-            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
 
             PropertyInfo contextProperty = targetContext.GetType().GetProperties().Where(p => p.PropertyType.Name.Contains("DbSet")).FirstOrDefault(p => p.PropertyType.GetGenericArguments().Any(a => a == reqType));
             if (contextProperty == null)
                 throw new Exception($"Entity \"{entityTypeFullname}\" is not handled by any DbSet in the \"{contextTypeFullname}\" context.");
 
-            entityType = contextProperty.PropertyType.GetGenericArguments()[0];
+            // entityType = contextProperty.PropertyType.GetGenericArguments()[0];
             var dbsetResult = contextProperty.GetValue(targetContext) as IEnumerable<object>;
             var dt = (DataTable)JsonConvert.DeserializeObject(JsonConvert.SerializeObject(dbsetResult), typeof(DataTable));
             dt = dt.Filter(filters);
             return JsonConvert.DeserializeObject<List<ExpandoObject>>(JsonConvert.SerializeObject(dt));
         }
 
-        public DataTable GetDatatableFromSql(string contextTypeFullname, string sqlQuery, List<DataFilterDto> filters)
+        public async Task<DataTable> GetDatatableFromSql(string contextTypeFullname, string sqlQuery, List<DataFilterDto> filters)
         {
-            DbContext apiDbContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
-            DataTable dt = apiDbContext.Database.RawSqlQuery(sqlQuery);
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+            DataTable dt = targetContext.Database.RawSqlQuery(sqlQuery);
             return dt.Filter(filters);
         }
 
-        public IEnumerable<object> ReadFromSql(string contextTypeFullname, string sqlQuery, List<DataFilterDto> filters)
+        public async Task<IEnumerable<object>> ReadFromSql(string contextTypeFullname, string sqlQuery, List<DataFilterDto> filters)
         {
-            DataTable dt = GetDatatableFromSql(contextTypeFullname, sqlQuery, filters);
+            DataTable dt = await GetDatatableFromSql(contextTypeFullname, sqlQuery, filters);
             var res = JsonConvert.DeserializeObject<List<ExpandoObject>>(JsonConvert.SerializeObject(dt));
             return res;
         }
 
-        public int Update(string contextTypeFullname, string entityFullname, object entity)
+        public async Task<int> Update(string contextTypeFullname, string entityFullname, object entity)
         {
             Type entityType = Utils.GetType(entityFullname);
             if (entityType == null)
@@ -352,7 +356,8 @@ namespace Querier.Api.Domain.Services
             if (keyProperty == null)
                 throw new Exception($"Entity \"{entityFullname}\" has no defined Key attribute defined in the datamart context.");
 
-            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
 
             object modelEntity = JsonSerializer.Deserialize(entity.ToString() ?? throw new InvalidOperationException(), entityType);
             if (modelEntity != null)
@@ -378,7 +383,7 @@ namespace Querier.Api.Domain.Services
             return 0;
         }
 
-        public int CreateOrUpdate(string contextTypeFullname, string entityFullname, object entity)
+        public async Task<int> CreateOrUpdate(string contextTypeFullname, string entityFullname, object entity)
         {
             Type entityType = Utils.GetType(entityFullname);
             if (entityType == null)
@@ -388,7 +393,8 @@ namespace Querier.Api.Domain.Services
             if (keyProperty == null)
                 throw new Exception($"Entity \"{entityFullname}\" has no defined Key attribute defined in the datamart context.");
 
-            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
 
             object modelEntity = JsonSerializer.Deserialize(entity.ToString() ?? string.Empty, entityType);
             if (modelEntity != null)
@@ -398,13 +404,13 @@ namespace Querier.Api.Domain.Services
             object existingEntity = targetContext.Find(entityType, keyValue);
 
             if (existingEntity is null)
-                return Create(contextTypeFullname, entityFullname, entity);
+                return await Create(contextTypeFullname, entityFullname, entity);
             }
 
-            return Update(contextTypeFullname, entityFullname, entity);
+            return await Update(contextTypeFullname, entityFullname, entity);
         }
 
-        public void Delete(string contextTypeFullname, string entityFullname, object entityIdentifier)
+        public async Task Delete(string contextTypeFullname, string entityFullname, object entityIdentifier)
         {
             Type entityType = Utils.GetType(entityFullname);
             if (entityType == null)
@@ -414,7 +420,8 @@ namespace Querier.Api.Domain.Services
             if (keyProperty == null)
                 throw new Exception($"Entity \"{entityFullname}\" has no defined Key attribute defined in the datamart context.");
 
-            DbContext targetContext = Utils.GetDbContextFromTypeName(contextTypeFullname);
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(contextTypeFullname);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
 
             object entityKey = Convert.ChangeType(entityIdentifier, keyProperty.PropertyType);
             object existingEntity = targetContext.Find(entityType, entityKey);
@@ -423,18 +430,20 @@ namespace Querier.Api.Domain.Services
             targetContext.SaveChanges();
         }
 
-        public SqlQueryResultDto GetSqlQueryEntityDefinition(EntityCRUDExecuteSQLQueryDto request)
+        public async Task<SqlQueryResultDto> GetSqlQueryEntityDefinition(EntityCRUDExecuteSQLQueryDto request)
         {
             SqlQueryResultDto result = new SqlQueryResultDto
             {
                 QuerySuccessful = true,
                 Datas = []
             };
-            DbContext apiDbContext = Utils.GetDbContextFromTypeName(request.ContextTypeName);
-
+            
+            var contextFactory = await connectionService.GetDbContextFactoryByContextTypeFullNameAsync(request.ContextTypeName);
+            using DbContext targetContext = await contextFactory.CreateDbContextAsync();
+            
             try
             {
-                DataTable dt = apiDbContext.Database.RawSqlQuery(request.SqlQuery);
+                DataTable dt = targetContext.Database.RawSqlQuery(request.SqlQuery);
                 result.Structure = new DataStructureDefinitionDto
                 {
                     Name = "SQL Query Result",
