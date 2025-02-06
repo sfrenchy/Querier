@@ -290,7 +290,7 @@ namespace Querier.Api.Infrastructure.Services
             }
         }
 
-        public async Task<DataPagedResult<dynamic>> ExecuteQueryAsync(int id, DataRequestParametersWtihSQLParametersDto dataRequestParameters)
+        public async Task<DataPagedResult<dynamic>> ExecuteQueryAsync(int id, DataRequestParametersWithSQLParametersDto dataRequestParameters)
         {
             try
             {

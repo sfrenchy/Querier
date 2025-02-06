@@ -281,7 +281,7 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<DataPagedResult<dynamic>>> ExecuteAsync(
             int id,
-            [FromBody] DataRequestParametersWtihSQLParametersDto parameters)
+            [FromBody] DataRequestParametersWithSQLParametersDto parameters)
         {
             try
             {
