@@ -10,6 +10,7 @@ namespace Querier.Api.Application.Interfaces.Repositories
         Task<IEnumerable<Row>> GetByPageIdAsync(int pageId);
         Task<Row> CreateAsync(Row row);
         Task<Row> UpdateAsync(Row row);
+        Task<Row> UpdateAsync(int id, Row row);
         Task<bool> DeleteAsync(int id);
         Task<int> GetMaxOrderInPageAsync(int pageId);
     }

@@ -112,34 +112,40 @@ namespace Querier.Api.Infrastructure.Data.Repositories
 
         public async Task<Row> UpdateAsync(Row row)
         {
+            return await UpdateAsync(row.Id, row);
+        }
+
+        public async Task<Row> UpdateAsync(int id, Row row)
+        {
             try
             {
                 ArgumentNullException.ThrowIfNull(row);
 
-                _logger.LogInformation("Updating row with ID: {Id}", row.Id);
+                _logger.LogInformation("Updating row with ID: {Id}", id);
                 using var context = await _contextFactory.CreateDbContextAsync();
 
-                var exists = await context.Rows.AnyAsync(r => r.Id == row.Id);
+                var exists = await context.Rows.AnyAsync(r => r.Id == id);
                 if (!exists)
                 {
-                    _logger.LogWarning("Cannot update row: Row not found with ID: {Id}", row.Id);
-                    throw new InvalidOperationException($"Row with ID {row.Id} does not exist");
+                    _logger.LogWarning("Cannot update row: Row not found with ID: {Id}", id);
+                    throw new InvalidOperationException($"Row with ID {id} does not exist");
                 }
 
+                row.Id = id; // S'assurer que l'ID est correct
                 context.Rows.Update(row);
                 await context.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully updated row with ID: {Id}", row.Id);
+                _logger.LogInformation("Successfully updated row with ID: {Id}", id);
                 return row;
             }
             catch (DbUpdateException ex)
             {
-                _logger.LogError(ex, "Database error occurred while updating row with ID: {Id}", row?.Id);
+                _logger.LogError(ex, "Database error occurred while updating row with ID: {Id}", id);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating row with ID: {Id}", row?.Id);
+                _logger.LogError(ex, "Error updating row with ID: {Id}", id);
                 throw;
             }
         }

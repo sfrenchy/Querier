@@ -94,11 +94,17 @@ namespace Querier.Api.Infrastructure.Services
                 {
                     try
                     {
-                        await rowRepository.DeleteAsync(row.Id);
+                        // On ne supprime plus les rows, on les met à jour
+                        var updatedRow = layout.Rows.FirstOrDefault(r => r.Id == row.Id);
+                        if (updatedRow == null)
+                        {
+                            // Si la row n'existe plus dans le nouveau layout, on la supprime
+                            await rowRepository.DeleteAsync(row.Id);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, "Error deleting row {RowId} during layout update for page {PageId}", row.Id, pageId);
+                        logger.LogError(ex, "Error updating row {RowId} during layout update for page {PageId}", row.Id, pageId);
                         throw;
                     }
                 }
@@ -107,23 +113,56 @@ namespace Querier.Api.Infrastructure.Services
                 {
                     try
                     {
-                        var newRow = new Row
+                        Row savedRow;
+                        if (rowResponse.Id > 0)
                         {
-                            PageId = pageId,
-                            Order = rowResponse.Order,
-                            Height = rowResponse.Height,
-                        };
-
-                        var savedRow = await rowRepository.CreateAsync(newRow);
+                            // Mise à jour de la row existante
+                            var existingRow = await rowRepository.GetByIdAsync(rowResponse.Id);
+                            if (existingRow != null)
+                            {
+                                existingRow.Order = rowResponse.Order;
+                                existingRow.Height = rowResponse.Height;
+                                savedRow = await rowRepository.UpdateAsync(rowResponse.Id, existingRow);
+                            }
+                            else
+                            {
+                                // La row n'existe plus, on en crée une nouvelle
+                                savedRow = await rowRepository.CreateAsync(new Row
+                                {
+                                    PageId = pageId,
+                                    Order = rowResponse.Order,
+                                    Height = rowResponse.Height,
+                                });
+                            }
+                        }
+                        else
+                        {
+                            // Nouvelle row
+                            savedRow = await rowRepository.CreateAsync(new Row
+                            {
+                                PageId = pageId,
+                                Order = rowResponse.Order,
+                                Height = rowResponse.Height,
+                            });
+                        }
 
                         foreach (var cardDto in rowResponse.Cards)
                         {
-                            await cardService.CreateAsync(savedRow.Id, cardDto);
+                            if (cardDto.Id > 0)
+                            {
+                                // Mise à jour de la carte existante
+                                await cardService.UpdateAsync(cardDto.Id, savedRow.Id, cardDto);
+                            }
+                            else
+                            {
+                                // Nouvelle carte
+                                await cardService.CreateAsync(savedRow.Id, cardDto);
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, "Error creating row and cards during layout update for page {PageId}", pageId);
+                        logger.LogError(ex, "Error creating/updating row and cards during layout update for page {PageId}", pageId);
                         throw;
                     }
                 }

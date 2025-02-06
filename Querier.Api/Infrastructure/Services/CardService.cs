@@ -117,6 +117,11 @@ namespace Querier.Api.Infrastructure.Services
 
         public async Task<CardDto> UpdateAsync(int id, CardDto request)
         {
+            return await UpdateAsync(id, request.RowId, request);
+        }
+
+        public async Task<CardDto> UpdateAsync(int id, int rowId, CardDto request)
+        {
             try
             {
                 if (request == null)
@@ -124,7 +129,7 @@ namespace Querier.Api.Infrastructure.Services
                     throw new ArgumentNullException(nameof(request));
                 }
 
-                logger.LogInformation("Updating card with ID: {Id}", id);
+                logger.LogInformation("Updating card with ID: {Id} in row {RowId}", id, rowId);
 
                 var existingCard = await repository.GetByIdAsync(id);
                 if (existingCard == null)
@@ -138,41 +143,35 @@ namespace Querier.Api.Infrastructure.Services
                 existingCard.Order = request.Order;
                 existingCard.BackgroundColor = request.BackgroundColor;
                 existingCard.TextColor = request.TextColor;
-                existingCard.RowId = request.RowId;
+                existingCard.RowId = rowId;
                 existingCard.HeaderBackgroundColor = request.HeaderBackgroundColor;
                 existingCard.HeaderTextColor = request.HeaderTextColor;
                 existingCard.Configuration = request.Configuration != null 
                     ? JsonConvert.SerializeObject(request.Configuration)
                     : null;
 
-                existingCard.CardTranslations.Clear();
+                var translations = new List<CardTranslation>();
                 if (request.Title?.Any() == true)
                 {
-                    foreach (var translation in request.Title)
+                    translations.AddRange(request.Title.Select(t => new CardTranslation
                     {
-                        existingCard.CardTranslations.Add(new CardTranslation
-                        {
-                            LanguageCode = translation.LanguageCode,
-                            Title = translation.Value,
-                            CardId = id
-                        });
-                    }
+                        LanguageCode = t.LanguageCode,
+                        Title = t.Value,
+                        CardId = id
+                    }));
                 }
+                
+                existingCard.CardTranslations = translations;
 
                 var result = await repository.UpdateAsync(existingCard);
                 var dto = CardDto.FromEntity(result);
 
-                logger.LogInformation("Successfully updated card with ID: {Id}", id);
+                logger.LogInformation("Successfully updated card with ID: {Id} in row {RowId}", id, rowId);
                 return dto;
-            }
-            catch (InvalidOperationException ex)
-            {
-                logger.LogWarning(ex, "Invalid operation while updating card with ID: {Id}", id);
-                throw;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error updating card with ID: {Id}", id);
+                logger.LogError(ex, "Error updating card with ID: {Id} in row {RowId}", id, rowId);
                 throw;
             }
         }

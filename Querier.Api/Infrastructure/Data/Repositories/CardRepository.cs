@@ -120,18 +120,37 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 _logger.LogInformation("Updating card with ID: {Id}", card.Id);
                 using var context = await _contextFactory.CreateDbContextAsync();
 
-                var exists = await context.Cards.AnyAsync(c => c.Id == card.Id);
-                if (!exists)
+                // Récupérer la carte existante avec ses traductions
+                var existingCard = await context.Cards
+                    .Include(c => c.CardTranslations)
+                    .FirstOrDefaultAsync(c => c.Id == card.Id);
+
+                if (existingCard == null)
                 {
                     _logger.LogWarning("Cannot update card: Card not found with ID: {Id}", card.Id);
                     throw new InvalidOperationException($"Card with ID {card.Id} does not exist");
                 }
 
-                context.Cards.Update(card);
+                // Mettre à jour les propriétés de base
+                context.Entry(existingCard).CurrentValues.SetValues(card);
+
+                // Gérer les traductions
+                // Supprimer toutes les anciennes traductions
+                context.CardTranslations.RemoveRange(existingCard.CardTranslations);
+
+                // Ajouter les nouvelles traductions
+                if (card.CardTranslations != null)
+                {
+                    foreach (var translation in card.CardTranslations)
+                    {
+                        existingCard.CardTranslations.Add(translation);
+                    }
+                }
+
                 await context.SaveChangesAsync();
 
                 _logger.LogInformation("Successfully updated card with ID: {Id}", card.Id);
-                return card;
+                return existingCard;
             }
             catch (DbUpdateException ex)
             {

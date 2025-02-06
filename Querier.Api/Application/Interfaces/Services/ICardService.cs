@@ -9,10 +9,11 @@ namespace Querier.Api.Application.Interfaces.Services
     {
         Task<CardDto> GetByIdAsync(int id);
         Task<IEnumerable<CardDto>> GetByRowIdAsync(int rowId);
-        Task<DataPagedResult<CardDto>> GetByRowIdPagedAsync(int rowId, DataRequestParametersDto parameters);
         Task<CardDto> CreateAsync(int rowId, CardDto request);
         Task<CardDto> UpdateAsync(int id, CardDto request);
+        Task<CardDto> UpdateAsync(int id, int rowId, CardDto request);
         Task<bool> DeleteAsync(int id);
         Task<bool> ReorderAsync(int rowId, List<int> cardIds);
+        Task<DataPagedResult<CardDto>> GetByRowIdPagedAsync(int rowId, DataRequestParametersDto parameters);
     }
 } 
