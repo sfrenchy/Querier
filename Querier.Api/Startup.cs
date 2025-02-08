@@ -73,29 +73,6 @@ namespace Querier.Api
 
                 var signalRConfig = _configuration.GetSection("SignalR").Get<SignalRConfig>();
                 
-                // Configure CORS
-                services.AddCors(options =>
-                {
-                    // Policy for SignalR
-                    options.AddPolicy("SignalRPolicy", builder =>
-                    {
-                        builder
-                            .WithOrigins("http://localhost:4200")
-                            .AllowAnyMethod()
-                            .AllowAnyHeader()
-                            .AllowCredentials(); // Nécessaire pour SignalR
-                    });
-
-                    // Garder la politique existante pour l'API
-                    options.AddPolicy("AllowAll", builder =>
-                    {
-                        builder
-                            .AllowAnyOrigin()
-                            .AllowAnyMethod()
-                            .AllowAnyHeader();
-                    });
-                });
-
                 // Services additionnels
                 _logger.LogInformation("Configuring additional services");
                 services.AddHealthChecks();
@@ -105,6 +82,8 @@ namespace Querier.Api
                 {
                     options.EnableDetailedErrors = isDevelopment;
                     options.MaximumReceiveMessageSize = signalRConfig?.MaximumReceiveMessageSize ?? 102400;
+                    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+                    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
                 });
 
                 services.AddScoped<INotificationService, NotificationService>();
@@ -143,14 +122,10 @@ namespace Querier.Api
 
                 _logger.LogInformation("Configuring Swagger");
                 app.UseCustomSwagger();
-
                 _logger.LogInformation("Configuring middleware pipeline");
+                app.UseWebSockets();
+                app.UseCustomCors();
                 app.UseRouting();
-
-                // Appliquer les deux politiques CORS
-                app.UseCustomCors(); // Pour l'API REST
-                app.UseCors("SignalRPolicy"); // Pour SignalR
-
                 app.UseAuthentication();
                 app.UseAuthorization();
                 app.UseConfigurationCheck();
@@ -178,13 +153,15 @@ namespace Querier.Api
                 app.UseEndpoints(endpoints =>
                 {
                     endpoints.MapControllers();
+                    
                     endpoints.MapControllerRoute(
                         name: "public",
                         pattern: "api/v1/settings/configured",
                         defaults: new { controller = "PublicSettings", action = "GetApiIsConfigured" }
                     ).WithMetadata(new AllowAnonymousAttribute());
-                    endpoints.MapHub<QuerierHub>("/hubs/querier")
-                        .RequireCors("SignalRPolicy");
+
+                    // Appliquer la politique SignalR uniquement sur le hub
+                    endpoints.MapHub<QuerierHub>("api/v1/hubs/querier");
                 });
 
                 _logger.LogInformation("Configuring health checks and static files");
