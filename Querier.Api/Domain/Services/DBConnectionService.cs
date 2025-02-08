@@ -33,6 +33,7 @@ using Querier.Api.Infrastructure.Database.Templates;
 using Querier.Api.Infrastructure.Services;
 using Swashbuckle.AspNetCore.Swagger;
 using System.Collections.Concurrent;
+using Querier.Api.Domain.Models;
 
 namespace Querier.Api.Domain.Services
 {
@@ -51,6 +52,7 @@ namespace Querier.Api.Domain.Services
         private readonly IEncryptionService _encryptionService;
         private readonly ConcurrentDictionary<string, IDbContextFactory<DbContext>> _contextFactoryCache = new();
         private readonly ConcurrentDictionary<int, IDbContextFactory<DbContext>> _contextFactoryByIdCache = new();
+        private readonly IProgressService _progressService;
         
         public DbConnectionService(
             IDbConnectionRepository dbConnectionRepository,
@@ -64,7 +66,8 @@ namespace Querier.Api.Domain.Services
             ILogger<EndpointExtractor> endpointExtractorLogger,
             ILogger<DatabaseToCSharpConverter> databaseToCSharpConverterLogger,
             IAssemblyManagerService assemblyManager,
-            IEncryptionService encryptionService)
+            IEncryptionService encryptionService,
+            IProgressService progressService)
         {
             _logger = logger;
             _dbConnectionRepository = dbConnectionRepository;
@@ -78,212 +81,232 @@ namespace Querier.Api.Domain.Services
             _schemaExtractor = new DatabaseSchemaExtractor(schemaExtractorLogger);
             _databaseToCSharpConverter = new DatabaseToCSharpConverter(databaseToCSharpConverterLogger);
             _encryptionService = encryptionService;
+            _progressService = progressService;
         }
 
         public async Task<DBConnectionCreateResultDto> AddConnectionAsync(DBConnectionCreateDto connection)
         {
-            _logger.LogDebug("Adding new database connection: {Name}", connection.Name);
-            DBConnectionCreateResultDto result = new DBConnectionCreateResultDto();
-            string connectionNamespace = "";
-            string contextName = "";
-            string procedureDescription = "";
-
-            // Construire la chaîne de connexion à partir des paramètres
-            var connectionString = BuildConnectionString(connection.ConnectionType, connection.Parameters);
             try
             {
+                await _progressService.StartOperation(connection.OperationId, ProgressStatus.Starting);
+                _logger.LogDebug("Adding new database connection: {Name}", connection.Name);
+                DBConnectionCreateResultDto result = new DBConnectionCreateResultDto();
+                string connectionNamespace = "";
+                string contextName = "";
+                string procedureDescription = "";
+
+                // Validation step (10%)
+                await _progressService.ReportProgress(connection.OperationId, 10, ProgressStatus.ValidatingConnection);
+                var connectionString = BuildConnectionString(connection.ConnectionType, connection.Parameters);
                 
-
-                // Tester la connexion
-                switch (connection.ConnectionType)
+                try
                 {
-                    case DbConnectionType.SqlServer:
-                        await using (SqlConnection c = new SqlConnection(connectionString))
-                        {
-                            _logger.LogDebug("Testing SQL Server connection for: {Name}", connection.Name);
-                            c.Open();
-                            connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
-                            contextName = $"{c.Database}Context";
-                            result.State = DBConnectionState.Connected;
-                            _logger.LogInformation("Successfully connected to SQL Server for: {Name}", connection.Name);
-                        }
-                        break;
-                    case DbConnectionType.MySql:
-                        await using (MySqlConnection c = new MySqlConnection(connectionString))
-                        {
-                            _logger.LogDebug("Testing MySQL connection for: {Name}", connection.Name);
-                            c.Open();
-                            connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
-                            contextName = $"{c.Database}Context";
-                            result.State = DBConnectionState.Connected;
-                            _logger.LogInformation("Successfully connected to MySQL for: {Name}", connection.Name);
-                        }
-                        break;
-                    case DbConnectionType.PgSql:
-                        await using (NpgsqlConnection c = new NpgsqlConnection(connectionString))
-                        {
-                            _logger.LogDebug("Testing PostgreSQL connection for: {Name}", connection.Name);
-                            c.Open();
-                            connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
-                            contextName = $"{c.Database}Context";
-                            result.State = DBConnectionState.Connected;
-                            _logger.LogInformation("Successfully connected to PostgreSQL for: {Name}", connection.Name);
-                        }
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Connection error for database: {Name}", connection.Name);
-                result.State = DBConnectionState.ConnectionError;
-                result.Messages.Add(ex.Message);
-                return result;
-            }
-
-            try
-            {
-                _logger.LogDebug("Creating scaffolder for database type: {Type}", connection.ConnectionType);
-                IReverseEngineerScaffolder scaffolder = connection.ConnectionType switch
-                {
-                    DbConnectionType.SqlServer => DatabaseScaffolderFactory.CreateMssqlScaffolder(),
-                    DbConnectionType.MySql => DatabaseScaffolderFactory.CreateMySQLScaffolder(),
-                    DbConnectionType.PgSql => DatabaseScaffolderFactory.CreatePgSQLScaffolder(),
-                    _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
-                };
-
-                var dbOpts = new DatabaseModelFactoryOptions();
-                var modelOpts = new ModelReverseEngineerOptions();
-                var codeGenOpts = new ModelCodeGenerationOptions()
-                {
-                    RootNamespace = connectionNamespace,
-                    ContextName = contextName,
-                    ContextNamespace = connectionNamespace,
-                    ModelNamespace = connectionNamespace,
-                    SuppressConnectionStringWarning = true,
-                    SuppressOnConfiguring = true,
-                    UseDataAnnotations = true
-                };
-
-                var scaffoldedModelSources = scaffolder.ScaffoldModel(connectionString, dbOpts, modelOpts, codeGenOpts);
-
-                var contextFile = connection.ConnectionType switch
-                {
-                    DbConnectionType.SqlServer => scaffoldedModelSources.ContextFile.Code.Replace(".UseSqlServer", ".UseLazyLoadingProxies().UseSqlServer"),
-                    DbConnectionType.MySql => scaffoldedModelSources.ContextFile.Code.Replace(".UseMySql", ".UseLazyLoadingProxies().UseMySql"),
-                    DbConnectionType.PgSql => scaffoldedModelSources.ContextFile.Code.Replace(".UseNpgsql", ".UseLazyLoadingProxies().UseNpgsql"),
-                    _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
-                };
-
-                var sourceFiles = new List<string> { contextFile };
-                sourceFiles.AddRange(scaffoldedModelSources.AdditionalFiles.Select(f => f.Code));
-
-                Dictionary<string, string> srcZipContent = new Dictionary<string, string> { { scaffoldedModelSources.ContextFile.Path, scaffoldedModelSources.ContextFile.Code } };
-                foreach (var addFile in scaffoldedModelSources.AdditionalFiles)
-                {
-                    srcZipContent.Add(addFile.Path, addFile.Code);
-                }
-                
-                List<Entities.QDBConnection.StoredProcedure> storedProcedures = _databaseToCSharpConverter.ToProcedureList(connectionString);
-                procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
-
-                var procedureModel = new StoredProcedureTemplateModel
-                {
-                    NameSpace = connectionNamespace,
-                    ContextNameSpace = contextName,
-                    ContextRoute = connection.ApiRoute,
-                    ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
-                };
-                
-                // if scaffolding OK => Generate a common DB Schema representation for stored procedure
-                if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == DbConnectionType.SqlServer)
-                {
-                    GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
-                }
-
-                // Extract entity metadata from scaffolded model
-                var entityModel = new TemplateModel
-                {
-                    NameSpace = connectionNamespace,
-                    ContextNameSpace = contextName,
-                    ContextRoute = connection.ApiRoute,
-                    EntityList = ExtractEntityMetadata(scaffoldedModelSources)
-                };
-                
-                GenerateEntityFiles(procedureModel, entityModel, srcZipContent, sourceFiles);
-
-                // Create source zip
-                byte[] sourceZipBytes = CreateSourceZip(srcZipContent);
-
-                if (!Directory.Exists("Assemblies"))
-                    Directory.CreateDirectory("Assemblies");
-                string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
-                await File.WriteAllBytesAsync(srcPath, sourceZipBytes);
-
-                // Compile generated sources
-                var (assemblyBytes, pdbBytes) = CompileAssembly(connection.Name, sourceFiles);
-                if (assemblyBytes == null)
-                {
-                    result.State = DBConnectionState.CompilationError;
-                    return result;
-                }
-
-                // Calculate assembly hash
-                var hash = ComputeAssemblyHash(assemblyBytes);
-
-                // Load assembly and configure services
-                var container = await _assemblyManager.LoadAssemblyAsync(
-                    connection.Name,
-                    connection.ConnectionType,
-                    connectionString,
-                    assemblyBytes);
-
-                if (container == null)
-                {
-                    result.State = DBConnectionState.LoadError;
-                    return result;
-                }
-
-                using DbContext newDbContext = Utils.GetDbContextFromTypeName(connectionNamespace + "." + contextName, connectionString, connection.ConnectionType);
-                
-                var endpoints = _endpointExtractor.ExtractFromAssembly(container.GetType().Assembly, newDbContext,connectionString, connection.ConnectionType);
-
-                foreach (var p in connection.Parameters)
-                {
-                    if (p.IsEncrypted)
-                        p.Value = await _encryptionService.EncryptAsync(p.Value);
-                }
-                
-                var newConnection = new DBConnection
-                {
-                    Name = connection.Name,
-                    ConnectionString = "",
-                    ConnectionType = connection.ConnectionType,
-                    Description = procedureDescription,
-                    AssemblyHash = hash,
-                    AssemblyDll = assemblyBytes,
-                    AssemblyPdb = pdbBytes,
-                    AssemblySourceZip = sourceZipBytes,
-                    ContextName = connectionNamespace + "." + contextName,
-                    ApiRoute = connection.ApiRoute,
-                    Endpoints = endpoints,
-                    Parameters = connection.Parameters.Select(p => new ConnectionStringParameter()
+                    switch (connection.ConnectionType)
                     {
-                        Key = p.Key,
-                        IsEncrypted = p.IsEncrypted,
-                        StoredValue = p.Value
-                    }).ToList()
-                };
+                        case DbConnectionType.SqlServer:
+                            await using (SqlConnection c = new SqlConnection(connectionString))
+                            {
+                                _logger.LogDebug("Testing SQL Server connection for: {Name}", connection.Name);
+                                c.Open();
+                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
+                                contextName = $"{c.Database}Context";
+                                result.State = DBConnectionState.Connected;
+                                _logger.LogInformation("Successfully connected to SQL Server for: {Name}", connection.Name);
+                            }
+                            break;
+                        case DbConnectionType.MySql:
+                            await using (MySqlConnection c = new MySqlConnection(connectionString))
+                            {
+                                _logger.LogDebug("Testing MySQL connection for: {Name}", connection.Name);
+                                c.Open();
+                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
+                                contextName = $"{c.Database}Context";
+                                result.State = DBConnectionState.Connected;
+                                _logger.LogInformation("Successfully connected to MySQL for: {Name}", connection.Name);
+                            }
+                            break;
+                        case DbConnectionType.PgSql:
+                            await using (NpgsqlConnection c = new NpgsqlConnection(connectionString))
+                            {
+                                _logger.LogDebug("Testing PostgreSQL connection for: {Name}", connection.Name);
+                                c.Open();
+                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
+                                contextName = $"{c.Database}Context";
+                                result.State = DBConnectionState.Connected;
+                                _logger.LogInformation("Successfully connected to PostgreSQL for: {Name}", connection.Name);
+                            }
+                            break;
+                    }
+                    await _progressService.ReportProgress(connection.OperationId, 20, ProgressStatus.ConnectionValidated);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Connection error for database: {Name}", connection.Name);
+                    await _progressService.FailOperation(connection.OperationId, ProgressStatus.Failed);
+                    result.State = DBConnectionState.ConnectionError;
+                    result.Messages.Add(ex.Message);
+                    return result;
+                }
 
-                await _dbConnectionRepository.AddDbConnectionAsync(newConnection);
+                // Schema retrieval (30%)
+                await _progressService.ReportProgress(connection.OperationId, 30, ProgressStatus.RetrievingSchema);
+                try
+                {
+                    _logger.LogDebug("Creating scaffolder for database type: {Type}", connection.ConnectionType);
+                    IReverseEngineerScaffolder scaffolder = connection.ConnectionType switch
+                    {
+                        DbConnectionType.SqlServer => DatabaseScaffolderFactory.CreateMssqlScaffolder(),
+                        DbConnectionType.MySql => DatabaseScaffolderFactory.CreateMySQLScaffolder(),
+                        DbConnectionType.PgSql => DatabaseScaffolderFactory.CreatePgSQLScaffolder(),
+                        _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
+                    };
 
-                result.State = DBConnectionState.Available;
-                result.Id = newConnection.Id;
+                    var dbOpts = new DatabaseModelFactoryOptions();
+                    var modelOpts = new ModelReverseEngineerOptions();
+                    var codeGenOpts = new ModelCodeGenerationOptions()
+                    {
+                        RootNamespace = connectionNamespace,
+                        ContextName = contextName,
+                        ContextNamespace = connectionNamespace,
+                        ModelNamespace = connectionNamespace,
+                        SuppressConnectionStringWarning = true,
+                        SuppressOnConfiguring = true,
+                        UseDataAnnotations = true
+                    };
 
-                return result;
+                    var scaffoldedModelSources = scaffolder.ScaffoldModel(connectionString, dbOpts, modelOpts, codeGenOpts);
+
+                    var contextFile = connection.ConnectionType switch
+                    {
+                        DbConnectionType.SqlServer => scaffoldedModelSources.ContextFile.Code.Replace(".UseSqlServer", ".UseLazyLoadingProxies().UseSqlServer"),
+                        DbConnectionType.MySql => scaffoldedModelSources.ContextFile.Code.Replace(".UseMySql", ".UseLazyLoadingProxies().UseMySql"),
+                        DbConnectionType.PgSql => scaffoldedModelSources.ContextFile.Code.Replace(".UseNpgsql", ".UseLazyLoadingProxies().UseNpgsql"),
+                        _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
+                    };
+
+                    var sourceFiles = new List<string> { contextFile };
+                    sourceFiles.AddRange(scaffoldedModelSources.AdditionalFiles.Select(f => f.Code));
+
+                    Dictionary<string, string> srcZipContent = new Dictionary<string, string> { { scaffoldedModelSources.ContextFile.Path, scaffoldedModelSources.ContextFile.Code } };
+                    foreach (var addFile in scaffoldedModelSources.AdditionalFiles)
+                    {
+                        srcZipContent.Add(addFile.Path, addFile.Code);
+                    }
+                    
+                    List<Entities.QDBConnection.StoredProcedure> storedProcedures = _databaseToCSharpConverter.ToProcedureList(connectionString);
+                    procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
+
+                    var procedureModel = new StoredProcedureTemplateModel
+                    {
+                        NameSpace = connectionNamespace,
+                        ContextNameSpace = contextName,
+                        ContextRoute = connection.ApiRoute,
+                        ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
+                    };
+                    
+                    // if scaffolding OK => Generate a common DB Schema representation for stored procedure
+                    if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == DbConnectionType.SqlServer)
+                    {
+                        GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
+                    }
+
+                    // Extract entity metadata from scaffolded model
+                    var entityModel = new TemplateModel
+                    {
+                        NameSpace = connectionNamespace,
+                        ContextNameSpace = contextName,
+                        ContextRoute = connection.ApiRoute,
+                        EntityList = ExtractEntityMetadata(scaffoldedModelSources)
+                    };
+                    
+                    GenerateEntityFiles(procedureModel, entityModel, srcZipContent, sourceFiles);
+
+                    // Create source zip
+                    byte[] sourceZipBytes = CreateSourceZip(srcZipContent);
+
+                    if (!Directory.Exists("Assemblies"))
+                        Directory.CreateDirectory("Assemblies");
+                    string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
+                    await File.WriteAllBytesAsync(srcPath, sourceZipBytes);
+
+                    // Compile generated sources
+                    await _progressService.ReportProgress(connection.OperationId, 80, ProgressStatus.Compiling);
+                    var (assemblyBytes, pdbBytes) = CompileAssembly(connection.Name, sourceFiles);
+                    if (assemblyBytes == null)
+                    {
+                        await _progressService.FailOperation(connection.OperationId, ProgressStatus.Failed);
+                        result.State = DBConnectionState.CompilationError;
+                        return result;
+                    }
+                    await _progressService.ReportProgress(connection.OperationId, 90, ProgressStatus.CompilationSucceeded);
+
+                    // Calculate assembly hash
+                    var hash = ComputeAssemblyHash(assemblyBytes);
+
+                    // Load assembly and configure services
+                    await _progressService.ReportProgress(connection.OperationId, 95, ProgressStatus.LoadingAssembly);
+                    var container = await _assemblyManager.LoadAssemblyAsync(
+                        connection.Name,
+                        connection.ConnectionType,
+                        connectionString,
+                        assemblyBytes);
+
+                    if (container == null)
+                    {
+                        await _progressService.FailOperation(connection.OperationId, ProgressStatus.Failed);
+                        result.State = DBConnectionState.LoadError;
+                        return result;
+                    }
+
+                    using DbContext newDbContext = Utils.GetDbContextFromTypeName(connectionNamespace + "." + contextName, connectionString, connection.ConnectionType);
+                    
+                    var endpoints = _endpointExtractor.ExtractFromAssembly(container.GetType().Assembly, newDbContext,connectionString, connection.ConnectionType);
+
+                    foreach (var p in connection.Parameters)
+                    {
+                        if (p.IsEncrypted)
+                            p.Value = await _encryptionService.EncryptAsync(p.Value);
+                    }
+                    
+                    var newConnection = new DBConnection
+                    {
+                        Name = connection.Name,
+                        ConnectionString = "",
+                        ConnectionType = connection.ConnectionType,
+                        Description = procedureDescription,
+                        AssemblyHash = hash,
+                        AssemblyDll = assemblyBytes,
+                        AssemblyPdb = pdbBytes,
+                        AssemblySourceZip = sourceZipBytes,
+                        ContextName = connectionNamespace + "." + contextName,
+                        ApiRoute = connection.ApiRoute,
+                        Endpoints = endpoints,
+                        Parameters = connection.Parameters.Select(p => new ConnectionStringParameter()
+                        {
+                            Key = p.Key,
+                            IsEncrypted = p.IsEncrypted,
+                            StoredValue = p.Value
+                        }).ToList()
+                    };
+
+                    await _dbConnectionRepository.AddDbConnectionAsync(newConnection);
+
+                    await _progressService.CompleteOperation(connection.OperationId, ProgressStatus.Completed);
+                    result.State = DBConnectionState.Available;
+                    result.Id = newConnection.Id;
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error during scaffolding for database: {Name}", connection.Name);
+                    await _progressService.FailOperation(connection.OperationId, ProgressStatus.Failed);
+                    throw;
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during scaffolding for database: {Name}", connection.Name);
+                _logger.LogError(ex, "Failed to create connection {ConnectionName}", connection.Name);
+                await _progressService.FailOperation(connection.OperationId, ProgressStatus.Failed);
                 throw;
             }
         }

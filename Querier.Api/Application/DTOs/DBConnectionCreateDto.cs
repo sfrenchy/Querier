@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Entities.DBConnection;
@@ -11,6 +12,12 @@ namespace Querier.Api.Application.DTOs
     /// </summary>
     public class DBConnectionCreateDto
     {
+        /// <summary>
+        /// Unique identifier for tracking the operation progress
+        /// </summary>
+        [Required]
+        public string OperationId { get; set; }
+
         /// <summary>
         /// Display name for the new database connection
         /// </summary>
