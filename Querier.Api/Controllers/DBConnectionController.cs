@@ -158,22 +158,18 @@ namespace Querier.Api.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteAsync(int id)
         {
+            logger.LogInformation("Deleting database connection with ID: {Id}", id);
+
             try
             {
-                logger.LogInformation("Deleting database connection with ID: {Id}", id);
-
-                try
-                {
-                    await dbConnectionService.DeleteDbConnectionAsync(id);
-                }
-                catch (KeyNotFoundException)
-                {
-                    logger.LogWarning("Database connection not found with ID: {Id}", id);
-                    return NotFound(new { error = $"Database connection with ID {id} not found" });
-                }
-
+                await dbConnectionService.DeleteDbConnectionAsync(id);
                 logger.LogInformation("Successfully deleted database connection with ID: {Id}", id);
                 return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                logger.LogWarning("Database connection not found with ID: {Id}", id);
+                return NotFound(new { error = $"Database connection with ID {id} not found" });
             }
             catch (Exception ex)
             {

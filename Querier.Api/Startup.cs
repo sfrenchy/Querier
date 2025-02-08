@@ -122,10 +122,15 @@ namespace Querier.Api
 
                 _logger.LogInformation("Configuring Swagger");
                 app.UseCustomSwagger();
-                _logger.LogInformation("Configuring middleware pipeline");
-                app.UseWebSockets();
-                app.UseCustomCors();
+                
+                // WebSockets doit être avant UseRouting
+                app.UseWebSockets(new WebSocketOptions
+                {
+                    KeepAliveInterval = TimeSpan.FromSeconds(30)
+                });
+                
                 app.UseRouting();
+                app.UseCustomCors();
                 app.UseAuthentication();
                 app.UseAuthorization();
                 app.UseConfigurationCheck();

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Threading.Tasks;
+using Querier.Api.Models;
 
 namespace Querier.Api.Hubs
 {
@@ -35,6 +36,11 @@ namespace Querier.Api.Hubs
         public async Task UnsubscribeFromOperation(string operationId)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"operation_{operationId}");
+        }
+
+        public async Task SendOperationProgress(OperationProgress progress)
+        {
+            await Clients.All.SendAsync("operationProgress", progress);
         }
     }
 } 

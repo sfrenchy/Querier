@@ -27,23 +27,23 @@ namespace Querier.Api.Domain.Services
         private async Task<AuthResultDto> GenerateJwtToken(ApiUser user)
         {
             try
-        {
-            var jwtSecret = await settingService.GetSettingValueAsync<string>("jwt:secret");
-            var jwtIssuer = await settingService.GetSettingValueAsync<string>("jwt:issuer");
-            var jwtAudience = await settingService.GetSettingValueAsync<string>("jwt:audience");
-            var jwtExpiryInMinutes = await settingService.GetSettingValueAsync<int>("jwt:expiry");
+            {
+                var jwtSecret = await settingService.GetSettingValueAsync<string>("jwt:secret");
+                var jwtIssuer = await settingService.GetSettingValueAsync<string>("jwt:issuer");
+                var jwtAudience = await settingService.GetSettingValueAsync<string>("jwt:audience");
+                var jwtExpiryInMinutes = await settingService.GetSettingValueAsync<int>("jwt:expiry");
                 var refreshTokenExpiryInDays = await settingService.GetSettingValueAsync<int>("jwt:refreshTokenExpiry");
                 if (refreshTokenExpiryInDays == 0) refreshTokenExpiryInDays = 180; // 6 mois par défaut
 
-            if (string.IsNullOrEmpty(jwtSecret))
-                throw new InvalidOperationException("JWT secret is not configured");
+                if (string.IsNullOrEmpty(jwtSecret))
+                    throw new InvalidOperationException("JWT secret is not configured");
 
                 if (user.Email == null)
                     throw new InvalidOperationException("User email cannot be null");
 
                 logger.LogInformation("Generating JWT token for user: {Email}", user.Email);
 
-            var userRoles = await userRepository.GetRolesAsync(user);
+                var userRoles = await userRepository.GetRolesAsync(user);
                 var claims = new List<Claim>
                 {
                     new Claim("Id", user.Id),

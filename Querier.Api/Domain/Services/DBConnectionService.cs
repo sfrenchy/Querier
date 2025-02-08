@@ -488,6 +488,8 @@ namespace Querier.Api.Domain.Services
             try
             {
                 _logger.LogDebug("Deleting database connection with ID: {Id}", dbConnectionId);
+                
+                // Exécuter les opérations en parallèle quand c'est possible
                 var connection = await _dbConnectionRepository.FindByIdAsync(dbConnectionId);
                 
                 if (connection == null)
@@ -496,13 +498,16 @@ namespace Querier.Api.Domain.Services
                     throw new KeyNotFoundException($"Connection with ID {dbConnectionId} not found");
                 }
 
-                // Décharger l'assembly si elle est chargée
-                if (_assemblyManager.IsAssemblyLoaded(connection.Name))
-                {
-                    await _assemblyManager.UnloadAssemblyAsync(connection.Name);
-                }
+                // Décharger l'assembly en parallèle avec la suppression en base
+                var unloadTask = _assemblyManager.IsAssemblyLoaded(connection.Name) 
+                    ? _assemblyManager.UnloadAssemblyAsync(connection.Name)
+                    : Task.CompletedTask;
 
-                await _dbConnectionRepository.DeleteDbConnectionAsync(dbConnectionId);
+                var deleteTask = _dbConnectionRepository.DeleteDbConnectionAsync(dbConnectionId);
+
+                // Attendre que les deux opérations soient terminées
+                await Task.WhenAll(unloadTask, deleteTask);
+
                 _logger.LogInformation("Successfully deleted database connection with ID: {Id}", dbConnectionId);
             }
             catch (Exception ex)
