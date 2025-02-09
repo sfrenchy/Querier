@@ -40,7 +40,7 @@ namespace Querier.Api.Hubs
 
         public async Task SendOperationProgress(OperationProgress progress)
         {
-            await Clients.All.SendAsync("operationProgress", progress);
+            await Clients.Group($"operation_{progress.OperationId}").SendAsync("operationProgress", progress);
         }
     }
 } 
