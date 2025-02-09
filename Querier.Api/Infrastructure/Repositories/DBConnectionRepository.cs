@@ -69,6 +69,7 @@ namespace Querier.Api.Infrastructure.Repositories
         {
             var connection = await _context.DBConnections
                 .Include(c => c.Parameters)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (connection != null)
@@ -97,7 +98,11 @@ namespace Querier.Api.Infrastructure.Repositories
 
         public async Task DeleteDbConnectionAsync(int id)
         {
-            var connection = await _context.DBConnections.FindAsync(id);
+            var connection = await _context.DBConnections
+                .Include(c => c.Parameters)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             if (connection != null)
             {
                 _context.DBConnections.Remove(connection);

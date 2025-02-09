@@ -26,8 +26,8 @@ namespace Querier.Api.Infrastructure.Extensions
                     var allowedHosts = settingService.GetSettingValueAsync("api:allowedHosts", "*").Result?.Split(',');
                     var allowedOrigins = settingService.GetSettingValueAsync("api:allowedOrigins", "*").Result?.Split(',');
                     var allowedMethods = settingService.GetSettingValueAsync("api:allowedMethods", "GET,POST,DELETE,OPTIONS,PUT").Result?.Split(',');
-                    var allowedHeaders = settingService.GetSettingValueAsync("api:allowedHeaders", "X-Request-Token,Accept,Content-Type,Authorization").Result?.Split(',');
-                    var preflightMaxAge = settingService.GetSettingValueAsync("api:PreflightMaxAge", 10).Result;
+                    var allowedHeaders = settingService.GetSettingValueAsync("api:allowedHeaders", "X-Request-Token,Accept,Content-Type,Authorization,X-Requested-With,X-Signalr-User-Agent").Result?.Split(',');
+                    var preflightMaxAge = settingService.GetSettingValueAsync("api:PreflightMaxAge", -1).Result;
 
                     logger.LogDebug("CORS Configuration: Hosts: {Hosts}, Origins: {Origins}, Methods: {Methods}, Headers: {Headers}, MaxAge: {MaxAge}",
                         string.Join(",", allowedHosts),
@@ -36,16 +36,26 @@ namespace Querier.Api.Infrastructure.Extensions
                         string.Join(",", allowedHeaders),
                         preflightMaxAge);
 
+                    // Ajouter une politique spécifique pour SignalR
+                    // options.AddPolicy("SignalRPolicy", builder =>
+                    // {
+                    //     builder
+                    //         .WithOrigins("http://localhost:4200")
+                    //         .AllowAnyMethod()
+                    //         .AllowAnyHeader()
+                    //         .SetIsOriginAllowed(origin => true)
+                    //         .AllowCredentials();
+                    // });
                     app.UseCors(builder =>
                     {
                         if (allowedOrigins.Contains("*"))
                         {
-                            builder.AllowAnyOrigin();
+                            builder.SetIsOriginAllowed(origin => true);
                             logger.LogInformation("CORS configured to allow any origin");
                         }
                         else
                         {
-                            builder.WithOrigins(allowedOrigins);
+                            builder.SetIsOriginAllowed(origin => allowedOrigins.Contains(origin));
                             logger.LogInformation("CORS configured with specific origins: {Origins}", string.Join(",", allowedOrigins));
                         }
 
@@ -71,6 +81,7 @@ namespace Querier.Api.Infrastructure.Extensions
                             logger.LogInformation("CORS configured with specific methods: {Methods}", string.Join(",", allowedMethods));
                         }
 
+                        builder.AllowCredentials();
                         builder.SetPreflightMaxAge(TimeSpan.FromMinutes(preflightMaxAge));
                     });
 
@@ -81,9 +92,10 @@ namespace Querier.Api.Infrastructure.Extensions
             {
                 logger.LogError(ex, "Error configuring CORS settings. Using default permissive configuration");
                 app.UseCors(builder => builder
-                    .AllowAnyOrigin()
+                    .SetIsOriginAllowed(origin => true)
                     .AllowAnyMethod()
-                    .AllowAnyHeader());
+                    .AllowAnyHeader()
+                    .AllowCredentials());
             }
 
             return app;

@@ -14,6 +14,8 @@ using Querier.Api.Domain.Services;
 using Querier.Api.Infrastructure.Data.Context;
 using Querier.Api.Infrastructure.Extensions;
 using Querier.Api.Infrastructure.Services;
+using Querier.Api.Hubs;
+using Querier.Api.Configuration;
 
 namespace Querier.Api
 {
@@ -69,20 +71,23 @@ namespace Querier.Api
                            options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
                        });
 
-                services.AddCors(options =>
-                {
-                    options.AddPolicy("AllowAll", builder =>
-                    {
-                        builder.AllowAnyOrigin()
-                               .AllowAnyMethod()
-                               .AllowAnyHeader();
-                    });
-                });
-
+                var signalRConfig = _configuration.GetSection("SignalR").Get<SignalRConfig>();
+                
                 // Services additionnels
                 _logger.LogInformation("Configuring additional services");
                 services.AddHealthChecks();
-                services.AddSignalR();
+
+                var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+                services.AddSignalR(options =>
+                {
+                    options.EnableDetailedErrors = isDevelopment;
+                    options.MaximumReceiveMessageSize = signalRConfig?.MaximumReceiveMessageSize ?? 102400;
+                    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+                    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+                });
+
+                services.AddScoped<INotificationService, NotificationService>();
+                services.AddScoped<IProgressService, ProgressService>();
                 services.AddSingleton<IDynamicContextList, DynamicContextList>(_ => DynamicContextList.Instance);
 
                 // Enregistrement du service d'encryption
@@ -117,22 +122,27 @@ namespace Querier.Api
 
                 _logger.LogInformation("Configuring Swagger");
                 app.UseCustomSwagger();
-
-                _logger.LogInformation("Configuring middleware pipeline");
+                
+                // WebSockets doit être avant UseRouting
+                app.UseWebSockets(new WebSocketOptions
+                {
+                    KeepAliveInterval = TimeSpan.FromSeconds(30)
+                });
+                
                 app.UseRouting();
                 app.UseCustomCors();
                 app.UseAuthentication();
                 app.UseAuthorization();
                 app.UseConfigurationCheck();
 
-                // Configuration de l'identité après l'initialisation des services
+                // Configure identity after services initialization
                 _logger.LogInformation("Configuring identity options");
                 using (var scope = app.ApplicationServices.CreateScope())
                 {
                     try
                     {
                         var identityConfig = scope.ServiceProvider.GetRequiredService<IAspnetIdentityConfigurationService>();
-                        // On attend explicitement la configuration pour s'assurer qu'elle est terminée avant de continuer
+                        // Explicitly wait for configuration to ensure it's completed before continuing
                         identityConfig.ConfigureIdentityOptions().Wait();
                         identityConfig.ConfigureTokenProviderOptions().Wait();
                         _logger.LogInformation("Identity configuration completed successfully");
@@ -148,11 +158,15 @@ namespace Querier.Api
                 app.UseEndpoints(endpoints =>
                 {
                     endpoints.MapControllers();
+                    
                     endpoints.MapControllerRoute(
                         name: "public",
                         pattern: "api/v1/settings/configured",
                         defaults: new { controller = "PublicSettings", action = "GetApiIsConfigured" }
                     ).WithMetadata(new AllowAnonymousAttribute());
+
+                    // Appliquer la politique SignalR uniquement sur le hub
+                    endpoints.MapHub<QuerierHub>("api/v1/hubs/querier");
                 });
 
                 _logger.LogInformation("Configuring health checks and static files");
@@ -160,6 +174,7 @@ namespace Querier.Api
                    .UseStaticFiles();
 
                 app.UseDynamicAssemblies();
+
                 _logger.LogInformation("Application configuration completed successfully");
             }
             catch (Exception ex)

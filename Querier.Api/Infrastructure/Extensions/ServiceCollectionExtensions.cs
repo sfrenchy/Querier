@@ -147,6 +147,16 @@ namespace Querier.Api.Infrastructure.Extensions
                             var tokenLogger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
                             tokenLogger.LogDebug("Configuring token validation parameters");
 
+                            // Gestion du token SignalR
+                            var accessToken = context.Request.Query["access_token"];
+                            var path = context.HttpContext.Request.Path;
+                            
+                            if (!string.IsNullOrEmpty(accessToken) && 
+                                path.StartsWithSegments("/api/v1/hubs/querier"))
+                            {
+                                context.Token = accessToken;
+                            }
+
                             var settingService = context.HttpContext.RequestServices.GetRequiredService<ISettingService>();
                             var secret = await settingService.GetSettingValueIfExistsAsync("jwt:secret", "DefaultDevSecretKey_12345678901234567890123456789012", "JWT secret");
                             var key = Encoding.ASCII.GetBytes(secret);
