@@ -121,6 +121,12 @@ namespace $nameSpace$
                             npgsqlOptions.CommandTimeout(30);
                         });
                         break;
+                    case DbConnectionType.SQLite:
+                        options.UseSqlite(connectionString, npgsqlOptions =>
+                        {
+                            npgsqlOptions.CommandTimeout(30);
+                        });
+                        break;
                     default:
                         throw new ArgumentException("Type de connexion non supporté : " + connectionType.ToString());
                 }

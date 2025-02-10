@@ -13,6 +13,9 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 using Pomelo.EntityFrameworkCore.MySql.Diagnostics.Internal;
 using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
+using Microsoft.EntityFrameworkCore.Sqlite.Diagnostics.Internal;
+using Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal;
+using Microsoft.EntityFrameworkCore.Sqlite.Storage.Internal;
 
 namespace Querier.Api.Domain.Services
 {
@@ -62,6 +65,23 @@ namespace Querier.Api.Domain.Services
                 .AddSingleton<IAnnotationCodeGenerator, AnnotationCodeGenerator>()
                 .AddSingleton<IDatabaseModelFactory, NpgsqlDatabaseModelFactory>()
                 .AddSingleton<IProviderConfigurationCodeGenerator, NpgsqlCodeGenerator>()
+                .AddSingleton<IScaffoldingModelFactory, RelationalScaffoldingModelFactory>()
+                .AddSingleton<IPluralizer, Bricelam.EntityFrameworkCore.Design.Pluralizer>()
+                .AddSingleton<ProviderCodeGeneratorDependencies>()
+                .AddSingleton<AnnotationCodeGeneratorDependencies>()
+                .BuildServiceProvider()
+                .GetRequiredService<IReverseEngineerScaffolder>();
+
+        public static IReverseEngineerScaffolder CreateSQLiteScaffolder() =>
+            new ServiceCollection()
+                .AddEntityFrameworkSqlite()
+                .AddLogging()
+                .AddEntityFrameworkDesignTimeServices()
+                .AddSingleton<LoggingDefinitions, SqliteLoggingDefinitions>()
+                .AddSingleton<IRelationalTypeMappingSource, SqliteTypeMappingSource>()
+                .AddSingleton<IAnnotationCodeGenerator, AnnotationCodeGenerator>()
+                .AddSingleton<IDatabaseModelFactory, SqliteDatabaseModelFactory>()
+                .AddSingleton<IProviderConfigurationCodeGenerator, SqliteCodeGenerator>()
                 .AddSingleton<IScaffoldingModelFactory, RelationalScaffoldingModelFactory>()
                 .AddSingleton<IPluralizer, Bricelam.EntityFrameworkCore.Design.Pluralizer>()
                 .AddSingleton<ProviderCodeGeneratorDependencies>()

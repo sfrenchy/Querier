@@ -4,6 +4,7 @@ namespace Querier.Api.Domain.Common.Enums
     {
         SqlServer,
         MySql,
-        PgSql
+        PgSql,
+        SQLite
     }
 }

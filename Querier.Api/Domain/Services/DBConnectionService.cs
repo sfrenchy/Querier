@@ -33,6 +33,8 @@ using Querier.Api.Infrastructure.Database.Templates;
 using Querier.Api.Infrastructure.Services;
 using Swashbuckle.AspNetCore.Swagger;
 using System.Collections.Concurrent;
+using Microsoft.Data.Sqlite;
+using Querier.Api.Domain.Entities.QDBConnection;
 using Querier.Api.Domain.Models;
 
 namespace Querier.Api.Domain.Services
@@ -136,6 +138,17 @@ namespace Querier.Api.Domain.Services
                                 _logger.LogInformation("Successfully connected to PostgreSQL for: {Name}", connection.Name);
                             }
                             break;
+                        case DbConnectionType.SQLite:
+                            await using (SqliteConnection c = new SqliteConnection(connectionString))
+                            {
+                                _logger.LogDebug("Testing SQLite connection for: {Name}", connection.Name);
+                                c.Open();
+                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
+                                contextName = $"{c.Database}Context";
+                                result.State = DBConnectionState.Connected;
+                                _logger.LogInformation("Successfully connected to PostgreSQL for: {Name}", connection.Name);
+                            }
+                            break;
                     }
                     await _progressService.ReportProgress(connection.OperationId, 20, ProgressStatus.ConnectionValidated);
                 }
@@ -158,6 +171,7 @@ namespace Querier.Api.Domain.Services
                         DbConnectionType.SqlServer => DatabaseScaffolderFactory.CreateMssqlScaffolder(),
                         DbConnectionType.MySql => DatabaseScaffolderFactory.CreateMySQLScaffolder(),
                         DbConnectionType.PgSql => DatabaseScaffolderFactory.CreatePgSQLScaffolder(),
+                        DbConnectionType.SQLite => DatabaseScaffolderFactory.CreateSQLiteScaffolder(),
                         _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
                     };
 
@@ -181,6 +195,7 @@ namespace Querier.Api.Domain.Services
                         DbConnectionType.SqlServer => scaffoldedModelSources.ContextFile.Code.Replace(".UseSqlServer", ".UseLazyLoadingProxies().UseSqlServer"),
                         DbConnectionType.MySql => scaffoldedModelSources.ContextFile.Code.Replace(".UseMySql", ".UseLazyLoadingProxies().UseMySql"),
                         DbConnectionType.PgSql => scaffoldedModelSources.ContextFile.Code.Replace(".UseNpgsql", ".UseLazyLoadingProxies().UseNpgsql"),
+                        DbConnectionType.SQLite => scaffoldedModelSources.ContextFile.Code.Replace("blahblah",""),
                         _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
                     };
 
@@ -192,10 +207,18 @@ namespace Querier.Api.Domain.Services
                     {
                         srcZipContent.Add(addFile.Path, addFile.Code);
                     }
-                    
-                    List<Entities.QDBConnection.StoredProcedure> storedProcedures = _databaseToCSharpConverter.ToProcedureList(connectionString);
-                    procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
 
+                    List<Entities.QDBConnection.StoredProcedure> storedProcedures = new List<StoredProcedure>();
+                    
+                    
+                    // if scaffolding OK => Generate a common DB Schema representation for stored procedure
+                    if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == DbConnectionType.SqlServer)
+                    {
+                        storedProcedures = _databaseToCSharpConverter.ToProcedureList(connectionString);
+                        procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
+
+                        
+                    }
                     var procedureModel = new StoredProcedureTemplateModel
                     {
                         NameSpace = connectionNamespace,
@@ -203,13 +226,7 @@ namespace Querier.Api.Domain.Services
                         ContextRoute = connection.ApiRoute,
                         ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
                     };
-                    
-                    // if scaffolding OK => Generate a common DB Schema representation for stored procedure
-                    if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == DbConnectionType.SqlServer)
-                    {
-                        GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
-                    }
-
+                    GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
                     // Extract entity metadata from scaffolded model
                     var entityModel = new TemplateModel
                     {
@@ -790,6 +807,10 @@ namespace Querier.Api.Domain.Services
                         _logger.LogDebug("Configuring PostgresSQL connection");
                         if (optionsBuilder != null) optionsBuilder.UseNpgsql(connectionString);
                         break;
+                    case DbConnectionType.SQLite:
+                        _logger.LogDebug("Configuring SQLite connection");
+                        if (optionsBuilder != null) optionsBuilder.UseSqlite(connectionString);
+                        break;
                     default:
                         _logger.LogError("Unsupported database type: {ConnectionType}", connection.ConnectionType);
                         throw new NotSupportedException($"Database type {connection.ConnectionType} not supported");
@@ -1116,29 +1137,39 @@ namespace Querier.Api.Domain.Services
                 // Créer le type générique de DbContextOptionsBuilder
                 var optionsBuilderType = typeof(DbContextOptionsBuilder<>).MakeGenericType(contextType);
                 var optionsBuilder = (DbContextOptionsBuilder)Activator.CreateInstance(optionsBuilderType);
-
+                if (optionsBuilder == null)
+                    throw new NullReferenceException("optionsBuilder cannot be null");
                 // Configurer les options selon le type de base de données
                 switch (connection.ConnectionType)
                 {
                     case DbConnectionType.SqlServer:
                         _logger.LogDebug("Configuring SQL Server connection factory");
                         optionsBuilder.UseSqlServer(connectionString, 
-                            options => options.EnableRetryOnFailure());
+                            options => 
+                                options.EnableRetryOnFailure()
+                                );
                         break;
 
                     case DbConnectionType.MySql:
                         _logger.LogDebug("Configuring MySQL connection factory");
                         optionsBuilder.UseMySql(connectionString,
                             ServerVersion.AutoDetect(connectionString),
-                            options => options.EnableRetryOnFailure());
+                            options => 
+                                options.EnableRetryOnFailure()
+                                );
                         break;
 
                     case DbConnectionType.PgSql:
                         _logger.LogDebug("Configuring PostgreSQL connection factory");
                         optionsBuilder.UseNpgsql(connectionString,
-                            options => options.EnableRetryOnFailure());
+                            options => 
+                                options.EnableRetryOnFailure()
+                                );
                         break;
-
+                    case DbConnectionType.SQLite:
+                        _logger.LogDebug("Configuring SQLite connection factory");
+                        optionsBuilder.UseSqlite(connectionString);
+                        break;
                     default:
                         _logger.LogError("Unsupported database type: {ConnectionType}", connection.ConnectionType);
                         throw new NotSupportedException($"Database type {connection.ConnectionType} not supported");

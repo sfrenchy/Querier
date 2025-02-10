@@ -106,6 +106,10 @@ namespace Querier.Api.Common.Utilities
                         LOGGER?.LogDebug("Configuring PostgresSQL connection");
                         if (optionsBuilder != null) optionsBuilder.UseNpgsql(connectionString);
                         break;
+                    case DbConnectionType.SQLite:
+                        LOGGER?.LogDebug("Configuring SQLite connection");
+                        if (optionsBuilder != null) optionsBuilder.UseSqlite(connectionString);
+                        break;
                     default:
                         LOGGER?.LogError("Unsupported database type: {ConnectionType}", connectionType);
                         throw new NotSupportedException($"Database type {connectionType} not supported");

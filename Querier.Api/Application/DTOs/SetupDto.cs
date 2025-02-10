@@ -16,5 +16,9 @@ namespace Querier.Api.Application.DTOs
         /// SMTP server configuration for email services
         /// </summary>
         public SetupSmtpDto Smtp { get; set; }
+        /// <summary>
+        /// Create a sample for the API using
+        /// </summary>
+        public bool CreateSample { get; set; }
     }
 }
