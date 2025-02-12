@@ -1,12 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.DTOs.Requests.Setup;
 using Querier.Api.Application.Interfaces.Services;
+using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Entities.Auth;
 
 namespace Querier.Api.Domain.Services
@@ -15,6 +19,7 @@ namespace Querier.Api.Domain.Services
         UserManager<ApiUser> userManager,
         RoleManager<ApiRole> roleManager,
         ISettingService settingService,
+        IDbConnectionService dbConnectionService,
         ILogger<WizardService> logger)
         : IWizardService, IDisposable
     {
@@ -57,6 +62,31 @@ namespace Querier.Api.Domain.Services
                     await ConfigureSmtpSettings(request.Smtp);
                     await UpdateApiConfiguration();
 
+                    if (request.CreateSample)
+                    {
+                        using var client = new WebClient();
+                        client.DownloadFile("https://github.com/jpwhite3/northwind-SQLite3/raw/refs/heads/main/dist/northwind.db", "northwind_sample.db");
+                        DBConnectionCreateDto createDBConnectionDto = new DBConnectionCreateDto()
+                        {
+                            OperationId = request.OperationId,
+                            Parameters = new List<ConnectionStringParameterCreateDto>()
+                            {
+                                new ConnectionStringParameterCreateDto()
+                                {
+                                    Key = "Data Source",
+                                    Value = "./northwind_sample.db",
+                                    IsEncrypted = false
+                                }
+                            },
+                            ApiRoute = "northwind_sample",
+                            ConnectionType = DbConnectionType.SQLite,
+                            ContextName = "NorthwindSQLiteSample",
+                            GenerateProcedureControllersAndServices = false,
+                            Name = "NorthwindSQLiteSample"
+                        };
+                        await dbConnectionService.AddConnectionAsync(createDBConnectionDto);
+                        
+                    }
                     logger.LogInformation("Application setup completed successfully");
                     return (true, null);
                 }

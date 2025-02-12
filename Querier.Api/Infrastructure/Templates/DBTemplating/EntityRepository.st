@@ -142,8 +142,7 @@ namespace $nameSpace$.Repositories
                     data = data.Skip(skip).Take(pageSize);
 
                 var result = await data.ToListAsync();
-                if (pageSize != 0 && result.Count > pageSize)
-                    throw new Exception("result.Count > pageSize, something's wrong. Skip=" + skip.ToString() + " - pageSize=" + pageSize.ToString());
+                
                 _logger.LogInformation("Successfully retrieved " + result.Count().ToString() + " $entity.Name$ records");
                 return new DataPagedResult<$entity.Name$>(result, totalCount, parameters);
             \}

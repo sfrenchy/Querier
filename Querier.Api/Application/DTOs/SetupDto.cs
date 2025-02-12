@@ -7,6 +7,7 @@ namespace Querier.Api.Application.DTOs
     /// </summary>
     public class SetupDto
     {
+        public string OperationId { get; set; }
         /// <summary>
         /// Administrative user configuration for initial setup
         /// </summary>
