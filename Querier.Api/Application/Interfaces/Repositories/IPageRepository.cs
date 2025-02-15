@@ -6,7 +6,7 @@ namespace Querier.Api.Application.Interfaces.Repositories
 {
     public interface IPageRepository
     {
-        Task<Page> GetByIdAsync(int id);
+        Task<Page> GetByIdAsync(int id, bool includeRelations = true);
         Task<IEnumerable<Page>> GetAllAsync();
         Task<Page> CreateAsync(Page page);
         Task<Page> UpdateAsync(int id, Page page);

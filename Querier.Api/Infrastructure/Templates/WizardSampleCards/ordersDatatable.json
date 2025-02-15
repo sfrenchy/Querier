@@ -1,0 +1,486 @@
+{
+  "datasource": {
+    "type": "API",
+    "connection": {
+      "id": 1,
+      "connectionType": 3,
+      "name": "NorthwindSQLiteSample",
+      "apiRoute": "northwind_sample",
+      "contextName": "NorthwindSQLiteSample.main.Api.Models.mainContext",
+      "description": "",
+      "parameters": [
+        {
+          "id": 1,
+          "key": "Data Source",
+          "value": "./northwind_sample.db",
+          "isEncrypted": false
+        }
+      ]
+    },
+    "controller": {
+      "name": "Order",
+      "route": "northwind_sample/Order",
+      "responseEntityJsonSchema": "{\"type\":\"object\",\"title\":\"OrderDto\",\"properties\":{\"OrderId\":{\"type\":\"integer\",\"x-entity-metadata\":{\"isPrimaryKey\":true,\"isIdentity\":true,\"columnName\":\"OrderID\",\"columnType\":\"INTEGER\",\"defaultValue\":0,\"isRequired\":true}},\"CustomerId\":{\"type\":\"string\",\"x-entity-metadata\":{\"isForeignKey\":true,\"foreignKeyTable\":\"Customers\",\"foreignKeyColumn\":\"CustomerId\",\"foreignKeyConstraintName\":\"FK_Orders_Customers_CustomerID\",\"columnName\":\"CustomerID\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"EmployeeId\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"isForeignKey\":true,\"foreignKeyTable\":\"Employees\",\"foreignKeyColumn\":\"EmployeeId\",\"foreignKeyConstraintName\":\"FK_Orders_Employees_EmployeeID\",\"columnName\":\"EmployeeID\",\"columnType\":\"INTEGER\",\"isRequired\":false}},\"OrderDate\":{\"type\":\"string\",\"format\":\"date-time\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"OrderDate\",\"columnType\":\"DATETIME\",\"isRequired\":false}},\"RequiredDate\":{\"type\":\"string\",\"format\":\"date-time\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"RequiredDate\",\"columnType\":\"DATETIME\",\"isRequired\":false}},\"ShippedDate\":{\"type\":\"string\",\"format\":\"date-time\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"ShippedDate\",\"columnType\":\"DATETIME\",\"isRequired\":false}},\"ShipVia\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"isForeignKey\":true,\"foreignKeyTable\":\"Shippers\",\"foreignKeyColumn\":\"ShipperId\",\"foreignKeyConstraintName\":\"FK_Orders_Shippers_ShipVia\",\"columnName\":\"ShipVia\",\"columnType\":\"INTEGER\",\"isRequired\":false}},\"Freight\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"Freight\",\"columnType\":\"NUMERIC\",\"defaultValue\":0,\"isRequired\":false}},\"ShipName\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipName\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"ShipAddress\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipAddress\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"ShipCity\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipCity\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"ShipRegion\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipRegion\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"ShipPostalCode\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipPostalCode\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"ShipCountry\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipCountry\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"Customer\":{\"type\":\"object\",\"x-entity-metadata\":{\"isNavigation\":true,\"navigationType\":\"NorthwindSQLiteSample.main.Api.Models.Customer\",\"foreignKeyProperty\":\"CustomerId\"}},\"Employee\":{\"type\":\"object\",\"x-entity-metadata\":{\"isNavigation\":true,\"navigationType\":\"NorthwindSQLiteSample.main.Api.Models.Employee\",\"foreignKeyProperty\":\"EmployeeId\"}},\"OrderDetails\":{\"type\":\"array\",\"x-entity-metadata\":{\"isCollection\":true,\"elementType\":\"NorthwindSQLiteSample.main.Api.Models.OrderDetail\",\"foreignKeyProperty\":\"OrderId\"}},\"ShipViaNavigation\":{\"type\":\"object\",\"x-entity-metadata\":{\"isNavigation\":true,\"navigationType\":\"NorthwindSQLiteSample.main.Api.Models.Shipper\",\"foreignKeyProperty\":\"ShipVia\"}}}}",
+      "parameterJsonSchema": "{\"type\":\"object\",\"title\":\"DataRequestParametersDto\",\"properties\":{\"PageNumber\":{\"type\":\"integer\"},\"PageSize\":{\"type\":\"integer\"},\"OrderBy\":{\"type\":\"array\"},\"GlobalSearch\":{\"type\":\"string\"},\"ColumnSearches\":{\"type\":\"array\"},\"Includes\":{\"type\":\"array\"}}}"
+    },
+    "isStoredProcedure": false
+  },
+  "columns": [
+    {
+      "key": "OrderId",
+      "type": "number",
+      "label": {
+        "en": "OrderId",
+        "fr": "OrderId"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "isPrimaryKey": true,
+        "isIdentity": true,
+        "columnName": "OrderID",
+        "columnType": "INTEGER",
+        "defaultValue": 0,
+        "isRequired": true
+      }
+    },
+    {
+      "key": "CustomerId",
+      "type": "foreignKey",
+      "label": {
+        "en": "CustomerId",
+        "fr": "CustomerId"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "isForeignKey": true,
+        "foreignKeyTable": "Customers",
+        "foreignKeyColumn": "CustomerId",
+        "foreignKeyConstraintName": "FK_Orders_Customers_CustomerID",
+        "columnName": "CustomerID",
+        "columnType": "TEXT",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "EmployeeId",
+      "type": "foreignKey",
+      "label": {
+        "en": "EmployeeId",
+        "fr": "EmployeeId"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "isForeignKey": true,
+        "foreignKeyTable": "Employees",
+        "foreignKeyColumn": "EmployeeId",
+        "foreignKeyConstraintName": "FK_Orders_Employees_EmployeeID",
+        "columnName": "EmployeeID",
+        "columnType": "INTEGER",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "OrderDate",
+      "type": "date",
+      "label": {
+        "en": "Command date",
+        "fr": "Date Commande"
+      },
+      "alignment": "left",
+      "visible": true,
+      "dateFormat": "date",
+      "isFixed": true,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "OrderDate",
+        "columnType": "DATETIME",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "CustomerId_display",
+      "type": "string",
+      "label": {
+        "en": "Customer",
+        "fr": "Client"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "isVirtualForeignKey": true,
+      "sourceColumn": "CustomerId",
+      "foreignKeyConfig": {
+        "table": "Customers",
+        "displayColumns": [
+          "CompanyName"
+        ],
+        "searchColumns": [
+          "CompanyName"
+        ],
+        "displayFormat": "{Company Name}",
+        "showInTable": true
+      }
+    },
+    {
+      "key": "EmployeeId_display",
+      "type": "string",
+      "label": {
+        "en": "Employee",
+        "fr": "Employé"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "isVirtualForeignKey": true,
+      "sourceColumn": "EmployeeId",
+      "foreignKeyConfig": {
+        "table": "Employees",
+        "displayColumns": [
+          "LastName",
+          "FirstName"
+        ],
+        "searchColumns": [
+          "LastName",
+          "FirstName"
+        ],
+        "displayFormat": "{LastName} {FirstName}",
+        "showInTable": true
+      }
+    },
+    {
+      "key": "RequiredDate",
+      "type": "date",
+      "label": {
+        "en": "Required date",
+        "fr": "Date requise"
+      },
+      "alignment": "left",
+      "visible": true,
+      "dateFormat": "date",
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "RequiredDate",
+        "columnType": "DATETIME",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "ShippedDate",
+      "type": "date",
+      "label": {
+        "en": "Shipped date",
+        "fr": "Date d'envoi"
+      },
+      "alignment": "left",
+      "visible": true,
+      "dateFormat": "date",
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "ShippedDate",
+        "columnType": "DATETIME",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "ShipVia",
+      "type": "foreignKey",
+      "label": {
+        "en": "ShipVia",
+        "fr": "ShipVia"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "isForeignKey": true,
+        "foreignKeyTable": "Shippers",
+        "foreignKeyColumn": "ShipperId",
+        "foreignKeyConstraintName": "FK_Orders_Shippers_ShipVia",
+        "columnName": "ShipVia",
+        "columnType": "INTEGER",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "Freight",
+      "type": "integer",
+      "label": {
+        "en": "Freight",
+        "fr": "Frête"
+      },
+      "alignment": "right",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "Freight",
+        "columnType": "NUMERIC",
+        "defaultValue": 0,
+        "isRequired": false
+      }
+    },
+    {
+      "key": "ShipVia_display",
+      "type": "string",
+      "label": {
+        "en": "Shipper",
+        "fr": "Logisticien"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "isVirtualForeignKey": true,
+      "sourceColumn": "ShipVia",
+      "foreignKeyConfig": {
+        "table": "Shippers",
+        "displayColumns": [
+          "CompanyName"
+        ],
+        "searchColumns": [
+          "CompanyName"
+        ],
+        "showInTable": true,
+        "displayFormat": "{CompanyName}"
+      }
+    },
+    {
+      "key": "ShipName",
+      "type": "string",
+      "label": {
+        "en": "ShipName",
+        "fr": "ShipName"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "ShipName",
+        "columnType": "TEXT",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "ShipAddress",
+      "type": "string",
+      "label": {
+        "en": "ShipAddress",
+        "fr": "ShipAddress"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "ShipAddress",
+        "columnType": "TEXT",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "ShipCity",
+      "type": "string",
+      "label": {
+        "en": "ShipCity",
+        "fr": "ShipCity"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "ShipCity",
+        "columnType": "TEXT",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "ShipRegion",
+      "type": "string",
+      "label": {
+        "en": "ShipRegion",
+        "fr": "ShipRegion"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "ShipRegion",
+        "columnType": "TEXT",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "ShipPostalCode",
+      "type": "string",
+      "label": {
+        "en": "ShipPostalCode",
+        "fr": "ShipPostalCode"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "ShipPostalCode",
+        "columnType": "TEXT",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "ShipCountry",
+      "type": "string",
+      "label": {
+        "en": "ShipCountry",
+        "fr": "ShipCountry"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": true,
+      "entityMetadata": {
+        "columnName": "ShipCountry",
+        "columnType": "TEXT",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "Customer",
+      "type": "NorthwindSQLiteSample.main.Api.Models.Customer",
+      "label": {
+        "en": "Customer",
+        "fr": "Customer"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "isNavigation": true,
+        "navigationType": "NorthwindSQLiteSample.main.Api.Models.Customer",
+        "foreignKeyProperty": "CustomerId"
+      }
+    },
+    {
+      "key": "Employee",
+      "type": "NorthwindSQLiteSample.main.Api.Models.Employee",
+      "label": {
+        "en": "Employee",
+        "fr": "Employee"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "isNavigation": true,
+        "navigationType": "NorthwindSQLiteSample.main.Api.Models.Employee",
+        "foreignKeyProperty": "EmployeeId"
+      }
+    },
+    {
+      "key": "OrderDetails",
+      "type": "array",
+      "label": {
+        "en": "OrderDetails",
+        "fr": "OrderDetails"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "isCollection": true,
+        "elementType": "NorthwindSQLiteSample.main.Api.Models.OrderDetail",
+        "foreignKeyProperty": "OrderId"
+      }
+    },
+    {
+      "key": "ShipViaNavigation",
+      "type": "NorthwindSQLiteSample.main.Api.Models.Shipper",
+      "label": {
+        "en": "ShipViaNavigation",
+        "fr": "ShipViaNavigation"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "isNavigation": true,
+        "navigationType": "NorthwindSQLiteSample.main.Api.Models.Shipper",
+        "foreignKeyProperty": "ShipVia"
+      }
+    }
+  ],
+  "visualConfig": {
+    "headerBackgroundColor": "#1f2937",
+    "rowBackgroundColor": "#252c3c",
+    "headerTextColor": "#d1d5db",
+    "rowTextColor": "#d1d5db",
+    "isCompactMode": true,
+    "alternateRowColors": "on",
+    "alternateRowsBrightness": "35",
+    "rowCount": 9
+  },
+  "crudConfig": {
+    "canAdd": true,
+    "canUpdate": true,
+    "canDelete": true,
+    "foreignKeyConfigs": {
+      "Customers": {
+        "table": "Customers",
+        "displayColumns": [
+          "CompanyName",
+          "ContactName"
+        ],
+        "searchColumns": [
+          "CompanyName"
+        ],
+        "displayFormat": "{CompanyName} {ContactName}",
+        "showInTable": true
+      },
+      "Employees": {
+        "table": "Employees",
+        "displayColumns": [
+          "LastName",
+          "FirstName"
+        ],
+        "searchColumns": [
+          "LastName",
+          "FirstName"
+        ],
+        "displayFormat": "{LastName} {FirstName}",
+        "showInTable": true
+      },
+      "Shippers": {
+        "table": "Shippers",
+        "displayColumns": [
+          "CompanyName"
+        ],
+        "searchColumns": [
+          "CompanyName"
+        ],
+        "showInTable": true,
+        "displayFormat": "{CompanyName}"
+      }
+    }
+  }
+}

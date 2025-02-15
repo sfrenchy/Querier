@@ -246,42 +246,6 @@ namespace Querier.Api.Infrastructure.Data.Context
                     .HasForeignKey(d => d.MenuId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-            SeedMenuData(modelBuilder);
-        }
-
-        private void SeedMenuData(ModelBuilder modelBuilder)
-        {
-            _logger.LogDebug("Seeding menu data");
-
-            modelBuilder.Entity<Menu>().HasData(
-                new Menu
-                {
-                    Id = 1,
-                    Icon = "home",
-                    Order = 1,
-                    IsVisible = true,
-                    Roles = "Admin,User",
-                    Route = "/home"
-                }
-            );
-
-            modelBuilder.Entity<MenuTranslation>().HasData(
-                new MenuTranslation
-                {
-                    Id = 1,
-                    MenuId = 1,
-                    LanguageCode = "en",
-                    Name = "Home"
-                },
-                new MenuTranslation
-                {
-                    Id = 2,
-                    MenuId = 1,
-                    LanguageCode = "fr",
-                    Name = "Accueil"
-                }
-            );
         }
 
         private void ConfigurePages(ModelBuilder modelBuilder)
@@ -317,43 +281,6 @@ namespace Querier.Api.Infrastructure.Data.Context
                       .HasForeignKey(d => d.PageId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
-
-            SeedPageData(modelBuilder);
-        }
-
-        private void SeedPageData(ModelBuilder modelBuilder)
-        {
-            _logger.LogDebug("Seeding page data");
-
-            modelBuilder.Entity<Page>().HasData(
-                new Page
-                {
-                    Id = 1,
-                    Icon = "dashboard",
-                    Order = 1,
-                    IsVisible = true,
-                    Roles = "Admin,User",
-                    Route = "/northwind/home",
-                    MenuId = 1
-                }
-            );
-
-            modelBuilder.Entity<PageTranslation>().HasData(
-                new PageTranslation
-                {
-                    Id = 1,
-                    PageId = 1,
-                    LanguageCode = "fr",
-                    Name = "Northwind - Accueil"
-                },
-                new PageTranslation
-                {
-                    Id = 2,
-                    PageId = 1,
-                    LanguageCode = "en",
-                    Name = "Northwind - Home"
-                }
-            );
         }
 
         private void ConfigureCards(ModelBuilder modelBuilder)

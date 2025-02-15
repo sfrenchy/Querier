@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.DTOs.Requests.Setup;
 using Querier.Api.Application.Interfaces.Services;
@@ -20,6 +24,11 @@ namespace Querier.Api.Domain.Services
         RoleManager<ApiRole> roleManager,
         ISettingService settingService,
         IDbConnectionService dbConnectionService,
+        ISqlQueryService sqlQueryService,
+        IMenuService menuService,
+        IPageService pageService,
+        IRowService rowService,
+        ICardService cardService,
         ILogger<WizardService> logger)
         : IWizardService, IDisposable
     {
@@ -61,30 +70,40 @@ namespace Querier.Api.Domain.Services
                     await CreateAdminUser(request.Admin);
                     await ConfigureSmtpSettings(request.Smtp);
                     await UpdateApiConfiguration();
-
+                    ApiUser adminUser = await userManager.FindByEmailAsync(request.Admin.Email);
+                    
                     if (request.CreateSample)
                     {
-                        using var client = new WebClient();
-                        client.DownloadFile("https://github.com/jpwhite3/northwind-SQLite3/raw/refs/heads/main/dist/northwind.db", "northwind_sample.db");
-                        DBConnectionCreateDto createDBConnectionDto = new DBConnectionCreateDto()
-                        {
-                            OperationId = request.OperationId,
-                            Parameters = new List<ConnectionStringParameterCreateDto>()
-                            {
-                                new ConnectionStringParameterCreateDto()
-                                {
-                                    Key = "Data Source",
-                                    Value = "./northwind_sample.db",
-                                    IsEncrypted = false
-                                }
-                            },
-                            ApiRoute = "northwind_sample",
-                            ConnectionType = DbConnectionType.SQLite,
-                            ContextName = "NorthwindSQLiteSample",
-                            GenerateProcedureControllersAndServices = false,
-                            Name = "NorthwindSQLiteSample"
-                        };
-                        await dbConnectionService.AddConnectionAsync(createDBConnectionDto);
+                        DBConnectionCreateResultDto dbConnectionResult = await RetrieveAndCreateNorthwindDatabase(request.OperationId);
+                        DBConnectionDto connectionDto = await dbConnectionService.GetByIdAsync(dbConnectionResult.Id);
+                        SqlQueryDto querySample = await CreateSampleQuery(request.OperationId, connectionDto, adminUser,
+                            "Product Quantity By Country",
+                            "Show number of sales products by country",
+                            "SELECT\n   s.Country,\n   SUM(od.Quantity)   AS Quantity\nFROM\n    [Order Details]   AS od\nINNER JOIN\n    Products          AS p\n        ON  p.ProductID = od.ProductID\nINNER JOIN\n    Suppliers         AS s\n        ON  s.SupplierID = p.SupplierID\nGROUP BY\n   s.Country",
+                            new Dictionary<string, object>());
+                        MenuDto menu = await CreateMenu(request.OperationId);
+                        await CreateWelcomePage(request.OperationId, menu);
+                        await CreateDatatablePage(request.OperationId, menu);
+                        
+                        PageDto chartsPage= await CreatePage(
+                            request.OperationId, 
+                            menu, 
+                            3, 
+                            "simple_charts",
+                            [
+                                new TranslatableStringDto() { LanguageCode = "fr", Value = "Charts simple" },
+                                new TranslatableStringDto() { LanguageCode = "en", Value = "Simple charts" }
+                            ]);
+                        PageDto advancedPage= await CreatePage(
+                            request.OperationId, 
+                            menu, 
+                            3, 
+                            "advanced",
+                            [
+                                new TranslatableStringDto() { LanguageCode = "fr", Value = "Conf. Avancée" },
+                                new TranslatableStringDto() { LanguageCode = "en", Value = "Advanced" }
+                            ]);
+                        
                         
                     }
                     logger.LogInformation("Application setup completed successfully");
@@ -106,6 +125,285 @@ namespace Querier.Api.Domain.Services
                 logger.LogError(ex, "Unexpected error during setup process");
                 return (false, $"Unexpected error during setup: {ex.Message}");
             }
+        }
+
+        private async Task CreateDatatablePage(string requestOperationId, MenuDto menu)
+        {
+            PageDto dataTablePage= await CreatePage(
+                requestOperationId, 
+                menu, 
+                2, 
+                "simple_datatable",
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Datatable simple" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Simple datatable" }
+                ]);
+            RowDto row1 = await CreateRow(requestOperationId, dataTablePage.Id, 300, 1);
+            RowDto row2 = await CreateRow(requestOperationId, dataTablePage.Id, 530, 2);
+            RowDto row3 = await CreateRow(requestOperationId, dataTablePage.Id, 350, 3);
+            
+            await CreateCard(requestOperationId, row1.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Introduction aux datatables" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Datatable introduction" }
+                ],
+                1,
+                "html content",
+                12,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/dataTableGeneralDescription.json")
+            );
+            
+            await CreateCard(requestOperationId, row2.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Commandes" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Orders" }
+                ],
+                1,
+                "datatable",
+                12,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/ordersDatatable.json")
+            );
+            
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Affichage et navigation" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Display and navigation" }
+                ],
+                1,
+                "html content",
+                3,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/datatableDisplayFeatures.json")
+            );
+            
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Manipulation des données" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Data handling" }
+                ],
+                2,
+                "html content",
+                3,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/datatableDataHandling.json")
+            );
+            
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Edition et CRUD" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Edit and CRUD" }
+                ],
+                3,
+                "html content",
+                3,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/datatableEditAndCRUD.json")
+            );
+            
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Personalisation" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Personalization" }
+                ],
+                4,
+                "html content",
+                3,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/datatablePersonalisation.json")
+            );
+        }
+
+        private async Task CreateWelcomePage(string requestOperationId, MenuDto menu)
+        {
+            PageDto welcomePage = await CreatePage(
+                requestOperationId, 
+                menu, 
+                1, 
+                "welcome",
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Accueil" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Home" }
+                ]);
+            RowDto row1 = await CreateRow(requestOperationId, welcomePage.Id, 300, 1);
+            RowDto row2 = await CreateRow(requestOperationId, welcomePage.Id, 300, 2);
+            RowDto row3 = await CreateRow(requestOperationId, welcomePage.Id, 300, 3);
+
+            await CreateCard(requestOperationId, row1.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Bienvenue" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Welcome" }
+                ],
+                1,
+                "html content",
+                12,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/generalDescription.json")
+            );
+            await CreateCard(requestOperationId, row2.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Architecture backend" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Backend architecture" }
+                ],
+                1,
+                "html content",
+                6,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/backendArchitecture.json")
+            );
+            await CreateCard(requestOperationId, row2.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Architecture backend" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Backend architecture" }
+                ],
+                2,
+                "html content",
+                6,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/frontendArchitecture.json")
+            );
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Tableaux de bord" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Dashboards" }
+                ],
+                1,
+                "html content",
+                3,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/dashboards.json")
+            );
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Bases de données" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Databases" }
+                ],
+                2,
+                "html content",
+                3,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/databases.json")
+            );
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Sources de données" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Datasources" }
+                ],
+                3,
+                "html content",
+                3,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/datasources.json")
+            );
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Fonctionnalités" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Features" }
+                ],
+                4,
+                "html content",
+                3,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/features.json")
+            );
+        }
+
+        private async Task CreateCard(string requestOperationId, int rowId, IEnumerable<TranslatableStringDto> title, int order, string type, int gridWidth, string cardConfiguration)
+        {
+            CardDto cardDto = new CardDto()
+            {
+                Title = title,
+                Order = order,
+                Type = type,
+                GridWidth = gridWidth,
+                Configuration = JsonConvert.DeserializeObject<ExpandoObject>(cardConfiguration),
+                BackgroundColor = 2042167,
+                TextColor = 16777215,
+                HeaderBackgroundColor = 1006484,
+                HeaderTextColor = 16777215,
+                DisplayHeader = true,
+                DisplayFooter = false,
+                Icon = "fa-solid fa-circle-plus",
+                RowId = rowId
+            };
+            await cardService.CreateAsync(rowId, cardDto);
+        }
+
+        private async Task<RowDto> CreateRow(object operationId, int pageId, double height, int order)
+        {
+            RowCreateDto createRow = new RowCreateDto()
+            {
+                Height = height,
+                Order = order
+            };
+            return await rowService.CreateAsync(pageId, createRow);
+        }
+
+        private async Task<SqlQueryDto> CreateSampleQuery(string requestOperationId, DBConnectionDto dbConnection, ApiUser user, string name, string description, string query, Dictionary<string, object> parameters)
+        {
+            SqlQueryDto queryDto = new SqlQueryDto()
+            {
+                CreatedAt = DateTime.Now,
+                CreatedBy = user.Id,
+                CreatedByEmail = user.Email,
+                DBConnection = dbConnection,
+                DBConnectionId = dbConnection.Id,
+                Description = description,
+                IsPublic = true,
+                LastModifiedAt = DateTime.Now,
+                Name = name,
+                Query = query,
+                Parameters = parameters,
+                OutputDescription = ""
+            };
+            return await sqlQueryService.CreateQueryAsync(queryDto, parameters);
+        }
+
+        private async Task<PageDto> CreatePage(string requestOperationId, MenuDto menu, int orderId, string route, List<TranslatableStringDto> title)
+        {
+            PageCreateDto createPage = new PageCreateDto()
+            {
+                Icon = "home",
+                MenuId = menu.Id,
+                Order = orderId,
+                Roles = menu.Roles,
+                Route = route,
+                IsVisible = true,
+                Title = title
+            };
+            return await pageService.CreateAsync(createPage);
+        }
+
+        private async Task<MenuDto> CreateMenu(string requestOperationId)
+        {
+            MenuCreateDto menuDto = new MenuCreateDto()
+            {
+                Icon = "home",
+                IsVisible = true,
+                Order = 1,
+                Roles = roleManager.Roles.Select(RoleDto.FromEntity).ToList(),
+                Route = "northwindlite",
+                Title = new List<TranslatableStringDto>()
+                {
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Northwind exemple" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Northwind example" }
+                }
+            };
+
+            return await menuService.CreateAsync(menuDto);
+        }
+
+        private async Task<DBConnectionCreateResultDto> RetrieveAndCreateNorthwindDatabase(string operationId)
+        {
+            using var client = new WebClient();
+            client.DownloadFile("https://github.com/jpwhite3/northwind-SQLite3/raw/refs/heads/main/dist/northwind.db", "northwind_sample.db");
+            DBConnectionCreateDto createDBConnectionDto = new DBConnectionCreateDto()
+            {
+                OperationId = operationId,
+                Parameters = new List<ConnectionStringParameterCreateDto>()
+                {
+                    new ConnectionStringParameterCreateDto()
+                    {
+                        Key = "Data Source",
+                        Value = "./northwind_sample.db",
+                        IsEncrypted = false
+                    }
+                },
+                ApiRoute = "northwind_sample",
+                ConnectionType = DbConnectionType.SQLite,
+                ContextName = "NorthwindSQLiteSample",
+                GenerateProcedureControllersAndServices = false,
+                Name = "NorthwindSQLiteSample"
+            };
+            return await dbConnectionService.AddConnectionAsync(createDBConnectionDto);
         }
 
         private async Task UpdateJwtSettings(string jwtSecret)
