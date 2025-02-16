@@ -1,0 +1,104 @@
+{
+  "datasource": {
+    "type": "SQLQuery",
+    "localDataTable": {
+      "cardId": ""
+    },
+    "query": {
+      "id": 1,
+      "name": "Product Quantity By Country",
+      "description": "Show number of sales products by country",
+      "query": "SELECT\n   s.Country,\n   SUM(od.Quantity)   AS Quantity\nFROM\n    [Order Details]   AS od\nINNER JOIN\n    Products          AS p\n        ON  p.ProductID = od.ProductID\nINNER JOIN\n    Suppliers         AS s\n        ON  s.SupplierID = p.SupplierID\nGROUP BY\n   s.Country",
+      "createdBy": "cc0d20b8-6e5f-4cf5-b0f9-30243334bafc",
+      "createdByEmail": "achampion@neuf.fr",
+      "createdAt": "2025-02-15T11:04:42.419305",
+      "lastModifiedAt": "2025-02-15T18:04:42.374176",
+      "isPublic": true,
+      "parameters": {},
+      "dbConnectionId": 1,
+      "dbConnection": null,
+      "outputDescription": "{\"type\":\"object\",\"title\":\"Product Quantity By Country\",\"properties\":{\"Country\":{\"type\":\"string\",\"nullable\":true,\"x-column-metadata\":{\"allowDBNull\":true,\"dataType\":\"String\"}},\"Quantity\":{\"type\":\"integer\",\"nullable\":true,\"x-column-metadata\":{\"allowDBNull\":true,\"dataType\":\"Int64\"}}}}"
+    }
+  },
+  "visualConfig": {
+    "backgroundColor": "#1f2937",
+    "textColor": "#ffffff",
+    "animation": true,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "grid": {
+      "show": true,
+      "borderColor": "#333",
+      "borderWidth": 1,
+      "backgroundColor": "transparent",
+      "containLabel": true
+    },
+    "legend": {
+      "show": true,
+      "position": "left",
+      "orient": "vertical",
+      "align": "auto",
+      "padding": 5,
+      "itemGap": 10,
+      "itemWidth": 25,
+      "itemHeight": 14,
+      "backgroundColor": "transparent",
+      "borderColor": "transparent",
+      "borderWidth": 0,
+      "borderRadius": 0,
+      "textStyle": {
+        "color": "#ffffff",
+        "fontSize": 12
+      }
+    },
+    "tooltip": {
+      "show": true,
+      "trigger": "item",
+      "showContent": true,
+      "backgroundColor": "rgba(50, 50, 50, 0.7)",
+      "borderColor": "#333",
+      "borderWidth": 0,
+      "padding": 5,
+      "textStyle": {
+        "color": "#ffffff",
+        "fontSize": 14
+      }
+    },
+    "toolbox": {
+      "show": true,
+      "orient": "vertical",
+      "itemSize": 15,
+      "itemGap": 10,
+      "showTitle": true,
+      "feature": {
+        "dataZoom": {
+          "show": true,
+          "title": {
+            "zoom": "Zoom",
+            "back": "Retour"
+          }
+        },
+        "restore": {
+          "show": true,
+          "title": "Réinitialiser"
+        },
+        "saveAsImage": {
+          "show": true,
+          "title": "Sauvegarder"
+        },
+        "dataView": {
+          "show": true,
+          "title": "Données",
+          "lang": [
+            "Vue données",
+            "Fermer",
+            "Actualiser"
+          ]
+        }
+      }
+    }
+  },
+  "labelColumn": "Country",
+  "valueColumn": "Quantity",
+  "radius": "75%"
+}

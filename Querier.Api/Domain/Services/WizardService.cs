@@ -84,16 +84,9 @@ namespace Querier.Api.Domain.Services
                         MenuDto menu = await CreateMenu(request.OperationId);
                         await CreateWelcomePage(request.OperationId, menu);
                         await CreateDatatablePage(request.OperationId, menu);
+                        await CreateChartPage(request.OperationId, menu);
                         
-                        PageDto chartsPage= await CreatePage(
-                            request.OperationId, 
-                            menu, 
-                            3, 
-                            "simple_charts",
-                            [
-                                new TranslatableStringDto() { LanguageCode = "fr", Value = "Charts simple" },
-                                new TranslatableStringDto() { LanguageCode = "en", Value = "Simple charts" }
-                            ]);
+                        
                         PageDto advancedPage= await CreatePage(
                             request.OperationId, 
                             menu, 
@@ -125,6 +118,94 @@ namespace Querier.Api.Domain.Services
                 logger.LogError(ex, "Unexpected error during setup process");
                 return (false, $"Unexpected error during setup: {ex.Message}");
             }
+        }
+
+        private async Task CreateChartPage(string requestOperationId, MenuDto menu)
+        {
+            PageDto chartsPage= await CreatePage(
+                requestOperationId, 
+                menu, 
+                3, 
+                "simple_charts",
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Charts simple" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Simple charts" }
+                ]);
+            RowDto row1 = await CreateRow(requestOperationId, chartsPage.Id, 200, 1);
+            RowDto row2 = await CreateRow(requestOperationId, chartsPage.Id, 530, 2);
+            RowDto row3 = await CreateRow(requestOperationId, chartsPage.Id, 530, 3);
+            RowDto row4 = await CreateRow(requestOperationId, chartsPage.Id, 530, 4);
+            
+            await CreateCard(requestOperationId, row1.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Créer des charts avec vos données" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Create charts from your datas" }
+                ],
+                1,
+                "html content",
+                12,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/chartGeneralDescription.json")
+            );
+            await CreateCard(requestOperationId, row2.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Evolution du fret" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Freight evolution" }
+                ],
+                1,
+                "linechart",
+                8,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/lineChartSample.json")
+            );
+            await CreateCard(requestOperationId, row2.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Graphique en ligne" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Line chart" }
+                ],
+                2,
+                "html content",
+                4,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/lineChartDescription.json")
+            );
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Produits par pays" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Products by country" }
+                ],
+                1,
+                "piechart",
+                8,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/pieChartSample.json")
+            );
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Graphique circulaire" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Pie chart" }
+                ],
+                2,
+                "html content",
+                4,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/pieChartDescription.json")
+            );
+            await CreateCard(requestOperationId, row4.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Factures" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Invoices" }
+                ],
+                1,
+                "stackedbarandlineschart",
+                8,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/stackedBarChartSample.json")
+            );
+            await CreateCard(requestOperationId, row4.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Graphique combiné barres empilées et courbes" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Stacked bars and lines chart" }
+                ],
+                2,
+                "html content",
+                4,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/stackedBarChartDescription.json")
+            );
         }
 
         private async Task CreateDatatablePage(string requestOperationId, MenuDto menu)

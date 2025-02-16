@@ -1,0 +1,14 @@
+{
+  "content": {
+    "html": [
+      {
+        "languageCode": "fr",
+        "value": "<p><font color=\"#ffffff\">Querier intègre la librairie en\"</font><a href=\"https://xieziyu.github.io/ngx-echarts/#/welcome\" target=\"_blank\"><font color=\"#2ab26b\">ngx-echart</font></a><font color=\"#ffffff\">\" vous permettant de créer différents type de graphiques prédéfini.</font></p><p><font color=\"#ffffff\"><br></font></p><p><font color=\"#ffffff\">Comme la Datatable, les données peuvent être issues de l'API, donnant ainsi accès aux procédures stockées, tables, vues de vos bases de données ou bien de requêtes personnalisées. De nombreuses options de configuration du rendu des graphiques sont disponibles.</font></p>"
+      },
+      {
+        "languageCode": "en",
+        "value": "<p data-start=\"0\" data-end=\"104\" style=\"caret-color: rgb(0, 0, 0);\"><font face=\"Times New Roman\" color=\"#ffffff\">Querier integrates the<span class=\"Apple-converted-space\">&nbsp;\"</span></font><a href=\"https://xieziyu.github.io/ngx-echarts/#/welcome\" target=\"_blank\"><font color=\"#0ca116\">ngx-echarts</font></a><font face=\"Times New Roman\" color=\"#ffffff\"><span class=\"Apple-converted-space\">\"&nbsp;</span>library, allowing you to create various predefined chart types.</font></p><p data-start=\"106\" data-end=\"326\" data-is-last-node=\"\" style=\"caret-color: rgb(0, 0, 0);\"><font face=\"Times New Roman\" color=\"#ffffff\">Like the Data Table, data can come from the API, providing access to stored procedures, tables, views from your databases, or custom queries. Numerous configuration options are available to customize the chart rendering.</font></p>"
+      }
+    ]
+  }
+}
