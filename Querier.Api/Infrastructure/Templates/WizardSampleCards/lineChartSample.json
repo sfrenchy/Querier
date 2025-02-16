@@ -1,0 +1,123 @@
+{
+  "datasource": {
+    "type": "API",
+    "procedureParameters": {},
+    "hasUserParameters": false,
+    "isStoredProcedure": false,
+    "connection": {
+      "id": 1,
+      "connectionType": 3,
+      "name": "NorthwindSQLiteSample",
+      "apiRoute": "northwind_sample",
+      "contextName": "NorthwindSQLiteSample.main.Api.Models.mainContext",
+      "description": "",
+      "parameters": [
+        {
+          "id": 1,
+          "key": "Data Source",
+          "value": "./northwind_sample.db",
+          "isEncrypted": false
+        }
+      ]
+    },
+    "controller": {
+      "name": "Order",
+      "route": "northwind_sample/Order",
+      "responseEntityJsonSchema": "{\"type\":\"object\",\"title\":\"OrderDto\",\"properties\":{\"OrderId\":{\"type\":\"integer\",\"x-entity-metadata\":{\"isPrimaryKey\":true,\"isIdentity\":true,\"columnName\":\"OrderID\",\"columnType\":\"INTEGER\",\"defaultValue\":0,\"isRequired\":true}},\"CustomerId\":{\"type\":\"string\",\"x-entity-metadata\":{\"isForeignKey\":true,\"foreignKeyTable\":\"Customers\",\"foreignKeyColumn\":\"CustomerId\",\"foreignKeyConstraintName\":\"FK_Orders_Customers_CustomerID\",\"columnName\":\"CustomerID\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"EmployeeId\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"isForeignKey\":true,\"foreignKeyTable\":\"Employees\",\"foreignKeyColumn\":\"EmployeeId\",\"foreignKeyConstraintName\":\"FK_Orders_Employees_EmployeeID\",\"columnName\":\"EmployeeID\",\"columnType\":\"INTEGER\",\"isRequired\":false}},\"OrderDate\":{\"type\":\"string\",\"format\":\"date-time\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"OrderDate\",\"columnType\":\"DATETIME\",\"isRequired\":false}},\"RequiredDate\":{\"type\":\"string\",\"format\":\"date-time\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"RequiredDate\",\"columnType\":\"DATETIME\",\"isRequired\":false}},\"ShippedDate\":{\"type\":\"string\",\"format\":\"date-time\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"ShippedDate\",\"columnType\":\"DATETIME\",\"isRequired\":false}},\"ShipVia\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"isForeignKey\":true,\"foreignKeyTable\":\"Shippers\",\"foreignKeyColumn\":\"ShipperId\",\"foreignKeyConstraintName\":\"FK_Orders_Shippers_ShipVia\",\"columnName\":\"ShipVia\",\"columnType\":\"INTEGER\",\"isRequired\":false}},\"Freight\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"Freight\",\"columnType\":\"NUMERIC\",\"defaultValue\":0,\"isRequired\":false}},\"ShipName\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipName\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"ShipAddress\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipAddress\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"ShipCity\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipCity\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"ShipRegion\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipRegion\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"ShipPostalCode\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipPostalCode\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"ShipCountry\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ShipCountry\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"Customer\":{\"type\":\"object\",\"x-entity-metadata\":{\"isNavigation\":true,\"navigationType\":\"NorthwindSQLiteSample.main.Api.Models.Customer\",\"foreignKeyProperty\":\"CustomerId\"}},\"Employee\":{\"type\":\"object\",\"x-entity-metadata\":{\"isNavigation\":true,\"navigationType\":\"NorthwindSQLiteSample.main.Api.Models.Employee\",\"foreignKeyProperty\":\"EmployeeId\"}},\"OrderDetails\":{\"type\":\"array\",\"x-entity-metadata\":{\"isCollection\":true,\"elementType\":\"NorthwindSQLiteSample.main.Api.Models.OrderDetail\",\"foreignKeyProperty\":\"OrderId\"}},\"ShipViaNavigation\":{\"type\":\"object\",\"x-entity-metadata\":{\"isNavigation\":true,\"navigationType\":\"NorthwindSQLiteSample.main.Api.Models.Shipper\",\"foreignKeyProperty\":\"ShipVia\"}}}}",
+      "parameterJsonSchema": "{\"type\":\"object\",\"title\":\"DataRequestParametersDto\",\"properties\":{\"PageNumber\":{\"type\":\"integer\"},\"PageSize\":{\"type\":\"integer\"},\"OrderBy\":{\"type\":\"array\"},\"GlobalSearch\":{\"type\":\"string\"},\"ColumnSearches\":{\"type\":\"array\"},\"Includes\":{\"type\":\"array\"}}}"
+    }
+  },
+  "visualConfig": {
+    "backgroundColor": "#1f2937",
+    "textColor": "#ffffff",
+    "animation": true,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "grid": {
+      "show": true,
+      "borderColor": "#333",
+      "borderWidth": 1,
+      "backgroundColor": "transparent",
+      "containLabel": true
+    },
+    "legend": {
+      "show": true,
+      "position": "top",
+      "orient": "vertical",
+      "align": "auto",
+      "padding": 5,
+      "itemGap": 10,
+      "itemWidth": 25,
+      "itemHeight": 14,
+      "backgroundColor": "transparent",
+      "borderColor": "transparent",
+      "borderWidth": 0,
+      "borderRadius": 0,
+      "textStyle": {
+        "color": "#ffffff",
+        "fontSize": 12
+      }
+    },
+    "tooltip": {
+      "show": true,
+      "trigger": "axis",
+      "showContent": true,
+      "backgroundColor": "rgba(50, 50, 50, 0.7)",
+      "borderColor": "#333",
+      "borderWidth": 0,
+      "padding": 5,
+      "textStyle": {
+        "color": "#ffffff",
+        "fontSize": 14
+      }
+    },
+    "toolbox": {
+      "show": true,
+      "orient": "vertical",
+      "itemSize": 15,
+      "itemGap": 10,
+      "showTitle": true,
+      "feature": {
+        "dataZoom": {
+          "show": true,
+          "title": {
+            "zoom": "Zoom",
+            "back": "Retour"
+          }
+        },
+        "restore": {
+          "show": true,
+          "title": "Réinitialiser"
+        },
+        "saveAsImage": {
+          "show": true,
+          "title": "Sauvegarder"
+        },
+        "dataView": {
+          "show": true,
+          "title": "Données",
+          "lang": [
+            "Vue données",
+            "Fermer",
+            "Actualiser"
+          ]
+        }
+      }
+    }
+  },
+  "xAxisColumn": "OrderDate",
+  "xAxisDateFormat": "DD/MM/YYYY",
+  "series": [
+    {
+      "name": "Freight",
+      "dataColumn": "Freight",
+      "type": "line",
+      "color": "#3b82f6",
+      "showSymbol": true,
+      "symbolSize": 4,
+      "areaStyle": {
+        "opacity": 0
+      }
+    }
+  ]
+}

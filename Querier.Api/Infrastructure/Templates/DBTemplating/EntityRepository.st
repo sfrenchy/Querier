@@ -138,10 +138,11 @@ namespace $nameSpace$.Repositories
                 
                 var data = query.AsNoTracking();
 
-                if (skip != 0 && pageSize != 0)
+                if (pageSize != 0)
                     data = data.Skip(skip).Take(pageSize);
 
                 var result = await data.ToListAsync();
+                
                 _logger.LogInformation("Successfully retrieved " + result.Count().ToString() + " $entity.Name$ records");
                 return new DataPagedResult<$entity.Name$>(result, totalCount, parameters);
             \}

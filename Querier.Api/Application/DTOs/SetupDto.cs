@@ -7,6 +7,7 @@ namespace Querier.Api.Application.DTOs
     /// </summary>
     public class SetupDto
     {
+        public string OperationId { get; set; }
         /// <summary>
         /// Administrative user configuration for initial setup
         /// </summary>
@@ -16,5 +17,9 @@ namespace Querier.Api.Application.DTOs
         /// SMTP server configuration for email services
         /// </summary>
         public SetupSmtpDto Smtp { get; set; }
+        /// <summary>
+        /// Create a sample for the API using
+        /// </summary>
+        public bool CreateSample { get; set; }
     }
 }

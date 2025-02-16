@@ -21,15 +21,24 @@ namespace Querier.Api.Infrastructure.Data.Repositories
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<Page> GetByIdAsync(int id)
+        public async Task<Page> GetByIdAsync(int id, bool includeRelations = true)
         {
             _logger.LogDebug("Getting page by ID {PageId}", id);
             try
             {
                 using var context = await _contextFactory.CreateDbContextAsync();
-                var page = await context.Pages
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(p => p.Id == id);
+                IQueryable<Page> query = context.Pages;
+                
+                if (includeRelations)
+                {
+                    query = query
+                        .Include(p => p.PageTranslations)
+                        .Include(p => p.Rows)
+                            .ThenInclude(r => r.Cards)
+                                .ThenInclude(c => c.CardTranslations);
+                }
+
+                var page = await query.FirstOrDefaultAsync(p => p.Id == id);
                 if (page == null)
                 {
                     _logger.LogWarning("Page {PageId} not found", id);
