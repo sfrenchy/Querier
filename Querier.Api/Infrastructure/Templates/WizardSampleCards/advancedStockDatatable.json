@@ -1,0 +1,257 @@
+{
+  "datasource": {
+    "type": "API",
+    "connection": {
+      "id": 1,
+      "connectionType": 3,
+      "name": "NorthwindSQLiteSample",
+      "apiRoute": "northwind_sample",
+      "contextName": "NorthwindSQLiteSample.main.Api.Models.mainContext",
+      "description": "",
+      "parameters": [
+        {
+          "id": 1,
+          "key": "Data Source",
+          "value": "./northwind_sample.db",
+          "isEncrypted": false
+        }
+      ]
+    },
+    "controller": {
+      "name": "AlphabeticalListOfProduct",
+      "route": "northwind_sample/AlphabeticalListOfProduct",
+      "responseEntityJsonSchema": "{\"type\":\"object\",\"title\":\"AlphabeticalListOfProductDto\",\"properties\":{\"ProductId\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"ProductID\",\"columnType\":\"INTEGER\",\"isRequired\":false}},\"ProductName\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"ProductName\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"SupplierId\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"SupplierID\",\"columnType\":\"INTEGER\",\"isRequired\":false}},\"CategoryId\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"CategoryID\",\"columnType\":\"INTEGER\",\"isRequired\":false}},\"QuantityPerUnit\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"QuantityPerUnit\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"UnitPrice\":{\"type\":\"number\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"UnitPrice\",\"columnType\":\"NUMERIC\",\"isRequired\":false}},\"UnitsInStock\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"UnitsInStock\",\"columnType\":\"INTEGER\",\"isRequired\":false}},\"UnitsOnOrder\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"UnitsOnOrder\",\"columnType\":\"INTEGER\",\"isRequired\":false}},\"ReorderLevel\":{\"type\":\"integer\",\"nullable\":true,\"x-entity-metadata\":{\"columnName\":\"ReorderLevel\",\"columnType\":\"INTEGER\",\"isRequired\":false}},\"Discontinued\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"Discontinued\",\"columnType\":\"TEXT\",\"isRequired\":false}},\"CategoryName\":{\"type\":\"string\",\"x-entity-metadata\":{\"columnName\":\"CategoryName\",\"columnType\":\"TEXT\",\"isRequired\":false}}}}",
+      "parameterJsonSchema": "{\"type\":\"object\",\"title\":\"DataRequestParametersDto\",\"properties\":{\"PageNumber\":{\"type\":\"integer\"},\"PageSize\":{\"type\":\"integer\"},\"OrderBy\":{\"type\":\"array\"},\"GlobalSearch\":{\"type\":\"string\"},\"ColumnSearches\":{\"type\":\"array\"},\"Includes\":{\"type\":\"array\"}}}"
+    },
+    "isStoredProcedure": false
+  },
+  "columns": [
+    {
+      "key": "CategoryName",
+      "type": "string",
+      "label": {
+        "en": "CategoryName",
+        "fr": "CategoryName"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "CategoryName",
+        "columnType": "TEXT",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "CategorySales",
+      "type": "array",
+      "label": {
+        "en": "CategorySales",
+        "fr": "CategorySales"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "CategorySales",
+        "columnType": "BLOB",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "ProductId",
+      "type": "number",
+      "label": {
+        "en": "ProductId",
+        "fr": "ProductId"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "ProductID",
+        "columnType": "INTEGER",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "ProductName",
+      "type": "string",
+      "label": {
+        "en": "ProductName",
+        "fr": "ProductName"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "ProductName",
+        "columnType": "TEXT",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "SupplierId",
+      "type": "number",
+      "label": {
+        "en": "SupplierId",
+        "fr": "SupplierId"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "SupplierID",
+        "columnType": "INTEGER",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "CategoryId",
+      "type": "number",
+      "label": {
+        "en": "CategoryId",
+        "fr": "CategoryId"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "CategoryID",
+        "columnType": "INTEGER",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "QuantityPerUnit",
+      "type": "string",
+      "label": {
+        "en": "QuantityPerUnit",
+        "fr": "QuantityPerUnit"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "QuantityPerUnit",
+        "columnType": "TEXT",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "UnitPrice",
+      "type": "number",
+      "label": {
+        "en": "UnitPrice",
+        "fr": "UnitPrice"
+      },
+      "alignment": "right",
+      "visible": true,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "UnitPrice",
+        "columnType": "NUMERIC",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "UnitsInStock",
+      "type": "number",
+      "label": {
+        "en": "UnitsInStock",
+        "fr": "UnitsInStock"
+      },
+      "alignment": "right",
+      "visible": true,
+      "decimals": 0,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "UnitsInStock",
+        "columnType": "INTEGER",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "UnitsOnOrder",
+      "type": "number",
+      "label": {
+        "en": "UnitsOnOrder",
+        "fr": "UnitsOnOrder"
+      },
+      "alignment": "right",
+      "visible": true,
+      "decimals": 0,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "UnitsOnOrder",
+        "columnType": "INTEGER",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "ReorderLevel",
+      "type": "number",
+      "label": {
+        "en": "ReorderLevel",
+        "fr": "ReorderLevel"
+      },
+      "alignment": "right",
+      "visible": true,
+      "decimals": 0,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "ReorderLevel",
+        "columnType": "INTEGER",
+        "isRequired": false
+      }
+    },
+    {
+      "key": "Discontinued",
+      "type": "string",
+      "label": {
+        "en": "Discontinued",
+        "fr": "Discontinued"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false,
+      "entityMetadata": {
+        "columnName": "Discontinued",
+        "columnType": "TEXT",
+        "isRequired": false
+      }
+    }
+  ],
+  "visualConfig": {
+    "headerBackgroundColor": "#1f2937",
+    "rowBackgroundColor": "#111827",
+    "headerTextColor": "#d1d5db",
+    "rowTextColor": "#d1d5db",
+    "isCompactMode": true,
+    "alternateRowColors": false,
+    "alternateRowsBrightness": 80,
+    "rowCount": 10
+  },
+  "crudConfig": {
+    "canAdd": false,
+    "canUpdate": false,
+    "canDelete": false,
+    "foreignKeyConfigs": {}
+  }
+}

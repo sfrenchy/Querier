@@ -120,6 +120,8 @@ namespace Querier.Api.Infrastructure.Services
                 if (httpContextAccessor.HttpContext != null)
                 {
                     var currentUser = await userService.GetCurrentUserAsync(httpContextAccessor.HttpContext.User);
+                    if (currentUser == null && !string.IsNullOrEmpty(query.CreatedBy))
+                        currentUser = await userService.GetByIdAsync(query.CreatedBy);
                     query.CreatedAt = DateTime.UtcNow;
                     query.CreatedBy = currentUser?.Id;
                 }

@@ -85,19 +85,7 @@ namespace Querier.Api.Domain.Services
                         await CreateWelcomePage(request.OperationId, menu);
                         await CreateDatatablePage(request.OperationId, menu);
                         await CreateChartPage(request.OperationId, menu);
-                        
-                        
-                        PageDto advancedPage= await CreatePage(
-                            request.OperationId, 
-                            menu, 
-                            3, 
-                            "advanced",
-                            [
-                                new TranslatableStringDto() { LanguageCode = "fr", Value = "Conf. Avancée" },
-                                new TranslatableStringDto() { LanguageCode = "en", Value = "Advanced" }
-                            ]);
-                        
-                        
+                        await CreateAdvancedPage(request.OperationId, menu);
                     }
                     logger.LogInformation("Application setup completed successfully");
                     return (true, null);
@@ -118,6 +106,95 @@ namespace Querier.Api.Domain.Services
                 logger.LogError(ex, "Unexpected error during setup process");
                 return (false, $"Unexpected error during setup: {ex.Message}");
             }
+        }
+
+        private async Task CreateAdvancedPage(string requestOperationId, MenuDto menu)
+        {
+            PageDto advancedPage= await CreatePage(
+                requestOperationId, 
+                menu, 
+                3, 
+                "advanced",
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Conf. Avancée" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Advanced" }
+                ]);
+            RowDto row1 = await CreateRow(requestOperationId, advancedPage.Id, 370, 1);
+            RowDto row2 = await CreateRow(requestOperationId, advancedPage.Id, 200, 2);
+            RowDto row3 = await CreateRow(requestOperationId, advancedPage.Id, 170, 3);
+            RowDto row4 = await CreateRow(requestOperationId, advancedPage.Id, 550, 4);
+            RowDto row5 = await CreateRow(requestOperationId, advancedPage.Id, 550, 5);
+            
+            await CreateCard(requestOperationId, row1.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Datatables sources et locales" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Source and local datatables" }
+                ],
+                1,
+                "html content",
+                12,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/advancedDescription.json")
+            );
+            await CreateCard(requestOperationId, row2.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Factures clients" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Customer invoices" }
+                ],
+                1,
+                "datatable",
+                12,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/advancedFirstDatatable.json")
+            );
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Adresse client" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Customer address" }
+                ],
+                1,
+                "datatable",
+                6,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/advancedAddressDatatable.json")
+            );
+            await CreateCard(requestOperationId, row3.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Transporteur" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Shipper" }
+                ],
+                2,
+                "datatable",
+                6,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/advancedShipperDatatable.json")
+            );
+            await CreateCard(requestOperationId, row4.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Stock" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Stock" }
+                ],
+                1,
+                "datatable",
+                12,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/advancedStockDatatable.json")
+            );
+            await CreateCard(requestOperationId, row5.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Stock par catégorie" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Units by category" }
+                ],
+                1,
+                "piechart",
+                6,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/advancedStockPieChart.json")
+            );
+            await CreateCard(requestOperationId, row5.Id, 
+                [
+                    new TranslatableStringDto() { LanguageCode = "fr", Value = "Stock vs stock à la commande" },
+                    new TranslatableStringDto() { LanguageCode = "en", Value = "Stock vs stock on order" }
+                ],
+                2,
+                "stackedbarandlineschart",
+                6,
+                await File.ReadAllTextAsync("Infrastructure/Templates/WizardSampleCards/advancedStockStackBarChart.json")
+            );
         }
 
         private async Task CreateChartPage(string requestOperationId, MenuDto menu)

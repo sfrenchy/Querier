@@ -1,0 +1,90 @@
+{
+  "datasource": {
+    "type": "LocalDataTable",
+    "localDataTable": {
+      "cardId": 25
+    },
+    "query": null
+  },
+  "visualConfig": {
+    "backgroundColor": "#1f2937",
+    "textColor": "#ffffff",
+    "animation": true,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "grid": {
+      "show": true,
+      "borderColor": "#333",
+      "borderWidth": 1,
+      "backgroundColor": "transparent",
+      "containLabel": true
+    },
+    "legend": {
+      "show": true,
+      "position": "bottom",
+      "orient": "horizontal",
+      "align": "auto",
+      "padding": 5,
+      "itemGap": 10,
+      "itemWidth": 25,
+      "itemHeight": 14,
+      "backgroundColor": "transparent",
+      "borderColor": "transparent",
+      "borderWidth": 0,
+      "borderRadius": 0,
+      "textStyle": {
+        "color": "#ffffff",
+        "fontSize": 12
+      }
+    },
+    "tooltip": {
+      "show": true,
+      "trigger": "item",
+      "showContent": true,
+      "backgroundColor": "rgba(50, 50, 50, 0.7)",
+      "borderColor": "#333",
+      "borderWidth": 0,
+      "padding": 5,
+      "textStyle": {
+        "color": "#ffffff",
+        "fontSize": 14
+      }
+    },
+    "toolbox": {
+      "show": true,
+      "orient": "vertical",
+      "itemSize": 15,
+      "itemGap": 10,
+      "showTitle": true,
+      "feature": {
+        "dataZoom": {
+          "show": true,
+          "title": {
+            "zoom": "Zoom",
+            "back": "Retour"
+          }
+        },
+        "restore": {
+          "show": true,
+          "title": "Réinitialiser"
+        },
+        "saveAsImage": {
+          "show": true,
+          "title": "Sauvegarder"
+        },
+        "dataView": {
+          "show": true,
+          "title": "Données",
+          "lang": [
+            "Vue données",
+            "Fermer",
+            "Actualiser"
+          ]
+        }
+      }
+    }
+  },
+  "labelColumn": "CategoryName",
+  "valueColumn": "UnitsInStock",
+  "radius": "75%"
+}

@@ -1,0 +1,352 @@
+{
+  "datasource": {
+    "type": "LocalDataTable",
+    "isStoredProcedure": false,
+    "localDataTable": {
+      "cardId": 22,
+      "useFilteredData": true,
+      "columns": []
+    }
+  },
+  "columns": [
+    {
+      "key": "ShipName",
+      "type": "string",
+      "label": {
+        "en": "ShipName",
+        "fr": "ShipName"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "ShipAddress",
+      "type": "string",
+      "label": {
+        "en": "ShipAddress",
+        "fr": "ShipAddress"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "ShipCity",
+      "type": "string",
+      "label": {
+        "en": "ShipCity",
+        "fr": "ShipCity"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "ShipRegion",
+      "type": "string",
+      "label": {
+        "en": "ShipRegion",
+        "fr": "ShipRegion"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "ShipPostalCode",
+      "type": "string",
+      "label": {
+        "en": "ShipPostalCode",
+        "fr": "ShipPostalCode"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "ShipCountry",
+      "type": "string",
+      "label": {
+        "en": "ShipCountry",
+        "fr": "ShipCountry"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "CustomerId",
+      "type": "string",
+      "label": {
+        "en": "CustomerId",
+        "fr": "CustomerId"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "OrderDate",
+      "type": "date",
+      "label": {
+        "en": "OrderDate",
+        "fr": "OrderDate"
+      },
+      "alignment": "left",
+      "visible": false,
+      "dateFormat": "datetime",
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "CustomerName",
+      "type": "string",
+      "label": {
+        "en": "CustomerName",
+        "fr": "CustomerName"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "Address",
+      "type": "string",
+      "label": {
+        "en": "Address",
+        "fr": "Address"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "City",
+      "type": "string",
+      "label": {
+        "en": "City",
+        "fr": "City"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "Region",
+      "type": "string",
+      "label": {
+        "en": "Region",
+        "fr": "Region"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "PostalCode",
+      "type": "string",
+      "label": {
+        "en": "PostalCode",
+        "fr": "PostalCode"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "Country",
+      "type": "string",
+      "label": {
+        "en": "Country",
+        "fr": "Country"
+      },
+      "alignment": "left",
+      "visible": true,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "Salesperson",
+      "type": "number",
+      "label": {
+        "en": "Salesperson",
+        "fr": "Salesperson"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "OrderId",
+      "type": "number",
+      "label": {
+        "en": "OrderId",
+        "fr": "OrderId"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "RequiredDate",
+      "type": "date",
+      "label": {
+        "en": "RequiredDate",
+        "fr": "RequiredDate"
+      },
+      "alignment": "left",
+      "visible": false,
+      "dateFormat": "datetime",
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "ShippedDate",
+      "type": "date",
+      "label": {
+        "en": "ShippedDate",
+        "fr": "ShippedDate"
+      },
+      "alignment": "left",
+      "visible": false,
+      "dateFormat": "datetime",
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "ShipperName",
+      "type": "string",
+      "label": {
+        "en": "ShipperName",
+        "fr": "ShipperName"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "ProductId",
+      "type": "number",
+      "label": {
+        "en": "ProductId",
+        "fr": "ProductId"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "ProductName",
+      "type": "string",
+      "label": {
+        "en": "ProductName",
+        "fr": "ProductName"
+      },
+      "alignment": "left",
+      "visible": false,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "UnitPrice",
+      "type": "number",
+      "label": {
+        "en": "UnitPrice",
+        "fr": "UnitPrice"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "Quantity",
+      "type": "number",
+      "label": {
+        "en": "Quantity",
+        "fr": "Quantity"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "Discount",
+      "type": "number",
+      "label": {
+        "en": "Discount",
+        "fr": "Discount"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "ExtendedPrice",
+      "type": "number",
+      "label": {
+        "en": "ExtendedPrice",
+        "fr": "ExtendedPrice"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false
+    },
+    {
+      "key": "Freight",
+      "type": "number",
+      "label": {
+        "en": "Freight",
+        "fr": "Freight"
+      },
+      "alignment": "right",
+      "visible": false,
+      "decimals": 2,
+      "isFixed": false,
+      "isFixedRight": false
+    }
+  ],
+  "visualConfig": {
+    "headerBackgroundColor": "#1f2937",
+    "rowBackgroundColor": "#7d9ad9",
+    "headerTextColor": "#d1d5db",
+    "rowTextColor": "#d1d5db",
+    "isCompactMode": false,
+    "alternateRowColors": false,
+    "alternateRowsBrightness": 80,
+    "rowCount": 1
+  },
+  "crudConfig": {
+    "canAdd": false,
+    "canUpdate": false,
+    "canDelete": false,
+    "foreignKeyConfigs": {}
+  }
+}
