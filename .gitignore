@@ -499,3 +499,4 @@ querier/ios/Flutter/Release.xcconfig
 querier/ios/Podfile
 querier/ios/Flutter/Debug.xcconfig
 querier/ios/Flutter/Release.xcconfig
+Querier.Api/northwind_sample.db
