@@ -6,8 +6,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Domain.Common.Models;
 using System.Linq.Dynamic.Core;
+using $rootNamespace$.Contexts;
+using $rootNamespace$.Models;
 
-namespace $nameSpace$.Repositories
+namespace $rootNamespace$.Repositories
 {
     $entityList: {entity|
     #region $entity.Name$
@@ -52,11 +54,11 @@ namespace $nameSpace$.Repositories
     /// </summary>
     public class $entity.Name$Repository : I$entity.Name$Repository
     {
-        private readonly IDbContextFactory<$contextNameSpace$> _contextFactory;
+        private readonly IDbContextFactory<$contextName$> _contextFactory;
         private readonly ILogger<$entity.Name$Repository> _logger;
 
         public $entity.Name$Repository(
-            IDbContextFactory<$contextNameSpace$> contextFactory,
+            IDbContextFactory<$contextName$> contextFactory,
             ILogger<$entity.Name$Repository> logger)
         {
             _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));

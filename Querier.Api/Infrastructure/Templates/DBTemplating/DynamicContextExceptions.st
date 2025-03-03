@@ -1,6 +1,6 @@
 using System;
 
-namespace $nameSpace$.Exceptions
+namespace $rootNamespace$.Exceptions
 {
     /// <summary>
     /// Base exception for all dynamic context related exceptions

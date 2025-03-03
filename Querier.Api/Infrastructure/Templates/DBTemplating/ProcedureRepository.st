@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Infrastructure.Database.Parameters;
 
-namespace $nameSpace$.Repositories
+namespace $rootNamespace$.Repositories
 {
     $procedureList: {procedure|
     #region $procedure.CSName$

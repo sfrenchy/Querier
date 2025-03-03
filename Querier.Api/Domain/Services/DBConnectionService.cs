@@ -93,8 +93,13 @@ namespace Querier.Api.Domain.Services
                 await _progressService.StartOperation(connection.OperationId, ProgressStatus.Starting);
                 _logger.LogDebug("Adding new database connection: {Name}", connection.Name);
                 DBConnectionCreateResultDto result = new DBConnectionCreateResultDto();
-                string connectionNamespace = "";
-                string contextName = "";
+                
+                string rootNamespace = connection.Name;
+                string contextName = $"{connection.Name}Context";
+                string contextNamespace = $"{connection.Name}.Contexts";
+                string modelNamespace = $"{connection.Name}.Models";
+                
+                //string connectionNamespace = "";
                 string procedureDescription = "";
 
                 // Validation step (10%)
@@ -110,8 +115,6 @@ namespace Querier.Api.Domain.Services
                             {
                                 _logger.LogDebug("Testing SQL Server connection for: {Name}", connection.Name);
                                 c.Open();
-                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
-                                contextName = $"{c.Database}Context";
                                 result.State = DBConnectionState.Connected;
                                 _logger.LogInformation("Successfully connected to SQL Server for: {Name}", connection.Name);
                             }
@@ -121,8 +124,6 @@ namespace Querier.Api.Domain.Services
                             {
                                 _logger.LogDebug("Testing MySQL connection for: {Name}", connection.Name);
                                 c.Open();
-                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
-                                contextName = $"{c.Database}Context";
                                 result.State = DBConnectionState.Connected;
                                 _logger.LogInformation("Successfully connected to MySQL for: {Name}", connection.Name);
                             }
@@ -132,8 +133,6 @@ namespace Querier.Api.Domain.Services
                             {
                                 _logger.LogDebug("Testing PostgreSQL connection for: {Name}", connection.Name);
                                 c.Open();
-                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
-                                contextName = $"{c.Database}Context";
                                 result.State = DBConnectionState.Connected;
                                 _logger.LogInformation("Successfully connected to PostgreSQL for: {Name}", connection.Name);
                             }
@@ -143,8 +142,6 @@ namespace Querier.Api.Domain.Services
                             {
                                 _logger.LogDebug("Testing SQLite connection for: {Name}", connection.Name);
                                 c.Open();
-                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
-                                contextName = $"{c.Database}Context";
                                 result.State = DBConnectionState.Connected;
                                 _logger.LogInformation("Successfully connected to PostgreSQL for: {Name}", connection.Name);
                             }
@@ -179,10 +176,10 @@ namespace Querier.Api.Domain.Services
                     var modelOpts = new ModelReverseEngineerOptions();
                     var codeGenOpts = new ModelCodeGenerationOptions()
                     {
-                        RootNamespace = connectionNamespace,
+                        RootNamespace = rootNamespace,
                         ContextName = contextName,
-                        ContextNamespace = connectionNamespace,
-                        ModelNamespace = connectionNamespace,
+                        ContextNamespace = contextNamespace,
+                        ModelNamespace = modelNamespace,
                         SuppressConnectionStringWarning = true,
                         SuppressOnConfiguring = true,
                         UseDataAnnotations = true
@@ -216,22 +213,24 @@ namespace Querier.Api.Domain.Services
                     {
                         storedProcedures = _databaseToCSharpConverter.ToProcedureList(connectionString);
                         procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
-
-                        
                     }
                     var procedureModel = new StoredProcedureTemplateModel
                     {
-                        NameSpace = connectionNamespace,
-                        ContextNameSpace = contextName,
+                        RootNamespace = rootNamespace,
+                        ContextName = contextName,
+                        ContextNamespace = contextNamespace,
+                        ModelNamespace = modelNamespace,
                         ContextRoute = connection.ApiRoute,
                         ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
                     };
                     GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
                     // Extract entity metadata from scaffolded model
-                    var entityModel = new TemplateModel
+                    var entityModel = new EntityTemplateModel
                     {
-                        NameSpace = connectionNamespace,
-                        ContextNameSpace = contextName,
+                        RootNamespace = rootNamespace,
+                        ContextName = contextName,
+                        ContextNamespace = contextNamespace,
+                        ModelNamespace = modelNamespace,
                         ContextRoute = connection.ApiRoute,
                         EntityList = ExtractEntityMetadata(scaffoldedModelSources)
                     };
@@ -275,7 +274,7 @@ namespace Querier.Api.Domain.Services
                         return result;
                     }
 
-                    using DbContext newDbContext = Utils.GetDbContextFromTypeName(connectionNamespace + "." + contextName, connectionString, connection.ConnectionType);
+                    using DbContext newDbContext = Utils.GetDbContextFromTypeName($"{contextNamespace}.{contextName}", connectionString, connection.ConnectionType);
                     
                     var endpoints = _endpointExtractor.ExtractFromAssembly(container.GetType().Assembly, newDbContext,connectionString, connection.ConnectionType);
 
@@ -295,7 +294,7 @@ namespace Querier.Api.Domain.Services
                         AssemblyDll = assemblyBytes,
                         AssemblyPdb = pdbBytes,
                         AssemblySourceZip = sourceZipBytes,
-                        ContextName = connectionNamespace + "." + contextName,
+                        ContextName = $"{contextNamespace}.{contextName}",
                         ApiRoute = connection.ApiRoute,
                         Endpoints = endpoints,
                         Parameters = connection.Parameters.Select(p => new ConnectionStringParameter()
@@ -349,8 +348,11 @@ namespace Querier.Api.Domain.Services
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
                 ), '$', '$');
 
-                template.Add("nameSpace", model.NameSpace);
-                template.Add("contextNameSpace", model.ContextNameSpace);
+                template.Add("rootNamespace", model.RootNamespace);
+                template.Add("contextNamespace", model.ContextNamespace);
+                template.Add("contextName", model.ContextName);
+                template.Add("modelNamespace", model.ModelNamespace);
+                
                 template.Add("procedureList", templateName == "ProcedureDto" 
                     ? model.ProcedureList.Where(s => s.HasOutput).ToList() 
                     : model.ProcedureList);
@@ -364,7 +366,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private void GenerateEntityFiles(StoredProcedureTemplateModel procedureModel, TemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateEntityFiles(StoredProcedureTemplateModel procedureModel, EntityTemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
         {
             var templates = new[]
             {
@@ -382,11 +384,11 @@ namespace Querier.Api.Domain.Services
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
                 ), '$', '$');
 
-                template.Add("procedureList", templateName == "ProcedureDto" 
-                    ? procedureModel.ProcedureList.Where(s => s.HasOutput).ToList() 
-                    : procedureModel.ProcedureList);
-                template.Add("nameSpace", model.NameSpace);
-                template.Add("contextNameSpace", model.ContextNameSpace);
+                template.Add("rootNamespace", model.RootNamespace);
+                template.Add("contextNameSpace", model.ContextNamespace);
+                template.Add("contextName", model.ContextName);
+                template.Add("modelNamespace", model.ModelNamespace);
+                
                 template.Add("entityList", model.EntityList);
 
                 if (templateName == "EntityController")

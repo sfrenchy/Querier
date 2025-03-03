@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 using Querier.Api.Domain.Common.Attributes;
+using $rootNamespace$.Models;
 
-namespace $nameSpace$.DTOs
+namespace $rootNamespace$.DTOs
 {
     $entityList: {entity|
     /// <summary>

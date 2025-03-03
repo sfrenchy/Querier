@@ -4,15 +4,15 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using $nameSpace$.DTOs;
-using $nameSpace$.Services;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Domain.Common.Attributes;
 using Microsoft.AspNetCore.Http;
-using $nameSpace$.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
+using $rootNamespace$.DTOs;
+using $rootNamespace$.Services;
+using $rootNamespace$.Exceptions;
 
-namespace $nameSpace$.Controllers
+namespace $rootNamespace$.Controllers
 {
     $entityList: {entity|
     /// <summary>

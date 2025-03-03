@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 using Querier.Api.Domain.Common.Attributes;
 
-namespace $nameSpace$ {
+namespace $rootNamespace$.DTOs {
     $procedureList: {procedure|
     /// <summary>
     /// Data Transfer Object (DTO) for the $procedure.CSName$ stored procedure results

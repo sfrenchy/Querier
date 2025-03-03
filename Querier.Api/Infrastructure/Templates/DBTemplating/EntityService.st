@@ -5,8 +5,6 @@ using System.Linq;
 using System.Linq.Dynamic.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using $nameSpace$.DTOs;
-using $nameSpace$.Repositories;
 using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Domain.Common.Models;
@@ -15,9 +13,12 @@ using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using System.IO;
 using Querier.Api.Application.DTOs;
-using $nameSpace$.Exceptions;
+using $rootNamespace$.Exceptions;
+using $rootNamespace$.DTOs;
+using $rootNamespace$.Repositories;
+using $rootNamespace$.Models;
 
-namespace $nameSpace$.Services
+namespace $rootNamespace$.Services
 {
     $entityList: {entity|
     #region $entity.Name$

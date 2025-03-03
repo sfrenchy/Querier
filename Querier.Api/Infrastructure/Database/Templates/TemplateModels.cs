@@ -3,19 +3,22 @@ using System.Collections.Generic;
 
 namespace Querier.Api.Infrastructure.Database.Templates
 {
-    public class TemplateModel
+    public abstract class TemplateModel
     {
-        public string NameSpace { get; set; }
-        public string ContextNameSpace { get; set; }
+        public string RootNamespace { get; set; }
+        public string ContextNamespace { get; set; }
+        public string ContextName { get; set; }
+        public string ModelNamespace { get; set; }
         public string ContextRoute { get; set; }
+    }
+    public class EntityTemplateModel : TemplateModel
+    {
+        
         public List<TemplateEntityMetadata> EntityList { get; set; } = new();
     }
 
-    public class StoredProcedureTemplateModel
+    public class StoredProcedureTemplateModel : TemplateModel
     {
-        public string NameSpace { get; set; }
-        public string ContextNameSpace { get; set; }
-        public string ContextRoute { get; set; }
         public List<StoredProcedureMetadata> ProcedureList { get; set; } = new();
     }
 

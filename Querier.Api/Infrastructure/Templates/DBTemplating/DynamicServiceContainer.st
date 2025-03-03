@@ -5,15 +5,16 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Application.Interfaces.Infrastructure;
-using $nameSpace$.Repositories;
-using $nameSpace$.Services;
+using $rootNamespace$.Repositories;
+using $rootNamespace$.Services;
+using $rootNamespace$.Contexts;
 
-namespace $nameSpace$
+namespace $rootNamespace$
 {
     /// <summary>
     /// Conteneur de services pour le contexte dynamique $contextNameSpace$
     /// </summary>
-    public class $contextNameSpace$ServiceContainer : IDynamicContextServiceContainer
+    public class $contextName$ServiceContainer : IDynamicContextServiceContainer
     {
         private readonly ILogger _logger;
         private readonly IServiceCollection _services;
@@ -23,7 +24,7 @@ namespace $nameSpace$
         private readonly Dictionary<Type, Type> _proceduresServices;
         private readonly Dictionary<string, Type> _procedureNameService;
 
-        public $contextNameSpace$ServiceContainer(IServiceCollection services, ILogger logger)
+        public $contextName$ServiceContainer(IServiceCollection services, ILogger logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _services = services ?? throw new ArgumentNullException(nameof(services));
@@ -93,10 +94,10 @@ namespace $nameSpace$
 
         public void ConfigureServices(IServiceCollection services, DbConnectionType connectionType, string connectionString, ILogger logger)
         {
-            _logger.LogInformation("Configuration des services pour " + typeof($contextNameSpace$ServiceContainer).Name);
+            _logger.LogInformation("Configuration des services pour " + nameof($contextName$ServiceContainer));
 
             // Configuration du DbContext
-            services.AddPooledDbContextFactory<$contextNameSpace$>(options =>
+            services.AddPooledDbContextFactory<$contextName$>(options =>
             {
                 switch (connectionType)
                 {
@@ -152,7 +153,7 @@ namespace $nameSpace$
             RegisterProcedureServiceType("$procedure.CSName$", typeof(I$procedure.CSName$Service));
             }$
 
-            _logger.LogInformation("Configuration des services terminée pour " + typeof($contextNameSpace$ServiceContainer).Name);
+            _logger.LogInformation("Configuration des services terminée pour " + nameof($contextName$ServiceContainer));
 
             // Construction du service provider après la configuration complète
             _serviceProvider = services.BuildServiceProvider();
@@ -184,7 +185,7 @@ namespace $nameSpace$
 
                 // Vérification de l'accès au DbContext
                 using var scope = CreateScope();
-                var dbContext = scope.ServiceProvider.GetService<$contextNameSpace$>();
+                var dbContext = scope.ServiceProvider.GetService<$contextName$>();
                 if (dbContext == null)
                 {
                     _logger.LogError("DbContext non configuré");
