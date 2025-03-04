@@ -7,6 +7,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Querier.Api.Infrastructure.Database.Extensions;
 using Querier.Api.Infrastructure.Database.Parameters;
+using $rootNamespace$.DTOs;
 
 namespace $contextNamespace$
 {
@@ -36,7 +37,7 @@ namespace $contextNamespace$
         {
             get
             {
-                return "$contextNameSpace$";
+                return "$contextName$";
             \}
         \}
     \}

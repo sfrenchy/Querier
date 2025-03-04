@@ -12,7 +12,7 @@ namespace $rootNamespace$.DTOs
     /// <summary>
     /// DTO for retrieving $entity.Name$ data
     /// </summary>
-    [DtoFor(Action = "GET", EntityType = "$nameSpace$.$entity.Name$")]
+    [DtoFor(Action = "GET", EntityType = "$modelNamespace$.$entity.Name$")]
     public class $entity.Name$Dto
     {
         $entity.Properties: {property|
@@ -46,7 +46,7 @@ namespace $rootNamespace$.DTOs
     /// <summary>
     /// DTO for creating a new $entity.Name$
     /// </summary>
-    [DtoFor(Action = "CREATE", EntityType = "$nameSpace$.$entity.Name$")]
+    [DtoFor(Action = "CREATE", EntityType = "$modelNamespace$.$entity.Name$")]
     public class Create$entity.Name$Dto
     {
         $entity.Properties: {property|
@@ -70,7 +70,7 @@ namespace $rootNamespace$.DTOs
     /// <summary>
     /// DTO for updating an existing $entity.Name$
     /// </summary>
-    [DtoFor(Action = "UPDATE", EntityType = "$nameSpace$.$entity.Name$")]
+    [DtoFor(Action = "UPDATE", EntityType = "$modelNamespace$.$entity.Name$")]
     public class Update$entity.Name$Dto
     {
         $entity.Properties: {property|

@@ -1,4 +1,4 @@
-using $rootNamespace$;
+using $rootNamespace$.DTOs;
 
 namespace $rootNamespace$.Reports
 {

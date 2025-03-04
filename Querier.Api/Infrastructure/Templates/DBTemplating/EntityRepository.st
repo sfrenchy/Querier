@@ -27,7 +27,8 @@ namespace $rootNamespace$.Repositories
         /// Gets a $entity.Name$ by its identifier
         /// </summary>
         Task<$entity.Name$?> GetByIdAsync($entity.KeyType$ id);
-
+        
+        $if (entity.IsTableEntity)$
         /// <summary>
         /// Creates a new $entity.Name$
         /// </summary>
@@ -42,7 +43,8 @@ namespace $rootNamespace$.Repositories
         /// Deletes a $entity.Name$ by its identifier
         /// </summary>
         Task<bool> DeleteAsync($entity.KeyType$ id);
-
+        $endif$
+        
         /// <summary>
         /// Gets unique values for a specific column
         /// </summary>
@@ -179,115 +181,115 @@ namespace $rootNamespace$.Repositories
                 throw;
             \}
         \}
-
-        public async Task<$entity.Name$> CreateAsync($entity.Name$ entity)
-        {
-            if (entity == null)
+        $if (entity.IsTableEntity)$
+            public async Task<$entity.Name$> CreateAsync($entity.Name$ entity)
             {
-                _logger.LogWarning("Attempt to create $entity.Name$ with null entity");
-                throw new ArgumentNullException(nameof(entity));
-            \}
-
-            _logger.LogDebug("Creating new $entity.Name$ entity");
-
-            try
-            {
-                await using var context = await _contextFactory.CreateDbContextAsync();
-                
-                _logger.LogDebug("Adding entity to context");
-                context.$entity.PluralName$.Add(entity);
-                
-                _logger.LogDebug("Saving changes to database");
-                await context.SaveChangesAsync();
-
-                _logger.LogInformation("Successfully created new $entity.Name$ with id " + entity.$entity.KeyName$.ToString());
-                return entity;
-            \}
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating new $entity.Name$ entity");
-                throw;
-            \}
-        \}
-
-        public async Task<$entity.Name$?> UpdateAsync($entity.Name$ entity)
-        {
-            if (entity == null)
-            {
-                _logger.LogWarning("Attempt to update $entity.Name$ with null entity");
-                throw new ArgumentNullException(nameof(entity));
-            \}
-
-            _logger.LogDebug("Updating $entity.Name$ with id " + entity.$entity.KeyName$.ToString());
-
-            try
-            {
-                await using var context = await _contextFactory.CreateDbContextAsync();
-                
-                var existingEntity = await context.$entity.PluralName$.FindAsync(entity.$entity.KeyName$);
-                if (existingEntity == null)
-                {
-                    _logger.LogInformation("$entity.Name$ with id " + entity.$entity.KeyName$.ToString() + " not found for update");
-                    return null;
-                \}
-
-                _logger.LogDebug("Updating entity in context");
-                context.Entry(existingEntity).CurrentValues.SetValues(entity);
-                
-                _logger.LogDebug("Saving changes to database");
-                await context.SaveChangesAsync();
-
-                _logger.LogInformation("Successfully updated $entity.Name$ with id " + entity.$entity.KeyName$.ToString());
-                return existingEntity;
-            \}
-            catch (DbUpdateConcurrencyException ex)
-            {
-                _logger.LogWarning(ex, "Concurrency conflict while updating $entity.Name$ with id " + entity.$entity.KeyName$.ToString());
-                throw;
-            \}
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating $entity.Name$ with id " + entity.$entity.KeyName$.ToString());
-                throw;
-            \}
-        \}
-
-        public async Task<bool> DeleteAsync($entity.KeyType$ id)
-        {
-            _logger.LogDebug("Deleting $entity.Name$ with id " + id.ToString());
-
-            try
-            {
-                await using var context = await _contextFactory.CreateDbContextAsync();
-                
-                var entity = await context.$entity.PluralName$.FindAsync(id);
                 if (entity == null)
                 {
-                    _logger.LogInformation("$entity.Name$ with id " + id.ToString() + " not found for deletion");
-                    return false;
+                    _logger.LogWarning("Attempt to create $entity.Name$ with null entity");
+                    throw new ArgumentNullException(nameof(entity));
                 \}
-
-                _logger.LogDebug("Removing entity from context");
-                context.$entity.PluralName$.Remove(entity);
-                
-                _logger.LogDebug("Saving changes to database");
-                await context.SaveChangesAsync();
-
-                _logger.LogInformation("Successfully deleted $entity.Name$ with id " + id.ToString());
-                return true;
+    
+                _logger.LogDebug("Creating new $entity.Name$ entity");
+    
+                try
+                {
+                    await using var context = await _contextFactory.CreateDbContextAsync();
+                    
+                    _logger.LogDebug("Adding entity to context");
+                    context.$entity.PluralName$.Add(entity);
+                    
+                    _logger.LogDebug("Saving changes to database");
+                    await context.SaveChangesAsync();
+    
+                    _logger.LogInformation("Successfully created new $entity.Name$ with id " + entity.$entity.KeyName$.ToString());
+                    return entity;
+                \}
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating new $entity.Name$ entity");
+                    throw;
+                \}
             \}
-            catch (DbUpdateConcurrencyException ex)
+    
+            public async Task<$entity.Name$?> UpdateAsync($entity.Name$ entity)
             {
-                _logger.LogWarning(ex, "Concurrency conflict while deleting $entity.Name$ with id " + id.ToString());
-                throw;
+                if (entity == null)
+                {
+                    _logger.LogWarning("Attempt to update $entity.Name$ with null entity");
+                    throw new ArgumentNullException(nameof(entity));
+                \}
+    
+                _logger.LogDebug("Updating $entity.Name$ with id " + entity.$entity.KeyName$.ToString());
+    
+                try
+                {
+                    await using var context = await _contextFactory.CreateDbContextAsync();
+                    
+                    var existingEntity = await context.$entity.PluralName$.FindAsync(entity.$entity.KeyName$);
+                    if (existingEntity == null)
+                    {
+                        _logger.LogInformation("$entity.Name$ with id " + entity.$entity.KeyName$.ToString() + " not found for update");
+                        return null;
+                    \}
+    
+                    _logger.LogDebug("Updating entity in context");
+                    context.Entry(existingEntity).CurrentValues.SetValues(entity);
+                    
+                    _logger.LogDebug("Saving changes to database");
+                    await context.SaveChangesAsync();
+    
+                    _logger.LogInformation("Successfully updated $entity.Name$ with id " + entity.$entity.KeyName$.ToString());
+                    return existingEntity;
+                \}
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    _logger.LogWarning(ex, "Concurrency conflict while updating $entity.Name$ with id " + entity.$entity.KeyName$.ToString());
+                    throw;
+                \}
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error updating $entity.Name$ with id " + entity.$entity.KeyName$.ToString());
+                    throw;
+                \}
             \}
-            catch (Exception ex)
+    
+            public async Task<bool> DeleteAsync($entity.KeyType$ id)
             {
-                _logger.LogError(ex, "Error deleting $entity.Name$ with id " + id.ToString());
-                throw;
+                _logger.LogDebug("Deleting $entity.Name$ with id " + id.ToString());
+    
+                try
+                {
+                    await using var context = await _contextFactory.CreateDbContextAsync();
+                    
+                    var entity = await context.$entity.PluralName$.FindAsync(id);
+                    if (entity == null)
+                    {
+                        _logger.LogInformation("$entity.Name$ with id " + id.ToString() + " not found for deletion");
+                        return false;
+                    \}
+    
+                    _logger.LogDebug("Removing entity from context");
+                    context.$entity.PluralName$.Remove(entity);
+                    
+                    _logger.LogDebug("Saving changes to database");
+                    await context.SaveChangesAsync();
+    
+                    _logger.LogInformation("Successfully deleted $entity.Name$ with id " + id.ToString());
+                    return true;
+                \}
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    _logger.LogWarning(ex, "Concurrency conflict while deleting $entity.Name$ with id " + id.ToString());
+                    throw;
+                \}
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error deleting $entity.Name$ with id " + id.ToString());
+                    throw;
+                \}
             \}
-        \}
-
+        $endif$
         public async Task<List<string>> GetUniqueValuesForColumnAsync(string columnName)
         {
             _logger.LogDebug("Getting unique values for column " + columnName + " in $entity.Name$");

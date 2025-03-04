@@ -50,7 +50,6 @@ namespace Querier.Api.Domain.Services
         private readonly DatabaseServerDiscovery _serverDiscovery;
         private readonly DatabaseSchemaExtractor _schemaExtractor;
         private readonly IAssemblyManagerService _assemblyManager;
-        private readonly DatabaseToCSharpConverter _databaseToCSharpConverter;
         private readonly IEncryptionService _encryptionService;
         private readonly ConcurrentDictionary<string, IDbContextFactory<DbContext>> _contextFactoryCache = new();
         private readonly ConcurrentDictionary<int, IDbContextFactory<DbContext>> _contextFactoryByIdCache = new();
@@ -66,7 +65,6 @@ namespace Querier.Api.Domain.Services
             ILogger<DatabaseSchemaExtractor> schemaExtractorLogger,
             ILogger<JsonSchemaGenerator> jsonSchemaGeneratorLogger,
             ILogger<EndpointExtractor> endpointExtractorLogger,
-            ILogger<DatabaseToCSharpConverter> databaseToCSharpConverterLogger,
             IAssemblyManagerService assemblyManager,
             IEncryptionService encryptionService,
             IProgressService progressService)
@@ -81,7 +79,6 @@ namespace Querier.Api.Domain.Services
             _endpointExtractor = new EndpointExtractor(jsonSchemaGenerator, endpointExtractorLogger, serviceProvider, services);
             _serverDiscovery = new DatabaseServerDiscovery(serverDiscoveryLogger);
             _schemaExtractor = new DatabaseSchemaExtractor(schemaExtractorLogger);
-            _databaseToCSharpConverter = new DatabaseToCSharpConverter(databaseToCSharpConverterLogger);
             _encryptionService = encryptionService;
             _progressService = progressService;
         }
@@ -205,37 +202,26 @@ namespace Querier.Api.Domain.Services
                         srcZipContent.Add(addFile.Path, addFile.Code);
                     }
 
-                    List<Entities.QDBConnection.StoredProcedure> storedProcedures = new List<StoredProcedure>();
-                    
-                    
-                    // if scaffolding OK => Generate a common DB Schema representation for stored procedure
-                    if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == DbConnectionType.SqlServer)
+                    IDatabaseMetadataProvider dbMetadataProvider = connection.ConnectionType switch
                     {
-                        storedProcedures = _databaseToCSharpConverter.ToProcedureList(connectionString);
-                        procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
-                    }
-                    var procedureModel = new StoredProcedureTemplateModel
-                    {
-                        RootNamespace = rootNamespace,
-                        ContextName = contextName,
-                        ContextNamespace = contextNamespace,
-                        ModelNamespace = modelNamespace,
-                        ContextRoute = connection.ApiRoute,
-                        ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
+                        DbConnectionType.SqlServer => new SqlServerDatabaseProvider(_logger),
+                        DbConnectionType.MySql => new MySqlDatabaseProvider(_logger),
+                        _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
                     };
-                    GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
-                    // Extract entity metadata from scaffolded model
-                    var entityModel = new EntityTemplateModel
+
+                    var templateModel = new TemplateModel()
                     {
                         RootNamespace = rootNamespace,
                         ContextName = contextName,
                         ContextNamespace = contextNamespace,
                         ModelNamespace = modelNamespace,
                         ContextRoute = connection.ApiRoute,
+                        ProcedureList = dbMetadataProvider.ExtractStoredProcedureMetadata(connectionString),
                         EntityList = ExtractEntityMetadata(scaffoldedModelSources)
                     };
                     
-                    GenerateEntityFiles(procedureModel, entityModel, srcZipContent, sourceFiles);
+                    GenerateProcedureFiles(templateModel, srcZipContent, sourceFiles);
+                    GenerateEntityFiles(templateModel, srcZipContent, sourceFiles);
 
                     // Create source zip
                     byte[] sourceZipBytes = CreateSourceZip(srcZipContent);
@@ -327,7 +313,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private void GenerateProcedureFiles(StoredProcedureTemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateProcedureFiles(TemplateModel templateModel, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
         {
             var templates = new[]
             {
@@ -348,17 +334,17 @@ namespace Querier.Api.Domain.Services
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
                 ), '$', '$');
 
-                template.Add("rootNamespace", model.RootNamespace);
-                template.Add("contextNamespace", model.ContextNamespace);
-                template.Add("contextName", model.ContextName);
-                template.Add("modelNamespace", model.ModelNamespace);
+                template.Add("rootNamespace", templateModel.RootNamespace);
+                template.Add("contextNamespace", templateModel.ContextNamespace);
+                template.Add("contextName", templateModel.ContextName);
+                template.Add("modelNamespace", templateModel.ModelNamespace);
                 
                 template.Add("procedureList", templateName == "ProcedureDto" 
-                    ? model.ProcedureList.Where(s => s.HasOutput).ToList() 
-                    : model.ProcedureList);
+                    ? templateModel.ProcedureList.Where(s => s.HasOutput).ToList() 
+                    : templateModel.ProcedureList);
 
                 if (templateName == "ProcedureController")
-                    template.Add("contextRoute", model.ContextRoute);
+                    template.Add("contextRoute", templateModel.ContextRoute);
 
                 string content = template.Render();
                 srcZipContent.Add(outputPath, content);
@@ -366,7 +352,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private void GenerateEntityFiles(StoredProcedureTemplateModel procedureModel, EntityTemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateEntityFiles(TemplateModel templateModel, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
         {
             var templates = new[]
             {
@@ -384,15 +370,15 @@ namespace Querier.Api.Domain.Services
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
                 ), '$', '$');
 
-                template.Add("rootNamespace", model.RootNamespace);
-                template.Add("contextNameSpace", model.ContextNamespace);
-                template.Add("contextName", model.ContextName);
-                template.Add("modelNamespace", model.ModelNamespace);
+                template.Add("rootNamespace", templateModel.RootNamespace);
+                template.Add("contextNameSpace", templateModel.ContextNamespace);
+                template.Add("contextName", templateModel.ContextName);
+                template.Add("modelNamespace", templateModel.ModelNamespace);
                 
-                template.Add("entityList", model.EntityList);
+                template.Add("entityList", templateModel.EntityList);
 
                 if (templateName == "EntityController")
-                    template.Add("contextRoute", model.ContextRoute);
+                    template.Add("contextRoute", templateModel.ContextRoute);
 
                 string content = template.Render();
                 srcZipContent.Add(outputPath, content);
@@ -832,8 +818,37 @@ namespace Querier.Api.Domain.Services
 
         private List<TemplateEntityMetadata> ExtractEntityMetadata(ScaffoldedModel scaffoldedModel)
         {
+            var contextFile = scaffoldedModel.ContextFile;
             var entityFiles = scaffoldedModel.AdditionalFiles.Where(f => !f.Path.EndsWith("Context.cs"));
             var pluralizer = new Bricelam.EntityFrameworkCore.Design.Pluralizer();
+            var viewEntities = new HashSet<string>();
+            
+            // Identify views from the context
+            var contextSyntaxTree = CSharpSyntaxTree.ParseText(contextFile.Code).GetRoot();
+            var onModelCreatingNode = contextSyntaxTree.DescendantNodes().OfType<MethodDeclarationSyntax>()
+                .First(m => m.Identifier.Text == "OnModelCreating");
+            if (onModelCreatingNode != null)
+            {
+                string currentEntity = "";
+                foreach (var invocation in onModelCreatingNode.DescendantNodes().OfType<InvocationExpressionSyntax>())
+                {
+                    if (invocation.Expression is MemberAccessExpressionSyntax memberAccessEntity &&
+                        memberAccessEntity.Name.Identifier.Text == "Entity")
+                    {
+                        if (memberAccessEntity.Name is GenericNameSyntax)
+                        {
+                            currentEntity = ((GenericNameSyntax)memberAccessEntity.Name).TypeArgumentList.Arguments.First()
+                                .GetText().ToString();
+                        }
+                        
+                    }
+                    if (invocation.Expression is MemberAccessExpressionSyntax memberAccess &&
+                        memberAccess.Name.Identifier.Text == "ToView")
+                    {
+                        viewEntities.Add(currentEntity);
+                    }
+                }
+            }
 
             // Première passe : extraire toutes les entités et leurs propriétés
             var entityMap = new Dictionary<string, TemplateEntityMetadata>();
@@ -849,7 +864,8 @@ namespace Querier.Api.Domain.Services
                     Name = entityName,
                     PluralName = pluralizer.Pluralize(entityName),
                     Properties = new List<TemplateProperty>(),
-                    ForeignKeys = new List<TemplateForeignKey>()
+                    ForeignKeys = new List<TemplateForeignKey>(),
+                    IsViewEntity = viewEntities.Contains(entityName)
                 };
                 List<string> keys = new List<string>();
                 List<string> foreignKeys = new List<string>();
@@ -995,34 +1011,6 @@ namespace Querier.Api.Domain.Services
             }
 
             return entityMap.Values.ToList();
-        }
-
-        private List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(List<Entities.QDBConnection.StoredProcedure> procedures)
-        {
-            return procedures.Select(p => new StoredProcedureMetadata
-            {
-                Name = p.Name,
-                CSName = p.CSName,
-                CSReturnSignature = p.CSReturnSignature,
-                CSParameterSignature = p.CSParameterSignature,
-                InlineParameters = p.InlineParameters,
-                HasOutput = p.HasOutput,
-                HasParameters = p.HasParameters,
-                Parameters = p.Parameters.Select(param => new TemplateProperty
-                {
-                    Name = param.Name,
-                    CSName = param.CSName,
-                    CSType = param.CSType,
-                    SqlParameterType = param.SqlParameterType
-                }).ToList(),
-                OutputSet = p.OutputSet.Select(col => new TemplateProperty
-                {
-                    Name = col.Name,
-                    CSName = col.CSName,
-                    CSType = col.CSType
-                }).ToList(),
-                SummableOutputColumns = p.SummableOutputColumns
-            }).ToList();
         }
 
         public class SourceDownload

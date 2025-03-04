@@ -102,6 +102,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Assemblies\" />
+    <Folder Include="Infrastructure\Database\Models\" />
     <Folder Include="wwwroot\uploadManager\" />
   </ItemGroup>
   <ItemGroup>

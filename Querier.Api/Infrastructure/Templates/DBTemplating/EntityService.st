@@ -40,7 +40,8 @@ namespace $rootNamespace$.Services
         /// <param name="id">The identifier of the $entity.Name$</param>
         /// <returns>The $entity.Name$ DTO if found, null otherwise</returns>
         Task<$entity.Name$Dto?> GetByIdAsync($entity.KeyType$ id);
-
+        
+        $if (entity.IsTableEntity)$
         /// <summary>
         /// Creates a new $entity.Name$ entity
         /// </summary>
@@ -62,7 +63,8 @@ namespace $rootNamespace$.Services
         /// <param name="id">The identifier of the entity to delete</param>
         /// <returns>True if the entity was deleted, false if not found</returns>
         Task<bool> DeleteAsync($entity.KeyType$ id);
-
+        $endif$
+        
         /// <summary>
         /// Retrieves unique values for a specific column
         /// </summary>
@@ -71,7 +73,7 @@ namespace $rootNamespace$.Services
         Task<List<string>> ColumnUniqueValuesAsync(string column);
     \}
 
-    [DynamicContextEntity(ContextName="$nameSpace$", ServiceName="I$entity.Name$Service")]
+    [DynamicContextEntity(ContextName="$contextNamespace$.$contextName$", ServiceName="I$entity.Name$Service")]
     public class $entity.Name$Service : I$entity.Name$Service
     {
         private readonly I$entity.Name$Repository _repository;
@@ -149,13 +151,13 @@ namespace $rootNamespace$.Services
         {
             $entity.Properties: {property|
             $if(!property.IsKey)$
-                    $property.Name$ = dto.$property.Name$,
+                $property.Name$ = dto.$property.Name$,
+            $else$
+                $if(property.IsEntityKey)$
+                    $property.Name$ = id,
                 $else$
-                    $if(property.IsEntityKey)$
-                        $property.Name$ = id,
-                    $else$
-                        $property.Name$ = dto.$property.Name$,
-                    $endif$
+                    $property.Name$ = dto.$property.Name$,
+                $endif$
             $endif$
             }$
             \};
@@ -299,84 +301,85 @@ namespace $rootNamespace$.Services
             \}
         \}
 
-        public async Task<$entity.Name$Dto> CreateAsync(Create$entity.Name$Dto createDto) {
-            if (createDto == null) {
-                throw new EntityValidationException("$entity.Name$", "Create DTO cannot be null");
-            \}
-
-            try {
-                var entity = MapToEntity(createDto);
-                var result = await _repository.CreateAsync(entity);
-                
-                // Invalidate collection cache
-                await InvalidateCollectionCacheAsync();
-                
-                _logger.LogInformation("Created new $entity.Name$ with id " + result.$entity.KeyName$.ToString());
-                return MapToDto(result);
-            \}
-            catch (Exception ex) when (ex is not DynamicContextException) {
-                throw new DatabaseOperationException("Create", "$entity.Name$", ex);
-            \}
-        \}
-
-        public async Task<$entity.Name$Dto?> UpdateAsync($entity.KeyType$ id, Update$entity.Name$Dto updateDto) {
-            if (id == null) {
-                throw new EntityValidationException("$entity.Name$", "Id cannot be null");
-            \}
-            if (updateDto == null) {
-                throw new EntityValidationException("$entity.Name$", "Update DTO cannot be null");
-            \}
-
-            try {
-                var entity = MapToEntity(updateDto, id);
-                var result = await _repository.UpdateAsync(entity);
-                
-                if (result == null) {
-                    throw new EntityNotFoundException("$entity.Name$", id);
+        $if (entity.IsTableEntity)$
+            public async Task<$entity.Name$Dto> CreateAsync(Create$entity.Name$Dto createDto) {
+                if (createDto == null) {
+                    throw new EntityValidationException("$entity.Name$", "Create DTO cannot be null");
                 \}
-
-                // Invalidate individual cache
-                var cacheKey = "$entity.Name$_GetById_" + id.ToString();
-                await _cache.RemoveAsync(cacheKey);
-
-                // Invalidate collection cache
-                await InvalidateCollectionCacheAsync();
-
-                _logger.LogInformation("Updated $entity.Name$ with id " + id.ToString());
-                return MapToDto(result);
-            \}
-            catch (Exception ex) when (ex is not DynamicContextException) {
-                throw new DatabaseOperationException("Update", "$entity.Name$", ex);
-            \}
-        \}
-
-        public async Task<bool> DeleteAsync($entity.KeyType$ id) {
-            if (id == null) {
-                throw new EntityValidationException("$entity.Name$", "Id cannot be null");
-            \}
-
-            try {
-                var deleted = await _repository.DeleteAsync(id);
-                
-                if (!deleted) {
-                    throw new EntityNotFoundException("$entity.Name$", id);
+    
+                try {
+                    var entity = MapToEntity(createDto);
+                    var result = await _repository.CreateAsync(entity);
+                    
+                    // Invalidate collection cache
+                    await InvalidateCollectionCacheAsync();
+                    
+                    _logger.LogInformation("Created new $entity.Name$ with id " + result.$entity.KeyName$.ToString());
+                    return MapToDto(result);
                 \}
-
-                // Invalidate individual cache
-                var cacheKey = "$entity.Name$_GetById_" + id.ToString();
-                await _cache.RemoveAsync(cacheKey);
-
-                // Invalidate collection cache
-                await InvalidateCollectionCacheAsync();
-
-                _logger.LogInformation("Deleted $entity.Name$ with id " + id.ToString());
-                return true;
+                catch (Exception ex) when (ex is not DynamicContextException) {
+                    throw new DatabaseOperationException("Create", "$entity.Name$", ex);
+                \}
             \}
-            catch (Exception ex) when (ex is not DynamicContextException) {
-                throw new DatabaseOperationException("Delete", "$entity.Name$", ex);
+    
+            public async Task<$entity.Name$Dto?> UpdateAsync($entity.KeyType$ id, Update$entity.Name$Dto updateDto) {
+                if (id == null) {
+                    throw new EntityValidationException("$entity.Name$", "Id cannot be null");
+                \}
+                if (updateDto == null) {
+                    throw new EntityValidationException("$entity.Name$", "Update DTO cannot be null");
+                \}
+    
+                try {
+                    var entity = MapToEntity(updateDto, id);
+                    var result = await _repository.UpdateAsync(entity);
+                    
+                    if (result == null) {
+                        throw new EntityNotFoundException("$entity.Name$", id);
+                    \}
+    
+                    // Invalidate individual cache
+                    var cacheKey = "$entity.Name$_GetById_" + id.ToString();
+                    await _cache.RemoveAsync(cacheKey);
+    
+                    // Invalidate collection cache
+                    await InvalidateCollectionCacheAsync();
+    
+                    _logger.LogInformation("Updated $entity.Name$ with id " + id.ToString());
+                    return MapToDto(result);
+                \}
+                catch (Exception ex) when (ex is not DynamicContextException) {
+                    throw new DatabaseOperationException("Update", "$entity.Name$", ex);
+                \}
             \}
-        \}
-
+    
+            public async Task<bool> DeleteAsync($entity.KeyType$ id) {
+                if (id == null) {
+                    throw new EntityValidationException("$entity.Name$", "Id cannot be null");
+                \}
+    
+                try {
+                    var deleted = await _repository.DeleteAsync(id);
+                    
+                    if (!deleted) {
+                        throw new EntityNotFoundException("$entity.Name$", id);
+                    \}
+    
+                    // Invalidate individual cache
+                    var cacheKey = "$entity.Name$_GetById_" + id.ToString();
+                    await _cache.RemoveAsync(cacheKey);
+    
+                    // Invalidate collection cache
+                    await InvalidateCollectionCacheAsync();
+    
+                    _logger.LogInformation("Deleted $entity.Name$ with id " + id.ToString());
+                    return true;
+                \}
+                catch (Exception ex) when (ex is not DynamicContextException) {
+                    throw new DatabaseOperationException("Delete", "$entity.Name$", ex);
+                \}
+            \}
+        $endif$
         public async Task<List<string>> ColumnUniqueValuesAsync(string column) {
             if (string.IsNullOrEmpty(column)) {
                 throw new EntityValidationException("$entity.Name$", "Column name cannot be null or empty");

@@ -9,6 +9,7 @@ using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Infrastructure.Database.Parameters;
 using $rootNamespace$.Services;
 using $rootNamespace$.Exceptions;
+using $rootNamespace$.DTOs;
 
 namespace $rootNamespace$.Controllers {
     $procedureList: {procedure|
@@ -18,7 +19,7 @@ namespace $rootNamespace$.Controllers {
     [Authorize]
     [ApiController]
     [ControllerFor(StoredProcedure = "$procedure.Name$")]
-    [Route("api/v1/$contextRoute$/procedures/$procedure.CSName$")]
+    [Route("api/v1/$contextRoute$/procedure/$procedure.CSName$")]
     [Produces("application/json")]
     public class $procedure.CSName$Controller : ControllerBase {
         private readonly I$procedure.CSName$Service _service;

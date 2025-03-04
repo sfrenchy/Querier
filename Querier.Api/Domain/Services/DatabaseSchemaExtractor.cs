@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
@@ -224,30 +225,30 @@ namespace Querier.Api.Domain.Services
             while (await reader.ReadAsync())
                 {
                     try
-            {
-                var schema = reader.GetString(0);
-                var viewName = reader.GetString(1);
-
-                if (currentViewName != viewName || currentSchema != schema)
-                {
-                    currentView = new DBConnectionViewDescriptionDto
                     {
-                        Name = viewName,
-                        Schema = schema
-                    };
-                    response.Views.Add(currentView);
-                    currentViewName = viewName;
-                    currentSchema = schema;
+                        var schema = reader.GetString(0);
+                        var viewName = reader.GetString(1);
+
+                        if (currentViewName != viewName || currentSchema != schema)
+                        {
+                            currentView = new DBConnectionViewDescriptionDto
+                            {
+                                Name = viewName,
+                                Schema = schema
+                            };
+                            response.Views.Add(currentView);
+                            currentViewName = viewName;
+                            currentSchema = schema;
                             viewCount++;
                             _logger.LogTrace("Processing view {Schema}.{View}", schema, viewName);
-                }
+                        }
 
-                currentView.Columns.Add(new DBConnectionColumnDescriptionDto
-                {
-                    Name = reader.GetString(2),
-                    DataType = reader.GetString(3),
-                    IsNullable = reader.GetString(4) == "YES"
-                });
+                        currentView.Columns.Add(new DBConnectionColumnDescriptionDto
+                        {
+                            Name = reader.GetString(2),
+                            DataType = reader.GetString(3),
+                            IsNullable = reader.GetString(4) == "YES"
+                        });
                         columnCount++;
                     }
                     catch (Exception ex)
@@ -319,6 +320,35 @@ namespace Querier.Api.Domain.Services
                             Mode = reader.GetString(4)
                         });
                         paramCount++;
+
+                        await using var getProcedureOutput = new SqlCommand("sp_describe_first_result_set", connection);
+                        getProcedureOutput.CommandType = CommandType.StoredProcedure;
+                        getProcedureOutput.Parameters.AddWithValue("@tsql", $"EXEC [{schema}].[{spName}]");
+
+                        using var da = new SqlDataAdapter(getProcedureOutput);
+                        var dt = new DataTable();
+                        da.Fill(dt);
+
+                        foreach (DataRow row in dt.Rows)
+                        {
+                            try
+                            {
+                                var outputColumn = new DBConnectionColumnDescriptionDto
+                                {
+                                    Name = (string)row["name"],
+                                    IsNullable = Convert.ToInt32(row["is_nullable"]) == 1,
+                                    DataType = (string)row["system_type_name"]
+                                };
+
+                                currentSp.OutputColumns.Add(outputColumn);
+                                _logger.LogDebug("Added output {OutputName} to procedure {ProcedureName}", outputColumn.Name, currentSp.Name);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Error processing output column for procedure {ProcedureName}. Continuing with next column", currentSp.Name);
+                                // Continue with next output
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -326,6 +356,8 @@ namespace Querier.Api.Domain.Services
                     }
                 }
 
+                
+                
                 _logger.LogDebug("Extracted {ProcedureCount} stored procedures with {ParameterCount} total parameters", 
                     spCount, paramCount);
             }

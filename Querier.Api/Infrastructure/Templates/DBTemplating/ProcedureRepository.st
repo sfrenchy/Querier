@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Infrastructure.Database.Parameters;
+using $rootNamespace$.DTOs;
+using $contextNamespace$;
 
 namespace $rootNamespace$.Repositories
 {
@@ -30,11 +32,11 @@ namespace $rootNamespace$.Repositories
     /// </summary>
     public class $procedure.CSName$Repository : I$procedure.CSName$Repository
     {
-        private readonly IDbContextFactory<$contextNameSpace$> _contextFactory;
+        private readonly IDbContextFactory<$contextName$> _contextFactory;
         private readonly ILogger<$procedure.CSName$Repository> _logger;
 
         public $procedure.CSName$Repository(
-            IDbContextFactory<$contextNameSpace$> contextFactory,
+            IDbContextFactory<$contextName$> contextFactory,
             ILogger<$procedure.CSName$Repository> logger)
         {
             _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));

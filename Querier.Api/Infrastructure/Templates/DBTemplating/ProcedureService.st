@@ -15,6 +15,7 @@ using Querier.Api.Domain.Common.Models;
 using Querier.Api.Application.DTOs;
 using $rootNamespace$.Repositories;
 using $rootNamespace$.Exceptions;
+using $rootNamespace$.DTOs;
 
 namespace $rootNamespace$.Services
 {
@@ -33,7 +34,7 @@ namespace $rootNamespace$.Services
         Task<DataPagedResult<$procedure.CSName$Dto>> ExecuteAsync($procedure.CSName$InputDto parameters);
     \}
 
-    [DynamicContextProcedure(ContextName="$nameSpace$", ServiceName="I$procedure.CSName$Service")]
+    [DynamicContextProcedure(ContextName="$contextNamespace$.$contextName$", ServiceName="I$procedure.CSName$Service")]
     public class $procedure.CSName$Service : DynamicContextServiceBase, I$procedure.CSName$Service
     {
         private readonly I$procedure.CSName$Repository _repository;

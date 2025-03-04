@@ -12,7 +12,7 @@ using $rootNamespace$.Contexts;
 namespace $rootNamespace$
 {
     /// <summary>
-    /// Conteneur de services pour le contexte dynamique $contextNameSpace$
+    /// Conteneur de services pour le contexte dynamique $contextName$
     /// </summary>
     public class $contextName$ServiceContainer : IDynamicContextServiceContainer
     {

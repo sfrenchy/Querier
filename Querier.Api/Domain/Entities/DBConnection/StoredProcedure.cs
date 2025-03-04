@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
+using Querier.Api.Domain.Entities.DBConnection;
 
 namespace Querier.Api.Domain.Entities.QDBConnection
 {
     public class StoredProcedure
     {
+        public string Schema { get; set; }
         public string Name { get; set; }
 
         public string CSName
