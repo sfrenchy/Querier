@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Querier.Api.Infrastructure.Database.Generators;
 
-public abstract class DatabaseProviderBase
+public abstract class DatabaseMetadataProviderBase
 {
     protected string NormalizeCsString(string str)
     {
@@ -12,8 +12,8 @@ public abstract class DatabaseProviderBase
         csName = csName.Replace("P_", "");
         return ToPascalCase(csName);
     }
-    
-    protected string ToPascalCase(string str)
+
+    private string ToPascalCase(string str)
     {
         // Replace all non-letter and non-digits with an underscore and lowercase the rest.
         string sample = string.Join("", str?.Select(c => char.IsLetterOrDigit(c) ? c.ToString().ToLower() : "_").ToArray());

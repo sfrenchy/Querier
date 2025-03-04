@@ -8,7 +8,7 @@ using Querier.Api.Infrastructure.Database.Templates;
 
 namespace Querier.Api.Infrastructure.Database.Generators;
 
-public class SqlServerDatabaseProvider(ILogger logger) : DatabaseProviderBase, IDatabaseMetadataProvider
+public class SqlServerDatabaseMetadataProvider(ILogger logger) : DatabaseMetadataProviderBase, IDatabaseMetadataProvider
 {
     public List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(string connectionString)
     {
@@ -37,11 +37,37 @@ public class SqlServerDatabaseProvider(ILogger logger) : DatabaseProviderBase, I
                 Schema = schemaName,
                 Name = procedureName,
                 CSName = NormalizeCsString(procedureName),
-                Parameters = GetProcedureParametersMetadata(connection, schemaName, procedureName),
-                OutputSet = GetProcedureOutputMetadata(connection, schemaName, procedureName)
+                Parameters = [],
+                OutputSet = []
             };
 
-            result.Add(procedure);
+            bool parametersMetadataDefined = false;
+            bool outputSetMetadataDefined = false;
+
+            try
+            {
+                procedure.Parameters = GetProcedureParametersMetadata(connection, schemaName, procedureName);
+                parametersMetadataDefined = true;
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Unable to get parameters metadata for procedure {procedure.Name}", procedure.Name);
+                parametersMetadataDefined = false;
+            }
+
+            try
+            {
+                procedure.OutputSet = GetProcedureOutputMetadata(connection, schemaName, procedureName);
+                outputSetMetadataDefined = true;
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Unable to get output set metadata for procedure {procedure.Name}", procedure.Name);
+                outputSetMetadataDefined = false;
+            }
+            
+            if (parametersMetadataDefined && outputSetMetadataDefined)
+                result.Add(procedure);
         }
         
         return result;

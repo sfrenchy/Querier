@@ -204,8 +204,8 @@ namespace Querier.Api.Domain.Services
 
                     IDatabaseMetadataProvider dbMetadataProvider = connection.ConnectionType switch
                     {
-                        DbConnectionType.SqlServer => new SqlServerDatabaseProvider(_logger),
-                        DbConnectionType.MySql => new MySqlDatabaseProvider(_logger),
+                        DbConnectionType.SqlServer => new SqlServerDatabaseMetadataProvider(_logger),
+                        DbConnectionType.MySql => new MySqlDatabaseMetadataProvider(_logger),
                         _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
                     };
 
