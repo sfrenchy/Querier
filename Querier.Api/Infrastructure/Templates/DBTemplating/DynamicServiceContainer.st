@@ -96,8 +96,45 @@ namespace $rootNamespace$
         {
             _logger.LogInformation("Configuration des services pour " + nameof($contextName$ServiceContainer));
 
-            // Configuration du DbContext
+            // Configure DbContext
             services.AddPooledDbContextFactory<$contextName$>(options =>
+            {
+                switch (connectionType)
+                {
+                    case DbConnectionType.SqlServer:
+                        options.UseSqlServer(connectionString, sqlOptions =>
+                        {
+                            sqlOptions.EnableRetryOnFailure(3);
+                            sqlOptions.CommandTimeout(30);
+                        });
+                        break;
+                    case DbConnectionType.MySql:
+                        options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), mySqlOptions =>
+                        {
+                            mySqlOptions.EnableRetryOnFailure(3);
+                            mySqlOptions.CommandTimeout(30);
+                        });
+                        break;
+                    case DbConnectionType.PgSql:
+                        options.UseNpgsql(connectionString, npgsqlOptions =>
+                        {
+                            npgsqlOptions.EnableRetryOnFailure(3);
+                            npgsqlOptions.CommandTimeout(30);
+                        });
+                        break;
+                    case DbConnectionType.SQLite:
+                        options.UseSqlite(connectionString, npgsqlOptions =>
+                        {
+                            npgsqlOptions.CommandTimeout(30);
+                        });
+                        break;
+                    default:
+                        throw new ArgumentException("Type de connexion non supporté : " + connectionType.ToString());
+                }
+            });
+            
+            // Configure ReadOnlyContext
+            services.AddPooledDbContextFactory<$contextName$ReadOnlyContext>(options =>
             {
                 switch (connectionType)
                 {

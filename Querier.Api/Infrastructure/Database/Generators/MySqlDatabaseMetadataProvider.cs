@@ -78,9 +78,8 @@ public class MySqlDatabaseMetadataProvider(ILogger logger) : DatabaseMetadataPro
             
         }
 
-        foreach (string procedureName in procedureToRemove)
+        foreach (var index in procedureToRemove.Select(procedureName => result.FindIndex(p => p.Name == procedureName)))
         {
-            int index = result.FindIndex(p => p.Name == procedureName);
             result.RemoveAt(index);
         }
         return result;

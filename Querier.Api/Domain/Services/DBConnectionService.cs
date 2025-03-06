@@ -206,6 +206,8 @@ namespace Querier.Api.Domain.Services
                     {
                         DbConnectionType.SqlServer => new SqlServerDatabaseMetadataProvider(_logger),
                         DbConnectionType.MySql => new MySqlDatabaseMetadataProvider(_logger),
+                        DbConnectionType.PgSql => new PostgreSqlDatabaseMetadataProvider(_logger),
+                        DbConnectionType.SQLite => new SqliteDatabaseMetadataProvider(),
                         _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
                     };
 
@@ -357,6 +359,7 @@ namespace Querier.Api.Domain.Services
             var templates = new[]
             {
                 ("DynamicServiceContainer", "Services\\DynamicServiceContainer.cs"),
+                ("ReadOnlyDbContext", "Context\\ReadOnlDbContext.cs"),
                 ("EntityController","Controllers\\EntityController.cs"),
                 ("EntityDto","Entities\\EntityDto.cs"),
                 ("EntityRepository","Repositories\\EntityRepository.cs"),
@@ -371,10 +374,10 @@ namespace Querier.Api.Domain.Services
                 ), '$', '$');
 
                 template.Add("rootNamespace", templateModel.RootNamespace);
-                template.Add("contextNameSpace", templateModel.ContextNamespace);
+                template.Add("contextNamespace", templateModel.ContextNamespace);
                 template.Add("contextName", templateModel.ContextName);
                 template.Add("modelNamespace", templateModel.ModelNamespace);
-                
+                template.Add("procedureList", templateModel.ProcedureList);
                 template.Add("entityList", templateModel.EntityList);
 
                 if (templateName == "EntityController")
