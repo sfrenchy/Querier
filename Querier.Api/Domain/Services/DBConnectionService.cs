@@ -5,7 +5,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Loader;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,11 +30,8 @@ using Querier.Api.Domain.Entities.DBConnection;
 using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Templates;
 using Querier.Api.Infrastructure.Services;
-using Swashbuckle.AspNetCore.Swagger;
 using System.Collections.Concurrent;
 using Microsoft.Data.Sqlite;
-using Querier.Api.Domain.Entities.QDBConnection;
-using Querier.Api.Domain.Models;
 
 namespace Querier.Api.Domain.Services
 {
@@ -55,6 +51,7 @@ namespace Querier.Api.Domain.Services
         private readonly ConcurrentDictionary<int, IDbContextFactory<DbContext>> _contextFactoryByIdCache = new();
         private readonly ConcurrentDictionary<int, IDbContextFactory<DbContext>> _readOnlyContextFactoryByIdCache = new();
         private readonly IProgressService _progressService;
+        private readonly IRoslynCompilerService _roslynCompilerService;
         
         public DbConnectionService(
             IDbConnectionRepository dbConnectionRepository,
@@ -68,6 +65,7 @@ namespace Querier.Api.Domain.Services
             ILogger<EndpointExtractor> endpointExtractorLogger,
             IAssemblyManagerService assemblyManager,
             IEncryptionService encryptionService,
+            IRoslynCompilerService roslynCompilerService,
             IProgressService progressService)
         {
             _logger = logger;
@@ -82,6 +80,7 @@ namespace Querier.Api.Domain.Services
             _schemaExtractor = new DatabaseSchemaExtractor(schemaExtractorLogger);
             _encryptionService = encryptionService;
             _progressService = progressService;
+            _roslynCompilerService = roslynCompilerService;
         }
 
         public async Task<DBConnectionCreateResultDto> AddConnectionAsync(DBConnectionCreateDto connection)
@@ -231,8 +230,8 @@ namespace Querier.Api.Domain.Services
 
                     // Compile generated sources
                     await _progressService.ReportProgress(connection.OperationId, 80, ProgressStatus.Compiling);
-                    var (assemblyBytes, pdbBytes) = CompileAssembly(connection.Name, sourceFiles);
-                    if (assemblyBytes == null)
+                    var compilationResult = _roslynCompilerService.CompileAssembly(connection.Name, sourceFiles);
+                    if (compilationResult.AssemblyBytes == null)
                     {
                         await _progressService.FailOperation(connection.OperationId, ProgressStatus.Failed);
                         result.State = DBConnectionState.CompilationError;
@@ -241,7 +240,7 @@ namespace Querier.Api.Domain.Services
                     await _progressService.ReportProgress(connection.OperationId, 90, ProgressStatus.CompilationSucceeded);
 
                     // Calculate assembly hash
-                    var hash = ComputeAssemblyHash(assemblyBytes);
+                    var hash = ComputeAssemblyHash(compilationResult.AssemblyBytes);
 
                     // Load assembly and configure services
                     await _progressService.ReportProgress(connection.OperationId, 95, ProgressStatus.LoadingAssembly);
@@ -249,7 +248,7 @@ namespace Querier.Api.Domain.Services
                         connection.Name,
                         connection.ConnectionType,
                         connectionString,
-                        assemblyBytes);
+                        compilationResult.AssemblyBytes);
 
                     if (container == null)
                     {
@@ -275,8 +274,8 @@ namespace Querier.Api.Domain.Services
                         ConnectionType = connection.ConnectionType,
                         Description = procedureDescription,
                         AssemblyHash = hash,
-                        AssemblyDll = assemblyBytes,
-                        AssemblyPdb = pdbBytes,
+                        AssemblyDll = compilationResult.AssemblyBytes,
+                        AssemblyPdb = compilationResult.PdbBytes,
                         AssemblySourceZip = sourceZipBytes,
                         ContextName = $"{contextNamespace}.{contextName}",
                         ApiRoute = connection.ApiRoute,
@@ -401,90 +400,12 @@ namespace Querier.Api.Domain.Services
             }
             return sourceStream.ToArray();
         }
-
-        private (byte[] assemblyBytes, byte[] pdbBytes) CompileAssembly(string contextName, List<string> sourceFiles)
-        {
-            var peStream = new MemoryStream();
-            var pdbStream = new MemoryStream();
-
-            var compilation = GenerateCode(contextName, sourceFiles);
-            var emitResult = compilation.Emit(peStream, pdbStream);
-
-            if (!emitResult.Success)
-            {
-                var compilationErrors = emitResult.Diagnostics
-                    .Where(d => d.Severity == DiagnosticSeverity.Error)
-                    .Select(d => new
-                    {
-                        Location = d.Location.GetLineSpan().StartLinePosition,
-                        Message = d.GetMessage(),
-                        ErrorCode = d.Id
-                    })
-                    .ToList();
-
-                var errorMessage = string.Join("\n", compilationErrors.Select(e => 
-                    $"Error {e.ErrorCode} at line {e.Location.Line + 1}: {e.Message}"));
-                
-                _logger.LogError("Code compilation failed:\n{Errors}", errorMessage);
-                return (null, null);
-            }
-
-            peStream.Seek(0, SeekOrigin.Begin);
-            pdbStream.Seek(0, SeekOrigin.Begin);
-            return (peStream.ToArray(), pdbStream.ToArray());
-        }
-
-        private CSharpCompilation GenerateCode(string contextName, List<string> sourceFiles)
-        {
-            var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp12);
-            var parsedSyntaxTrees = sourceFiles.Select(f => SyntaxFactory.ParseSyntaxTree(f, options));
-
-            return CSharpCompilation.Create($"{contextName}_DataContext.dll",
-                parsedSyntaxTrees,
-                references: GetCompilationReferences(),
-                options: new CSharpCompilationOptions(
-                    OutputKind.DynamicallyLinkedLibrary,
-                    optimizationLevel: OptimizationLevel.Debug));
-        }
-
+        
         private string ComputeAssemblyHash(byte[] assemblyBytes)
         {
             using var sha256 = SHA256.Create();
             var hash = sha256.ComputeHash(assemblyBytes);
             return Convert.ToBase64String(hash);
-        }
-
-        private List<MetadataReference> GetCompilationReferences()
-        {
-            var refs = new List<MetadataReference>();
-
-            // Reference all assemblies referenced by this program 
-            var referencedAssemblies = Assembly.GetExecutingAssembly().GetReferencedAssemblies();
-            refs.AddRange(referencedAssemblies.Select(a => MetadataReference.CreateFromFile(Assembly.Load(a).Location)));
-
-            // Add the missing ones needed to compile the assembly
-            var additionalAssemblies = new[]
-            {
-                typeof(object),
-                typeof(DbConnection),
-                typeof(System.Linq.Expressions.Expression),
-                typeof(System.ComponentModel.DisplayNameAttribute),
-                typeof(System.Threading.CancellationToken),
-                typeof(Task),
-                typeof(List<>),
-                typeof(Infrastructure.Database.Parameters.OutputParameter<>),
-                typeof(Microsoft.Extensions.Caching.Distributed.IDistributedCache),
-                typeof(Enumerable),
-                typeof(MemoryStream),
-                typeof(StreamReader),
-                typeof(System.Linq.Dynamic.Core.DynamicClassFactory),
-                typeof(MySqlConnector.MySqlConnection)
-            };
-
-            refs.AddRange(additionalAssemblies.Select(t => MetadataReference.CreateFromFile(t.Assembly.Location)));
-            refs.Add(MetadataReference.CreateFromFile(Assembly.Load("netstandard, Version=2.0.0.0").Location));
-
-            return refs;
         }
 
         public async Task DeleteDbConnectionAsync(int dbConnectionId)

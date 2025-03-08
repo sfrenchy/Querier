@@ -33,6 +33,7 @@ public class LinqQueryService(IDbContextFactory<ApiDbContext> contextFactory,
     IUserService userService,
     IHttpContextAccessor httpContextAccessor,
     IAssemblyManagerService assemblyManagerService,
+    IRoslynCompilerService roslynCompilerService,
     ILogger<SqlQueryService> logger) : ILinqQueryService
 {
     public async Task<IEnumerable<LinqQueryDto>> GetAllQueriesAsync(string userMail)
@@ -165,12 +166,12 @@ public class LinqQueryService(IDbContextFactory<ApiDbContext> contextFactory,
                 if (t == null) throw new Exception($"Type {query.DBConnection}.Contexts.LinqQuery.{query.DBConnection}{query.Name}Query not found");
                 MethodInfo? m = t.GetMethod("CreateDelegate", BindingFlags.Public | BindingFlags.Static);
                 if (m == null) throw new Exception("CreateDelegate() method not found");
-                
                 var func = (Func<IDynamicReadOnlyDbContext, dynamic>)m.Invoke(null, null);
 
-                var test = await dbConnectionService.GetReadOnlyDbContextFactoryByIdAsync(query.DBConnectionId);
-                var dbContext = (IDynamicReadOnlyDbContext) test.CreateDbContext();
+                var dbContextFactory = await dbConnectionService.GetReadOnlyDbContextFactoryByIdAsync(query.DBConnectionId);
+                var dbContext = (IDynamicReadOnlyDbContext) dbContextFactory.CreateDbContext();
                 dbContext.CompiledQueries[query.Name] = func;
+                
                 var dataresult = (IEnumerable) dbContext.CompiledQueries[query.Name](dbContext);
                 DataTable dt = dataresult.ToDataTable();
                 logger.LogDebug("Query execution successful, creating entity definition");
@@ -275,76 +276,35 @@ public class LinqQueryService(IDbContextFactory<ApiDbContext> contextFactory,
                 logger.LogWarning("SQL query with ID {QueryId} not found", queryId);
                 throw new NotFoundException("Query not found");
             }
-            /*
-            var targetContextFactory = await dbConnectionService.GetDbContextFactoryByIdAsync(query.DBConnectionId);
-            await using var dbContext = await targetContextFactory.CreateDbContextAsync();
-            var command = dbContext.Database.GetDbConnection().CreateCommand();
-            string sqlQuery = query.Query.TrimEnd(';');
+            
+            var dbContextFactory = await dbConnectionService.GetReadOnlyDbContextFactoryByIdAsync(query.DBConnectionId);
+            var dbContext = (IDynamicReadOnlyDbContext) dbContextFactory.CreateDbContext();
 
+            if (!dbContext.CompiledQueries.ContainsKey(query.Name))
+            {
+                var connectionAssemblies = assemblyManagerService.GetAssemblies(query.DBConnection.Name);
+                if (!connectionAssemblies.Any(a => a.FullName.Contains(query.Name)))
+                    await assemblyManagerService.LoadQueryAssemblyAsync(query.DBConnection.Name, query.AssemblyDll);
+
+                var assembly = connectionAssemblies.First(a => a.FullName.Contains(query.Name));
+                Type? t = assembly.GetType($"{query.DBConnection.Name}.Contexts.LinqQuery.{query.DBConnection.Name}{query.Name}Query");
+                if (t == null) throw new Exception($"Type {query.DBConnection}.Contexts.LinqQuery.{query.DBConnection}{query.Name}Query not found");
+                MethodInfo? m = t.GetMethod("CreateDelegate", BindingFlags.Public | BindingFlags.Static);
+                if (m == null) throw new Exception("CreateDelegate() method not found");
+                var func = (Func<IDynamicReadOnlyDbContext, dynamic>)m.Invoke(null, null);
+                dbContext.CompiledQueries[query.Name] = func;
+            }
+            
+            var data = (IEnumerable<dynamic>)dbContext.CompiledQueries[query.Name](dbContext);
+            var enumerable = data as dynamic[] ?? data.ToArray();
+            int totalCount = enumerable.Count();
             if (dataRequestParameters.PageSize > 0)
             {
                 logger.LogDebug("Applying pagination to query");
-                sqlQuery = BuildPaginatedQuery(sqlQuery);
-
-                var skipParameter = command.CreateParameter();
-                skipParameter.ParameterName = "@Skip";
-                skipParameter.Value = (dataRequestParameters.PageNumber - 1) * dataRequestParameters.PageSize;
-                command.Parameters.Add(skipParameter);
-
-                var takeParameter = command.CreateParameter();
-                takeParameter.ParameterName = "@Take";
-                takeParameter.Value = dataRequestParameters.PageSize;
-                command.Parameters.Add(takeParameter);
+                data = enumerable.Skip((dataRequestParameters.PageNumber - 1) * dataRequestParameters.PageSize).Take(dataRequestParameters.PageSize);
             }
-
-            command.CommandText = sqlQuery;
-            command.CommandType = CommandType.Text;
-
-            foreach (var param in dataRequestParameters.Parameters)
-            {
-                var parameter = command.CreateParameter();
-                parameter.ParameterName = param.Key;
-                parameter.Value = param.Value ?? DBNull.Value;
-                command.Parameters.Add(parameter);
-            }
-
-            logger.LogDebug("Opening database connection");
-                await dbContext.Database.OpenConnectionAsync();
-
-            await using var result = await command.ExecuteReaderAsync();
-            var data = new List<dynamic>();
-            int totalCount = 0;
-
-            while (await result.ReadAsync())
-            {
-                var row = new ExpandoObject() as IDictionary<string, object>;
-
-                if (dataRequestParameters.PageSize > 0 && totalCount == 0)
-                {
-                    totalCount = Convert.ToInt32(result.GetValue(result.GetOrdinal("TotalCount")));
-                }
-
-                for (var i = 0; i < result.FieldCount; i++)
-                {
-                    var columnName = result.GetName(i);
-                    if (dataRequestParameters.PageSize == 0 || (columnName != "RowNum" && columnName != "TotalCount"))
-                    {
-                        row.Add(columnName, result.GetValue(i));
-                    }
-                }
-
-                data.Add(row);
-            }
-
-            if (dataRequestParameters.PageSize == 0)
-            {
-                totalCount = data.Count;
-            }
-            */
-            dynamic data = new List<object>();
-            int totalCount = 0;
-
-            return new DataPagedResult<dynamic>(data, totalCount, dataRequestParameters);
+            
+            return new DataPagedResult<dynamic>(enumerable, totalCount, dataRequestParameters);
         }
         catch (Exception ex)
         {
@@ -387,101 +347,14 @@ public class LinqQueryService(IDbContextFactory<ApiDbContext> contextFactory,
             template.Add("linqQueryCode", query.Query);
             string finalLinqQueryCode = template.Render();
             
-            var (assemblyBytes, pdbBytes) = CompileAssembly(query.Name, [finalLinqQueryCode], [], refAssemblilesBytes);
+            var compilationResult = roslynCompilerService.CompileAssembly(query.Name, [finalLinqQueryCode], [], refAssemblilesBytes);
             
-            return (true, assemblyBytes, pdbBytes);
+            return (true, compilationResult.AssemblyBytes, compilationResult.PdbBytes);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error compiling/validating query for {QueryName}", query.Name);
             return (false, null, null);
         }
-    }
-    
-    private (byte[] assemblyBytes, byte[] pdbBytes) CompileAssembly(string contextName, List<string> sourceFiles, List<Type> referenceTypes, List<byte[]> refAssemblilesBytes)
-    {
-        var peStream = new MemoryStream();
-        var pdbStream = new MemoryStream();
-
-        var compilation = GenerateCode(contextName, sourceFiles, referenceTypes, refAssemblilesBytes);
-        var emitResult = compilation.Emit(peStream, pdbStream);
-
-        if (!emitResult.Success)
-        {
-            var compilationErrors = emitResult.Diagnostics
-                .Where(d => d.Severity == DiagnosticSeverity.Error)
-                .Select(d => new
-                {
-                    Location = d.Location.GetLineSpan().StartLinePosition,
-                    Message = d.GetMessage(),
-                    ErrorCode = d.Id
-                })
-                .ToList();
-
-            var errorMessage = string.Join("\n", compilationErrors.Select(e => 
-                $"Error {e.ErrorCode} at line {e.Location.Line + 1}: {e.Message}"));
-                
-            logger.LogError("Code compilation failed:\n{Errors}", errorMessage);
-            return (null, null);
-        }
-
-        peStream.Seek(0, SeekOrigin.Begin);
-        pdbStream.Seek(0, SeekOrigin.Begin);
-        return (peStream.ToArray(), pdbStream.ToArray());
-    }
-    
-    private CSharpCompilation GenerateCode(string contextName, List<string> sourceFiles, List<Type> referenceTypes, List<byte[]> refAssemblilesBytes)
-    {
-        var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp12);
-        var parsedSyntaxTrees = sourceFiles.Select(f => SyntaxFactory.ParseSyntaxTree(f, options));
-
-        return CSharpCompilation.Create($"{contextName}_DataContext.dll",
-            parsedSyntaxTrees,
-            references: GetCompilationReferences(referenceTypes, refAssemblilesBytes),
-            options: new CSharpCompilationOptions(
-                OutputKind.DynamicallyLinkedLibrary,
-                optimizationLevel: OptimizationLevel.Debug));
-    }
-    
-    private List<MetadataReference> GetCompilationReferences(List<Type> referenceTypes, List<byte[]> refAssemblilesBytes)
-    {
-        var refs = new List<MetadataReference>();
-
-        // Reference all assemblies referenced by this program 
-        var referencedAssemblies = Assembly.GetExecutingAssembly().GetReferencedAssemblies();
-        refs.AddRange(referencedAssemblies.Select(a => MetadataReference.CreateFromFile(Assembly.Load(a).Location)));
-
-        // Add the missing ones needed to compile the assembly
-        var additionalAssemblies = new List<Type>() {
-            typeof(object),
-            typeof(DbConnection),
-            typeof(System.Linq.Expressions.Expression),
-            typeof(System.ComponentModel.DisplayNameAttribute),
-            typeof(System.Threading.CancellationToken),
-            typeof(Task),
-            typeof(List<>),
-            typeof(Infrastructure.Database.Parameters.OutputParameter<>),
-            typeof(Microsoft.Extensions.Caching.Distributed.IDistributedCache),
-            typeof(Enumerable),
-            typeof(MemoryStream),
-            typeof(StreamReader),
-            typeof(System.Linq.Dynamic.Core.DynamicClassFactory),
-            typeof(MySqlConnector.MySqlConnection),
-            typeof(Func<,>)
-        };
-
-        if (referenceTypes != null)
-           additionalAssemblies.AddRange(referenceTypes);
-
-        refs.AddRange(additionalAssemblies.Select(t => MetadataReference.CreateFromFile(t.Assembly.Location)));
-        
-        foreach (byte[] a in refAssemblilesBytes)
-            refs.Add(MetadataReference.CreateFromStream(new MemoryStream(a)));
-        
-        refs.Add(MetadataReference.CreateFromFile(Assembly.Load("netstandard, Version=2.0.0.0").Location));
-        
-        
-        
-        return refs;
     }
 }

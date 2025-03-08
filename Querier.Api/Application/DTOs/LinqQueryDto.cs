@@ -66,7 +66,8 @@ public class LinqQueryDto
     /// Description of the query's output format and structure
     /// </summary>
     public string? OutputDescription { get; set; }
-    
+    public byte[] AssemblyDll { get; set; }
+    public byte[] AssemblyPdb { get; set; }
     public static LinqQueryDto FromEntity(LinqQuery linqQuery)
     {
         return new LinqQueryDto()
@@ -88,7 +89,9 @@ public class LinqQueryDto
                 ApiRoute = linqQuery.Connection.ApiRoute
             },
             DBConnectionId = linqQuery.ConnectionId,
-            OutputDescription = linqQuery.OutputDescription
+            OutputDescription = linqQuery.OutputDescription,
+            AssemblyDll = linqQuery.AssemblyDll,
+            AssemblyPdb = linqQuery.AssemblyPdb
         };
     }
 }

@@ -267,7 +267,8 @@ namespace Querier.Api.Infrastructure.Extensions
             services.AddScoped<IWizardService, WizardService>();
             services.AddScoped<IDbConnectionService, DbConnectionService>();
             services.AddScoped<IEmailTemplateService, EmailTemplateService>();
-
+            services.AddScoped<IRoslynCompilerService, RoslynCompilerService>();
+            
             // User and Auth services
             services.AddScoped<IEmailSendingService, SmtpEmailSendingService>();
             services.AddScoped<IAuthenticationService, AuthenticationService>();
