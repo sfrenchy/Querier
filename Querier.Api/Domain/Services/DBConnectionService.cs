@@ -5,7 +5,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Loader;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,11 +30,8 @@ using Querier.Api.Domain.Entities.DBConnection;
 using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Templates;
 using Querier.Api.Infrastructure.Services;
-using Swashbuckle.AspNetCore.Swagger;
 using System.Collections.Concurrent;
 using Microsoft.Data.Sqlite;
-using Querier.Api.Domain.Entities.QDBConnection;
-using Querier.Api.Domain.Models;
 
 namespace Querier.Api.Domain.Services
 {
@@ -50,11 +46,12 @@ namespace Querier.Api.Domain.Services
         private readonly DatabaseServerDiscovery _serverDiscovery;
         private readonly DatabaseSchemaExtractor _schemaExtractor;
         private readonly IAssemblyManagerService _assemblyManager;
-        private readonly DatabaseToCSharpConverter _databaseToCSharpConverter;
         private readonly IEncryptionService _encryptionService;
         private readonly ConcurrentDictionary<string, IDbContextFactory<DbContext>> _contextFactoryCache = new();
         private readonly ConcurrentDictionary<int, IDbContextFactory<DbContext>> _contextFactoryByIdCache = new();
+        private readonly ConcurrentDictionary<int, IDbContextFactory<DbContext>> _readOnlyContextFactoryByIdCache = new();
         private readonly IProgressService _progressService;
+        private readonly IRoslynCompilerService _roslynCompilerService;
         
         public DbConnectionService(
             IDbConnectionRepository dbConnectionRepository,
@@ -66,9 +63,9 @@ namespace Querier.Api.Domain.Services
             ILogger<DatabaseSchemaExtractor> schemaExtractorLogger,
             ILogger<JsonSchemaGenerator> jsonSchemaGeneratorLogger,
             ILogger<EndpointExtractor> endpointExtractorLogger,
-            ILogger<DatabaseToCSharpConverter> databaseToCSharpConverterLogger,
             IAssemblyManagerService assemblyManager,
             IEncryptionService encryptionService,
+            IRoslynCompilerService roslynCompilerService,
             IProgressService progressService)
         {
             _logger = logger;
@@ -81,9 +78,9 @@ namespace Querier.Api.Domain.Services
             _endpointExtractor = new EndpointExtractor(jsonSchemaGenerator, endpointExtractorLogger, serviceProvider, services);
             _serverDiscovery = new DatabaseServerDiscovery(serverDiscoveryLogger);
             _schemaExtractor = new DatabaseSchemaExtractor(schemaExtractorLogger);
-            _databaseToCSharpConverter = new DatabaseToCSharpConverter(databaseToCSharpConverterLogger);
             _encryptionService = encryptionService;
             _progressService = progressService;
+            _roslynCompilerService = roslynCompilerService;
         }
 
         public async Task<DBConnectionCreateResultDto> AddConnectionAsync(DBConnectionCreateDto connection)
@@ -93,8 +90,13 @@ namespace Querier.Api.Domain.Services
                 await _progressService.StartOperation(connection.OperationId, ProgressStatus.Starting);
                 _logger.LogDebug("Adding new database connection: {Name}", connection.Name);
                 DBConnectionCreateResultDto result = new DBConnectionCreateResultDto();
-                string connectionNamespace = "";
-                string contextName = "";
+                
+                string rootNamespace = connection.Name;
+                string contextName = $"{connection.Name}Context";
+                string contextNamespace = $"{connection.Name}.Contexts";
+                string modelNamespace = $"{connection.Name}.Models";
+                
+                //string connectionNamespace = "";
                 string procedureDescription = "";
 
                 // Validation step (10%)
@@ -110,8 +112,6 @@ namespace Querier.Api.Domain.Services
                             {
                                 _logger.LogDebug("Testing SQL Server connection for: {Name}", connection.Name);
                                 c.Open();
-                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
-                                contextName = $"{c.Database}Context";
                                 result.State = DBConnectionState.Connected;
                                 _logger.LogInformation("Successfully connected to SQL Server for: {Name}", connection.Name);
                             }
@@ -121,8 +121,6 @@ namespace Querier.Api.Domain.Services
                             {
                                 _logger.LogDebug("Testing MySQL connection for: {Name}", connection.Name);
                                 c.Open();
-                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
-                                contextName = $"{c.Database}Context";
                                 result.State = DBConnectionState.Connected;
                                 _logger.LogInformation("Successfully connected to MySQL for: {Name}", connection.Name);
                             }
@@ -132,8 +130,6 @@ namespace Querier.Api.Domain.Services
                             {
                                 _logger.LogDebug("Testing PostgreSQL connection for: {Name}", connection.Name);
                                 c.Open();
-                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
-                                contextName = $"{c.Database}Context";
                                 result.State = DBConnectionState.Connected;
                                 _logger.LogInformation("Successfully connected to PostgreSQL for: {Name}", connection.Name);
                             }
@@ -143,8 +139,6 @@ namespace Querier.Api.Domain.Services
                             {
                                 _logger.LogDebug("Testing SQLite connection for: {Name}", connection.Name);
                                 c.Open();
-                                connectionNamespace = $"{connection.Name}.{c.Database}.Api.Models";
-                                contextName = $"{c.Database}Context";
                                 result.State = DBConnectionState.Connected;
                                 _logger.LogInformation("Successfully connected to PostgreSQL for: {Name}", connection.Name);
                             }
@@ -179,64 +173,52 @@ namespace Querier.Api.Domain.Services
                     var modelOpts = new ModelReverseEngineerOptions();
                     var codeGenOpts = new ModelCodeGenerationOptions()
                     {
-                        RootNamespace = connectionNamespace,
+                        RootNamespace = rootNamespace,
                         ContextName = contextName,
-                        ContextNamespace = connectionNamespace,
-                        ModelNamespace = connectionNamespace,
+                        ContextNamespace = contextNamespace,
+                        ModelNamespace = modelNamespace,
                         SuppressConnectionStringWarning = true,
                         SuppressOnConfiguring = true,
                         UseDataAnnotations = true
                     };
 
                     var scaffoldedModelSources = scaffolder.ScaffoldModel(connectionString, dbOpts, modelOpts, codeGenOpts);
-
-                    var contextFile = connection.ConnectionType switch
-                    {
-                        DbConnectionType.SqlServer => scaffoldedModelSources.ContextFile.Code.Replace(".UseSqlServer", ".UseLazyLoadingProxies().UseSqlServer"),
-                        DbConnectionType.MySql => scaffoldedModelSources.ContextFile.Code.Replace(".UseMySql", ".UseLazyLoadingProxies().UseMySql"),
-                        DbConnectionType.PgSql => scaffoldedModelSources.ContextFile.Code.Replace(".UseNpgsql", ".UseLazyLoadingProxies().UseNpgsql"),
-                        DbConnectionType.SQLite => scaffoldedModelSources.ContextFile.Code.Replace("blahblah",""),
-                        _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
-                    };
-
+                    scaffoldedModelSources.ContextFile.Code = scaffoldedModelSources.ContextFile.Code.Replace($"DbContextOptions<{contextName}>", "DbContextOptions");
+                    var contextFile = scaffoldedModelSources.ContextFile.Code;
                     var sourceFiles = new List<string> { contextFile };
                     sourceFiles.AddRange(scaffoldedModelSources.AdditionalFiles.Select(f => f.Code));
 
-                    Dictionary<string, string> srcZipContent = new Dictionary<string, string> { { scaffoldedModelSources.ContextFile.Path, scaffoldedModelSources.ContextFile.Code } };
+                    Dictionary<string, string> srcZipContent = new Dictionary<string, string>
+                    {
+                        { scaffoldedModelSources.ContextFile.Path, scaffoldedModelSources.ContextFile.Code }
+                    };
                     foreach (var addFile in scaffoldedModelSources.AdditionalFiles)
                     {
                         srcZipContent.Add(addFile.Path, addFile.Code);
                     }
 
-                    List<Entities.QDBConnection.StoredProcedure> storedProcedures = new List<StoredProcedure>();
-                    
-                    
-                    // if scaffolding OK => Generate a common DB Schema representation for stored procedure
-                    if (connection.GenerateProcedureControllersAndServices && connection.ConnectionType == DbConnectionType.SqlServer)
+                    IDatabaseMetadataProvider dbMetadataProvider = connection.ConnectionType switch
                     {
-                        storedProcedures = _databaseToCSharpConverter.ToProcedureList(connectionString);
-                        procedureDescription = System.Text.Json.JsonSerializer.Serialize(storedProcedures);
-
-                        
-                    }
-                    var procedureModel = new StoredProcedureTemplateModel
-                    {
-                        NameSpace = connectionNamespace,
-                        ContextNameSpace = contextName,
-                        ContextRoute = connection.ApiRoute,
-                        ProcedureList = ExtractStoredProcedureMetadata(storedProcedures)
+                        DbConnectionType.SqlServer => new SqlServerDatabaseMetadataProvider(_logger),
+                        DbConnectionType.MySql => new MySqlDatabaseMetadataProvider(_logger),
+                        DbConnectionType.PgSql => new PostgreSqlDatabaseMetadataProvider(_logger),
+                        DbConnectionType.SQLite => new SqliteDatabaseMetadataProvider(),
+                        _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
                     };
-                    GenerateProcedureFiles(procedureModel, srcZipContent, sourceFiles);
-                    // Extract entity metadata from scaffolded model
-                    var entityModel = new TemplateModel
+
+                    var templateModel = new TemplateModel()
                     {
-                        NameSpace = connectionNamespace,
-                        ContextNameSpace = contextName,
+                        RootNamespace = rootNamespace,
+                        ContextName = contextName,
+                        ContextNamespace = contextNamespace,
+                        ModelNamespace = modelNamespace,
                         ContextRoute = connection.ApiRoute,
+                        ProcedureList = dbMetadataProvider.ExtractStoredProcedureMetadata(connectionString),
                         EntityList = ExtractEntityMetadata(scaffoldedModelSources)
                     };
                     
-                    GenerateEntityFiles(procedureModel, entityModel, srcZipContent, sourceFiles);
+                    GenerateProcedureFiles(templateModel, srcZipContent, sourceFiles);
+                    GenerateEntityFiles(templateModel, srcZipContent, sourceFiles);
 
                     // Create source zip
                     byte[] sourceZipBytes = CreateSourceZip(srcZipContent);
@@ -248,8 +230,8 @@ namespace Querier.Api.Domain.Services
 
                     // Compile generated sources
                     await _progressService.ReportProgress(connection.OperationId, 80, ProgressStatus.Compiling);
-                    var (assemblyBytes, pdbBytes) = CompileAssembly(connection.Name, sourceFiles);
-                    if (assemblyBytes == null)
+                    var compilationResult = _roslynCompilerService.CompileAssembly(connection.Name, sourceFiles);
+                    if (compilationResult.AssemblyBytes == null)
                     {
                         await _progressService.FailOperation(connection.OperationId, ProgressStatus.Failed);
                         result.State = DBConnectionState.CompilationError;
@@ -258,15 +240,15 @@ namespace Querier.Api.Domain.Services
                     await _progressService.ReportProgress(connection.OperationId, 90, ProgressStatus.CompilationSucceeded);
 
                     // Calculate assembly hash
-                    var hash = ComputeAssemblyHash(assemblyBytes);
+                    var hash = ComputeAssemblyHash(compilationResult.AssemblyBytes);
 
                     // Load assembly and configure services
                     await _progressService.ReportProgress(connection.OperationId, 95, ProgressStatus.LoadingAssembly);
-                    var container = await _assemblyManager.LoadAssemblyAsync(
+                    var container = await _assemblyManager.LoadDbConnectionAssemblyAsync(
                         connection.Name,
                         connection.ConnectionType,
                         connectionString,
-                        assemblyBytes);
+                        compilationResult.AssemblyBytes);
 
                     if (container == null)
                     {
@@ -275,7 +257,7 @@ namespace Querier.Api.Domain.Services
                         return result;
                     }
 
-                    using DbContext newDbContext = Utils.GetDbContextFromTypeName(connectionNamespace + "." + contextName, connectionString, connection.ConnectionType);
+                    using DbContext newDbContext = Utils.GetDbContextFromTypeName($"{contextNamespace}.{contextName}", connectionString, connection.ConnectionType);
                     
                     var endpoints = _endpointExtractor.ExtractFromAssembly(container.GetType().Assembly, newDbContext,connectionString, connection.ConnectionType);
 
@@ -292,10 +274,10 @@ namespace Querier.Api.Domain.Services
                         ConnectionType = connection.ConnectionType,
                         Description = procedureDescription,
                         AssemblyHash = hash,
-                        AssemblyDll = assemblyBytes,
-                        AssemblyPdb = pdbBytes,
+                        AssemblyDll = compilationResult.AssemblyBytes,
+                        AssemblyPdb = compilationResult.PdbBytes,
                         AssemblySourceZip = sourceZipBytes,
-                        ContextName = connectionNamespace + "." + contextName,
+                        ContextName = $"{contextNamespace}.{contextName}",
                         ApiRoute = connection.ApiRoute,
                         Endpoints = endpoints,
                         Parameters = connection.Parameters.Select(p => new ConnectionStringParameter()
@@ -328,7 +310,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private void GenerateProcedureFiles(StoredProcedureTemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateProcedureFiles(TemplateModel templateModel, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
         {
             var templates = new[]
             {
@@ -349,14 +331,17 @@ namespace Querier.Api.Domain.Services
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
                 ), '$', '$');
 
-                template.Add("nameSpace", model.NameSpace);
-                template.Add("contextNameSpace", model.ContextNameSpace);
+                template.Add("rootNamespace", templateModel.RootNamespace);
+                template.Add("contextNamespace", templateModel.ContextNamespace);
+                template.Add("contextName", templateModel.ContextName);
+                template.Add("modelNamespace", templateModel.ModelNamespace);
+                
                 template.Add("procedureList", templateName == "ProcedureDto" 
-                    ? model.ProcedureList.Where(s => s.HasOutput).ToList() 
-                    : model.ProcedureList);
+                    ? templateModel.ProcedureList.Where(s => s.HasOutput).ToList() 
+                    : templateModel.ProcedureList);
 
                 if (templateName == "ProcedureController")
-                    template.Add("contextRoute", model.ContextRoute);
+                    template.Add("contextRoute", templateModel.ContextRoute);
 
                 string content = template.Render();
                 srcZipContent.Add(outputPath, content);
@@ -364,11 +349,12 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private void GenerateEntityFiles(StoredProcedureTemplateModel procedureModel, TemplateModel model, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateEntityFiles(TemplateModel templateModel, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
         {
             var templates = new[]
             {
                 ("DynamicServiceContainer", "Services\\DynamicServiceContainer.cs"),
+                ("ReadOnlyDbContext", "Context\\ReadOnlyDbContext.cs"),
                 ("EntityController","Controllers\\EntityController.cs"),
                 ("EntityDto","Entities\\EntityDto.cs"),
                 ("EntityRepository","Repositories\\EntityRepository.cs"),
@@ -382,15 +368,15 @@ namespace Querier.Api.Domain.Services
                     Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
                 ), '$', '$');
 
-                template.Add("procedureList", templateName == "ProcedureDto" 
-                    ? procedureModel.ProcedureList.Where(s => s.HasOutput).ToList() 
-                    : procedureModel.ProcedureList);
-                template.Add("nameSpace", model.NameSpace);
-                template.Add("contextNameSpace", model.ContextNameSpace);
-                template.Add("entityList", model.EntityList);
+                template.Add("rootNamespace", templateModel.RootNamespace);
+                template.Add("contextNamespace", templateModel.ContextNamespace);
+                template.Add("contextName", templateModel.ContextName);
+                template.Add("modelNamespace", templateModel.ModelNamespace);
+                template.Add("procedureList", templateModel.ProcedureList);
+                template.Add("entityList", templateModel.EntityList);
 
                 if (templateName == "EntityController")
-                    template.Add("contextRoute", model.ContextRoute);
+                    template.Add("contextRoute", templateModel.ContextRoute);
 
                 string content = template.Render();
                 srcZipContent.Add(outputPath, content);
@@ -414,90 +400,12 @@ namespace Querier.Api.Domain.Services
             }
             return sourceStream.ToArray();
         }
-
-        private (byte[] assemblyBytes, byte[] pdbBytes) CompileAssembly(string contextName, List<string> sourceFiles)
-        {
-            var peStream = new MemoryStream();
-            var pdbStream = new MemoryStream();
-
-            var compilation = GenerateCode(contextName, sourceFiles);
-            var emitResult = compilation.Emit(peStream, pdbStream);
-
-            if (!emitResult.Success)
-            {
-                var compilationErrors = emitResult.Diagnostics
-                    .Where(d => d.Severity == DiagnosticSeverity.Error)
-                    .Select(d => new
-                    {
-                        Location = d.Location.GetLineSpan().StartLinePosition,
-                        Message = d.GetMessage(),
-                        ErrorCode = d.Id
-                    })
-                    .ToList();
-
-                var errorMessage = string.Join("\n", compilationErrors.Select(e => 
-                    $"Error {e.ErrorCode} at line {e.Location.Line + 1}: {e.Message}"));
-                
-                _logger.LogError("Code compilation failed:\n{Errors}", errorMessage);
-                return (null, null);
-            }
-
-            peStream.Seek(0, SeekOrigin.Begin);
-            pdbStream.Seek(0, SeekOrigin.Begin);
-            return (peStream.ToArray(), pdbStream.ToArray());
-        }
-
-        private CSharpCompilation GenerateCode(string contextName, List<string> sourceFiles)
-        {
-            var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp12);
-            var parsedSyntaxTrees = sourceFiles.Select(f => SyntaxFactory.ParseSyntaxTree(f, options));
-
-            return CSharpCompilation.Create($"{contextName}_DataContext.dll",
-                parsedSyntaxTrees,
-                references: GetCompilationReferences(),
-                options: new CSharpCompilationOptions(
-                    OutputKind.DynamicallyLinkedLibrary,
-                    optimizationLevel: OptimizationLevel.Debug));
-        }
-
+        
         private string ComputeAssemblyHash(byte[] assemblyBytes)
         {
             using var sha256 = SHA256.Create();
             var hash = sha256.ComputeHash(assemblyBytes);
             return Convert.ToBase64String(hash);
-        }
-
-        private List<MetadataReference> GetCompilationReferences()
-        {
-            var refs = new List<MetadataReference>();
-
-            // Reference all assemblies referenced by this program 
-            var referencedAssemblies = Assembly.GetExecutingAssembly().GetReferencedAssemblies();
-            refs.AddRange(referencedAssemblies.Select(a => MetadataReference.CreateFromFile(Assembly.Load(a).Location)));
-
-            // Add the missing ones needed to compile the assembly
-            var additionalAssemblies = new[]
-            {
-                typeof(object),
-                typeof(DbConnection),
-                typeof(System.Linq.Expressions.Expression),
-                typeof(System.ComponentModel.DisplayNameAttribute),
-                typeof(System.Threading.CancellationToken),
-                typeof(Task),
-                typeof(List<>),
-                typeof(Infrastructure.Database.Parameters.OutputParameter<>),
-                typeof(Microsoft.Extensions.Caching.Distributed.IDistributedCache),
-                typeof(Enumerable),
-                typeof(MemoryStream),
-                typeof(StreamReader),
-                typeof(System.Linq.Dynamic.Core.DynamicClassFactory),
-                typeof(MySqlConnector.MySqlConnection)
-            };
-
-            refs.AddRange(additionalAssemblies.Select(t => MetadataReference.CreateFromFile(t.Assembly.Location)));
-            refs.Add(MetadataReference.CreateFromFile(Assembly.Load("netstandard, Version=2.0.0.0").Location));
-
-            return refs;
         }
 
         public async Task DeleteDbConnectionAsync(int dbConnectionId)
@@ -748,90 +656,39 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task<DbContext> GetDbContextByContextTypeFullNameAsync(string contextTypeFullName)
-        {
-            DBConnection connection = await _dbConnectionRepository.FindByContextNameAsync(contextTypeFullName);
-            return await GetDbContextByIdAsync(connection.Id);
-        }
-        public async Task<DbContext> GetDbContextByIdAsync(int id)
-        {
-            try
-            {
-                //_logger.LogDebug($"Get DbContext for DBConnection {id}");
-                var connection = await _dbConnectionRepository.FindByIdAsync(id); 
-                var contextTypes = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(assembly => assembly.GetTypes())
-                    .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == connection.ContextName)
-                    .ToList();
-                if (!contextTypes.Any())
-                {
-                    _logger.LogError("No DbContext found with type name: {ContextTypeName}", connection.ContextName);
-                    throw new InvalidOperationException($"No DbContext found with type name {connection.ContextName}");
-                }
-
-                var contextType = contextTypes.First();
-                var scope = ServiceActivator.GetScope();
-                
-                // Try to get from DI first
-                _logger.LogTrace("Attempting to get context from DI container");
-                if (scope.ServiceProvider.GetService(contextType) is DbContext context)
-                {
-                    _logger.LogDebug("Successfully retrieved context from DI container");
-                    return context;
-                }
-                string connectionString = string.Join(';', connection.Parameters.Where(p => !p.IsEncrypted).Select(p => p.Key + "=" + p.StoredValue));
-                foreach (var cryptedParameter in connection.Parameters.Where(p => p.IsEncrypted))
-                {
-                    string uncryptedParameterValue = _encryptionService.DecryptAsync(cryptedParameter.StoredValue).GetAwaiter().GetResult();
-                    connectionString += $";{cryptedParameter.Key}={uncryptedParameterValue}";
-                }
-
-                // Create options with the correct connection string
-                _logger.LogTrace("Creating context options with connection string");
-                var optionsBuilderType = typeof(DbContextOptionsBuilder<>).MakeGenericType(contextType);
-                var optionsBuilder = (DbContextOptionsBuilder)Activator.CreateInstance(optionsBuilderType);
-
-                switch (connection.ConnectionType)
-                {
-                    case DbConnectionType.SqlServer:
-                        _logger.LogDebug("Configuring SQL Server connection");
-                        if (optionsBuilder != null) optionsBuilder.UseSqlServer(connectionString);
-                        break;
-                    case DbConnectionType.MySql:
-                        _logger.LogDebug("Configuring MySQL connection");
-                        if (optionsBuilder != null)
-                            optionsBuilder.UseMySql(connectionString,
-                                ServerVersion.AutoDetect(connectionString));
-                        break;
-                    case DbConnectionType.PgSql:
-                        _logger.LogDebug("Configuring PostgresSQL connection");
-                        if (optionsBuilder != null) optionsBuilder.UseNpgsql(connectionString);
-                        break;
-                    case DbConnectionType.SQLite:
-                        _logger.LogDebug("Configuring SQLite connection");
-                        if (optionsBuilder != null) optionsBuilder.UseSqlite(connectionString);
-                        break;
-                    default:
-                        _logger.LogError("Unsupported database type: {ConnectionType}", connection.ConnectionType);
-                        throw new NotSupportedException($"Database type {connection.ConnectionType} not supported");
-                }
-
-                _logger.LogDebug("Creating new instance of context type: {ContextType}", contextType.Name);
-                if (optionsBuilder != null)
-                    return (DbContext)Activator.CreateInstance(contextType, optionsBuilder.Options);
-                throw new Exception($"Unable to create optionBuilder for connection {id}");
-            }
-            catch (Exception ex) when (ex is not InvalidOperationException && ex is not NotSupportedException)
-            {
-                _logger.LogError(ex, $"Error creating DbContext for type connection: {id}");
-                throw;
-            }
-        }
-
         private List<TemplateEntityMetadata> ExtractEntityMetadata(ScaffoldedModel scaffoldedModel)
         {
+            var contextFile = scaffoldedModel.ContextFile;
             var entityFiles = scaffoldedModel.AdditionalFiles.Where(f => !f.Path.EndsWith("Context.cs"));
             var pluralizer = new Bricelam.EntityFrameworkCore.Design.Pluralizer();
+            var viewEntities = new HashSet<string>();
+            
+            // Identify views from the context
+            var contextSyntaxTree = CSharpSyntaxTree.ParseText(contextFile.Code).GetRoot();
+            var onModelCreatingNode = contextSyntaxTree.DescendantNodes().OfType<MethodDeclarationSyntax>()
+                .First(m => m.Identifier.Text == "OnModelCreating");
+            if (onModelCreatingNode != null)
+            {
+                string currentEntity = "";
+                foreach (var invocation in onModelCreatingNode.DescendantNodes().OfType<InvocationExpressionSyntax>())
+                {
+                    if (invocation.Expression is MemberAccessExpressionSyntax memberAccessEntity &&
+                        memberAccessEntity.Name.Identifier.Text == "Entity")
+                    {
+                        if (memberAccessEntity.Name is GenericNameSyntax)
+                        {
+                            currentEntity = ((GenericNameSyntax)memberAccessEntity.Name).TypeArgumentList.Arguments.First()
+                                .GetText().ToString();
+                        }
+                        
+                    }
+                    if (invocation.Expression is MemberAccessExpressionSyntax memberAccess &&
+                        memberAccess.Name.Identifier.Text == "ToView")
+                    {
+                        viewEntities.Add(currentEntity);
+                    }
+                }
+            }
 
             // Première passe : extraire toutes les entités et leurs propriétés
             var entityMap = new Dictionary<string, TemplateEntityMetadata>();
@@ -847,7 +704,8 @@ namespace Querier.Api.Domain.Services
                     Name = entityName,
                     PluralName = pluralizer.Pluralize(entityName),
                     Properties = new List<TemplateProperty>(),
-                    ForeignKeys = new List<TemplateForeignKey>()
+                    ForeignKeys = new List<TemplateForeignKey>(),
+                    IsViewEntity = viewEntities.Contains(entityName)
                 };
                 List<string> keys = new List<string>();
                 List<string> foreignKeys = new List<string>();
@@ -995,34 +853,6 @@ namespace Querier.Api.Domain.Services
             return entityMap.Values.ToList();
         }
 
-        private List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(List<Entities.QDBConnection.StoredProcedure> procedures)
-        {
-            return procedures.Select(p => new StoredProcedureMetadata
-            {
-                Name = p.Name,
-                CSName = p.CSName,
-                CSReturnSignature = p.CSReturnSignature,
-                CSParameterSignature = p.CSParameterSignature,
-                InlineParameters = p.InlineParameters,
-                HasOutput = p.HasOutput,
-                HasParameters = p.HasParameters,
-                Parameters = p.Parameters.Select(param => new TemplateProperty
-                {
-                    Name = param.Name,
-                    CSName = param.CSName,
-                    CSType = param.CSType,
-                    SqlParameterType = param.SqlParameterType
-                }).ToList(),
-                OutputSet = p.OutputSet.Select(col => new TemplateProperty
-                {
-                    Name = col.Name,
-                    CSName = col.CSName,
-                    CSType = col.CSType
-                }).ToList(),
-                SummableOutputColumns = p.SummableOutputColumns
-            }).ToList();
-        }
-
         public class SourceDownload
         {
             public byte[] Content { get; set; }
@@ -1105,25 +935,47 @@ namespace Querier.Api.Domain.Services
                 return await CreateDbContextFactoryAsync(connection);
             });
         }
+        
+        public async Task<IDbContextFactory<DbContext>> GetReadOnlyDbContextFactoryByIdAsync(int id)
+        {
+            return await _readOnlyContextFactoryByIdCache.GetOrAddAsync(id, async key =>
+            {
+                _logger.LogDebug("Cache miss for connection ID: {Id}, creating new factory", key);
+                var connection = await _dbConnectionRepository.FindByIdAsync(key);
+                return await CreateDbContextFactoryAsync(connection, true);
+            });
+        }
 
-        private async Task<IDbContextFactory<DbContext>> CreateDbContextFactoryAsync(DBConnection connection)
+        private async Task<IDbContextFactory<DbContext>> CreateDbContextFactoryAsync(DBConnection connection, bool getReadOnlyContext = false)
         {
             try
             {
                 _logger.LogDebug("Creating DbContextFactory for connection: {Name}", connection.Name);
                 
-                var contextTypes = AppDomain.CurrentDomain.GetAssemblies()
+                var standardContextTypes = AppDomain.CurrentDomain.GetAssemblies()
                     .SelectMany(assembly => assembly.GetTypes())
                     .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == connection.ContextName)
                     .ToList();
+                
+                var readOnlyContextTypes = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(assembly => assembly.GetTypes())
+                    .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == connection.ContextName + "ReadOnly")
+                    .ToList();
 
-                if (!contextTypes.Any())
+                if (!standardContextTypes.Any())
                 {
                     _logger.LogError("No DbContext found with type name: {ContextTypeName}", connection.ContextName);
                     throw new InvalidOperationException($"No DbContext found with type name {connection.ContextName}");
                 }
+                
+                if (!readOnlyContextTypes.Any())
+                {
+                    _logger.LogError("No ReadOnly DbContext found with type name: {ContextTypeName}", connection.ContextName);
+                    throw new InvalidOperationException($"No ReadOnly DbContext found with type name {connection.ContextName}");
+                }
 
-                var contextType = contextTypes.First();
+                var standardContextType = standardContextTypes.First();
+                var readOnlyContextType = readOnlyContextTypes.First();
                 var scope = ServiceActivator.GetScope();
 
                 // Construire la chaîne de connexion
@@ -1135,7 +987,7 @@ namespace Querier.Api.Domain.Services
                 }
 
                 // Créer le type générique de DbContextOptionsBuilder
-                var optionsBuilderType = typeof(DbContextOptionsBuilder<>).MakeGenericType(contextType);
+                var optionsBuilderType = typeof(DbContextOptionsBuilder<>).MakeGenericType(getReadOnlyContext? readOnlyContextType: standardContextType);
                 var optionsBuilder = (DbContextOptionsBuilder)Activator.CreateInstance(optionsBuilderType);
                 if (optionsBuilder == null)
                     throw new NullReferenceException("optionsBuilder cannot be null");
@@ -1176,7 +1028,7 @@ namespace Querier.Api.Domain.Services
                 }
 
                 // Créer le type générique de DbContextFactory
-                var factoryType = typeof(PooledDbContextFactory<>).MakeGenericType(contextType);
+                var factoryType = typeof(PooledDbContextFactory<>).MakeGenericType(getReadOnlyContext ? readOnlyContextType: standardContextType);
                 
                 // Créer la factory avec le type spécifique
                 var factory = Activator.CreateInstance(
@@ -1185,7 +1037,7 @@ namespace Querier.Api.Domain.Services
                     1024);
 
                 // Créer un wrapper qui convertit la factory spécifique en IDbContextFactory<DbContext>
-                return new DbContextFactoryWrapper(factory, contextType);
+                return new DbContextFactoryWrapper(factory, getReadOnlyContext ? readOnlyContextType : standardContextType);
             }
             catch (Exception ex) when (ex is not InvalidOperationException && ex is not NotSupportedException)
             {

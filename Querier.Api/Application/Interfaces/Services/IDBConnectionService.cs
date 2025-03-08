@@ -20,5 +20,6 @@ namespace Querier.Api.Application.Interfaces.Services
         Task<DBConnectionDto> GetByIdAsync(int id);
         Task<IDbContextFactory<DbContext>> GetDbContextFactoryByContextTypeFullNameAsync(string contextTypeFullName);
         Task<IDbContextFactory<DbContext>> GetDbContextFactoryByIdAsync(int id);
+        Task<IDbContextFactory<DbContext>> GetReadOnlyDbContextFactoryByIdAsync(int id);
     }
 }

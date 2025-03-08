@@ -5,12 +5,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using $nameSpace$.Services;
-using $nameSpace$.Exceptions;
 using Querier.Api.Domain.Common.Attributes;
 using Querier.Api.Infrastructure.Database.Parameters;
+using $rootNamespace$.Services;
+using $rootNamespace$.Exceptions;
+using $rootNamespace$.DTOs;
 
-namespace $nameSpace$.Controllers {
+namespace $rootNamespace$.Controllers {
     $procedureList: {procedure|
     /// <summary>
     /// Controller for managing $procedure.CSName$ stored procedure
@@ -18,7 +19,7 @@ namespace $nameSpace$.Controllers {
     [Authorize]
     [ApiController]
     [ControllerFor(StoredProcedure = "$procedure.Name$")]
-    [Route("api/v1/$contextRoute$/procedures/$procedure.CSName$")]
+    [Route("api/v1/$contextRoute$/procedure/$procedure.CSName$")]
     [Produces("application/json")]
     public class $procedure.CSName$Controller : ControllerBase {
         private readonly I$procedure.CSName$Service _service;

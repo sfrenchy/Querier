@@ -45,6 +45,7 @@ namespace Querier.Api.Infrastructure.Data.Context
         public virtual DbSet<Card> Cards { get; set; }
         public virtual DbSet<CardTranslation> CardTranslations { get; set; }
         public DbSet<SQLQuery> SQLQueries { get; set; }
+        public DbSet<LinqQuery> LinqQueries { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -129,7 +130,8 @@ namespace Querier.Api.Infrastructure.Data.Context
                 ConfigurePages(modelBuilder);
                 ConfigureCards(modelBuilder);
                 ConfigureSQLQueries(modelBuilder);
-
+                ConfigureLinqQueries(modelBuilder);
+                
                 _logger.LogInformation("Database model configuration completed successfully");
             }
             catch (Exception ex)
@@ -341,6 +343,27 @@ namespace Querier.Api.Infrastructure.Data.Context
             _logger.LogDebug("Configuring SQL queries");
 
             modelBuilder.Entity<SQLQuery>(entity =>
+            {
+                var converter = new ValueConverter<Dictionary<string, object>, string>(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                    v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null));
+
+                var comparer = new ValueComparer<Dictionary<string, object>>(
+                    (c1, c2) => c1.Count == c2.Count && !c1.Except(c2).Any(),
+                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.Key.GetHashCode(), v.Value != null ? v.Value.GetHashCode() : 0)),
+                    c => new Dictionary<string, object>(c));
+
+                entity.Property(e => e.Parameters)
+                    .HasConversion(converter)
+                    .Metadata.SetValueComparer(comparer);
+            });
+        }
+        
+        private void ConfigureLinqQueries(ModelBuilder modelBuilder)
+        {
+            _logger.LogDebug("Configuring Linq queries");
+
+            modelBuilder.Entity<LinqQuery>(entity =>
             {
                 var converter = new ValueConverter<Dictionary<string, object>, string>(
                     v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),

@@ -6,8 +6,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.IO;
-using $nameSpace$.Repositories;
-using $nameSpace$.Exceptions;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Attributes;
@@ -15,8 +13,11 @@ using Querier.Api.Infrastructure.Database.Services.Base;
 using Querier.Api.Infrastructure.Database.Parameters;
 using Querier.Api.Domain.Common.Models;
 using Querier.Api.Application.DTOs;
+using $rootNamespace$.Repositories;
+using $rootNamespace$.Exceptions;
+using $rootNamespace$.DTOs;
 
-namespace $nameSpace$.Services
+namespace $rootNamespace$.Services
 {
     $procedureList: {procedure|
     #region $procedure.Name$
@@ -33,7 +34,7 @@ namespace $nameSpace$.Services
         Task<DataPagedResult<$procedure.CSName$Dto>> ExecuteAsync($procedure.CSName$InputDto parameters);
     \}
 
-    [DynamicContextProcedure(ContextName="$nameSpace$", ServiceName="I$procedure.CSName$Service")]
+    [DynamicContextProcedure(ContextName="$contextNamespace$.$contextName$", ServiceName="I$procedure.CSName$Service")]
     public class $procedure.CSName$Service : DynamicContextServiceBase, I$procedure.CSName$Service
     {
         private readonly I$procedure.CSName$Repository _repository;

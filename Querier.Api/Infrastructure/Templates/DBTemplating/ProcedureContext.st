@@ -1,4 +1,3 @@
-using $nameSpace$;
 using Microsoft.Data.SqlClient;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -8,18 +7,19 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Querier.Api.Infrastructure.Database.Extensions;
 using Querier.Api.Infrastructure.Database.Parameters;
+using $rootNamespace$.DTOs;
 
-namespace $nameSpace$
+namespace $contextNamespace$
 {
-    public partial class $contextNameSpace$
+    public partial class $contextName$
     {
-        private $contextNameSpace$Procedures? _procedures;
+        private $contextName$Procedures? _procedures;
 
-        public $contextNameSpace$Procedures Procedures
+        public $contextName$Procedures Procedures
         {
             get
             {
-                if (_procedures is null) _procedures = new $contextNameSpace$Procedures(this);
+                if (_procedures is null) _procedures = new $contextName$Procedures(this);
                 return _procedures;
             \}
             set
@@ -28,7 +28,7 @@ namespace $nameSpace$
             \}
         \}
 
-        public $contextNameSpace$Procedures GetProcedures()
+        public $contextName$Procedures GetProcedures()
         {
             return Procedures;
         \}
@@ -37,16 +37,16 @@ namespace $nameSpace$
         {
             get
             {
-                return "$contextNameSpace$";
+                return "$contextName$";
             \}
         \}
     \}
 
-    public partial class $contextNameSpace$Procedures
+    public partial class $contextName$Procedures
     {
-        private readonly $contextNameSpace$ _context;
+        private readonly $contextName$ _context;
 
-        public $contextNameSpace$Procedures($contextNameSpace$ context)
+        public $contextName$Procedures($contextName$ context)
         {
             _context = context;
         }

@@ -1,4 +1,6 @@
-namespace Querier.Api.Domain.Entities.QDBConnection
+using Querier.Api.Domain.Entities.QDBConnection;
+
+namespace Querier.Api.Domain.Entities.DBConnection
 {
     public class ProcedureOutput
     {
@@ -26,14 +28,6 @@ namespace Querier.Api.Domain.Entities.QDBConnection
                     sqlType = sqlType.Substring(0, sqlType.IndexOf('('));
                 }
                 return SQLStringTools.SQLTypeToCSType(sqlType, IsNullable);
-            }
-        }
-
-        public string ColumnAttribute
-        {
-            get
-            {
-                return $"[Column(\"{Name}\", Order = {Order})]";
             }
         }
     }

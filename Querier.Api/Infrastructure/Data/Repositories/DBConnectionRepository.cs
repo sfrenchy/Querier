@@ -124,6 +124,7 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 using var context = await _contextFactory.CreateDbContextAsync();
                 var connection = await context.DBConnections
                     .AsNoTracking()
+                    .AsSplitQuery()
                     .Include(c => c.Endpoints)
                         .ThenInclude(e => e.Parameters)
                     .Include(c => c.Endpoints)

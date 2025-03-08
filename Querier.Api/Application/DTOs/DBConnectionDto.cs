@@ -40,6 +40,9 @@ namespace Querier.Api.Application.DTOs
         public string Description { get; set; }
         public List<DBConnectionStringParameterDto> Parameters { get; set; }
             
+        public byte[] AssemblyDll { get; set; }
+        public byte[] AssemblyPdb { get; set; }
+        public byte[] AssemblySourceZip { get; set; }
         /// <summary>
         /// Creates a DBConnectionDto from a domain entity
         /// </summary>
@@ -55,7 +58,10 @@ namespace Querier.Api.Application.DTOs
                 Parameters = connection.Parameters.Select(p => DBConnectionStringParameterDto.FromEntity(p)).ToList(),
                 ApiRoute = connection.ApiRoute,
                 ContextName = connection.ContextName,
-                Description = connection.Description
+                Description = connection.Description,
+                AssemblyDll = connection.AssemblyDll,
+                AssemblyPdb = connection.AssemblyPdb,
+                AssemblySourceZip = connection.AssemblySourceZip
             };
         }
     }

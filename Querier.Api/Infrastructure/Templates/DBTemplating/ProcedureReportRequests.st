@@ -1,6 +1,6 @@
-using $nameSpace$;
+using $rootNamespace$.DTOs;
 
-namespace $nameSpace$.Reports
+namespace $rootNamespace$.Reports
 {
     $procedureList: {procedure|
         public partial class $procedure.CSName$ReportRequest

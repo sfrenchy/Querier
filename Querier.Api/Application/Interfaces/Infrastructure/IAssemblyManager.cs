@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +20,7 @@ namespace Querier.Api.Application.Interfaces.Infrastructure
         /// </summary>
         /// <param name="assemblyName">Nom de l'assembly à normaliser</param>
         /// <returns>Le nom normalisé de l'assembly</returns>
-        string GetNormalizedAssemblyName(string assemblyName);
+        string GetContextNormalizedAssemblyName(string assemblyName);
 
         /// <summary>
         /// Charge une assembly à partir d'une connexion de base de données
@@ -35,17 +37,7 @@ namespace Querier.Api.Application.Interfaces.Infrastructure
         /// <param name="connectionString">Chaîne de connexion</param>
         /// <param name="assemblyBytes">Contenu de l'assembly</param>
         /// <returns>Le conteneur de services pour l'assembly chargée</returns>
-        Task<IDynamicContextServiceContainer> LoadAssemblyAsync(string name, DbConnectionType connectionType, string connectionString, byte[] assemblyBytes);
-
-        /// <summary>
-        /// Charge une assembly à partir d'un fichier
-        /// </summary>
-        /// <param name="name">Nom de l'assembly</param>
-        /// <param name="connectionType">Type de connexion</param>
-        /// <param name="connectionString">Chaîne de connexion</param>
-        /// <param name="assemblyPath">Chemin du fichier de l'assembly</param>
-        /// <returns>Le conteneur de services pour l'assembly chargée</returns>
-        Task<IDynamicContextServiceContainer> LoadAssemblyFromFileAsync(string name, DbConnectionType connectionType, string connectionString, string assemblyPath);
+        Task<IDynamicContextServiceContainer> LoadDbConnectionAssemblyAsync(string name, DbConnectionType connectionType, string connectionString, byte[] assemblyBytes);
 
         /// <summary>
         /// Décharge une assembly
@@ -66,5 +58,9 @@ namespace Querier.Api.Application.Interfaces.Infrastructure
         /// <param name="name">Nom de l'assembly</param>
         /// <returns>True si l'assembly est chargée, false sinon</returns>
         bool IsAssemblyLoaded(string name);
+
+        Task LoadQueryAssemblyAsync(string assemblyLoaderName, byte[] assemblyByte);
+
+        public IEnumerable<Assembly> GetAssemblies(string assemblyLoaderName);
     }
 } 

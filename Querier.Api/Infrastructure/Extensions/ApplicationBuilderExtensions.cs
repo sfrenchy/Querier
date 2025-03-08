@@ -27,7 +27,7 @@ namespace Querier.Api.Infrastructure.Extensions
                     var allowedOrigins = settingService.GetSettingValueAsync("api:allowedOrigins", "*").Result?.Split(',');
                     var allowedMethods = settingService.GetSettingValueAsync("api:allowedMethods", "GET,POST,DELETE,OPTIONS,PUT").Result?.Split(',');
                     var allowedHeaders = settingService.GetSettingValueAsync("api:allowedHeaders", "X-Request-Token,Accept,Content-Type,Authorization,X-Requested-With,X-Signalr-User-Agent").Result?.Split(',');
-                    var preflightMaxAge = settingService.GetSettingValueAsync("api:PreflightMaxAge", -1).Result;
+                    var preflightMaxAge = settingService.GetSettingValueAsync("api:PreflightMaxAge", 0).Result;
 
                     logger.LogDebug("CORS Configuration: Hosts: {Hosts}, Origins: {Origins}, Methods: {Methods}, Headers: {Headers}, MaxAge: {MaxAge}",
                         string.Join(",", allowedHosts),

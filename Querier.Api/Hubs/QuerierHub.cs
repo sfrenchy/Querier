@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authorization;
 using System;

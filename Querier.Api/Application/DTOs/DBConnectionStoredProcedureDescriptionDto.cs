@@ -21,5 +21,7 @@ namespace Querier.Api.Application.DTOs
         /// List of parameters accepted by the stored procedure
         /// </summary>
         public List<DBConnectionParameterDescriptionDto> Parameters { get; set; } = new();
+
+        public List<DBConnectionColumnDescriptionDto> OutputColumns { get; set; } = new();
     }
 }
