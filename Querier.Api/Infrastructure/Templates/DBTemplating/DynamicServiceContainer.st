@@ -134,7 +134,7 @@ namespace $rootNamespace$
             });
             
             // Configure ReadOnlyContext
-            services.AddPooledDbContextFactory<$contextName$ReadOnlyContext>(options =>
+            services.AddPooledDbContextFactory<$contextName$ReadOnly>(options =>
             {
                 switch (connectionType)
                 {

@@ -230,6 +230,44 @@ namespace Querier.Api.Common.Extensions
             return value;
         }
 
+        public static DataTable ToDataTable(this IEnumerable items)
+        {
+            DataTable dt = new DataTable();
+
+            if (items == null)
+                return dt;
+
+            // Récupérer le premier élément pour connaître la structure
+            IEnumerator enumerator = items.GetEnumerator();
+            if (!enumerator.MoveNext())
+                return dt; // collection vide
+
+            var firstItem = enumerator.Current;
+            var properties = firstItem.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            // Créer les colonnes du DataTable
+            foreach (PropertyInfo prop in properties)
+            {
+                // Si le type est nullable, on récupère le type sous-jacent
+                Type columnType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                dt.Columns.Add(prop.Name, columnType);
+            }
+
+            // Ajout de la première ligne
+            var values = properties.Select(p => p.GetValue(firstItem, null)).ToArray();
+            dt.Rows.Add(values);
+
+            // Ajout des autres lignes
+            while (enumerator.MoveNext())
+            {
+                var item = enumerator.Current;
+                values = properties.Select(p => p.GetValue(item, null)).ToArray();
+                dt.Rows.Add(values);
+            }
+
+            return dt;
+        }
+        
         public static DataTable ToDataTable(this IEnumerable<object> objects)
         {
             try

@@ -92,7 +92,7 @@ namespace Querier.Api.Infrastructure.Services
             if (!_dynamicControllerCache.GetOrAdd(controllerType, type =>
             {
                 var assemblyName = type.Assembly.GetName().Name;
-                return _assemblyManager.IsAssemblyLoaded(_assemblyManager.GetNormalizedAssemblyName(assemblyName));
+                return _assemblyManager.IsAssemblyLoaded(_assemblyManager.GetContextNormalizedAssemblyName(assemblyName));
             }))
             {
                 // Fast path pour les contrôleurs natifs
@@ -110,7 +110,7 @@ namespace Querier.Api.Infrastructure.Services
             }
 
             var assemblyName = controllerType.Assembly.GetName().Name;
-            var normalizedName = _assemblyManager.GetNormalizedAssemblyName(assemblyName);
+            var normalizedName = _assemblyManager.GetContextNormalizedAssemblyName(assemblyName);
             var container = _assemblyManager.GetServiceContainer(normalizedName);
 
             if (container == null)

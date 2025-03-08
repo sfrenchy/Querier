@@ -19,6 +19,7 @@ namespace Querier.Api
                 .AddJsonFile("appsettings.json")
                 .Build();
 
+#pragma warning disable ASP0000
             var serviceProvider = new ServiceCollection()
                 .AddLogging(builder =>
                 {
@@ -26,6 +27,7 @@ namespace Querier.Api
                     builder.AddDebug();
                 })
                 .BuildServiceProvider();
+#pragma warning restore ASP0000
 
             var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger<Startup>();

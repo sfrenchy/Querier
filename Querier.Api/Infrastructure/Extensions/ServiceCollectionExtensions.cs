@@ -295,6 +295,7 @@ namespace Querier.Api.Infrastructure.Extensions
             services.AddScoped<ICardService, CardService>();
             services.AddScoped<ILayoutService, LayoutService>();
             services.AddScoped<ISqlQueryService, SqlQueryService>();
+            services.AddScoped<ILinqQueryService, LinqQueryService>();
 
             // Menu repositories
             services.AddScoped<IMenuRepository, MenuRepository>();

@@ -1,23 +1,21 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
-using System.Security;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Domain.Common.Enums;
-using Querier.Api.Domain.Entities.DBConnection;
 
 namespace Querier.Api.Infrastructure.Services
 {
@@ -55,7 +53,7 @@ namespace Querier.Api.Infrastructure.Services
             _encryptionService = encryptionService;
         }
 
-        public string GetNormalizedAssemblyName(string assemblyName)
+        public string GetContextNormalizedAssemblyName(string assemblyName)
         {
             if (string.IsNullOrEmpty(assemblyName))
                 throw new ArgumentException("Assembly name cannot be null or empty", nameof(assemblyName));
@@ -80,7 +78,7 @@ namespace Querier.Api.Infrastructure.Services
 
         private IServiceCollection CreateServiceCollectionForAssembly(string name)
         {
-            var normalizedName = GetNormalizedAssemblyName(name);
+            var normalizedName = GetContextNormalizedAssemblyName(name);
             var services = new ServiceCollection();
             
             // Ajouter ServiceCollection comme singleton pour IServiceCollection
@@ -163,7 +161,7 @@ namespace Querier.Api.Infrastructure.Services
                     throw new ArgumentNullException(nameof(connection));
                 }
 
-                var normalizedName = GetNormalizedAssemblyName(connection.Name);
+                var normalizedName = GetContextNormalizedAssemblyName(connection.Name);
                 _logger.LogInformation("Loading assembly for connection: {ConnectionName}", normalizedName);
 
                 // Vérifier si l'assembly est déjà chargée
@@ -210,7 +208,7 @@ namespace Querier.Api.Infrastructure.Services
             }
         }
 
-        public async Task<IDynamicContextServiceContainer> LoadAssemblyAsync(
+        public async Task<IDynamicContextServiceContainer> LoadDbConnectionAssemblyAsync(
             string name,
             DbConnectionType connectionType,
             string connectionString,
@@ -223,7 +221,7 @@ namespace Querier.Api.Infrastructure.Services
                 if (assemblyBytes == null)
                     throw new ArgumentNullException(nameof(assemblyBytes));
 
-                var normalizedName = GetNormalizedAssemblyName(name);
+                var normalizedName = GetContextNormalizedAssemblyName(name);
                 _logger.LogInformation("Loading assembly from bytes for {Name}", normalizedName);
 
                 if (IsAssemblyLoaded(normalizedName))
@@ -250,42 +248,20 @@ namespace Querier.Api.Infrastructure.Services
             }
         }
 
-        public async Task<IDynamicContextServiceContainer> LoadAssemblyFromFileAsync(
-            string name,
-            DbConnectionType connectionType,
-            string connectionString,
-            string assemblyPath)
+        public async Task LoadQueryAssemblyAsync(string assemblyLoaderName, byte[] assemblyByte)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(name))
-                    throw new ArgumentException("Name cannot be null or empty", nameof(name));
-                if (string.IsNullOrEmpty(assemblyPath))
-                    throw new ArgumentException("Assembly path cannot be null or empty", nameof(assemblyPath));
+            if (!_loadContexts.ContainsKey(assemblyLoaderName))
+                throw new Exception($"No assembly loader with name {assemblyLoaderName}");
 
-                _logger.LogInformation("Loading assembly from file for {Name}: {Path}", name, assemblyPath);
-
-                if (IsAssemblyLoaded(name))
-                {
-                    _logger.LogInformation("Assembly already loaded for {Name}", name);
-                    return GetServiceContainer(name);
-                }
-
-                if (!File.Exists(assemblyPath))
-                {
-                    throw new FileNotFoundException("Assembly file not found", assemblyPath);
-                }
-
-                var assemblyBytes = await File.ReadAllBytesAsync(assemblyPath);
-                return await LoadAssemblyAsync(name, connectionType, connectionString, assemblyBytes);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading assembly from file for {Name}", name);
-                throw;
-            }
+            _loadContexts[assemblyLoaderName].LoadFromStream(new MemoryStream(assemblyByte));
         }
 
+        public IEnumerable<Assembly> GetAssemblies(string assemblyLoaderName)
+        {
+            return _loadContexts.TryGetValue(assemblyLoaderName, out var context) ? context.Assemblies : [];
+        }
+        
+        
         public async Task UnloadAssemblyAsync(string name)
         {
             if (string.IsNullOrEmpty(name))

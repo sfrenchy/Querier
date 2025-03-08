@@ -53,6 +53,7 @@ namespace Querier.Api.Domain.Services
         private readonly IEncryptionService _encryptionService;
         private readonly ConcurrentDictionary<string, IDbContextFactory<DbContext>> _contextFactoryCache = new();
         private readonly ConcurrentDictionary<int, IDbContextFactory<DbContext>> _contextFactoryByIdCache = new();
+        private readonly ConcurrentDictionary<int, IDbContextFactory<DbContext>> _readOnlyContextFactoryByIdCache = new();
         private readonly IProgressService _progressService;
         
         public DbConnectionService(
@@ -183,20 +184,15 @@ namespace Querier.Api.Domain.Services
                     };
 
                     var scaffoldedModelSources = scaffolder.ScaffoldModel(connectionString, dbOpts, modelOpts, codeGenOpts);
-
-                    var contextFile = connection.ConnectionType switch
-                    {
-                        DbConnectionType.SqlServer => scaffoldedModelSources.ContextFile.Code.Replace(".UseSqlServer", ".UseLazyLoadingProxies().UseSqlServer"),
-                        DbConnectionType.MySql => scaffoldedModelSources.ContextFile.Code.Replace(".UseMySql", ".UseLazyLoadingProxies().UseMySql"),
-                        DbConnectionType.PgSql => scaffoldedModelSources.ContextFile.Code.Replace(".UseNpgsql", ".UseLazyLoadingProxies().UseNpgsql"),
-                        DbConnectionType.SQLite => scaffoldedModelSources.ContextFile.Code.Replace("blahblah",""),
-                        _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
-                    };
-
+                    scaffoldedModelSources.ContextFile.Code = scaffoldedModelSources.ContextFile.Code.Replace($"DbContextOptions<{contextName}>", "DbContextOptions");
+                    var contextFile = scaffoldedModelSources.ContextFile.Code;
                     var sourceFiles = new List<string> { contextFile };
                     sourceFiles.AddRange(scaffoldedModelSources.AdditionalFiles.Select(f => f.Code));
 
-                    Dictionary<string, string> srcZipContent = new Dictionary<string, string> { { scaffoldedModelSources.ContextFile.Path, scaffoldedModelSources.ContextFile.Code } };
+                    Dictionary<string, string> srcZipContent = new Dictionary<string, string>
+                    {
+                        { scaffoldedModelSources.ContextFile.Path, scaffoldedModelSources.ContextFile.Code }
+                    };
                     foreach (var addFile in scaffoldedModelSources.AdditionalFiles)
                     {
                         srcZipContent.Add(addFile.Path, addFile.Code);
@@ -249,7 +245,7 @@ namespace Querier.Api.Domain.Services
 
                     // Load assembly and configure services
                     await _progressService.ReportProgress(connection.OperationId, 95, ProgressStatus.LoadingAssembly);
-                    var container = await _assemblyManager.LoadAssemblyAsync(
+                    var container = await _assemblyManager.LoadDbConnectionAssemblyAsync(
                         connection.Name,
                         connection.ConnectionType,
                         connectionString,
@@ -359,7 +355,7 @@ namespace Querier.Api.Domain.Services
             var templates = new[]
             {
                 ("DynamicServiceContainer", "Services\\DynamicServiceContainer.cs"),
-                ("ReadOnlyDbContext", "Context\\ReadOnlDbContext.cs"),
+                ("ReadOnlyDbContext", "Context\\ReadOnlyDbContext.cs"),
                 ("EntityController","Controllers\\EntityController.cs"),
                 ("EntityDto","Entities\\EntityDto.cs"),
                 ("EntityRepository","Repositories\\EntityRepository.cs"),
@@ -739,86 +735,6 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        public async Task<DbContext> GetDbContextByContextTypeFullNameAsync(string contextTypeFullName)
-        {
-            DBConnection connection = await _dbConnectionRepository.FindByContextNameAsync(contextTypeFullName);
-            return await GetDbContextByIdAsync(connection.Id);
-        }
-        public async Task<DbContext> GetDbContextByIdAsync(int id)
-        {
-            try
-            {
-                //_logger.LogDebug($"Get DbContext for DBConnection {id}");
-                var connection = await _dbConnectionRepository.FindByIdAsync(id); 
-                var contextTypes = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(assembly => assembly.GetTypes())
-                    .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == connection.ContextName)
-                    .ToList();
-                if (!contextTypes.Any())
-                {
-                    _logger.LogError("No DbContext found with type name: {ContextTypeName}", connection.ContextName);
-                    throw new InvalidOperationException($"No DbContext found with type name {connection.ContextName}");
-                }
-
-                var contextType = contextTypes.First();
-                var scope = ServiceActivator.GetScope();
-                
-                // Try to get from DI first
-                _logger.LogTrace("Attempting to get context from DI container");
-                if (scope.ServiceProvider.GetService(contextType) is DbContext context)
-                {
-                    _logger.LogDebug("Successfully retrieved context from DI container");
-                    return context;
-                }
-                string connectionString = string.Join(';', connection.Parameters.Where(p => !p.IsEncrypted).Select(p => p.Key + "=" + p.StoredValue));
-                foreach (var cryptedParameter in connection.Parameters.Where(p => p.IsEncrypted))
-                {
-                    string uncryptedParameterValue = _encryptionService.DecryptAsync(cryptedParameter.StoredValue).GetAwaiter().GetResult();
-                    connectionString += $";{cryptedParameter.Key}={uncryptedParameterValue}";
-                }
-
-                // Create options with the correct connection string
-                _logger.LogTrace("Creating context options with connection string");
-                var optionsBuilderType = typeof(DbContextOptionsBuilder<>).MakeGenericType(contextType);
-                var optionsBuilder = (DbContextOptionsBuilder)Activator.CreateInstance(optionsBuilderType);
-
-                switch (connection.ConnectionType)
-                {
-                    case DbConnectionType.SqlServer:
-                        _logger.LogDebug("Configuring SQL Server connection");
-                        if (optionsBuilder != null) optionsBuilder.UseSqlServer(connectionString);
-                        break;
-                    case DbConnectionType.MySql:
-                        _logger.LogDebug("Configuring MySQL connection");
-                        if (optionsBuilder != null)
-                            optionsBuilder.UseMySql(connectionString,
-                                ServerVersion.AutoDetect(connectionString));
-                        break;
-                    case DbConnectionType.PgSql:
-                        _logger.LogDebug("Configuring PostgresSQL connection");
-                        if (optionsBuilder != null) optionsBuilder.UseNpgsql(connectionString);
-                        break;
-                    case DbConnectionType.SQLite:
-                        _logger.LogDebug("Configuring SQLite connection");
-                        if (optionsBuilder != null) optionsBuilder.UseSqlite(connectionString);
-                        break;
-                    default:
-                        _logger.LogError("Unsupported database type: {ConnectionType}", connection.ConnectionType);
-                        throw new NotSupportedException($"Database type {connection.ConnectionType} not supported");
-                }
-
-                _logger.LogDebug("Creating new instance of context type: {ContextType}", contextType.Name);
-                if (optionsBuilder != null)
-                    return (DbContext)Activator.CreateInstance(contextType, optionsBuilder.Options);
-                throw new Exception($"Unable to create optionBuilder for connection {id}");
-            }
-            catch (Exception ex) when (ex is not InvalidOperationException && ex is not NotSupportedException)
-            {
-                _logger.LogError(ex, $"Error creating DbContext for type connection: {id}");
-                throw;
-            }
-        }
-
         private List<TemplateEntityMetadata> ExtractEntityMetadata(ScaffoldedModel scaffoldedModel)
         {
             var contextFile = scaffoldedModel.ContextFile;
@@ -1098,25 +1014,47 @@ namespace Querier.Api.Domain.Services
                 return await CreateDbContextFactoryAsync(connection);
             });
         }
+        
+        public async Task<IDbContextFactory<DbContext>> GetReadOnlyDbContextFactoryByIdAsync(int id)
+        {
+            return await _readOnlyContextFactoryByIdCache.GetOrAddAsync(id, async key =>
+            {
+                _logger.LogDebug("Cache miss for connection ID: {Id}, creating new factory", key);
+                var connection = await _dbConnectionRepository.FindByIdAsync(key);
+                return await CreateDbContextFactoryAsync(connection, true);
+            });
+        }
 
-        private async Task<IDbContextFactory<DbContext>> CreateDbContextFactoryAsync(DBConnection connection)
+        private async Task<IDbContextFactory<DbContext>> CreateDbContextFactoryAsync(DBConnection connection, bool getReadOnlyContext = false)
         {
             try
             {
                 _logger.LogDebug("Creating DbContextFactory for connection: {Name}", connection.Name);
                 
-                var contextTypes = AppDomain.CurrentDomain.GetAssemblies()
+                var standardContextTypes = AppDomain.CurrentDomain.GetAssemblies()
                     .SelectMany(assembly => assembly.GetTypes())
                     .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == connection.ContextName)
                     .ToList();
+                
+                var readOnlyContextTypes = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(assembly => assembly.GetTypes())
+                    .Where(t => t.IsAssignableTo(typeof(DbContext)) && t.FullName == connection.ContextName + "ReadOnly")
+                    .ToList();
 
-                if (!contextTypes.Any())
+                if (!standardContextTypes.Any())
                 {
                     _logger.LogError("No DbContext found with type name: {ContextTypeName}", connection.ContextName);
                     throw new InvalidOperationException($"No DbContext found with type name {connection.ContextName}");
                 }
+                
+                if (!readOnlyContextTypes.Any())
+                {
+                    _logger.LogError("No ReadOnly DbContext found with type name: {ContextTypeName}", connection.ContextName);
+                    throw new InvalidOperationException($"No ReadOnly DbContext found with type name {connection.ContextName}");
+                }
 
-                var contextType = contextTypes.First();
+                var standardContextType = standardContextTypes.First();
+                var readOnlyContextType = readOnlyContextTypes.First();
                 var scope = ServiceActivator.GetScope();
 
                 // Construire la chaîne de connexion
@@ -1128,7 +1066,7 @@ namespace Querier.Api.Domain.Services
                 }
 
                 // Créer le type générique de DbContextOptionsBuilder
-                var optionsBuilderType = typeof(DbContextOptionsBuilder<>).MakeGenericType(contextType);
+                var optionsBuilderType = typeof(DbContextOptionsBuilder<>).MakeGenericType(getReadOnlyContext? readOnlyContextType: standardContextType);
                 var optionsBuilder = (DbContextOptionsBuilder)Activator.CreateInstance(optionsBuilderType);
                 if (optionsBuilder == null)
                     throw new NullReferenceException("optionsBuilder cannot be null");
@@ -1169,7 +1107,7 @@ namespace Querier.Api.Domain.Services
                 }
 
                 // Créer le type générique de DbContextFactory
-                var factoryType = typeof(PooledDbContextFactory<>).MakeGenericType(contextType);
+                var factoryType = typeof(PooledDbContextFactory<>).MakeGenericType(getReadOnlyContext ? readOnlyContextType: standardContextType);
                 
                 // Créer la factory avec le type spécifique
                 var factory = Activator.CreateInstance(
@@ -1178,7 +1116,7 @@ namespace Querier.Api.Domain.Services
                     1024);
 
                 // Créer un wrapper qui convertit la factory spécifique en IDbContextFactory<DbContext>
-                return new DbContextFactoryWrapper(factory, contextType);
+                return new DbContextFactoryWrapper(factory, getReadOnlyContext ? readOnlyContextType : standardContextType);
             }
             catch (Exception ex) when (ex is not InvalidOperationException && ex is not NotSupportedException)
             {

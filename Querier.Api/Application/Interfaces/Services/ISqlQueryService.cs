@@ -13,6 +13,6 @@ namespace Querier.Api.Application.Interfaces.Services
         Task<SqlQueryDto> UpdateQueryAsync(SqlQueryDto query, Dictionary<string, object> sampleParameters = null);
         Task DeleteQueryAsync(int id);
 
-        Task<DataPagedResult<dynamic>> ExecuteQueryAsync(int queryId, DataRequestParametersWithSQLParametersDto dataRequestParameters);
+        Task<DataPagedResult<dynamic>> ExecuteQueryAsync(int queryId, DataRequestParametersWithParametersDto dataRequestParameters);
     }
 }

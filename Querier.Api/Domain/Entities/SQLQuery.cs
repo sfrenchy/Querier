@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
 namespace Querier.Api.Domain.Entities
 {
     public class SQLQuery
     {
+        [Key]
         public int Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
@@ -13,8 +16,6 @@ namespace Querier.Api.Domain.Entities
         public DateTime? LastModifiedAt { get; set; }
         public bool IsPublic { get; set; }
         public Dictionary<string, object> Parameters { get; set; }
-        
-        // Ajout de la relation avec DBConnection
         public int ConnectionId { get; set; }
         public virtual DBConnection.DBConnection Connection { get; set; }
         public string OutputDescription { get; set; }
