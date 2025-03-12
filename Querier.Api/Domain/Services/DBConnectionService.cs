@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -10,7 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Antlr4.StringTemplate;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Data.SqlClient;
@@ -52,7 +50,6 @@ namespace Querier.Api.Domain.Services
         private readonly ConcurrentDictionary<int, IDbContextFactory<DbContext>> _readOnlyContextFactoryByIdCache = new();
         private readonly IProgressService _progressService;
         private readonly IRoslynCompilerService _roslynCompilerService;
-        
         public DbConnectionService(
             IDbConnectionRepository dbConnectionRepository,
             IServiceProvider serviceProvider,
@@ -185,8 +182,10 @@ namespace Querier.Api.Domain.Services
                     var scaffoldedModelSources = scaffolder.ScaffoldModel(connectionString, dbOpts, modelOpts, codeGenOpts);
                     scaffoldedModelSources.ContextFile.Code = scaffoldedModelSources.ContextFile.Code.Replace($"DbContextOptions<{contextName}>", "DbContextOptions");
                     var contextFile = scaffoldedModelSources.ContextFile.Code;
-                    var sourceFiles = new List<string> { contextFile };
-                    sourceFiles.AddRange(scaffoldedModelSources.AdditionalFiles.Select(f => f.Code));
+                    var sourceFiles = new Dictionary<string, string>();
+                    sourceFiles.Add(scaffoldedModelSources.ContextFile.Path, contextFile);
+                    foreach (var source in scaffoldedModelSources.AdditionalFiles)
+                        sourceFiles.Add(source.Path, source.Code);
 
                     Dictionary<string, string> srcZipContent = new Dictionary<string, string>
                     {
@@ -310,7 +309,7 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private void GenerateProcedureFiles(TemplateModel templateModel, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateProcedureFiles(TemplateModel templateModel, Dictionary<string, string> srcZipContent, Dictionary<string, string> sourceFiles)
         {
             var templates = new[]
             {
@@ -345,11 +344,11 @@ namespace Querier.Api.Domain.Services
 
                 string content = template.Render();
                 srcZipContent.Add(outputPath, content);
-                sourceFiles.Add(content);
+                sourceFiles.Add(outputPath, content);
             }
         }
 
-        private void GenerateEntityFiles(TemplateModel templateModel, Dictionary<string, string> srcZipContent, List<string> sourceFiles)
+        private void GenerateEntityFiles(TemplateModel templateModel, Dictionary<string, string> srcZipContent, Dictionary<string, string> sourceFiles)
         {
             var templates = new[]
             {
@@ -380,7 +379,7 @@ namespace Querier.Api.Domain.Services
 
                 string content = template.Render();
                 srcZipContent.Add(outputPath, content);
-                sourceFiles.Add(content);
+                sourceFiles.Add(outputPath, content);
             }
         }
 
@@ -662,11 +661,12 @@ namespace Querier.Api.Domain.Services
             var entityFiles = scaffoldedModel.AdditionalFiles.Where(f => !f.Path.EndsWith("Context.cs"));
             var pluralizer = new Bricelam.EntityFrameworkCore.Design.Pluralizer();
             var viewEntities = new HashSet<string>();
-            
-            // Identify views from the context
+
+            // Identifier les vues depuis le fichier du contexte
             var contextSyntaxTree = CSharpSyntaxTree.ParseText(contextFile.Code).GetRoot();
             var onModelCreatingNode = contextSyntaxTree.DescendantNodes().OfType<MethodDeclarationSyntax>()
-                .First(m => m.Identifier.Text == "OnModelCreating");
+                .FirstOrDefault(m => m.Identifier.Text == "OnModelCreating");
+
             if (onModelCreatingNode != null)
             {
                 string currentEntity = "";
@@ -675,12 +675,10 @@ namespace Querier.Api.Domain.Services
                     if (invocation.Expression is MemberAccessExpressionSyntax memberAccessEntity &&
                         memberAccessEntity.Name.Identifier.Text == "Entity")
                     {
-                        if (memberAccessEntity.Name is GenericNameSyntax)
+                        if (memberAccessEntity.Name is GenericNameSyntax genericName)
                         {
-                            currentEntity = ((GenericNameSyntax)memberAccessEntity.Name).TypeArgumentList.Arguments.First()
-                                .GetText().ToString();
+                            currentEntity = genericName.TypeArgumentList.Arguments.First().ToString();
                         }
-                        
                     }
                     if (invocation.Expression is MemberAccessExpressionSyntax memberAccess &&
                         memberAccess.Name.Identifier.Text == "ToView")
@@ -690,14 +688,16 @@ namespace Querier.Api.Domain.Services
                 }
             }
 
-            // Première passe : extraire toutes les entités et leurs propriétés
+            // Extraction des entités
             var entityMap = new Dictionary<string, TemplateEntityMetadata>();
+
             foreach (var entityFile in entityFiles)
             {
                 var syntaxTree = CSharpSyntaxTree.ParseText(entityFile.Code);
                 var root = syntaxTree.GetRoot();
-                var classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().First();
-                
+                var classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
+                if (classDeclaration == null) continue;
+
                 var entityName = classDeclaration.Identifier.Text;
                 var entity = new TemplateEntityMetadata
                 {
@@ -705,50 +705,75 @@ namespace Querier.Api.Domain.Services
                     PluralName = pluralizer.Pluralize(entityName),
                     Properties = new List<TemplateProperty>(),
                     ForeignKeys = new List<TemplateForeignKey>(),
-                    IsViewEntity = viewEntities.Contains(entityName)
+                    IsViewEntity = viewEntities.Contains(entityName),
+                    KeyNames = new List<string>(),
+                    KeyTypes = new List<string>()
                 };
-                List<string> keys = new List<string>();
-                List<string> foreignKeys = new List<string>();
 
+                var keys = new HashSet<string>();
+                var foreignKeys = new HashSet<string>();
+
+                // Détection de [PrimaryKey] sur la classe (clé composite)
+                var primaryKeyAttribute = classDeclaration.AttributeLists
+                    .SelectMany(al => al.Attributes)
+                    .FirstOrDefault(a => a.Name.ToString() == "PrimaryKey");
+
+                if (primaryKeyAttribute?.ArgumentList != null)
+                {
+                    foreach (var arg in primaryKeyAttribute.ArgumentList.Arguments)
+                    {
+                        keys.Add(arg.Expression.ToString().Replace("\"", ""));
+                    }
+                }
+
+                // Détection des [Key] sur les propriétés (clés individuelles)
                 foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
                 {
-                    var keyAttributes = property.AttributeLists
+                    if (property.AttributeLists
                         .SelectMany(al => al.Attributes)
-                        .Where(a => a.Name.ToString() == "Key")
-                        .Select(a => property.Identifier.Text)
-                        .ToList();
-                    
-                    keys.AddRange(keyAttributes);
+                        .Any(a => a.Name.ToString() == "Key"))
+                    {
+                        keys.Add(property.Identifier.Text);
+                    }
                 }
-                
-                // Extraire les clés étrangères et leurs références
+
+                // Détection des clés étrangères et des propriétés de navigation
                 foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
                 {
                     var foreignKeyAttributes = property.AttributeLists
                         .SelectMany(al => al.Attributes)
                         .Where(a => a.Name.ToString() == "ForeignKey")
                         .SelectMany(a => a.ArgumentList.Arguments)
-                        .Select(a => a.Expression.ToString().Replace("\"", "")).ToList();
-                    
-                    foreach (var foreignKey in foreignKeyAttributes)
-                        if (!keys.Contains(foreignKey))
-                            foreignKeys.Add(foreignKey);
+                        .Select(a => a.Expression.ToString().Replace("\"", ""))
+                        .ToList();
 
-                    // Chercher les attributs de navigation
+                    foreach (var fk in foreignKeyAttributes)
+                    {
+                        if (!keys.Contains(fk))
+                        {
+                            foreignKeys.Add(fk);
+                        }
+                    }
+
+                    // Gestion des propriétés de navigation avec [InverseProperty]
                     var navigationProperty = property.AttributeLists
                         .SelectMany(al => al.Attributes)
-                        .FirstOrDefault(a => /*a.Name.ToString() == "InverseProperty" ||*/ a.Name.ToString() == "ForeignKey");
+                        .FirstOrDefault(a => a.Name.ToString() == "ForeignKey");
 
                     if (navigationProperty != null)
                     {
                         var inverseProperty = property.AttributeLists
                             .SelectMany(al => al.Attributes)
                             .FirstOrDefault(a => a.Name.ToString() == "InverseProperty");
-                        var foreignKeyIsCurrentPrimaryKey = navigationProperty.ArgumentList.Arguments.Any(a => keys.Contains(a.Expression.ToString().Replace("\"", "")));
+
+                        bool foreignKeyIsCurrentPrimaryKey = navigationProperty.ArgumentList.Arguments
+                            .Any(a => keys.Contains(a.Expression.ToString().Replace("\"", "")));
+
                         if (inverseProperty != null && !foreignKeyIsCurrentPrimaryKey)
                         {
                             bool inverseTargetIsCurrent = inverseProperty.ArgumentList.Arguments.Any(a =>
                                 a.Expression.ToString().Replace("\"", "") == pluralizer.Pluralize(entityName));
+
                             if (inverseTargetIsCurrent)
                             {
                                 var referencedType = property.Type.ToString().TrimEnd('?');
@@ -766,10 +791,10 @@ namespace Querier.Api.Domain.Services
                                         NamePlural = pluralizer.Pluralize(foreignKeys.LastOrDefault() ?? property.Identifier.Text),
                                         ReferencedEntityPlural = pluralizer.Pluralize(actualType),
                                         ReferencedEntitySingular = actualType,
-                                        ReferencedColumn =
-                                            "Id", // Par défaut, peut être mis à jour dans la deuxième passe
+                                        ReferencedColumn = "Id",
                                         IsCollection = isCollection
                                     };
+
                                     if (!entity.ForeignKeys.Any(f => f.Name == fk.Name))
                                         entity.ForeignKeys.Add(fk);
                                 }
@@ -777,14 +802,11 @@ namespace Querier.Api.Domain.Services
                         }
                     }
                 }
-                    
+
+                // Extraction des propriétés
                 foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
                 {
-                    var attributes = property.AttributeLists
-                        .SelectMany(al => al.Attributes)
-                        .Select(a => a.Name.ToString())
-                        .ToList();
-
+                    var attributes = property.AttributeLists.SelectMany(al => al.Attributes).Select(a => a.Name.ToString()).ToList();
                     var isKey = keys.Contains(property.Identifier.Text);
                     var isForeignKey = foreignKeys.Contains(property.Identifier.Text);
                     var isRequired = attributes.Contains("Required");
@@ -809,12 +831,13 @@ namespace Querier.Api.Domain.Services
 
                     if (isKey)
                     {
-                        entity.KeyType = property.Type.ToString();
-                        entity.KeyName = property.Identifier.Text;
+                        entity.KeyNames.Add(prop.Name);
+                        entity.KeyTypes.Add(prop.CSType);
                     }
                 }
 
-                if (string.IsNullOrEmpty(entity.KeyType))
+                // Définir une clé primaire si aucune n'a été trouvée
+                if (!entity.KeyNames.Any())
                 {
                     var idProperty = entity.Properties.FirstOrDefault(p => 
                         p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) ||
@@ -823,35 +846,31 @@ namespace Querier.Api.Domain.Services
                     if (idProperty != null)
                     {
                         idProperty.IsKey = true;
-                        entity.KeyType = idProperty.CSType;
-                        entity.KeyName = idProperty.Name;
-                    }
-                    else
-                    {
-                        var firstProperty = entity.Properties.First();
-                        firstProperty.IsKey = true;
-                        entity.KeyType = firstProperty.CSType;
-                        entity.KeyName = firstProperty.Name;
+                        entity.KeyNames.Add(idProperty.Name);
+                        entity.KeyTypes.Add(idProperty.CSType);
                     }
                 }
 
                 entityMap[entityName] = entity;
             }
 
-            // Deuxième passe : mettre à jour les colonnes référencées des clés étrangères
+            // 🔹 Deuxième passe : mise à jour des clés étrangères avec la bonne colonne référencée
             foreach (var entity in entityMap.Values)
             {
                 foreach (var fk in entity.ForeignKeys)
                 {
                     if (entityMap.TryGetValue(fk.ReferencedEntitySingular, out var referencedEntity))
                     {
-                        fk.ReferencedColumn = referencedEntity.KeyName;
+                        fk.ReferencedColumn = referencedEntity.KeyNames.FirstOrDefault() ?? "Id";
                     }
                 }
             }
 
             return entityMap.Values.ToList();
         }
+
+
+
 
         public class SourceDownload
         {
@@ -910,7 +929,13 @@ namespace Querier.Api.Domain.Services
             
             foreach (var param in parameters.Where(p => !string.IsNullOrEmpty(p.Value)))
             {
-                builder[param.Key] = param.Value;
+                if (!param.IsEncrypted)
+                    builder[param.Key] = param.Value;
+                else
+                {
+                    string uncryptedParameterValue = _encryptionService.DecryptAsync(param.Value).GetAwaiter().GetResult();
+                    builder[param.Key] = uncryptedParameterValue;
+                }
             }
 
             return builder.ConnectionString;
@@ -1045,7 +1070,7 @@ namespace Querier.Api.Domain.Services
                 throw;
             }
         }
-
+        
         // Classe wrapper pour gérer la conversion de type
         private class DbContextFactoryWrapper : IDbContextFactory<DbContext>
         {

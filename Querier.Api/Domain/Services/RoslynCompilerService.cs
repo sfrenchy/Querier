@@ -5,6 +5,7 @@ using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -34,7 +35,7 @@ public class CompilationFailedException : Exception
 public class RoslynCompilerService(ILogger<RoslynCompilerService> logger) : IRoslynCompilerService
 {
     public CompilationResult CompileAssembly(string assemblyName,
-        List<string> sourceFiles,
+        Dictionary<string, string> sourceFiles,
         List<Type> referenceTypes = null,
         List<byte[]> refAssemblyBytes = null)
     {
@@ -64,11 +65,11 @@ public class RoslynCompilerService(ILogger<RoslynCompilerService> logger) : IRos
         return new CompilationResult(peStream.ToArray(), pdbStream.ToArray(), Enumerable.Empty<Diagnostic>());
     }
 
-    private CSharpCompilation GenerateCode(string assemblyName, List<string> sourceFiles, List<Type> referenceTypes,
+    private CSharpCompilation GenerateCode(string assemblyName, Dictionary<string, string> sourceFiles, List<Type> referenceTypes,
         List<byte[]> refAssembliesBytes)
     {
         var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp12);
-        var parsedSyntaxTrees = sourceFiles.Select(f => SyntaxFactory.ParseSyntaxTree(f, options));
+        var parsedSyntaxTrees = sourceFiles.Select(f => SyntaxFactory.ParseSyntaxTree(f.Value, options, f.Key.EndsWith(".cs") ? f.Key : $"{f.Key}.cs", Encoding.UTF8));
 
         return CSharpCompilation.Create($"{assemblyName}.dll",
             parsedSyntaxTrees,

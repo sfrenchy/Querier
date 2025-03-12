@@ -6,8 +6,8 @@ public class TemplateEntityMetadata
 {
     public string Name { get; set; }
     public string PluralName { get; set; }
-    public string KeyType { get; set; }
-    public string KeyName { get; set; }
+    public List<string> KeyNames { get; set; } = new List<string>();
+    public List<string> KeyTypes { get; set; } = new List<string>();
     public bool IsViewEntity { get; set; }
 
     public bool IsTableEntity => !IsViewEntity;
