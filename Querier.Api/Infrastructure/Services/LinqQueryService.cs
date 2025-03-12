@@ -346,8 +346,9 @@ public class LinqQueryService(IDbContextFactory<ApiDbContext> contextFactory,
             template.Add("linqQueryName", query.Name);
             template.Add("linqQueryCode", query.Query);
             string finalLinqQueryCode = template.Render();
-            
-            var compilationResult = roslynCompilerService.CompileAssembly(query.Name, [finalLinqQueryCode], [], refAssemblilesBytes);
+            Dictionary<string, string> source = new Dictionary<string, string>();
+            source.Add("query", finalLinqQueryCode);
+            var compilationResult = roslynCompilerService.CompileAssembly(query.Name, source, [], refAssemblilesBytes);
             
             return (true, compilationResult.AssemblyBytes, compilationResult.PdbBytes);
         }
