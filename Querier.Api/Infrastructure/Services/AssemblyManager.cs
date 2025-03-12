@@ -30,14 +30,10 @@ namespace Querier.Api.Infrastructure.Services
         private readonly ConcurrentDictionary<string, ServiceCollection> _assemblyServices;
         private readonly ConcurrentDictionary<string, IServiceProvider> _assemblyServiceProviders;
         private readonly ConcurrentDictionary<string, string> _normalizedNameCache;
-        private readonly IDbConnectionRepository _dbConnectionRepository;
-        private readonly IEncryptionService _encryptionService;
         public AssemblyManagerService(
             ILogger<AssemblyManagerService> logger,
             IServiceProvider serviceProvider,
             IServiceCollection services,
-            IDbConnectionRepository dbConnectionRepository,
-            IEncryptionService encryptionService,
             ApplicationPartManager partManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -49,8 +45,6 @@ namespace Querier.Api.Infrastructure.Services
             _assemblyServices = new ConcurrentDictionary<string, ServiceCollection>();
             _assemblyServiceProviders = new ConcurrentDictionary<string, IServiceProvider>();
             _normalizedNameCache = new ConcurrentDictionary<string, string>();
-            _dbConnectionRepository = dbConnectionRepository;
-            _encryptionService = encryptionService;
         }
 
         public string GetContextNormalizedAssemblyName(string assemblyName)
@@ -177,17 +171,26 @@ namespace Querier.Api.Infrastructure.Services
 
                 // Charger l'assembly
                 Assembly assembly;
-                using (var assemblyStream = new MemoryStream(await _dbConnectionRepository.GetDLLStreamAsync(connection.Id)))
-                using (var pdbStream = new MemoryStream(await _dbConnectionRepository.GetPDBStreamAsync(connection.Id)))
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    assembly = loadContext.LoadFromStream(assemblyStream, pdbStream);
+                    IDbConnectionRepository dbConnectionRepository = (IDbConnectionRepository) scope.ServiceProvider.GetRequiredService(typeof(IDbConnectionRepository));
+
+                    
+                    using (var assemblyStream = new MemoryStream(await dbConnectionRepository.GetDLLStreamAsync(connection.Id)))
+                    using (var pdbStream = new MemoryStream(await dbConnectionRepository.GetPDBStreamAsync(connection.Id)))
+                    {
+                        assembly = loadContext.LoadFromStream(assemblyStream, pdbStream);
+                    }
                 }
 
-                
+
+
                 string connectionString = string.Join(';', connection.Parameters.Where(p => !p.IsEncrypted).Select(p => p.Key + "=" + p.Value));
                 foreach (var cryptedParameter in connection.Parameters.Where(p => p.IsEncrypted))
                 {
-                    string uncryptedParameterValue = await _encryptionService.DecryptAsync(cryptedParameter.Value);
+                    using var scope = _serviceProvider.CreateScope();
+                    var encryptionService = scope.ServiceProvider.GetRequiredService<IEncryptionService>();
+                    string uncryptedParameterValue = await encryptionService.DecryptAsync(cryptedParameter.Value);
                     connectionString += $";{cryptedParameter.Key}={uncryptedParameterValue}";
                 }
                 // Configurer les services et créer le conteneur

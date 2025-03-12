@@ -62,7 +62,7 @@ namespace Querier.Api
                     logging.AddConsole();
                     logging.AddDebug();
                     logging.AddEventSourceLogger();
-                    
+
                     if (hostingContext.HostingEnvironment.IsDevelopment())
                     {
                         logging.SetMinimumLevel(LogLevel.Debug);
@@ -71,6 +71,11 @@ namespace Querier.Api
                     {
                         logging.SetMinimumLevel(LogLevel.Information);
                     }
+                })
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddDbContextFactory<ApiDbContext>(options =>
+                        options.UseSqlite(hostContext.Configuration.GetConnectionString("ApiDBConnection")));
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

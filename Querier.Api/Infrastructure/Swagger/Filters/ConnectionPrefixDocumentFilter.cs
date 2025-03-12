@@ -11,25 +11,32 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using System.Xml.Linq;
 using System.Reflection;
 using Querier.Api.Application.Interfaces.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Querier.Api.Domain.Services;
 
 namespace Querier.Api.Infrastructure.Swagger.Filters
 {
     public class ConnectionPrefixDocumentFilter : IDocumentFilter
     {
         private readonly string _xmlPath;
-        private readonly IDbConnectionService _dbConnectionService;
+        private readonly IServiceProvider _serviceProvider;
 
-        public ConnectionPrefixDocumentFilter(IDbConnectionService dbConnectionService)
+        public ConnectionPrefixDocumentFilter(IServiceProvider serviceProvider)
         {
-            _dbConnectionService = dbConnectionService;
+            _serviceProvider = serviceProvider;
             var assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
             _xmlPath = Path.Combine(AppContext.BaseDirectory, $"{assemblyName}.xml");
         }
 
         private async Task<IEnumerable<string>> GetDatabaseConnections()
         {
-            var connections = await _dbConnectionService.GetAllAsync();
-            return connections.Select(c => c.ApiRoute).ToList();
+            using (var scope = _serviceProvider.CreateScope()) 
+            { 
+                var dbConnectionService = scope.ServiceProvider.GetRequiredService<IDbConnectionService>();
+                var connections = await dbConnectionService.GetAllAsync();
+                return connections.Select(c => c.ApiRoute).ToList();
+            }
+            
         }
 
         private string GetControllerDescription(TypeInfo controllerType)

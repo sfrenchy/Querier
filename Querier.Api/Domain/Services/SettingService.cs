@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Repositories;
@@ -11,25 +12,47 @@ using Querier.Api.Domain.Entities;
 
 namespace Querier.Api.Domain.Services
 {
-    public class SettingService(
-        ISettingRepository settingRepository,
-        ILogger<SettingService> logger)
+    public class SettingService
         : ISettingService
     {
+        private readonly ILogger<SettingService> _logger;
+        private readonly IServiceProvider _serviceProvider;
+        private ISettingRepository _settingRepository;
+        public SettingService(ILogger<SettingService> logger, IServiceProvider serviceProvider)
+        {
+            _logger = logger;
+            _serviceProvider = serviceProvider;
+        }
+
+        private ISettingRepository settingRepository
+        {
+            get
+            {
+                if (_settingRepository == null)
+                {
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        _settingRepository = scope.ServiceProvider.GetRequiredService<ISettingRepository>();
+                    }
+                }
+                return _settingRepository;
+            }
+        }
+
         public async Task<IEnumerable<SettingDto>> GetSettingsAsync()
         {
             try
             {
-                logger.LogInformation("Retrieving all settings");
+                _logger.LogInformation("Retrieving all settings");
                 var settings = await settingRepository.ListAsync();
                 var enumerable = settings.ToList();
                 var dtos = enumerable.Select(SettingDto.FromEntity);
-                logger.LogInformation("Successfully retrieved {Count} settings", enumerable.Count());
+                _logger.LogInformation("Successfully retrieved {Count} settings", enumerable.Count());
                 return dtos;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to retrieve settings");
+                _logger.LogError(ex, "Failed to retrieve settings");
                 throw;
             }
         }
@@ -38,28 +61,28 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                logger.LogInformation("Attempting to update setting: {Name}", setting.Name);
+                _logger.LogInformation("Attempting to update setting: {Name}", setting.Name);
 
                 if (setting == null)
                 {
-                    logger.LogError("UpdateSettingAsync called with null setting");
+                    _logger.LogError("UpdateSettingAsync called with null setting");
                     throw new ArgumentNullException(nameof(setting));
                 }
 
                 var entity = await settingRepository.GetByIdAsync(setting.Id);
                 if (entity == null)
                 {
-                    logger.LogWarning("Setting not found with ID: {Id}", setting.Id);
+                    _logger.LogWarning("Setting not found with ID: {Id}", setting.Id);
                     throw new KeyNotFoundException($"Setting with ID {setting.Id} not found");
                 }
 
                 var updatedEntity = await settingRepository.UpdateAsync(entity);
-                logger.LogInformation("Successfully updated setting: {Name}", setting.Name);
+                _logger.LogInformation("Successfully updated setting: {Name}", setting.Name);
                 return SettingDto.FromEntity(updatedEntity);
             }
             catch (Exception ex) when (ex is not ArgumentNullException && ex is not KeyNotFoundException)
             {
-                logger.LogError(ex, "Failed to update setting: {Name}", setting?.Name);
+                _logger.LogError(ex, "Failed to update setting: {Name}", setting?.Name);
                 throw;
             }
         }
@@ -68,23 +91,23 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                logger.LogInformation("Checking if API is configured");
+                _logger.LogInformation("Checking if API is configured");
                 var settings = await settingRepository.ListAsync();
                 var setting = settings.FirstOrDefault(s => s.Name == "api:isConfigured");
                 
                 if (setting == null)
                 {
-                    logger.LogInformation("API configuration setting not found, returning false");
+                    _logger.LogInformation("API configuration setting not found, returning false");
                     return false;
                 }
 
                 var isConfigured = setting.Value.ToLower() == "true";
-                logger.LogInformation("API configuration status: {IsConfigured}", isConfigured);
+                _logger.LogInformation("API configuration status: {IsConfigured}", isConfigured);
                 return isConfigured;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error checking API configuration status");
+                _logger.LogError(ex, "Error checking API configuration status");
                 return false;
             }
         }
@@ -98,11 +121,11 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                logger.LogDebug("Retrieving setting value: {Name}", name);
+                _logger.LogDebug("Retrieving setting value: {Name}", name);
 
                 if (string.IsNullOrEmpty(name))
                 {
-                    logger.LogWarning("GetSettingValueAsync called with null or empty name");
+                    _logger.LogWarning("GetSettingValueAsync called with null or empty name");
                     return defaultValue;
                 }
 
@@ -111,7 +134,7 @@ namespace Querier.Api.Domain.Services
 
                 if (setting == null)
                 {
-                    logger.LogDebug("Setting {Name} not found, returning default value", name);
+                    _logger.LogDebug("Setting {Name} not found, returning default value", name);
                     return defaultValue;
                 }
 
@@ -123,19 +146,19 @@ namespace Querier.Api.Domain.Services
                     }
 
                     var convertedValue = (T)Convert.ChangeType(setting.Value, typeof(T));
-                    logger.LogDebug("Successfully retrieved setting {Name} with value {Value}", name, convertedValue);
+                    _logger.LogDebug("Successfully retrieved setting {Name} with value {Value}", name, convertedValue);
                     return convertedValue;
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Failed to convert setting {Name} to type {Type}, returning default value", 
+                    _logger.LogWarning(ex, "Failed to convert setting {Name} to type {Type}, returning default value", 
                         name, typeof(T).Name);
                     return defaultValue;
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unexpected error retrieving setting {Name}", name);
+                _logger.LogError(ex, "Unexpected error retrieving setting {Name}", name);
                 return defaultValue;
             }
         }
@@ -144,17 +167,17 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                logger.LogInformation("Attempting to create new setting: {Name}", dto.Name);
+                _logger.LogInformation("Attempting to create new setting: {Name}", dto.Name);
 
                 if (dto == null)
                 {
-                    logger.LogError("CreateSettingAsync called with null DTO");
+                    _logger.LogError("CreateSettingAsync called with null DTO");
                     throw new ArgumentNullException(nameof(dto));
                 }
 
                 if (string.IsNullOrEmpty(dto.Name))
                 {
-                    logger.LogError("Cannot create setting with null or empty name");
+                    _logger.LogError("Cannot create setting with null or empty name");
                     throw new ArgumentException("Setting name cannot be null or empty", nameof(dto.Name));
                 }
 
@@ -167,13 +190,13 @@ namespace Querier.Api.Domain.Services
                 };
 
                 await settingRepository.AddAsync(newSetting);
-                logger.LogInformation("Successfully created setting: {Name}", dto.Name);
+                _logger.LogInformation("Successfully created setting: {Name}", dto.Name);
 
                 return SettingDto.FromEntity(newSetting);
             }
             catch (Exception ex) when (ex is not ArgumentNullException && ex is not ArgumentException)
             {
-                logger.LogError(ex, "Failed to create setting: {Name}", dto?.Name);
+                _logger.LogError(ex, "Failed to create setting: {Name}", dto?.Name);
                 throw;
             }
         }
@@ -182,11 +205,11 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                logger.LogDebug("Retrieving or creating setting: {Name}", name);
+                _logger.LogDebug("Retrieving or creating setting: {Name}", name);
 
                 if (string.IsNullOrEmpty(name))
                 {
-                    logger.LogWarning("GetSettingValueIfExistsAsync called with null or empty name");
+                    _logger.LogWarning("GetSettingValueIfExistsAsync called with null or empty name");
                     throw new ArgumentException("Setting name cannot be null or empty", nameof(name));
                 }
 
@@ -195,7 +218,7 @@ namespace Querier.Api.Domain.Services
 
                 if (setting == null)
                 {
-                    logger.LogInformation("Setting {Name} not found, creating with default value", name);
+                    _logger.LogInformation("Setting {Name} not found, creating with default value", name);
                     
                     var newSetting = new Setting
                     {
@@ -210,12 +233,12 @@ namespace Querier.Api.Domain.Services
                 }
 
                 var convertedValue = (T)Convert.ChangeType(setting.Value, typeof(T));
-                logger.LogDebug("Successfully retrieved existing setting {Name} with value {Value}", name, convertedValue);
+                _logger.LogDebug("Successfully retrieved existing setting {Name} with value {Value}", name, convertedValue);
                 return convertedValue;
             }
             catch (Exception ex) when (ex is not ArgumentException)
             {
-                logger.LogError(ex, "Failed to retrieve or create setting: {Name}", name);
+                _logger.LogError(ex, "Failed to retrieve or create setting: {Name}", name);
                 throw;
             }
         }
@@ -224,11 +247,11 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                logger.LogInformation("Attempting to update or create setting: {Name}", name);
+                _logger.LogInformation("Attempting to update or create setting: {Name}", name);
 
                 if (string.IsNullOrEmpty(name))
                 {
-                    logger.LogError("UpdateSettingIfExistsAsync called with null or empty name");
+                    _logger.LogError("UpdateSettingIfExistsAsync called with null or empty name");
                     throw new ArgumentException("Setting name cannot be null or empty", nameof(name));
                 }
 
@@ -240,13 +263,13 @@ namespace Querier.Api.Domain.Services
                     if (typeof(T).ToString() != setting.Type)
                     {
                         var error = $"Type mismatch for setting {name}, existing type: {setting.Type}, new type: {typeof(T)}";
-                        logger.LogError(error);
+                        _logger.LogError(error);
                         throw new InvalidOperationException(error);
                     }
 
                     setting.Value = value?.ToString();
                     await settingRepository.UpdateAsync(setting);
-                    logger.LogInformation("Successfully updated existing setting: {Name}", name);
+                    _logger.LogInformation("Successfully updated existing setting: {Name}", name);
                 }
                 else
                 {
@@ -257,12 +280,12 @@ namespace Querier.Api.Domain.Services
                         Type = typeof(T).ToString()
                     };
                     await settingRepository.AddAsync(setting);
-                    logger.LogInformation("Successfully created new setting: {Name}", name);
+                    _logger.LogInformation("Successfully created new setting: {Name}", name);
                 }
             }
             catch (Exception ex) when (ex is not ArgumentException && ex is not InvalidOperationException)
             {
-                logger.LogError(ex, "Failed to update or create setting: {Name}", name);
+                _logger.LogError(ex, "Failed to update or create setting: {Name}", name);
                 throw;
             }
         }
@@ -271,11 +294,11 @@ namespace Querier.Api.Domain.Services
         {
             try
             {
-                logger.LogInformation("Updating multiple settings. Count: {Count}", settings.Count);
+                _logger.LogInformation("Updating multiple settings. Count: {Count}", settings.Count);
 
                 if (settings == null)
                 {
-                    logger.LogError("UpdateSettings called with null dictionary");
+                    _logger.LogError("UpdateSettings called with null dictionary");
                     throw new ArgumentNullException(nameof(settings));
                 }
 
@@ -287,15 +310,15 @@ namespace Querier.Api.Domain.Services
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, "Failed to update setting {Name}, continuing with remaining settings", name);
+                        _logger.LogError(ex, "Failed to update setting {Name}, continuing with remaining settings", name);
                     }
                 }
 
-                logger.LogInformation("Completed updating multiple settings");
+                _logger.LogInformation("Completed updating multiple settings");
             }
             catch (Exception ex) when (ex is not ArgumentNullException)
             {
-                logger.LogError(ex, "Failed to update multiple settings");
+                _logger.LogError(ex, "Failed to update multiple settings");
                 throw;
             }
         }
