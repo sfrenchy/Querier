@@ -187,18 +187,18 @@ public class JsonSchemaGeneratorService
         {
             if (CustomAttributeExtensions.GetCustomAttribute<DtoForAttribute>(containerType) != null)
             {
-                string typeString = CustomAttributeExtensions.GetCustomAttribute<DtoForAttribute>(containerType).EntityType;
+                Type targetEntityType = CustomAttributeExtensions.GetCustomAttribute<DtoForAttribute>(containerType).EntityType;
 
                 foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
                 {
-                    if (a.GetTypes().Any(t => t.FullName == typeString))
-                        containerType = a.GetTypes().First(t => t.FullName == typeString);
+                    if (a.GetTypes().Any(t => t == targetEntityType))
+                        containerType = a.GetTypes().First(t => t == targetEntityType);
                 }
                 
                 if (containerType == null)
                 {
-                    _logger.LogError("Type {TypeString} not found in EF model", typeString);
-                    throw new Exception($"Type {typeString} not found in EF model");
+                    _logger.LogError("Type {TypeString} not found in EF model", targetEntityType);
+                    throw new Exception($"Type {targetEntityType} not found in EF model");
                 }
             }
             var efEntityType = _efModel.FindEntityType(containerType);

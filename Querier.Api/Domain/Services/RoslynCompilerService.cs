@@ -65,6 +65,50 @@ public class RoslynCompilerService(ILogger<RoslynCompilerService> logger) : IRos
         return new CompilationResult(peStream.ToArray(), pdbStream.ToArray(), Enumerable.Empty<Diagnostic>());
     }
 
+    public CompilationResult CompileAssembly(string assemblyName,
+        IEnumerable<SyntaxTree> sourceFiles,
+        List<Type> referenceTypes = null,
+        List<byte[]> refAssemblyBytes = null)
+    {
+        var peStream = new MemoryStream();
+        var pdbStream = new MemoryStream();
+
+        var compilation = GenerateCode(assemblyName, sourceFiles, referenceTypes, refAssemblyBytes);
+        var emitResult = compilation.Emit(peStream, pdbStream);
+
+        if (!emitResult.Success)
+        {
+            var compilationErrors = emitResult.Diagnostics
+                .Where(d => d.Severity == DiagnosticSeverity.Error)
+                .ToList();
+
+            var errorMessage = string.Join("\n", compilationErrors.Select(e =>
+                $"Error {e.Id} at line {e.Location.GetLineSpan().StartLinePosition.Line + 1}: {e.GetMessage()}"));
+
+            logger.LogError("Compilation failed for {AssemblyName}: {Errors}", assemblyName, errorMessage);
+
+            return new CompilationResult(null, null, compilationErrors);
+        }
+
+        peStream.Seek(0, SeekOrigin.Begin);
+        pdbStream.Seek(0, SeekOrigin.Begin);
+
+        return new CompilationResult(peStream.ToArray(), pdbStream.ToArray(), Enumerable.Empty<Diagnostic>());
+    }
+
+    private CSharpCompilation GenerateCode(string assemblyName,IEnumerable<SyntaxTree> parsedSyntaxTrees, List<Type> referenceTypes,
+        List<byte[]> refAssembliesBytes)
+    {
+        var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp12);
+
+        return CSharpCompilation.Create($"{assemblyName}.dll",
+            parsedSyntaxTrees,
+            references: GetCompilationReferences(referenceTypes, refAssembliesBytes),
+            options: new CSharpCompilationOptions(
+                OutputKind.DynamicallyLinkedLibrary,
+                optimizationLevel: OptimizationLevel.Debug));
+    }
+
     private CSharpCompilation GenerateCode(string assemblyName, Dictionary<string, string> sourceFiles, List<Type> referenceTypes,
         List<byte[]> refAssembliesBytes)
     {
