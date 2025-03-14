@@ -40,10 +40,12 @@ public class SourceCodeService
         { "Repositories", new() },
         { "Services", new() },
         { "Controllers", new() },
-        { "Contexts", new() }
+        { "Contexts", new() },
+        { "ServiceContainer", new() }
     };
     private HashSet<string> _viewEntities = new HashSet<string>();
     private List<TemplateEntityMetadata> _entityMap = new();
+    private List<StoredProcedureMetadata> _procedureMap = new();
     public SourceCodeService(DbConnectionType dbConnectionType, string connectionString, string rootNamespace, string apiRoute, ILogger logger)
     {
         _dbConnectionType = dbConnectionType;
@@ -74,15 +76,6 @@ public class SourceCodeService
         _entityMap = GenerateEntityMap();
         _logger.LogInformation($"Generate Dtos source code");
 
-        await Task.WhenAll(
-            GenerateFromEntities("EntityToDto", "Dtos", _generatedSyntaxTrees["Dtos"]),
-            GenerateFromEntities("EntityToInterfaceRepository", "Interfaces", _generatedSyntaxTrees["Interfaces"]),
-            GenerateFromEntities("EntityToRepository", "Repositories", _generatedSyntaxTrees["Repositories"]),
-            GenerateFromEntities("EntityToInterfaceService", "Interfaces", _generatedSyntaxTrees["Interfaces"]),
-            GenerateFromEntities("EntityToService", "Services", _generatedSyntaxTrees["Services"]),
-            GenerateFromEntities("EntityToController", "Controllers", _generatedSyntaxTrees["Controllers"])
-        );
-
         IDatabaseMetadataProvider dbMetadataProvider = _dbConnectionType switch
         {
             DbConnectionType.SqlServer => new SqlServerDatabaseMetadataProvider(_logger),
@@ -92,16 +85,106 @@ public class SourceCodeService
             _ => throw new NotSupportedException($"Database type {_dbConnectionType} not supported")
         };
 
-        var proceduresMetadata = dbMetadataProvider.ExtractStoredProcedureMetadata(_connectionString);
+        _procedureMap = dbMetadataProvider.ExtractStoredProcedureMetadata(_connectionString);
+
         await Task.WhenAll(
-            GenerateProcedureFromDatabase("ProcedureToInputDto", "Dtos/Procedures", proceduresMetadata, _generatedSyntaxTrees["Dtos"]),
-            GenerateProcedureFromDatabase("ProcedureToOutputDto", "Dtos/Procedures", proceduresMetadata, _generatedSyntaxTrees["Dtos"]),
-            GenerateProcedureFromDatabase("ProcedureToInterfaceRepository", "Interfaces/Procedures", proceduresMetadata, _generatedSyntaxTrees["Interfaces"]),
-            GenerateProcedureFromDatabase("ProcedureToRepository", "Repositories/Procedures", proceduresMetadata, _generatedSyntaxTrees["Repositories"]),
-            GenerateProcedureFromDatabase("ProcedureToInterfaceService", "Interfaces/Procedures", proceduresMetadata, _generatedSyntaxTrees["Interfaces"]),
-            GenerateProcedureFromDatabase("ProcedureToService", "Services/Procedures", proceduresMetadata, _generatedSyntaxTrees["Repositories"]),
-            GenerateProcedureFromDatabase("ProcedureToController", "Controllers/Procedures", proceduresMetadata, _generatedSyntaxTrees["Controllers"])
+            GenerateFromEntities("EntityToDto", "Dtos", _generatedSyntaxTrees["Dtos"]),
+            GenerateFromEntities("EntityToInterfaceRepository", "Interfaces/Repositories", _generatedSyntaxTrees["Interfaces"]),
+            GenerateFromEntities("EntityToRepository", "Repositories", _generatedSyntaxTrees["Repositories"]),
+            GenerateFromEntities("EntityToInterfaceService", "Interfaces/Services", _generatedSyntaxTrees["Interfaces"]),
+            GenerateFromEntities("EntityToService", "Services", _generatedSyntaxTrees["Services"]),
+            GenerateFromEntities("EntityToController", "Controllers", _generatedSyntaxTrees["Controllers"]),
+            GenerateProcedureFromDatabase("ProcedureToInputDto", "Dtos/Procedures", _procedureMap, _generatedSyntaxTrees["Dtos"]),
+            GenerateProcedureFromDatabase("ProcedureToOutputDto", "Dtos/Procedures", _procedureMap, _generatedSyntaxTrees["Dtos"]),
+            GenerateProcedureFromDatabase("ProcedureToInterfaceRepository", "Interfaces/Procedures/Repositories", _procedureMap, _generatedSyntaxTrees["Interfaces"]),
+            GenerateProcedureFromDatabase("ProcedureToRepository", "Repositories/Procedures", _procedureMap, _generatedSyntaxTrees["Repositories"]),
+            GenerateProcedureFromDatabase("ProcedureToInterfaceService", "Interfaces/Procedures/Services", _procedureMap, _generatedSyntaxTrees["Interfaces"]),
+            GenerateProcedureFromDatabase("ProcedureToService", "Services/Procedures", _procedureMap, _generatedSyntaxTrees["Repositories"]),
+            GenerateProcedureFromDatabase("ProcedureToController", "Controllers/Procedures", _procedureMap, _generatedSyntaxTrees["Controllers"]),
+            GenerateReadOnlyDbContext()
         );
+
+        await GenerateServiceContainer();
+    }
+
+    private async Task GenerateServiceContainer()
+    {
+        await Task.Run(() =>
+        {
+            var template = new Template(_templates["ServiceContainer"], '$', '$');
+            template.Add("model", new
+            {
+                RootNamespace = _rootNamespace,
+                EntityRepositories = _generatedSyntaxTrees["Repositories"].Where(s => !s.FilePath.Contains("Procedures")).Select(s => Path.GetFileNameWithoutExtension(s.FilePath)),
+                ProcedureRepositories = _generatedSyntaxTrees["Repositories"].Where(s => s.FilePath.Contains("Procedures")).Select(s => Path.GetFileNameWithoutExtension(s.FilePath)),
+                EntityServices = _generatedSyntaxTrees["Services"].Where(s => !s.FilePath.Contains("Procedures")).Select(s => Path.GetFileNameWithoutExtension(s.FilePath)),
+                ProcedureServices = _generatedSyntaxTrees["Services"].Where(s => s.FilePath.Contains("Procedures")).Select(s => Path.GetFileNameWithoutExtension(s.FilePath)),
+            });
+            string code = template.Render();
+            SyntaxTree codeSyntaxTree = CSharpSyntaxTree.ParseText(code, null, $"{_rootNamespace}ServiceContainer.cs", Encoding.UTF8);
+            SyntaxNode root = codeSyntaxTree.GetRoot();
+            SyntaxNode formattedRoot = Formatter.Format(root, _workspace);
+            var diagnostics = codeSyntaxTree.GetDiagnostics();
+            if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
+            {
+                foreach (var error in diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
+                {
+                    var location = error.Location.GetLineSpan();
+                    int lineNumber = location.StartLinePosition.Line + 1;
+                    var codeLines = code.Split('\n');
+                    string errorLine = lineNumber <= codeLines.Length ? codeLines[lineNumber - 1].Trim() : "Unknown line";
+                    _logger.LogDebug($"Error in file {_rootNamespace}ServiceContainer.cs at line {lineNumber}: {errorLine}");
+                    _logger.LogDebug($"Diagnostic: {error.GetMessage()}");
+                }
+                throw new InvalidOperationException($"Error while generating code for ServiceContainer. See logs for details.");
+            }
+            lock (_generatedSyntaxTrees["ServiceContainer"])
+            {
+                _generatedSyntaxTrees["ServiceContainer"].Add(CSharpSyntaxTree.ParseText(formattedRoot.ToFullString(), null, $"{_rootNamespace}ServiceContainer.cs", Encoding.UTF8));
+            }
+        });
+    }
+
+    private async Task GenerateReadOnlyDbContext()
+    {
+        await Task.Run(() =>
+        {
+            var template = new Template(_templates["DbContextReadOnly"], '$', '$');
+            template.Add("model", new
+            {
+                RootNamespace = _rootNamespace
+            });
+
+            string code = template.Render();
+            SyntaxTree codeSyntaxTree = CSharpSyntaxTree.ParseText(code, null, $"Contexts/{_rootNamespace}DbContextReadOnly.cs", Encoding.UTF8);
+            SyntaxNode root = codeSyntaxTree.GetRoot();
+            SyntaxNode formattedRoot = Formatter.Format(root, _workspace);
+            var diagnostics = codeSyntaxTree.GetDiagnostics();
+            if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
+            {
+                foreach (var error in diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
+                {
+                    var location = error.Location.GetLineSpan();
+                    int lineNumber = location.StartLinePosition.Line + 1;
+
+                    var codeLines = code.Split('\n');
+                    string errorLine = lineNumber <= codeLines.Length ? codeLines[lineNumber - 1].Trim() : "Unknown line";
+
+                    _logger.LogDebug($"Error in file {_rootNamespace}DbContextReadOnly.cs at line {lineNumber}: {errorLine}");
+                    _logger.LogDebug($"Diagnostic: {error.GetMessage()}");
+                }
+
+                throw new InvalidOperationException($"Error while generating code for ReadOnlyDbContext. See logs for details.");
+            }
+            var classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
+            var interfaceDeclaration = root.DescendantNodes().OfType<InterfaceDeclarationSyntax>().FirstOrDefault();
+            var codeDeclarationName = classDeclaration != null ? classDeclaration.Identifier.Text : interfaceDeclaration.Identifier.Text;
+            
+            lock (_generatedSyntaxTrees["Contexts"])
+            {
+                _generatedSyntaxTrees["Contexts"].Add(CSharpSyntaxTree.ParseText(formattedRoot.ToFullString(), null, $"Contexts/{_rootNamespace}DbContextReadOnly.cs", Encoding.UTF8));
+            }
+        });
     }
 
     private async Task GenerateProcedureFromDatabase(string templateFile, string sourcePath, List<StoredProcedureMetadata> proceduresMetadata, HashSet<SyntaxTree> targetSyntaxTrees)
