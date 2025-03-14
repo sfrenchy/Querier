@@ -298,6 +298,7 @@ public class SourceCodeService
                         IsTableEntity = entity.IsTableEntity,
                         Properties = entity.Properties,
                         ForeignKeys = entity.ForeignKeys,
+                        HasKeys = entity.Keys.Count > 0,
                         MethodSignatureParameter = methodSignatureParameters,
                         LinqEntityFilter = linqEntityFilter,
                         KeyParameterLine = keyParameterLine,

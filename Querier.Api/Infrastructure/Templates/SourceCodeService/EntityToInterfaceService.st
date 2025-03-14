@@ -21,34 +21,36 @@ public interface I$model.Entity.Name$Service : IDynamicContextEntityService
     Task<DataPagedResult<Get$model.Entity.Name$Dto>> GetAllAsync(DataRequestParametersDto? parameters = null);
     
     $if (model.Entity.IsTableEntity)$
-        /// <summary>
-        /// Retrieves a specific $model.Entity.Name$ by its identifier
-        /// </summary>
-        /// <param name="id">The identifier of the $model.Entity.Name$</param>
-        /// <returns>The $model.Entity.Name$ DTO if found, null otherwise</returns>
-        Task<Get$model.Entity.Name$Dto?> GetByIdAsync($model.Entity.MethodSignatureParameter$);
+        $if (model.Entity.HasKey)$
+            /// <summary>
+            /// Retrieves a specific $model.Entity.Name$ by its identifier
+            /// </summary>
+            /// <param name="id">The identifier of the $model.Entity.Name$</param>
+            /// <returns>The $model.Entity.Name$ DTO if found, null otherwise</returns>
+            Task<Get$model.Entity.Name$Dto?> GetByIdAsync($model.Entity.MethodSignatureParameter$);
     
-        /// <summary>
-        /// Creates a new $model.Entity.Name$ entity
-        /// </summary>
-        /// <param name="createDto">The DTO containing the creation data</param>
-        /// <returns>The created $model.Entity.Name$ DTO</returns>
-        Task<Get$model.Entity.Name$Dto> CreateAsync(Create$model.Entity.Name$Dto createDto);
+            /// <summary>
+            /// Creates a new $model.Entity.Name$ entity
+            /// </summary>
+            /// <param name="createDto">The DTO containing the creation data</param>
+            /// <returns>The created $model.Entity.Name$ DTO</returns>
+            Task<Get$model.Entity.Name$Dto> CreateAsync(Create$model.Entity.Name$Dto createDto);
 
-        /// <summary>
-        /// Updates an existing $model.Entity.Name$ entity
-        /// </summary>
-        /// <param name="id">The identifier of the entity to update</param>
-        /// <param name="updateDto">The DTO containing the update data</param>
-        /// <returns>The updated $model.Entity.Name$ DTO if found, null otherwise</returns>
-        Task<Get$model.Entity.Name$Dto?> UpdateAsync($model.Entity.MethodSignatureParameter$, Update$model.Entity.Name$Dto updateDto);
+            /// <summary>
+            /// Updates an existing $model.Entity.Name$ entity
+            /// </summary>
+            /// <param name="id">The identifier of the entity to update</param>
+            /// <param name="updateDto">The DTO containing the update data</param>
+            /// <returns>The updated $model.Entity.Name$ DTO if found, null otherwise</returns>
+            Task<Get$model.Entity.Name$Dto?> UpdateAsync($model.Entity.MethodSignatureParameter$, Update$model.Entity.Name$Dto updateDto);
 
-        /// <summary>
-        /// Deletes a specific $model.Entity.Name$ entity
-        /// </summary>
-        /// <param name="id">The identifier of the entity to delete</param>
-        /// <returns>True if the entity was deleted, false if not found</returns>
-        Task<bool> DeleteAsync($model.Entity.MethodSignatureParameter$);
+            /// <summary>
+            /// Deletes a specific $model.Entity.Name$ entity
+            /// </summary>
+            /// <param name="id">The identifier of the entity to delete</param>
+            /// <returns>True if the entity was deleted, false if not found</returns>
+            Task<bool> DeleteAsync($model.Entity.MethodSignatureParameter$);
+        $endif$
     $endif$
         
     /// <summary>

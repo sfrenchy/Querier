@@ -118,138 +118,140 @@ public class $model.Entity.Name$Repository : I$model.Entity.Name$Repository
     \}
 
     $if (model.Entity.IsTableEntity)$
-        public async Task<$model.Entity.Name$?> GetByIdAsync($model.Entity.MethodSignatureParameter$)
-        {
-            _logger.LogDebug(\$"Getting $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
-
-            try
+        $if (model.Entity.HasKey)$
+            public async Task<$model.Entity.Name$?> GetByIdAsync($model.Entity.MethodSignatureParameter$)
             {
-                await using var context = await _contextFactory.CreateDbContextAsync();
-                var entity = await context.$model.Entity.PluralName$.AsNoTracking().FirstOrDefaultAsync($model.Entity.LinqEntityFilter$);
+                _logger.LogDebug(\$"Getting $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
 
+                try
+                {
+                    await using var context = await _contextFactory.CreateDbContextAsync();
+                    var entity = await context.$model.Entity.PluralName$.AsNoTracking().FirstOrDefaultAsync($model.Entity.LinqEntityFilter$);
+
+                    if (entity == null)
+                    {
+                        _logger.LogInformation(\$"$model.Entity.Name$ with id $model.Entity.StringConcatParameters$ not found");
+                        return null;
+                    \}
+
+                    _logger.LogDebug(\$"Successfully retrieved $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
+                    return entity;
+                \}
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, \$"Error getting $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
+                    throw;
+                \}
+            \}
+    
+            public async Task<$model.Entity.Name$> CreateAsync($model.Entity.Name$ entity)
+            {
                 if (entity == null)
                 {
-                    _logger.LogInformation(\$"$model.Entity.Name$ with id $model.Entity.StringConcatParameters$ not found");
-                    return null;
+                    _logger.LogWarning("Attempt to create $model.Entity.Name$ with null entity");
+                    throw new ArgumentNullException(nameof(entity));
                 \}
-
-                _logger.LogDebug(\$"Successfully retrieved $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
-                return entity;
-            \}
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, \$"Error getting $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
-                throw;
-            \}
-        \}
     
-        public async Task<$model.Entity.Name$> CreateAsync($model.Entity.Name$ entity)
-        {
-            if (entity == null)
-            {
-                _logger.LogWarning("Attempt to create $model.Entity.Name$ with null entity");
-                throw new ArgumentNullException(nameof(entity));
-            \}
+                _logger.LogDebug("Creating new $model.Entity.Name$ entity");
     
-            _logger.LogDebug("Creating new $model.Entity.Name$ entity");
-    
-            try
-            {
-                await using var context = await _contextFactory.CreateDbContextAsync();
-                    
-                _logger.LogDebug("Adding entity to context");
-                context.$model.Entity.PluralName$.Add(entity);
-                    
-                _logger.LogDebug("Saving changes to database");
-                await context.SaveChangesAsync();
-    
-                _logger.LogInformation("Successfully created new $model.Entity.Name$");
-                return entity;
-            \}
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating new $model.Entity.Name$ entity");
-                throw;
-            \}
-        \}
-    
-        public async Task<$model.Entity.Name$?> UpdateAsync($model.Entity.MethodSignatureParameter$, $model.Entity.Name$ entity)
-        {
-            if (entity == null)
-            {
-                _logger.LogWarning("Attempt to update $model.Entity.Name$ with null entity");
-                throw new ArgumentNullException(nameof(entity));
-            \}
-    
-            _logger.LogDebug(\$"Updating $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
-    
-            try
-            {
-                await using var context = await _contextFactory.CreateDbContextAsync();
-                    
-                var existingEntity = await GetByIdAsync($model.Entity.KeyParameterLine$);
-                if (existingEntity == null)
+                try
                 {
-                    _logger.LogInformation(\$"$model.Entity.Name$ with id $model.Entity.StringConcatParameters$ not found for update");
-                    return null;
+                    await using var context = await _contextFactory.CreateDbContextAsync();
+                    
+                    _logger.LogDebug("Adding entity to context");
+                    context.$model.Entity.PluralName$.Add(entity);
+                    
+                    _logger.LogDebug("Saving changes to database");
+                    await context.SaveChangesAsync();
+    
+                    _logger.LogInformation("Successfully created new $model.Entity.Name$");
+                    return entity;
                 \}
-    
-                _logger.LogDebug("Updating entity in context");
-                context.Entry(existingEntity).CurrentValues.SetValues(entity);
-                    
-                _logger.LogDebug("Saving changes to database");
-                await context.SaveChangesAsync();
-    
-                _logger.LogInformation(\$"Successfully updated $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
-                return existingEntity;
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating new $model.Entity.Name$ entity");
+                    throw;
+                \}
             \}
-            catch (DbUpdateConcurrencyException ex)
-            {
-                _logger.LogWarning(ex, \$"Concurrency conflict while updating $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
-                throw;
-            \}
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, \$"Error updating $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
-                throw;
-            \}
-        \}
     
-        public async Task<bool> DeleteAsync($model.Entity.MethodSignatureParameter$)
-        {
-            _logger.LogDebug(\$"Deleting $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
-    
-            try
+            public async Task<$model.Entity.Name$?> UpdateAsync($model.Entity.MethodSignatureParameter$, $model.Entity.Name$ entity)
             {
-                await using var context = await _contextFactory.CreateDbContextAsync();
-                    
-                var entity = await context.$model.Entity.PluralName$.FindAsync($model.Entity.KeyParameterLine$);
                 if (entity == null)
                 {
-                    _logger.LogInformation(\$"$model.Entity.Name$ with id $model.Entity.StringConcatParameters$ not found for deletion");
-                    return false;
+                    _logger.LogWarning("Attempt to update $model.Entity.Name$ with null entity");
+                    throw new ArgumentNullException(nameof(entity));
                 \}
     
-                _logger.LogDebug("Removing entity from context");
-                context.$model.Entity.PluralName$.Remove(entity);
-                    
-                _logger.LogDebug("Saving changes to database");
-                await context.SaveChangesAsync();
+                _logger.LogDebug(\$"Updating $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
     
-                _logger.LogInformation(\$"Successfully deleted $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
-                return true;
+                try
+                {
+                    await using var context = await _contextFactory.CreateDbContextAsync();
+                    
+                    var existingEntity = await GetByIdAsync($model.Entity.KeyParameterLine$);
+                    if (existingEntity == null)
+                    {
+                        _logger.LogInformation(\$"$model.Entity.Name$ with id $model.Entity.StringConcatParameters$ not found for update");
+                        return null;
+                    \}
+    
+                    _logger.LogDebug("Updating entity in context");
+                    context.Entry(existingEntity).CurrentValues.SetValues(entity);
+                    
+                    _logger.LogDebug("Saving changes to database");
+                    await context.SaveChangesAsync();
+    
+                    _logger.LogInformation(\$"Successfully updated $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
+                    return existingEntity;
+                \}
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    _logger.LogWarning(ex, \$"Concurrency conflict while updating $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
+                    throw;
+                \}
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, \$"Error updating $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
+                    throw;
+                \}
             \}
-            catch (DbUpdateConcurrencyException ex)
+    
+            public async Task<bool> DeleteAsync($model.Entity.MethodSignatureParameter$)
             {
-                _logger.LogWarning(ex, \$"Concurrency conflict while deleting $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
-                throw;
+                _logger.LogDebug(\$"Deleting $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
+    
+                try
+                {
+                    await using var context = await _contextFactory.CreateDbContextAsync();
+                    
+                    var entity = await context.$model.Entity.PluralName$.FindAsync($model.Entity.KeyParameterLine$);
+                    if (entity == null)
+                    {
+                        _logger.LogInformation(\$"$model.Entity.Name$ with id $model.Entity.StringConcatParameters$ not found for deletion");
+                        return false;
+                    \}
+    
+                    _logger.LogDebug("Removing entity from context");
+                    context.$model.Entity.PluralName$.Remove(entity);
+                    
+                    _logger.LogDebug("Saving changes to database");
+                    await context.SaveChangesAsync();
+    
+                    _logger.LogInformation(\$"Successfully deleted $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
+                    return true;
+                \}
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    _logger.LogWarning(ex, \$"Concurrency conflict while deleting $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
+                    throw;
+                \}
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, \$"Error deleting $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
+                    throw;
+                \}
             \}
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, \$"Error deleting $model.Entity.Name$ with id $model.Entity.StringConcatParameters$");
-                throw;
-            \}
-        \}
+        $endif$
     $endif$
     public async Task<List<string>> GetUniqueValuesForColumnAsync(string columnName)
     {

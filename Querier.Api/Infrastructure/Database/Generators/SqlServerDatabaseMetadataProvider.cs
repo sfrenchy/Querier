@@ -1,15 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Entities.QDBConnection;
+using Querier.Api.Domain.Services;
 using Querier.Api.Infrastructure.Database.Templates;
 
 namespace Querier.Api.Infrastructure.Database.Generators;
 
-public class SqlServerDatabaseMetadataProvider(ILogger logger) : DatabaseMetadataProviderBase, IDatabaseMetadataProvider
+public class SqlServerDatabaseMetadataProvider : DatabaseMetadataProviderBase, IDatabaseMetadataProvider
 {
+    private readonly ILogger<SqlServerDatabaseMetadataProvider> _logger;
+    public SqlServerDatabaseMetadataProvider(ILogger<SqlServerDatabaseMetadataProvider> logger) : base()
+    {
+        _logger = logger;
+    }
+    
     public List<StoredProcedureMetadata> ExtractStoredProcedureMetadata(string connectionString)
     {
         List<StoredProcedureMetadata> result = [];
@@ -30,7 +39,7 @@ public class SqlServerDatabaseMetadataProvider(ILogger logger) : DatabaseMetadat
         {
             string schemaName = (string)procedureReader["ROUTINE_SCHEMA"];
             string procedureName = (string)procedureReader["ROUTINE_NAME"];
-            logger.LogDebug("Processing stored procedure: {ProcedureName}", procedureName);
+            _logger.LogDebug("Processing stored procedure: {ProcedureName}", procedureName);
                     
             StoredProcedureMetadata procedure = new StoredProcedureMetadata
             {
@@ -51,28 +60,31 @@ public class SqlServerDatabaseMetadataProvider(ILogger logger) : DatabaseMetadat
             }
             catch (Exception e)
             {
-                logger.LogError(e, "Unable to get parameters metadata for procedure {procedure.Name}", procedure.Name);
+                _logger.LogError(e, "Unable to get parameters metadata for procedure {procedure.Name}", procedure.Name);
                 parametersMetadataDefined = false;
             }
 
             try
             {
                 procedure.OutputSet = GetProcedureOutputMetadata(connection, schemaName, procedureName);
-                outputSetMetadataDefined = true;
+                outputSetMetadataDefined = procedure.OutputSet.Count > 0;
             }
             catch (Exception e)
             {
-                logger.LogError(e, "Unable to get output set metadata for procedure {procedure.Name}", procedure.Name);
+                _logger.LogError(e, "Unable to get output set metadata for procedure {procedure.Name}", procedure.Name);
                 outputSetMetadataDefined = false;
             }
             
             if (parametersMetadataDefined && outputSetMetadataDefined)
                 result.Add(procedure);
+            else
+            {
+                // AI Analysis
+            }
         }
         
         return result;
     }
-
     private List<TemplateProperty> GetProcedureParametersMetadata(SqlConnection connection, string schemaName, string procedureName)
     {
         List<TemplateProperty> result = [];
@@ -113,12 +125,11 @@ public class SqlServerDatabaseMetadataProvider(ILogger logger) : DatabaseMetadat
             };
 
             result.Add(parameter);
-            logger.LogDebug("Added parameter {ParameterName} to procedure {ProcedureName}", parameter.Name, procedureName);
+            _logger.LogDebug("Added parameter {ParameterName} to procedure {ProcedureName}", parameter.Name, procedureName);
         }
         
         return result;
     }
-
     private List<TemplateProperty> GetProcedureOutputMetadata(SqlConnection connection, string schemaName, string procedureName)
     {
         List<TemplateProperty> result = [];
@@ -145,7 +156,7 @@ public class SqlServerDatabaseMetadataProvider(ILogger logger) : DatabaseMetadat
                 CSType = SqlTypeToCsType((string)row["system_type_name"], false)
             };
             result.Add(outputSet);
-            logger.LogDebug("Added output {OutputName} to procedure {ProcedureName}", outputSet.Name, procedureName);
+            _logger.LogDebug("Added output {OutputName} to procedure {ProcedureName}", outputSet.Name, procedureName);
         }
         
         return result;
@@ -250,7 +261,6 @@ public class SqlServerDatabaseMetadataProvider(ILogger logger) : DatabaseMetadat
         }
         return csType;
     }
-    
     private string SqlTypeToCsType(string sqlType, bool isNullable, int length = 1)
     {
         string csType = "";

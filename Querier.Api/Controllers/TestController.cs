@@ -26,7 +26,7 @@ namespace Querier.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Test()
         {
-            var _sourceCodeService = new SourceCodeService(Domain.Common.Enums.DbConnectionType.SqlServer, "Server=localhost;Database=Northwind;User=arnaud;Password=arnaud;MultipleActiveResultSets=True;TrustServerCertificate=True", "Northwind", "northwind", _logger);
+            var _sourceCodeService = new SourceCodeService(Domain.Common.Enums.DbConnectionType.SqlServer, "Server=localhost;Database=ALHAMBRA_DATAMART;User=arnaud;Password=arnaud;MultipleActiveResultSets=True;TrustServerCertificate=True", "Northwind", "northwind", _logger);
             await _sourceCodeService.GenerateDbConnectionSourcesAsync();
             var zipFile = await _sourceCodeService.CreateSourceZipAsync();
 
@@ -34,12 +34,12 @@ namespace Querier.Api.Controllers
                 Directory.CreateDirectory("Assemblies");
             string srcPath = Path.Combine("Assemblies", $"Northwind.DynamicContext.Sources.zip");
             await System.IO.File.WriteAllBytesAsync(srcPath, zipFile);
-            /*
+            
             var scope = _serviceProvider.CreateScope();
             var roslynCompilerService = scope.ServiceProvider.GetRequiredService<IRoslynCompilerService>();
             
             var compilationResult = roslynCompilerService.CompileAssembly("Test", _sourceCodeService.GetGeneratedSyntaxTrees());
-            */
+            
             return Ok();
         }
     }
