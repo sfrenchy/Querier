@@ -16,25 +16,27 @@ public interface I$model.Entity.Name$Repository
     Task<DataPagedResult<$model.Entity.Name$>> GetAllAsync(DataRequestParametersDto? parameters = null);
 
     $if (model.Entity.IsTableEntity)$
-        /// <summary>
-        /// Gets a $model.Entity.Name$ by its identifier
-        /// </summary>
-        Task<$model.Entity.Name$?> GetByIdAsync($model.Entity.MethodSignatureParameter$);
+        $if (model.Entity.HasKey)$
+            /// <summary>
+            /// Gets a $model.Entity.Name$ by its identifier
+            /// </summary>
+            Task<$model.Entity.Name$?> GetByIdAsync($model.Entity.MethodSignatureParameter$);
     
-        /// <summary>
-        /// Creates a new $model.Entity.Name$
-        /// </summary>
-        Task<$model.Entity.Name$> CreateAsync($model.Entity.Name$ entity);
+            /// <summary>
+            /// Creates a new $model.Entity.Name$
+            /// </summary>
+            Task<$model.Entity.Name$> CreateAsync($model.Entity.Name$ entity);
 
-        /// <summary>
-        /// Updates an existing $model.Entity.Name$
-        /// </summary>
-        Task<$model.Entity.Name$?> UpdateAsync($model.Entity.MethodSignatureParameter$, $model.Entity.Name$ entity);
+            /// <summary>
+            /// Updates an existing $model.Entity.Name$
+            /// </summary>
+            Task<$model.Entity.Name$?> UpdateAsync($model.Entity.MethodSignatureParameter$, $model.Entity.Name$ entity);
 
-        /// <summary>
-        /// Deletes a $model.Entity.Name$ by its identifier
-        /// </summary>
-        Task<bool> DeleteAsync($model.Entity.MethodSignatureParameter$);
+            /// <summary>
+            /// Deletes a $model.Entity.Name$ by its identifier
+            /// </summary>
+            Task<bool> DeleteAsync($model.Entity.MethodSignatureParameter$);
+        $endif$
     $endif$
         
     /// <summary>
