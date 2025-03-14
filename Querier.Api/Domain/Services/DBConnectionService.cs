@@ -706,8 +706,8 @@ namespace Querier.Api.Domain.Services
                     Properties = new List<TemplateProperty>(),
                     ForeignKeys = new List<TemplateForeignKey>(),
                     IsViewEntity = viewEntities.Contains(entityName),
-                    KeyNames = new List<string>(),
-                    KeyTypes = new List<string>()
+                    //KeyNames = new List<string>(),
+                   // KeyTypes = new List<string>()
                 };
 
                 var keys = new HashSet<string>();
@@ -831,25 +831,25 @@ namespace Querier.Api.Domain.Services
 
                     if (isKey)
                     {
-                        entity.KeyNames.Add(prop.Name);
-                        entity.KeyTypes.Add(prop.CSType);
+                        //entity.KeyNames.Add(prop.Name);
+                        //entity.KeyTypes.Add(prop.CSType);
                     }
                 }
 
                 // Définir une clé primaire si aucune n'a été trouvée
-                if (!entity.KeyNames.Any())
-                {
-                    var idProperty = entity.Properties.FirstOrDefault(p => 
-                        p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) ||
-                        p.Name.EndsWith("Id", StringComparison.OrdinalIgnoreCase));
+                //if (!entity.KeyNames.Any())
+                //{
+                //    var idProperty = entity.Properties.FirstOrDefault(p => 
+                //        p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) ||
+                //        p.Name.EndsWith("Id", StringComparison.OrdinalIgnoreCase));
 
-                    if (idProperty != null)
-                    {
-                        idProperty.IsKey = true;
-                        entity.KeyNames.Add(idProperty.Name);
-                        entity.KeyTypes.Add(idProperty.CSType);
-                    }
-                }
+                //    if (idProperty != null)
+                //    {
+                //        idProperty.IsKey = true;
+                //        entity.KeyNames.Add(idProperty.Name);
+                //        entity.KeyTypes.Add(idProperty.CSType);
+                //    }
+                //}
 
                 entityMap[entityName] = entity;
             }
@@ -861,7 +861,7 @@ namespace Querier.Api.Domain.Services
                 {
                     if (entityMap.TryGetValue(fk.ReferencedEntitySingular, out var referencedEntity))
                     {
-                        fk.ReferencedColumn = referencedEntity.KeyNames.FirstOrDefault() ?? "Id";
+                       // fk.ReferencedColumn = referencedEntity.KeyNames.FirstOrDefault() ?? "Id";
                     }
                 }
             }

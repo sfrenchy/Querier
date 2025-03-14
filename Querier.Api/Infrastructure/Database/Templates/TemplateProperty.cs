@@ -7,6 +7,7 @@ namespace Querier.Api.Infrastructure.Database.Templates
     {
         public string Name { get; set; }
         public string CSName { get; set; }
+        public string CSParameterName { get { return char.ToLowerInvariant(CSName[0]) + CSName.Substring(1); } }
         public string CSType { get; set; }
         public bool IsKey { get; set; }
         public bool IsRequired { get; set; }
