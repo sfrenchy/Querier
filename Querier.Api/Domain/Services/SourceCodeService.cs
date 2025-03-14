@@ -1,5 +1,6 @@
 ﻿using Antlr4.StringTemplate;
 using Bricelam.EntityFrameworkCore.Design;
+using DocumentFormat.OpenXml.Vml.Office;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -8,6 +9,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.Extensions.Logging;
 using Querier.Api.Domain.Common.Enums;
+using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Templates;
 using System;
 using System.Collections.Generic;
@@ -80,7 +82,84 @@ public class SourceCodeService
             GenerateFromEntities("EntityToService", "Services", _generatedSyntaxTrees["Services"]),
             GenerateFromEntities("EntityToController", "Controllers", _generatedSyntaxTrees["Controllers"])
         );
+
+        IDatabaseMetadataProvider dbMetadataProvider = _dbConnectionType switch
+        {
+            DbConnectionType.SqlServer => new SqlServerDatabaseMetadataProvider(_logger),
+            DbConnectionType.MySql => new MySqlDatabaseMetadataProvider(_logger),
+            DbConnectionType.PgSql => new PostgreSqlDatabaseMetadataProvider(_logger),
+            DbConnectionType.SQLite => new SqliteDatabaseMetadataProvider(),
+            _ => throw new NotSupportedException($"Database type {_dbConnectionType} not supported")
+        };
+
+        var proceduresMetadata = dbMetadataProvider.ExtractStoredProcedureMetadata(_connectionString);
+        await Task.WhenAll(
+            GenerateProcedureFromDatabase("ProcedureToInputDto", "Dtos/Procedures", proceduresMetadata, _generatedSyntaxTrees["Dtos"]),
+            GenerateProcedureFromDatabase("ProcedureToOutputDto", "Dtos/Procedures", proceduresMetadata, _generatedSyntaxTrees["Dtos"]),
+            GenerateProcedureFromDatabase("ProcedureToInterfaceRepository", "Interfaces/Procedures", proceduresMetadata, _generatedSyntaxTrees["Interfaces"]),
+            GenerateProcedureFromDatabase("ProcedureToRepository", "Repositories/Procedures", proceduresMetadata, _generatedSyntaxTrees["Repositories"]),
+            GenerateProcedureFromDatabase("ProcedureToInterfaceService", "Interfaces/Procedures", proceduresMetadata, _generatedSyntaxTrees["Interfaces"]),
+            GenerateProcedureFromDatabase("ProcedureToService", "Services/Procedures", proceduresMetadata, _generatedSyntaxTrees["Repositories"]),
+            GenerateProcedureFromDatabase("ProcedureToController", "Controllers/Procedures", proceduresMetadata, _generatedSyntaxTrees["Controllers"])
+        );
     }
+
+    private async Task GenerateProcedureFromDatabase(string templateFile, string sourcePath, List<StoredProcedureMetadata> proceduresMetadata, HashSet<SyntaxTree> targetSyntaxTrees)
+    {
+        foreach (StoredProcedureMetadata procedureMetadata in proceduresMetadata)
+        {
+            await Task.Run(() =>
+            {
+                var template = new Template(_templates[templateFile], '$', '$');
+                template.Add("model", new
+                {
+                    RootNamespace = _rootNamespace,
+                    ApiRoute = _apiRoute,
+                    CSName = procedureMetadata.CSName,
+                    OutputSet = procedureMetadata.OutputSet,
+                    Parameters = procedureMetadata.Parameters,
+                    HasOutput = procedureMetadata.HasOutput,
+                    HasParameters = procedureMetadata.HasParameters,
+                    InlineParameters = procedureMetadata.InlineParameters
+                });
+
+                string code = template.Render();
+                if (!string.IsNullOrWhiteSpace(code))
+                {
+                    SyntaxTree codeSyntaxTree = CSharpSyntaxTree.ParseText(code, null, sourcePath, Encoding.UTF8);
+                    SyntaxNode root = codeSyntaxTree.GetRoot();
+                    SyntaxNode formattedRoot = Formatter.Format(root, _workspace);
+                    var diagnostics = codeSyntaxTree.GetDiagnostics();
+                    if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
+                    {
+                        foreach (var error in diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
+                        {
+                            var location = error.Location.GetLineSpan();
+                            int lineNumber = location.StartLinePosition.Line + 1;
+
+                            var codeLines = code.Split('\n');
+                            string errorLine = lineNumber <= codeLines.Length ? codeLines[lineNumber - 1].Trim() : "Unknown line";
+
+                            _logger.LogDebug($"Error in file {sourcePath} at line {lineNumber}: {errorLine}");
+                            _logger.LogDebug($"Diagnostic: {error.GetMessage()}");
+                        }
+
+                        throw new InvalidOperationException($"Error while generating code for procedure {procedureMetadata.Name}. See logs for details.");
+                    }
+                    var classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
+                    var interfaceDeclaration = root.DescendantNodes().OfType<InterfaceDeclarationSyntax>().FirstOrDefault();
+                    var codeDeclarationName = classDeclaration != null ? classDeclaration.Identifier.Text : interfaceDeclaration.Identifier.Text;
+                    string filePath = sourcePath + "/" + codeDeclarationName + ".cs";
+
+                    lock (targetSyntaxTrees)
+                    {
+                        targetSyntaxTrees.Add(CSharpSyntaxTree.ParseText(formattedRoot.ToFullString(), null, filePath, Encoding.UTF8));
+                    }
+                }
+            });
+        }
+    }
+
     public async Task<byte[]> CreateSourceZipAsync()
     {
         return await Task.Run(() =>
@@ -111,7 +190,6 @@ public class SourceCodeService
             await Task.Run(() =>
             {
                 var template = new Template(_templates[templateFile], '$', '$');
-
                 string methodSignatureParameters = string.Join(", ", entity.Keys.Select(k => $"{k.Value} {char.ToLowerInvariant(k.Key[0])}{k.Key.Substring(1)}"));
                 string linqEntityFilter = $"e => ";
                 var parametersKey = entity.Keys.Select(k => $"{char.ToLowerInvariant(k.Key[0])}{k.Key.Substring(1)}");
@@ -165,7 +243,7 @@ public class SourceCodeService
                         _logger.LogDebug($"Diagnostic: {error.GetMessage()}");
                     }
 
-                    throw new InvalidOperationException($"Error while generating DTO for entity {entity.Name}. See logs for details.");
+                    throw new InvalidOperationException($"Error while generating code for entity {entity.Name}. See logs for details.");
                 }
                 var classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
                 var interfaceDeclaration = root.DescendantNodes().OfType<InterfaceDeclarationSyntax>().FirstOrDefault();
