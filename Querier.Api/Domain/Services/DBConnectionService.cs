@@ -1,35 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
-using Antlr4.StringTemplate;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using MySql.Data.MySqlClient;
-using Npgsql;
 using Querier.Api.Application.DTOs;
 using Querier.Api.Application.Interfaces.Services;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using Querier.Api.Common.Utilities;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Domain.Entities.DBConnection;
-using Querier.Api.Infrastructure.Database.Generators;
-using Querier.Api.Infrastructure.Database.Templates;
 using Querier.Api.Infrastructure.Services;
 using System.Collections.Concurrent;
-using Microsoft.Data.Sqlite;
 
 namespace Querier.Api.Domain.Services
 {
@@ -37,9 +25,6 @@ namespace Querier.Api.Domain.Services
     {
         private readonly IDbConnectionRepository _dbConnectionRepository;
         private readonly ILogger<DbConnectionService> _logger;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly IServiceCollection _services;
-        private readonly ApplicationPartManager _partManager;
         private readonly EndpointExtractor _endpointExtractor;
         private readonly DatabaseServerDiscovery _serverDiscovery;
         private readonly DatabaseSchemaExtractor _schemaExtractor;
@@ -67,9 +52,6 @@ namespace Querier.Api.Domain.Services
         {
             _logger = logger;
             _dbConnectionRepository = dbConnectionRepository;
-            _serviceProvider = serviceProvider;
-            _services = services;
-            _partManager = partManager;
             _assemblyManager = assemblyManager;
             var jsonSchemaGenerator = new JsonSchemaGeneratorService(jsonSchemaGeneratorLogger);
             _endpointExtractor = new EndpointExtractor(jsonSchemaGenerator, endpointExtractorLogger, serviceProvider, services);
