@@ -96,16 +96,14 @@ namespace Querier.Api.Infrastructure.Data.Repositories
                 _logger.LogInformation("Retrieving all database connections");
 
                 using var context = await _contextFactory.CreateDbContextAsync();
-                var connections = await context.DBConnections
-                    .AsNoTracking()
-                    .AsSplitQuery()
+                var connections = context.DBConnections.AsNoTracking().AsSplitQuery()
                     .Include(c => c.Endpoints)
                         .ThenInclude(e => e.Parameters)
                     .Include(c => c.Endpoints)
-                        .ThenInclude(e => e.Responses)
-                    .ToListAsync();
+                        .ThenInclude(e => e.Responses);
+                var result = await connections.ToListAsync();
 
-                _logger.LogInformation("Successfully retrieved {Count} database connections", connections.Count);
+                _logger.LogInformation("Successfully retrieved {Count} database connections", result.Count);
                 return connections.Select(DBConnectionDto.FromEntity).ToList();
             }
             catch (Exception ex)
