@@ -37,10 +37,11 @@ namespace Querier.Api.Domain.Services
         protected abstract DbConnection Connection { get; }
         protected abstract void ExtractProcedureOutputMetadata();
         public List<StoredProcedureMetadata> ProcedureMetadata => _procedureMetadata;
-        protected abstract string GetSqlDbType(string sqlType);
         protected abstract string GetCSharpType(string sqlType);
         protected void ExtractMetadata()
         {
+            if (string.IsNullOrEmpty(GetProcedureWithParametersQuery))
+                return;
             List<StoredProcedureParameter> parameters = new();
             DbCommand listStoredProcedureWithParameterCommand = Connection.CreateCommand();
             listStoredProcedureWithParameterCommand.CommandText = GetProcedureWithParametersQuery;

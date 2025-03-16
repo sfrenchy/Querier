@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Querier.Api.Domain.Common.Models;
-using Northwind.Entities;
+using $model.RootNamespace$.Entities;
 
 namespace $model.RootNamespace$.Repositories;
 

@@ -89,9 +89,9 @@ namespace Querier.Api.Domain.Services
                 DBConnectionCreateResultDto result = new DBConnectionCreateResultDto();
                 
                 string rootNamespace = connection.Name;
-                string contextName = $"{connection.Name}Context";
+                string contextName = $"{connection.Name}DbContext";
                 string contextNamespace = $"{connection.Name}.Contexts";
-                string modelNamespace = $"{connection.Name}.Models";
+                string modelNamespace = $"{connection.Name}.Entities";
                 
                 //string connectionNamespace = "";
                 string procedureDescription = "";
@@ -104,7 +104,8 @@ namespace Querier.Api.Domain.Services
                 await _progressService.ReportProgress(connection.OperationId, 30, ProgressStatus.RetrievingSchema);
                 try
                 {
-                    SourceCodeService sourceCodeService = new SourceCodeService(connection.ConnectionType, connectionString, connection.Name, connection.ApiRoute, _logger);
+                    SourceCodeFromDatabaseService sourceCodeService = new SourceCodeFromDatabaseService(connection.ConnectionType, connectionString, connection.Name, connection.ApiRoute, _logger);
+                    await sourceCodeService.GenerateDbConnectionSourcesAsync();
                     // Create source zip
                     byte[] sourceZipBytes = await sourceCodeService.CreateSourceZipAsync();
 

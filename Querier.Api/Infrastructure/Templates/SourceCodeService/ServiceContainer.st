@@ -6,9 +6,11 @@ using Microsoft.EntityFrameworkCore;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Application.Interfaces.Infrastructure;
 using $model.RootNamespace$.Repositories;
+$if(model.HasProcedures)$
 using $model.RootNamespace$.Repositories.Procedure;
-using $model.RootNamespace$.Services;
 using $model.RootNamespace$.Services.Procedure;
+$endif$
+using $model.RootNamespace$.Services;
 using $model.RootNamespace$.Contexts;
 
 namespace $model.RootNamespace$
@@ -182,12 +184,12 @@ namespace $model.RootNamespace$
             }$
             
             // Enregistrement des services
-            $model.EntityRepositories: {entity|
+            $model.EntityServices: {entity|
                 services.AddScoped<I$entity$, $entity$>();
                 RegisterEntityServiceType("$entity$", typeof(I$entity$));
             }$
 
-            $model.ProcedureRepositories: {procedure|
+            $model.ProcedureServices: {procedure|
                 services.AddScoped<I$procedure$, $procedure$>();
                 RegisterProcedureServiceType("$procedure$", typeof(I$procedure$));
             }$

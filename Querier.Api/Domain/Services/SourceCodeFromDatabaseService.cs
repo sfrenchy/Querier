@@ -30,7 +30,7 @@ using System.Threading.Tasks;
 
 namespace Querier.Api.Domain.Services;
 
-public class SourceCodeService
+public class SourceCodeFromDatabaseService
 {
     private readonly ILogger _logger;
     private readonly DbConnectionType _dbConnectionType;
@@ -56,7 +56,7 @@ public class SourceCodeService
     private HashSet<string> _viewEntities = new HashSet<string>();
     private List<TemplateEntityMetadata> _entityMap = new();
     private List<StoredProcedureMetadata> _procedureMap = new();
-    public SourceCodeService(DbConnectionType dbConnectionType, string connectionString, string rootNamespace, string apiRoute, ILogger logger)
+    public SourceCodeFromDatabaseService(DbConnectionType dbConnectionType, string connectionString, string rootNamespace, string apiRoute, ILogger logger)
     {
         _dbConnectionType = dbConnectionType;
         _connectionString = connectionString;
@@ -67,7 +67,8 @@ public class SourceCodeService
 
     public IEnumerable<SyntaxTree> GetGeneratedSyntaxTrees()
     {
-        return _generatedSyntaxTrees.SelectMany(kvp => kvp.Value);
+        var result = _generatedSyntaxTrees.SelectMany(kvp => kvp.Value);
+        return result;
     }
 
     public async Task GenerateDbConnectionSourcesAsync()
@@ -84,17 +85,14 @@ public class SourceCodeService
         ScaffoldedModel();
         _entityMap = GenerateEntityMap();
 
-        IDatabaseMetadataProvider dbMetadataProvider = _dbConnectionType switch
+        ProcedureMetadataExtractorBase dbMetadataProvider = _dbConnectionType switch
         {
-            DbConnectionType.SqlServer => new SqlServerDatabaseMetadataProvider(_dbModel, _logger),
-            DbConnectionType.MySql => new MySqlDatabaseMetadataProvider(_logger),
-            DbConnectionType.PgSql => new PostgreSqlDatabaseMetadataProvider(_logger),
-            DbConnectionType.SQLite => new SqliteDatabaseMetadataProvider(),
+            DbConnectionType.SqlServer => new ProcedureMetadataExtractorSqlServer(_connectionString, _dbModel),
+            DbConnectionType.SQLite => new ProcedureMetadataExtractorSqlite(_connectionString, _dbModel),
             _ => throw new NotSupportedException($"Database type {_dbConnectionType} not supported")
         };
 
-        var procedureMetadataExtractor = new ProcedureMetadataExtractorSqlServer(_connectionString, _dbModel);
-        _procedureMap = procedureMetadataExtractor.ProcedureMetadata;
+        _procedureMap = dbMetadataProvider.ProcedureMetadata;
 
         await Task.WhenAll(
             GenerateFromEntities("EntityToDto", "Dtos", _generatedSyntaxTrees["Dtos"]),
@@ -130,6 +128,7 @@ public class SourceCodeService
                 ProcedureRepositories = _generatedSyntaxTrees["Repositories"].Where(s => s.FilePath.Contains("Procedures")).Select(s => Path.GetFileNameWithoutExtension(s.FilePath)),
                 EntityServices = _generatedSyntaxTrees["Services"].Where(s => !s.FilePath.Contains("Procedures")).Select(s => Path.GetFileNameWithoutExtension(s.FilePath)),
                 ProcedureServices = _generatedSyntaxTrees["Services"].Where(s => s.FilePath.Contains("Procedures")).Select(s => Path.GetFileNameWithoutExtension(s.FilePath)),
+                HasProcedure = _procedureMap.Any()
             });
             string code = template.Render();
             SyntaxTree codeSyntaxTree = CSharpSyntaxTree.ParseText(code, null, $"{_rootNamespace}ServiceContainer.cs", Encoding.UTF8);
