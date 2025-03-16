@@ -1,13 +1,22 @@
 ﻿using Antlr4.StringTemplate;
 using Bricelam.EntityFrameworkCore.Design;
-using DocumentFormat.OpenXml.Vml.Office;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Scaffolding;
+using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
+using Microsoft.EntityFrameworkCore.Sqlite.Scaffolding.Internal;
+using Microsoft.EntityFrameworkCore.SqlServer.Scaffolding.Internal;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
+using Pomelo.EntityFrameworkCore.MySql.Internal;
+using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 using Querier.Api.Domain.Common.Enums;
 using Querier.Api.Infrastructure.Database.Generators;
 using Querier.Api.Infrastructure.Database.Templates;
@@ -32,6 +41,7 @@ public class SourceCodeService
     private readonly Pluralizer _pluralizer = new Pluralizer();
     private readonly Dictionary<string, string> _templates = new Dictionary<string, string>();
     private readonly AdhocWorkspace _workspace = new AdhocWorkspace();
+    private DatabaseModel _dbModel = new();
     private Dictionary<string, HashSet<SyntaxTree>> _generatedSyntaxTrees = new()
     {
         { "Entities", new() },
@@ -72,20 +82,19 @@ public class SourceCodeService
         }
         
         ScaffoldedModel();
-        _logger.LogInformation("Generate entity map");
         _entityMap = GenerateEntityMap();
-        _logger.LogInformation($"Generate Dtos source code");
 
         IDatabaseMetadataProvider dbMetadataProvider = _dbConnectionType switch
         {
-            DbConnectionType.SqlServer => new SqlServerDatabaseMetadataProvider(_logger),
+            DbConnectionType.SqlServer => new SqlServerDatabaseMetadataProvider(_dbModel, _logger),
             DbConnectionType.MySql => new MySqlDatabaseMetadataProvider(_logger),
             DbConnectionType.PgSql => new PostgreSqlDatabaseMetadataProvider(_logger),
             DbConnectionType.SQLite => new SqliteDatabaseMetadataProvider(),
             _ => throw new NotSupportedException($"Database type {_dbConnectionType} not supported")
         };
 
-        _procedureMap = dbMetadataProvider.ExtractStoredProcedureMetadata(_connectionString);
+        var procedureMetadataExtractor = new ProcedureMetadataExtractorSqlServer(_connectionString, _dbModel);
+        _procedureMap = procedureMetadataExtractor.ProcedureMetadata;
 
         await Task.WhenAll(
             GenerateFromEntities("EntityToDto", "Dtos", _generatedSyntaxTrees["Dtos"]),
@@ -106,6 +115,8 @@ public class SourceCodeService
 
         await GenerateServiceContainer();
     }
+
+    
 
     private async Task GenerateServiceContainer()
     {
@@ -535,6 +546,28 @@ public class SourceCodeService
             _ => throw new NotSupportedException($"Database type {_dbConnectionType} not supported")
         };
 
+        var databaseEFCoreServiceProvider = _dbConnectionType switch
+        {
+            DbConnectionType.SqlServer => new ServiceCollection().AddEntityFrameworkSqlServer().BuildServiceProvider(),
+            DbConnectionType.MySql => new ServiceCollection().AddEntityFrameworkMySql().BuildServiceProvider(),
+            DbConnectionType.PgSql => new ServiceCollection().AddEntityFrameworkNpgsql().BuildServiceProvider(),
+            DbConnectionType.SQLite => new ServiceCollection().AddEntityFrameworkSqlite().BuildServiceProvider(),
+            _ => throw new NotSupportedException($"Database type {_dbConnectionType} not supported")
+        };
+
+        var diagnosticsLogger = databaseEFCoreServiceProvider.GetRequiredService<IDiagnosticsLogger<DbLoggerCategory.Scaffolding>>();
+        var relationalTypeMapperSource = databaseEFCoreServiceProvider.GetRequiredService<IRelationalTypeMappingSource>();
+
+        DatabaseModelFactory DatabaseModelFactory = _dbConnectionType switch
+        { 
+            DbConnectionType.SqlServer => new SqlServerDatabaseModelFactory(diagnosticsLogger, relationalTypeMapperSource),
+            DbConnectionType.MySql => new MySqlDatabaseModelFactory(diagnosticsLogger, relationalTypeMapperSource, new MySqlOptions()),
+            DbConnectionType.PgSql => new NpgsqlDatabaseModelFactory(diagnosticsLogger),
+            DbConnectionType.SQLite => new SqliteDatabaseModelFactory(diagnosticsLogger, relationalTypeMapperSource),
+            _ => throw new NotSupportedException($"Database type {_dbConnectionType} not supported")
+        };
+
+
         var dbOpts = new DatabaseModelFactoryOptions();
         var modelOpts = new ModelReverseEngineerOptions();
         var codeGenOpts = new ModelCodeGenerationOptions()
@@ -553,6 +586,8 @@ public class SourceCodeService
         };
 
         ScaffoldedModel scaffoldedModelSources = scaffolder.ScaffoldModel(_connectionString, dbOpts, modelOpts, codeGenOpts);
+
+        _dbModel = DatabaseModelFactory.Create(_connectionString, dbOpts);
 
         PrepareScalffoldedModel(scaffoldedModelSources);
         var contextSyntaxTree = SyntaxFactory.ParseSyntaxTree(scaffoldedModelSources.ContextFile.Code, null, $"Contexts/{codeGenOpts.ContextName}.cs", Encoding.UTF8);

@@ -100,127 +100,13 @@ namespace Querier.Api.Domain.Services
                 await _progressService.ReportProgress(connection.OperationId, 10, ProgressStatus.ValidatingConnection);
                 var connectionString = BuildConnectionString(connection.ConnectionType, connection.Parameters);
                 
-                try
-                {
-                    switch (connection.ConnectionType)
-                    {
-                        case DbConnectionType.SqlServer:
-                            await using (SqlConnection c = new SqlConnection(connectionString))
-                            {
-                                _logger.LogDebug("Testing SQL Server connection for: {Name}", connection.Name);
-                                c.Open();
-                                result.State = DBConnectionState.Connected;
-                                _logger.LogInformation("Successfully connected to SQL Server for: {Name}", connection.Name);
-                            }
-                            break;
-                        case DbConnectionType.MySql:
-                            await using (MySqlConnection c = new MySqlConnection(connectionString))
-                            {
-                                _logger.LogDebug("Testing MySQL connection for: {Name}", connection.Name);
-                                c.Open();
-                                result.State = DBConnectionState.Connected;
-                                _logger.LogInformation("Successfully connected to MySQL for: {Name}", connection.Name);
-                            }
-                            break;
-                        case DbConnectionType.PgSql:
-                            await using (NpgsqlConnection c = new NpgsqlConnection(connectionString))
-                            {
-                                _logger.LogDebug("Testing PostgreSQL connection for: {Name}", connection.Name);
-                                c.Open();
-                                result.State = DBConnectionState.Connected;
-                                _logger.LogInformation("Successfully connected to PostgreSQL for: {Name}", connection.Name);
-                            }
-                            break;
-                        case DbConnectionType.SQLite:
-                            await using (SqliteConnection c = new SqliteConnection(connectionString))
-                            {
-                                _logger.LogDebug("Testing SQLite connection for: {Name}", connection.Name);
-                                c.Open();
-                                result.State = DBConnectionState.Connected;
-                                _logger.LogInformation("Successfully connected to PostgreSQL for: {Name}", connection.Name);
-                            }
-                            break;
-                    }
-                    await _progressService.ReportProgress(connection.OperationId, 20, ProgressStatus.ConnectionValidated);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Connection error for database: {Name}", connection.Name);
-                    await _progressService.FailOperation(connection.OperationId, ProgressStatus.Failed);
-                    result.State = DBConnectionState.ConnectionError;
-                    result.Messages.Add(ex.Message);
-                    return result;
-                }
-
                 // Schema retrieval (30%)
                 await _progressService.ReportProgress(connection.OperationId, 30, ProgressStatus.RetrievingSchema);
                 try
                 {
-                    _logger.LogDebug("Creating scaffolder for database type: {Type}", connection.ConnectionType);
-                    IReverseEngineerScaffolder scaffolder = connection.ConnectionType switch
-                    {
-                        DbConnectionType.SqlServer => DatabaseScaffolderFactory.CreateMssqlScaffolder(),
-                        DbConnectionType.MySql => DatabaseScaffolderFactory.CreateMySQLScaffolder(),
-                        DbConnectionType.PgSql => DatabaseScaffolderFactory.CreatePgSQLScaffolder(),
-                        DbConnectionType.SQLite => DatabaseScaffolderFactory.CreateSQLiteScaffolder(),
-                        _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
-                    };
-
-                    var dbOpts = new DatabaseModelFactoryOptions();
-                    var modelOpts = new ModelReverseEngineerOptions();
-                    var codeGenOpts = new ModelCodeGenerationOptions()
-                    {
-                        RootNamespace = rootNamespace,
-                        ContextName = contextName,
-                        ContextNamespace = contextNamespace,
-                        ModelNamespace = modelNamespace,
-                        SuppressConnectionStringWarning = true,
-                        SuppressOnConfiguring = true,
-                        UseDataAnnotations = true
-                    };
-
-                    var scaffoldedModelSources = scaffolder.ScaffoldModel(connectionString, dbOpts, modelOpts, codeGenOpts);
-                    scaffoldedModelSources.ContextFile.Code = scaffoldedModelSources.ContextFile.Code.Replace($"DbContextOptions<{contextName}>", "DbContextOptions");
-                    var contextFile = scaffoldedModelSources.ContextFile.Code;
-                    var sourceFiles = new Dictionary<string, string>();
-                    sourceFiles.Add(scaffoldedModelSources.ContextFile.Path, contextFile);
-                    foreach (var source in scaffoldedModelSources.AdditionalFiles)
-                        sourceFiles.Add(source.Path, source.Code);
-
-                    Dictionary<string, string> srcZipContent = new Dictionary<string, string>
-                    {
-                        { scaffoldedModelSources.ContextFile.Path, scaffoldedModelSources.ContextFile.Code }
-                    };
-                    foreach (var addFile in scaffoldedModelSources.AdditionalFiles)
-                    {
-                        srcZipContent.Add(addFile.Path, addFile.Code);
-                    }
-
-                    IDatabaseMetadataProvider dbMetadataProvider = connection.ConnectionType switch
-                    {
-                        DbConnectionType.SqlServer => new SqlServerDatabaseMetadataProvider(_logger),
-                        DbConnectionType.MySql => new MySqlDatabaseMetadataProvider(_logger),
-                        DbConnectionType.PgSql => new PostgreSqlDatabaseMetadataProvider(_logger),
-                        DbConnectionType.SQLite => new SqliteDatabaseMetadataProvider(),
-                        _ => throw new NotSupportedException($"Database type {connection.ConnectionType} not supported")
-                    };
-
-                    var templateModel = new TemplateModel()
-                    {
-                        RootNamespace = rootNamespace,
-                        ContextName = contextName,
-                        ContextNamespace = contextNamespace,
-                        ModelNamespace = modelNamespace,
-                        ContextRoute = connection.ApiRoute,
-                        ProcedureList = dbMetadataProvider.ExtractStoredProcedureMetadata(connectionString),
-                        EntityList = ExtractEntityMetadata(scaffoldedModelSources)
-                    };
-                    
-                    GenerateProcedureFiles(templateModel, srcZipContent, sourceFiles);
-                    GenerateEntityFiles(templateModel, srcZipContent, sourceFiles);
-
+                    SourceCodeService sourceCodeService = new SourceCodeService(connection.ConnectionType, connectionString, connection.Name, connection.ApiRoute, _logger);
                     // Create source zip
-                    byte[] sourceZipBytes = CreateSourceZip(srcZipContent);
+                    byte[] sourceZipBytes = await sourceCodeService.CreateSourceZipAsync();
 
                     if (!Directory.Exists("Assemblies"))
                         Directory.CreateDirectory("Assemblies");
@@ -229,7 +115,7 @@ namespace Querier.Api.Domain.Services
 
                     // Compile generated sources
                     await _progressService.ReportProgress(connection.OperationId, 80, ProgressStatus.Compiling);
-                    var compilationResult = _roslynCompilerService.CompileAssembly(connection.Name, sourceFiles);
+                    var compilationResult = _roslynCompilerService.CompileAssembly(connection.Name, sourceCodeService.GetGeneratedSyntaxTrees());
                     if (compilationResult.AssemblyBytes == null)
                     {
                         await _progressService.FailOperation(connection.OperationId, ProgressStatus.Failed);

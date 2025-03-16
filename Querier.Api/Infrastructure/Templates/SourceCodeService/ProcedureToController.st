@@ -41,13 +41,13 @@ public class $model.CSName$Controller : ControllerBase {
     /// <response code="400">If the parameters are invalid</response>
     /// <response code="500">If there was an error executing the stored procedure</response>
     [HttpPost("execute")]
-    [ProducesResponseType(typeof(List<$model.CSName$OutputDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType($if(model.HasOutput)$typeof(List<$model.CSName$OutputDto>), $endif$StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     $if(model.HasParameters)$
-    public async Task<ActionResult<List<$model.CSName$OutputDto>>> Execute([FromBody] $model.CSName$InputDto parameters) {
+    public async Task<ActionResult$if(model.HasOutput)$<List<$model.CSName$OutputDto>>$endif$> Execute([FromBody] $model.CSName$InputDto parameters) {
     $else$
-    public async Task<ActionResult<List<$model.CSName$OutputDto>>> Execute() {
+    public async Task<ActionResult$if(model.HasOutput)$<List<$model.CSName$OutputDto>>$endif$> Execute() {
     $endif$
         try {
             $if(model.HasParameters)$
@@ -66,11 +66,11 @@ public class $model.CSName$Controller : ControllerBase {
             }$
 
             $if(model.HasParameters)$
-                var results = await _service.ExecuteAsync(parameters);
+                $if(model.HasOutput)$var results = $endif$await _service.ExecuteAsync(parameters);
             $else$
-                var results = await _service.ExecuteAsync();
+                $if(model.HasOutput)$var results = $endif$await _service.ExecuteAsync();
             $endif$
-            return Ok(results);
+            return Ok($if(model.HasOutput)$results$endif$);
         \}
         catch (EntityValidationException ex) {
             _logger.LogWarning(ex, "Validation error in Execute");
@@ -123,6 +123,7 @@ public class $model.CSName$Controller : ControllerBase {
                     }$
                 \},
                 $endif$
+                $if(model.HasOutput)$
                 ["resultColumns"] = new[] {
                     $model.OutputSet: {column|
                     new {
@@ -131,6 +132,7 @@ public class $model.CSName$Controller : ControllerBase {
                     \},
                     }$
                 \}
+                $endif$
             \};
 
             return Ok(metadata);
