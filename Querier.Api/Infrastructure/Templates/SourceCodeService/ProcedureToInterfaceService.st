@@ -16,8 +16,8 @@ public interface I$model.CSName$Service
     /// <param name="parameters">The parameters for the stored procedure</param>
     /// <returns>A list of results from the stored procedure execution</returns>
     $if(model.HasParameters)$
-        Task<DataPagedResult<$model.CSName$OutputDto>> ExecuteAsync($model.CSName$InputDto parameters);
+        Task$if(model.HasOutput)$<DataPagedResult<$model.CSName$OutputDto>>$endif$ ExecuteAsync($model.CSName$InputDto parameters);
     $else$
-        Task<DataPagedResult<$model.CSName$OutputDto>> ExecuteAsync();
+        Task$if(model.HasOutput)$<DataPagedResult<$model.CSName$OutputDto>>$endif$ ExecuteAsync();
     $endif$
 \}

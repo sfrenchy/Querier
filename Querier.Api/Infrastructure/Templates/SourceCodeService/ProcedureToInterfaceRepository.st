@@ -18,8 +18,8 @@ public interface I$model.CSName$Repository
     /// Executes the $model.CSName$ stored procedure
     /// </summary>
     $if(model.HasParameters)$
-        Task<List<$model.CSName$OutputDto>> ExecuteAsync($model.CSName$InputDto parameters);
+        Task$if(model.HasOutput)$<List<$model.CSName$OutputDto>>$endif$ ExecuteAsync($model.CSName$InputDto parameters);
     $else$
-        Task<List<$model.CSName$OutputDto>> ExecuteAsync();
+        Task$if(model.HasOutput)$<List<$model.CSName$OutputDto>>$endif$ ExecuteAsync();
     $endif$
 \}

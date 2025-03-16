@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Data.SqlClient;
+using Querier.Api.Infrastructure.Base;
 using Querier.Api.Infrastructure.Database.Parameters;
 using Querier.Api.Infrastructure.Database.Extensions;
 using $model.RootNamespace$.Dtos.Procedure;
@@ -16,7 +17,7 @@ namespace $model.RootNamespace$.Repositories.Procedure;
 /// <summary>
 /// Repository implementation for $procedure.CSName$ stored procedure
 /// </summary>
-public class $model.CSName$Repository : I$model.CSName$Repository
+public class $model.CSName$Repository : DynamicContextRepositoryBase, I$model.CSName$Repository
 {
     private readonly IDbContextFactory<$model.RootNamespace$DbContext> _contextFactory;
     private readonly ILogger<$model.CSName$Repository> _logger;
@@ -30,7 +31,7 @@ public class $model.CSName$Repository : I$model.CSName$Repository
     \}
 
     $if(model.HasParameters)$
-    public async Task<List<$model.CSName$OutputDto>> ExecuteAsync($model.CSName$InputDto parameters)
+    public async Task$if(model.HasOutput)$<List<$model.CSName$OutputDto>>$endif$ ExecuteAsync($model.CSName$InputDto parameters)
     {
         if (parameters == null)
         {
@@ -40,7 +41,7 @@ public class $model.CSName$Repository : I$model.CSName$Repository
 
         _logger.LogDebug("Executing $model.CSName$ stored procedure with parameters: " + parameters.ToString());
     $else$
-    public async Task<List<$model.CSName$OutputDto>> ExecuteAsync()
+    public async Task$if(model.HasOutput)$<List<$model.CSName$OutputDto>>$endif$ ExecuteAsync()
     {
         _logger.LogDebug("Executing $model.CSName$ stored procedure");
     $endif$
@@ -49,9 +50,9 @@ public class $model.CSName$Repository : I$model.CSName$Repository
         {
             await using var context = await _contextFactory.CreateDbContextAsync();
             $if(model.HasParameters)$
-                return await $model.CSName$Async(parameters);
+                $if(model.HasOutput)$return $endif$await $model.CSName$Async(parameters);
             $else$
-                return await $model.CSName$Async();
+                $if(model.HasOutput)$return $endif$await $model.CSName$Async();
             $endif$
         \}
         catch (Exception ex)
@@ -61,29 +62,19 @@ public class $model.CSName$Repository : I$model.CSName$Repository
         \}
     \}
 
-    public virtual async Task<List<$model.CSName$OutputDto>> $model.CSName$Async($if(model.HasParameters)$$model.CSName$InputDto inputDto, $endif$OutputParameter<int> returnValue = null, CancellationToken cancellationToken = default)
+    public virtual async Task$if(model.HasOutput)$<List<$model.CSName$OutputDto>>$endif$ $model.CSName$Async($if(model.HasParameters)$$model.CSName$InputDto inputDto, $endif$OutputParameter<int> returnValue = null, CancellationToken cancellationToken = default)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-        var parameterreturnValue = new SqlParameter
-        {
-            ParameterName = "returnValue",
-            Direction = System.Data.ParameterDirection.Output,
-            SqlDbType = System.Data.SqlDbType.Int,
-        \};
+        var parameterReturnValue = GetDbParameter(context, "returnValue", typeof(int), null, System.Data.ParameterDirection.Output);
 
         var sqlParameters = new []
         {
             $if(model.HasParameters)$
             $model.Parameters: {parameter|
-                new SqlParameter
-                {
-                    ParameterName = "$parameter.Name$",
-                    Value = inputDto.$parameter.CSName$ ?? Convert.DBNull,
-                    SqlDbType = $parameter.SqlParameterType$
-                \},
+            GetDbParameter(context, "$parameter.Name$", inputDto.$parameter.CSName$.GetType(), inputDto.$parameter.CSName$),
             }$
             $endif$
-            parameterreturnValue
+            parameterReturnValue
         \};
 
         $if (model.HasOutput)$
@@ -92,7 +83,7 @@ public class $model.CSName$Repository : I$model.CSName$Repository
             await context.SqlQueryAsync<object>("EXEC @returnValue = [dbo].[$model.Name$] $model.InlineParameters$", sqlParameters, cancellationToken);
         $endif$
 
-        returnValue?.SetValue(parameterreturnValue.Value);
+        returnValue?.SetValue(parameterReturnValue.Value);
 
         $if (model.HasOutput)$
         return _;

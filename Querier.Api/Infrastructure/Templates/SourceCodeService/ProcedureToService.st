@@ -44,12 +44,12 @@ public class $model.CSName$Service : DynamicContextServiceBase<$model.CSName$Ser
         _logger.LogDebug("Initializing $model.CSName$Service");
     \}
     $if(model.HasParameters)$
-    public async Task<DataPagedResult<$model.CSName$OutputDto>> ExecuteAsync($model.CSName$InputDto parameters) {
+    public async Task$if(model.HasOutput)$<DataPagedResult<$model.CSName$OutputDto>>$endif$ ExecuteAsync($model.CSName$InputDto parameters) {
     if (parameters == null) {
             throw new EntityValidationException("$model.RootNamespace$", "$model.CSName$", "Parameters cannot be null");
         \}
     $else$
-    public async Task<DataPagedResult<$model.CSName$OutputDto>> ExecuteAsync() {
+    public async Task$if(model.HasOutput)$<DataPagedResult<$model.CSName$OutputDto>>$endif$ ExecuteAsync() {
     $endif$
         
 
@@ -68,15 +68,18 @@ public class $model.CSName$Service : DynamicContextServiceBase<$model.CSName$Ser
             $else$
                 var cacheKey = "$model.CSName$";
             $endif$
+            $if(model.HasOutput)$
             return await ExecuteCacheOperationAsync("$model.RootNamespace$", "Execute", cacheKey, async () => {
                 try {
                     var results = await _repository.ExecuteAsync($if(model.HasParameters)$parameters$endif$);
+                    
                     return new DataPagedResult<$model.CSName$OutputDto>(
                         results,
                         results.Count(),
                         new DataRequestParametersDto(),
                         new List<ForeignKeyDataDto>()
                     );
+
                 \}
                 catch (Exception ex) {
                     throw new StoredProcedureException(
@@ -87,6 +90,9 @@ public class $model.CSName$Service : DynamicContextServiceBase<$model.CSName$Ser
                     );
                 \}
             \});
+            $else$
+                await _repository.ExecuteAsync($if(model.HasParameters)$parameters$endif$);
+            $endif$
         \}
         catch (Exception ex) when (ex is not DynamicContextException) {
             throw new StoredProcedureException(
