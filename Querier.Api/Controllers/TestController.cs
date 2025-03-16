@@ -26,7 +26,7 @@ namespace Querier.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Test()
         {
-            var _sourceCodeService = new SourceCodeService(Domain.Common.Enums.DbConnectionType.SqlServer, "Server=localhost;Database=ALHAMBRA_DATAMART;User=arnaud;Password=arnaud;MultipleActiveResultSets=True;TrustServerCertificate=True", "Northwind", "northwind", _logger);
+            var _sourceCodeService = new SourceCodeFromDatabaseService(Domain.Common.Enums.DbConnectionType.SqlServer, "Server=localhost;Database=ALHAMBRA_DATAMART;User=arnaud;Password=arnaud;MultipleActiveResultSets=True;TrustServerCertificate=True", "Northwind", "northwind", _logger);
             await _sourceCodeService.GenerateDbConnectionSourcesAsync();
             var zipFile = await _sourceCodeService.CreateSourceZipAsync();
 

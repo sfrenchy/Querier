@@ -143,45 +143,5 @@ namespace Querier.Api.Domain.Services
                 _ => "unknown",
             };
         }
-
-        protected override string GetSqlDbType(string sqlType)
-        { 
-            if (sqlType.IndexOf("(") != -1)
-            {
-                sqlType = sqlType.Substring(0, sqlType.IndexOf("("));
-            }
-            return sqlType.ToLower() switch
-            {
-                "bigint" => nameof(SqlDbType.BigInt),
-                "binary" => nameof(SqlDbType.Binary),
-                "bit" => nameof(SqlDbType.Bit),
-                "char" => nameof(SqlDbType.Char),
-                "date" => nameof(SqlDbType.Date),
-                "datetime" => nameof(SqlDbType.DateTime),
-                "datetime2" => nameof(SqlDbType.DateTime2),
-                "datetimeoffset" => nameof(SqlDbType.DateTimeOffset),
-                "decimal" => nameof(SqlDbType.Decimal),
-                "float" => nameof(SqlDbType.Float),
-                "image" => nameof(SqlDbType.Image),
-                "int" => nameof(SqlDbType.Int),
-                "money" => nameof(SqlDbType.Money),
-                "nchar" => nameof(SqlDbType.NChar),
-                "ntext" => nameof(SqlDbType.NText),
-                "numeric" => nameof(SqlDbType.Decimal),
-                "nvarchar" => nameof(SqlDbType.NVarChar),
-                "real" => nameof(SqlDbType.Real),
-                "smalldatetime" => nameof(SqlDbType.SmallDateTime),
-                "smallint" => nameof(SqlDbType.SmallInt),
-                "smallmoney" => nameof(SqlDbType.SmallMoney),
-                "text" => nameof(SqlDbType.Text),
-                "time" => nameof(SqlDbType.Time),
-                "tinyint" => nameof(SqlDbType.TinyInt),
-                "uniqueidentifier" => nameof(SqlDbType.UniqueIdentifier),
-                "varbinary" => nameof(SqlDbType.VarBinary),
-                "varchar" => nameof(SqlDbType.VarChar),
-                "xml" => nameof(SqlDbType.Xml),
-                _ => throw new ArgumentException($"Unknown SQL type: {sqlType}"),
-            };
-        }
     }
 }
