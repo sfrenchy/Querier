@@ -59,9 +59,9 @@ namespace Querier.Api.Application.DTOs
                 ApiRoute = connection.ApiRoute,
                 ContextName = connection.ContextName,
                 Description = connection.Description,
-                AssemblyDll = connection.AssemblyDll,
-                AssemblyPdb = connection.AssemblyPdb,
-                AssemblySourceZip = connection.AssemblySourceZip
+                //AssemblyDll = connection.AssemblyDll,
+                //AssemblyPdb = connection.AssemblyPdb,
+                //AssemblySourceZip = connection.AssemblySourceZip
             };
         }
     }

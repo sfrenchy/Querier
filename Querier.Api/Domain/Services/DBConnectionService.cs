@@ -90,7 +90,7 @@ namespace Querier.Api.Domain.Services
                     await sourceCodeService.GenerateDbConnectionSourcesAsync();
                     // Create source zip
                     byte[] sourceZipBytes = await sourceCodeService.CreateSourceZipAsync();
-
+                    await _progressService.ReportProgress(connection.OperationId, 50, ProgressStatus.GeneratingEntities);
                     if (!Directory.Exists("Assemblies"))
                         Directory.CreateDirectory("Assemblies");
                     string srcPath = Path.Combine("Assemblies", $"{connection.Name}.DynamicContext.Sources.zip");
