@@ -100,7 +100,7 @@ namespace Querier.Api.Infrastructure.Services
                 {
                     _logger.LogDebug("Using fast path for native controller: {ControllerType}", controllerType.FullName);
                 }
-                return ActivatorUtilities.CreateInstance(_serviceProvider, controllerType);
+                return ActivatorUtilities.CreateInstance(context.HttpContext.RequestServices, controllerType);
             }
 
             // Le reste du code pour les contrôleurs dynamiques
