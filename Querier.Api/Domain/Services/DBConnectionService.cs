@@ -98,7 +98,7 @@ namespace Querier.Api.Domain.Services
 
                 // Validation step (10%)
                 await _progressService.ReportProgress(connection.OperationId, 10, ProgressStatus.ValidatingConnection);
-                var connectionString = BuildConnectionString(connection.ConnectionType, connection.Parameters);
+                var connectionString = CreateConnectionString(connection.ConnectionType, connection.Parameters);
                 
                 // Schema retrieval (30%)
                 await _progressService.ReportProgress(connection.OperationId, 30, ProgressStatus.RetrievingSchema);
@@ -117,7 +117,9 @@ namespace Querier.Api.Domain.Services
                     // Compile generated sources
                     await _progressService.ReportProgress(connection.OperationId, 80, ProgressStatus.Compiling);
                     var compilationResult = _roslynCompilerService.CompileAssembly(connection.Name, sourceCodeService.GetGeneratedSyntaxTrees());
-                    if (compilationResult.AssemblyBytes == null)
+                    if (!compilationResult.Success || 
+                        compilationResult.AssemblyBytes == null || 
+                        compilationResult.AssemblyBytes.Length == 0)
                     {
                         await _progressService.FailOperation(connection.OperationId, ProgressStatus.Failed);
                         result.State = DBConnectionState.CompilationError;
@@ -196,97 +198,6 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private void GenerateProcedureFiles(TemplateModel templateModel, Dictionary<string, string> srcZipContent, Dictionary<string, string> sourceFiles)
-        {
-            var templates = new[]
-            {
-                ("DynamicContextExceptions", "Exceptions\\DynamicContextExceptions.cs"),
-                ("ProcedureContext", "Context\\ProcedureContext.cs"),
-                ("ProcedureController", "Controllers\\ProcedureController.cs"),
-                ("ProcedureDto", "DTOs\\ProcedureDtos.cs"),
-                ("ProcedureInputDto", "DTOs\\ProcedureInputDtos.cs"),
-                ("ProcedureReportRequests", "Reports\\ProcedureReportRequests.cs"),
-                ("ProcedureRepository", "Repositories\\ProcedureRepository.cs"),
-                ("ProcedureService", "Services\\ProcedureService.cs"),
-            };
-
-            foreach (var (templateName, outputPath) in templates)
-            {
-                _logger.LogDebug($"Processing template {templateName}");
-                var template = new Template(File.ReadAllText(
-                    Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
-                ), '$', '$');
-
-                template.Add("rootNamespace", templateModel.RootNamespace);
-                template.Add("contextNamespace", templateModel.ContextNamespace);
-                template.Add("contextName", templateModel.ContextName);
-                template.Add("modelNamespace", templateModel.ModelNamespace);
-                
-                template.Add("procedureList", templateName == "ProcedureDto" 
-                    ? templateModel.ProcedureList.Where(s => s.HasOutput).ToList() 
-                    : templateModel.ProcedureList);
-
-                if (templateName == "ProcedureController")
-                    template.Add("contextRoute", templateModel.ContextRoute);
-
-                string content = template.Render();
-                srcZipContent.Add(outputPath, content);
-                sourceFiles.Add(outputPath, content);
-            }
-        }
-
-        private void GenerateEntityFiles(TemplateModel templateModel, Dictionary<string, string> srcZipContent, Dictionary<string, string> sourceFiles)
-        {
-            var templates = new[]
-            {
-                ("DynamicServiceContainer", "Services\\DynamicServiceContainer.cs"),
-                ("ReadOnlyDbContext", "Context\\ReadOnlyDbContext.cs"),
-                ("EntityController","Controllers\\EntityController.cs"),
-                ("EntityDto","Entities\\EntityDto.cs"),
-                ("EntityRepository","Repositories\\EntityRepository.cs"),
-                ("EntityService","Services\\EntityService.cs"),
-            };
-
-            foreach (var (templateName, outputPath) in templates)
-            {
-                _logger.LogDebug($"Processing template {templateName}");
-                var template = new Template(File.ReadAllText(
-                    Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Templates", "DBTemplating", $"{templateName}.st")
-                ), '$', '$');
-
-                template.Add("rootNamespace", templateModel.RootNamespace);
-                template.Add("contextNamespace", templateModel.ContextNamespace);
-                template.Add("contextName", templateModel.ContextName);
-                template.Add("modelNamespace", templateModel.ModelNamespace);
-                template.Add("procedureList", templateModel.ProcedureList);
-                template.Add("entityList", templateModel.EntityList);
-
-                if (templateName == "EntityController")
-                    template.Add("contextRoute", templateModel.ContextRoute);
-
-                string content = template.Render();
-                srcZipContent.Add(outputPath, content);
-                sourceFiles.Add(outputPath, content);
-            }
-        }
-
-        private byte[] CreateSourceZip(Dictionary<string, string> srcZipContent)
-        {
-            using var sourceStream = new MemoryStream();
-            using (var archive = new ZipArchive(sourceStream, ZipArchiveMode.Create))
-            {
-                foreach (var item in srcZipContent)
-                {
-                    var entry = archive.CreateEntry(item.Key);
-                    using var entryStream = entry.Open();
-                    using var streamWriter = new BinaryWriter(entryStream);
-                    var bytes = Encoding.UTF8.GetBytes(item.Value);
-                    streamWriter.Write(bytes, 0, bytes.Length);
-                }
-            }
-            return sourceStream.ToArray();
-        }
-        
         private string ComputeAssemblyHash(byte[] assemblyBytes)
         {
             using var sha256 = SHA256.Create();
@@ -542,223 +453,6 @@ namespace Querier.Api.Domain.Services
             }
         }
 
-        private List<TemplateEntityMetadata> ExtractEntityMetadata(ScaffoldedModel scaffoldedModel)
-        {
-            var contextFile = scaffoldedModel.ContextFile;
-            var entityFiles = scaffoldedModel.AdditionalFiles.Where(f => !f.Path.EndsWith("Context.cs"));
-            var pluralizer = new Bricelam.EntityFrameworkCore.Design.Pluralizer();
-            var viewEntities = new HashSet<string>();
-
-            // Identifier les vues depuis le fichier du contexte
-            var contextSyntaxTree = CSharpSyntaxTree.ParseText(contextFile.Code).GetRoot();
-            var onModelCreatingNode = contextSyntaxTree.DescendantNodes().OfType<MethodDeclarationSyntax>()
-                .FirstOrDefault(m => m.Identifier.Text == "OnModelCreating");
-
-            if (onModelCreatingNode != null)
-            {
-                string currentEntity = "";
-                foreach (var invocation in onModelCreatingNode.DescendantNodes().OfType<InvocationExpressionSyntax>())
-                {
-                    if (invocation.Expression is MemberAccessExpressionSyntax memberAccessEntity &&
-                        memberAccessEntity.Name.Identifier.Text == "Entity")
-                    {
-                        if (memberAccessEntity.Name is GenericNameSyntax genericName)
-                        {
-                            currentEntity = genericName.TypeArgumentList.Arguments.First().ToString();
-                        }
-                    }
-                    if (invocation.Expression is MemberAccessExpressionSyntax memberAccess &&
-                        memberAccess.Name.Identifier.Text == "ToView")
-                    {
-                        viewEntities.Add(currentEntity);
-                    }
-                }
-            }
-
-            // Extraction des entités
-            var entityMap = new Dictionary<string, TemplateEntityMetadata>();
-
-            foreach (var entityFile in entityFiles)
-            {
-                var syntaxTree = CSharpSyntaxTree.ParseText(entityFile.Code);
-                var root = syntaxTree.GetRoot();
-                var classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
-                if (classDeclaration == null) continue;
-
-                var entityName = classDeclaration.Identifier.Text;
-                var entity = new TemplateEntityMetadata
-                {
-                    Name = entityName,
-                    PluralName = pluralizer.Pluralize(entityName),
-                    Properties = new List<TemplateProperty>(),
-                    ForeignKeys = new List<TemplateForeignKey>(),
-                    IsViewEntity = viewEntities.Contains(entityName),
-                    //KeyNames = new List<string>(),
-                   // KeyTypes = new List<string>()
-                };
-
-                var keys = new HashSet<string>();
-                var foreignKeys = new HashSet<string>();
-
-                // Détection de [PrimaryKey] sur la classe (clé composite)
-                var primaryKeyAttribute = classDeclaration.AttributeLists
-                    .SelectMany(al => al.Attributes)
-                    .FirstOrDefault(a => a.Name.ToString() == "PrimaryKey");
-
-                if (primaryKeyAttribute?.ArgumentList != null)
-                {
-                    foreach (var arg in primaryKeyAttribute.ArgumentList.Arguments)
-                    {
-                        keys.Add(arg.Expression.ToString().Replace("\"", ""));
-                    }
-                }
-
-                // Détection des [Key] sur les propriétés (clés individuelles)
-                foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
-                {
-                    if (property.AttributeLists
-                        .SelectMany(al => al.Attributes)
-                        .Any(a => a.Name.ToString() == "Key"))
-                    {
-                        keys.Add(property.Identifier.Text);
-                    }
-                }
-
-                // Détection des clés étrangères et des propriétés de navigation
-                foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
-                {
-                    var foreignKeyAttributes = property.AttributeLists
-                        .SelectMany(al => al.Attributes)
-                        .Where(a => a.Name.ToString() == "ForeignKey")
-                        .SelectMany(a => a.ArgumentList.Arguments)
-                        .Select(a => a.Expression.ToString().Replace("\"", ""))
-                        .ToList();
-
-                    foreach (var fk in foreignKeyAttributes)
-                    {
-                        if (!keys.Contains(fk))
-                        {
-                            foreignKeys.Add(fk);
-                        }
-                    }
-
-                    // Gestion des propriétés de navigation avec [InverseProperty]
-                    var navigationProperty = property.AttributeLists
-                        .SelectMany(al => al.Attributes)
-                        .FirstOrDefault(a => a.Name.ToString() == "ForeignKey");
-
-                    if (navigationProperty != null)
-                    {
-                        var inverseProperty = property.AttributeLists
-                            .SelectMany(al => al.Attributes)
-                            .FirstOrDefault(a => a.Name.ToString() == "InverseProperty");
-
-                        bool foreignKeyIsCurrentPrimaryKey = navigationProperty.ArgumentList.Arguments
-                            .Any(a => keys.Contains(a.Expression.ToString().Replace("\"", "")));
-
-                        if (inverseProperty != null && !foreignKeyIsCurrentPrimaryKey)
-                        {
-                            bool inverseTargetIsCurrent = inverseProperty.ArgumentList.Arguments.Any(a =>
-                                a.Expression.ToString().Replace("\"", "") == pluralizer.Pluralize(entityName));
-
-                            if (inverseTargetIsCurrent)
-                            {
-                                var referencedType = property.Type.ToString().TrimEnd('?');
-                                if (referencedType != entityName) // Éviter les auto-références
-                                {
-                                    var isCollection = referencedType.StartsWith("ICollection<") ||
-                                                       referencedType.StartsWith("List<");
-                                    var actualType = isCollection
-                                        ? referencedType.Substring(referencedType.IndexOf('<') + 1).TrimEnd('>')
-                                        : referencedType;
-
-                                    var fk = new TemplateForeignKey
-                                    {
-                                        Name = foreignKeys.LastOrDefault() ?? property.Identifier.Text,
-                                        NamePlural = pluralizer.Pluralize(foreignKeys.LastOrDefault() ?? property.Identifier.Text),
-                                        ReferencedEntityPlural = pluralizer.Pluralize(actualType),
-                                        ReferencedEntitySingular = actualType,
-                                        ReferencedColumn = "Id",
-                                        IsCollection = isCollection
-                                    };
-
-                                    if (!entity.ForeignKeys.Any(f => f.Name == fk.Name))
-                                        entity.ForeignKeys.Add(fk);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Extraction des propriétés
-                foreach (var property in classDeclaration.DescendantNodes().OfType<PropertyDeclarationSyntax>())
-                {
-                    var attributes = property.AttributeLists.SelectMany(al => al.Attributes).Select(a => a.Name.ToString()).ToList();
-                    var isKey = keys.Contains(property.Identifier.Text);
-                    var isForeignKey = foreignKeys.Contains(property.Identifier.Text);
-                    var isRequired = attributes.Contains("Required");
-                    var isAutoGenerated = attributes.Contains("DatabaseGenerated") && 
-                        property.AttributeLists
-                            .SelectMany(al => al.Attributes)
-                            .Any(a => a.ArgumentList?.Arguments
-                                .Any(arg => arg.ToString().Contains("DatabaseGeneratedOption.Identity")) ?? false);
-
-                    var prop = new TemplateProperty
-                    {
-                        Name = property.Identifier.Text,
-                        CSName = property.Identifier.Text,
-                        CSType = property.Type.ToString(),
-                        IsKey = isKey,
-                        IsRequired = isRequired,
-                        IsAutoGenerated = isAutoGenerated,
-                        IsForeignKey = isForeignKey
-                    };
-
-                    entity.Properties.Add(prop);
-
-                    if (isKey)
-                    {
-                        //entity.KeyNames.Add(prop.Name);
-                        //entity.KeyTypes.Add(prop.CSType);
-                    }
-                }
-
-                // Définir une clé primaire si aucune n'a été trouvée
-                //if (!entity.KeyNames.Any())
-                //{
-                //    var idProperty = entity.Properties.FirstOrDefault(p => 
-                //        p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) ||
-                //        p.Name.EndsWith("Id", StringComparison.OrdinalIgnoreCase));
-
-                //    if (idProperty != null)
-                //    {
-                //        idProperty.IsKey = true;
-                //        entity.KeyNames.Add(idProperty.Name);
-                //        entity.KeyTypes.Add(idProperty.CSType);
-                //    }
-                //}
-
-                entityMap[entityName] = entity;
-            }
-
-            // 🔹 Deuxième passe : mise à jour des clés étrangères avec la bonne colonne référencée
-            foreach (var entity in entityMap.Values)
-            {
-                foreach (var fk in entity.ForeignKeys)
-                {
-                    if (entityMap.TryGetValue(fk.ReferencedEntitySingular, out var referencedEntity))
-                    {
-                       // fk.ReferencedColumn = referencedEntity.KeyNames.FirstOrDefault() ?? "Id";
-                    }
-                }
-            }
-
-            return entityMap.Values.ToList();
-        }
-
-
-
-
         public class SourceDownload
         {
             public byte[] Content { get; set; }
@@ -808,6 +502,18 @@ namespace Querier.Api.Domain.Services
                 _logger.LogError(ex, "Error analyzing query objects for connection ID: {Id}, type: {Type}", connectionId, objectType);
                 throw;
             }
+        }
+
+        private string CreateConnectionString(DbConnectionType connectionType, IEnumerable<ConnectionStringParameterCreateDto> parameters)
+        {
+            var builder = new System.Data.Common.DbConnectionStringBuilder();
+
+            foreach (var param in parameters.Where(p => !string.IsNullOrEmpty(p.Value)))
+            {
+                builder[param.Key] = param.Value;
+            }
+
+            return builder.ConnectionString;
         }
 
         private string BuildConnectionString(DbConnectionType connectionType, IEnumerable<ConnectionStringParameterCreateDto> parameters)

@@ -128,7 +128,7 @@ public class SourceCodeFromDatabaseService
                 ProcedureRepositories = _generatedSyntaxTrees["Repositories"].Where(s => s.FilePath.Contains("Procedures")).Select(s => Path.GetFileNameWithoutExtension(s.FilePath)),
                 EntityServices = _generatedSyntaxTrees["Services"].Where(s => !s.FilePath.Contains("Procedures")).Select(s => Path.GetFileNameWithoutExtension(s.FilePath)),
                 ProcedureServices = _generatedSyntaxTrees["Services"].Where(s => s.FilePath.Contains("Procedures")).Select(s => Path.GetFileNameWithoutExtension(s.FilePath)),
-                HasProcedure = _procedureMap.Any()
+                HasProcedures = _procedureMap.Any()
             });
             string code = template.Render();
             SyntaxTree codeSyntaxTree = CSharpSyntaxTree.ParseText(code, null, $"{_rootNamespace}ServiceContainer.cs", Encoding.UTF8);
