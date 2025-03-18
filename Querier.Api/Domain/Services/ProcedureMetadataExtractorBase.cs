@@ -30,7 +30,7 @@ namespace Querier.Api.Domain.Services
         {
             DbModel = dbModel;
         }
-        protected abstract string GetStoredProcedureSqlCreate(string procedureName);
+        protected abstract string GetStoredProcedureSqlCreate(string procedureName, string schema);
         protected List<StoredProcedureMetadata> _procedureMetadata = new();
         protected string ConnectionString;
         protected abstract string GetProcedureWithParametersQuery { get; }
@@ -121,7 +121,7 @@ namespace Querier.Api.Domain.Services
 
         protected bool TryAIOutputMetadataExtraction(StoredProcedureMetadata procedure, List<TemplateProperty> result)
         {
-            string sqlProcedureCode = GetStoredProcedureSqlCreate(procedure.Name);
+            string sqlProcedureCode = GetStoredProcedureSqlCreate(procedure.Name, procedure.Schema);
             return false;
         }
     }

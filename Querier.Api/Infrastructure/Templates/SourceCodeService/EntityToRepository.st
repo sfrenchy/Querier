@@ -60,28 +60,28 @@ public class $model.Entity.Name$Repository : I$model.Entity.Name$Repository
                     e.$property.Name$.ToString().ToLower().Contains(searchTerm) ||
                     $endif$
                     $if(!property.IsArray && property.IsInt)$
-                    (isInt && e.$property.Name$ == searchInt) ||
+                    (isInt && e.$property.Name$ == ($property.CSType$)searchInt) ||
                     $endif$
                     $if(!property.IsArray && property.IsDateTime)$
                     (isDate && e.$property.Name$ == searchDate) ||
                     $endif$
                     $if(!property.IsArray && property.IsDecimal)$
-                    (isDecimal && e.$property.Name$ == searchDecimal) ||
+                    (isDecimal && e.$property.Name$ == ($property.CSType$)searchDecimal) ||
                     $endif$
                     $if(!property.IsArray && property.IsDouble)$
-                    (isDouble && e.$property.Name$ == searchDouble) ||
+                    (isDouble && e.$property.Name$ == ($property.CSType$)searchDouble) ||
                     $endif$
                     $if(!property.IsArray && property.IsFloat)$
-                    (isFloat && e.$property.Name$ == searchFloat) ||
+                    (isFloat && e.$property.Name$ == ($property.CSType$)searchFloat) ||
                     $endif$
                     $if(!property.IsArray && property.IsLong)$
-                    (isLong && e.$property.Name$ == searchLong) ||
+                    (isLong && e.$property.Name$ == ($property.CSType$)searchLong) ||
                     $endif$
                     $if(!property.IsArray && property.IsShort)$
-                    (isShort && e.$property.Name$ == searchShort) ||
+                    (isShort && e.$property.Name$ == ($property.CSType$)searchShort) ||
                     $endif$
                     $if(!property.IsArray && property.IsByte)$
-                    (isByte && e.$property.Name$ == searchByte) ||
+                    (isByte && e.$property.Name$ == ($property.CSType$)searchByte) ||
                     $endif$
                     $if(!property.IsArray && property.IsBool)$
                     (isBool && e.$property.Name$ == searchBool) ||
@@ -121,7 +121,7 @@ public class $model.Entity.Name$Repository : I$model.Entity.Name$Repository
                             $if(!property.IsArray && property.IsInt)$
                             var $property.Name$Terms = searchTerms
                             .Where(term => int.TryParse(term, out _))
-                                .Select(term => (int?)int.Parse(term))
+                                .Select(term => ($property.CSType$)int.Parse(term))
                                 .ToList();
                             query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
                             $endif$
@@ -137,7 +137,7 @@ public class $model.Entity.Name$Repository : I$model.Entity.Name$Repository
                             $if(!property.IsArray && property.IsDecimal)$
                             var $property.Name$Terms = searchTerms
                             .Where(term => decimal.TryParse(term, out _))
-                                .Select(term => (decimal?)decimal.Parse(term))
+                                .Select(term => ($property.CSType$)decimal.Parse(term))
                                 .ToList();
                                 query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
                             $endif$
@@ -145,7 +145,7 @@ public class $model.Entity.Name$Repository : I$model.Entity.Name$Repository
                             $if(!property.IsArray && property.IsDouble)$
                             var $property.Name$Terms = searchTerms
                             .Where(term => double.TryParse(term, out _))
-                                .Select(term => (double?)double.Parse(term))
+                                .Select(term => ($property.CSType$)double.Parse(term))
                                 .ToList();
                                 query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
                             $endif$
@@ -153,7 +153,7 @@ public class $model.Entity.Name$Repository : I$model.Entity.Name$Repository
                             $if(!property.IsArray && property.IsFloat)$
                             var $property.Name$Terms = searchTerms
                             .Where(term => float.TryParse(term, out _))
-                                .Select(term => (float?)float.Parse(term))
+                                .Select(term => ($property.CSType$)float.Parse(term))
                                 .ToList();
                                 query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
                             $endif$
@@ -161,7 +161,7 @@ public class $model.Entity.Name$Repository : I$model.Entity.Name$Repository
                             $if(!property.IsArray && property.IsLong)$
                             var $property.Name$Terms = searchTerms
                             .Where(term => long.TryParse(term, out _))
-                                .Select(term => (long?)long.Parse(term))
+                                .Select(term => ($property.CSType$)long.Parse(term))
                                 .ToList();
                                 query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
                             $endif$
@@ -169,7 +169,7 @@ public class $model.Entity.Name$Repository : I$model.Entity.Name$Repository
                             $if(!property.IsArray && property.IsShort)$
                             var $property.Name$Terms = searchTerms
                             .Where(term => short.TryParse(term, out _))
-                                .Select(term => (short?)short.Parse(term))
+                                .Select(term => ($property.CSType$)short.Parse(term))
                                 .ToList();
                                 query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
                             $endif$
@@ -177,7 +177,7 @@ public class $model.Entity.Name$Repository : I$model.Entity.Name$Repository
                             $if(!property.IsArray && property.IsByte)$
                             var $property.Name$Terms = searchTerms
                             .Where(term => byte.TryParse(term, out _))
-                                .Select(term => (byte?)byte.Parse(term))
+                                .Select(term => ($property.CSType$)byte.Parse(term))
                                 .ToList();
                                 query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
                             $endif$

@@ -103,7 +103,7 @@ namespace Querier.Api.Domain.Services
             _procedureMetadata.RemoveAll(p => p == null);
         }
 
-        protected override string GetStoredProcedureSqlCreate(string procedureName)
+        protected override string GetStoredProcedureSqlCreate(string procedureName, string schema)
         {
             SqlCommand command = new SqlCommand($"EXEC sp_helptext '{procedureName}'", _connection);
             using var reader = command.ExecuteReader();
@@ -117,9 +117,9 @@ namespace Querier.Api.Domain.Services
 
         protected override string GetCSharpType(string sqlType)
         {
-            if (sqlType.IndexOf("(") != -1)
+            if (sqlType.IndexOf("(", StringComparison.Ordinal) != -1)
             {
-                sqlType = sqlType.Substring(0, sqlType.IndexOf("("));
+                sqlType = sqlType.Substring(0, sqlType.IndexOf("(", StringComparison.Ordinal));
             }
             return sqlType.ToLower() switch
             {
