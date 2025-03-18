@@ -42,10 +42,55 @@ public class $model.Entity.Name$Repository : I$model.Entity.Name$Repository
             {
                 _logger.LogDebug("Applying global search filter: " + parameters.GlobalSearch);
                 var searchTerm = parameters.GlobalSearch.ToLower();
+                bool isInt = int.TryParse(searchTerm, out int searchInt);
+                bool isDecimal = decimal.TryParse(searchTerm, out decimal searchDecimal);
+                bool isDate = DateTime.TryParse(searchTerm, out DateTime searchDate);
+                bool isDouble = double.TryParse(searchTerm, out double searchDouble);
+                bool isFloat = float.TryParse(searchTerm, out float searchFloat);
+                bool isLong = long.TryParse(searchTerm, out long searchLong);
+                bool isShort = short.TryParse(searchTerm, out short searchShort);
+                bool isByte = byte.TryParse(searchTerm, out byte searchByte);
+                bool isBool = bool.TryParse(searchTerm, out bool searchBool);
+                bool isGuid = Guid.TryParse(searchTerm, out Guid searchGuid);
+                bool isTimeSpan = TimeSpan.TryParse(searchTerm, out TimeSpan searchTimeSpan);
+
                 query = query.Where(e =>
                     $model.Entity.Properties: {property|
-                    $if(property.IsLinqToSqlSupportedType)$
+                    $if(!property.IsArray && property.IsString)$
                     e.$property.Name$.ToString().ToLower().Contains(searchTerm) ||
+                    $endif$
+                    $if(!property.IsArray && property.IsInt)$
+                    (isInt && e.$property.Name$ == searchInt) ||
+                    $endif$
+                    $if(!property.IsArray && property.IsDateTime)$
+                    (isDate && e.$property.Name$ == searchDate) ||
+                    $endif$
+                    $if(!property.IsArray && property.IsDecimal)$
+                    (isDecimal && e.$property.Name$ == searchDecimal) ||
+                    $endif$
+                    $if(!property.IsArray && property.IsDouble)$
+                    (isDouble && e.$property.Name$ == searchDouble) ||
+                    $endif$
+                    $if(!property.IsArray && property.IsFloat)$
+                    (isFloat && e.$property.Name$ == searchFloat) ||
+                    $endif$
+                    $if(!property.IsArray && property.IsLong)$
+                    (isLong && e.$property.Name$ == searchLong) ||
+                    $endif$
+                    $if(!property.IsArray && property.IsShort)$
+                    (isShort && e.$property.Name$ == searchShort) ||
+                    $endif$
+                    $if(!property.IsArray && property.IsByte)$
+                    (isByte && e.$property.Name$ == searchByte) ||
+                    $endif$
+                    $if(!property.IsArray && property.IsBool)$
+                    (isBool && e.$property.Name$ == searchBool) ||
+                    $endif$
+                    $if(!property.IsArray && property.IsGuid)$
+                    (isGuid && e.$property.Name$ == searchGuid) ||
+                    $endif$
+                    $if(!property.IsArray && property.IsTimeSpan)$
+                    (isTimeSpan && e.$property.Name$ == searchTimeSpan) ||
                     $endif$
                     }$
                     false);
@@ -64,15 +109,109 @@ public class $model.Entity.Name$Repository : I$model.Entity.Name$Repository
                     var columnName = columnSearch.Key;
                     var searchTerms = columnSearch.Value;
                     _logger.LogDebug("Applying search for column " + columnName + " with terms: " + searchTerms);
-
-                    query = columnName switch
+                    switch (columnName)
                     {
-                        $model.Entity.Properties: {property|
-                        "$property.Name$" => query.Where(e => searchTerms.Any(term => 
-                            e.$property.Name$.ToString().ToLower().Contains(term))),
+                    $model.Entity.Properties: {property|
+                        case "$property.Name$":
+                            
+                            $if(!property.IsArray && property.IsString)$
+                            query = query.Where(e => searchTerms.Any(term => e.$property.Name$.ToString().ToLower().Contains(term)));
+                            $endif$
+
+                            $if(!property.IsArray && property.IsInt)$
+                            var $property.Name$Terms = searchTerms
+                            .Where(term => int.TryParse(term, out _))
+                                .Select(term => (int?)int.Parse(term))
+                                .ToList();
+                            query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
+                            $endif$
+
+                            $if(!property.IsArray && property.IsDateTime)$
+                            var $property.Name$Terms = searchTerms
+                            .Where(term => DateTime.TryParse(term, out _))
+                                .Select(term => (DateTime?)DateTime.Parse(term))
+                                .ToList();
+                                query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
+                            $endif$
+
+                            $if(!property.IsArray && property.IsDecimal)$
+                            var $property.Name$Terms = searchTerms
+                            .Where(term => decimal.TryParse(term, out _))
+                                .Select(term => (decimal?)decimal.Parse(term))
+                                .ToList();
+                                query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
+                            $endif$
+
+                            $if(!property.IsArray && property.IsDouble)$
+                            var $property.Name$Terms = searchTerms
+                            .Where(term => double.TryParse(term, out _))
+                                .Select(term => (double?)double.Parse(term))
+                                .ToList();
+                                query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
+                            $endif$
+
+                            $if(!property.IsArray && property.IsFloat)$
+                            var $property.Name$Terms = searchTerms
+                            .Where(term => float.TryParse(term, out _))
+                                .Select(term => (float?)float.Parse(term))
+                                .ToList();
+                                query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
+                            $endif$
+
+                            $if(!property.IsArray && property.IsLong)$
+                            var $property.Name$Terms = searchTerms
+                            .Where(term => long.TryParse(term, out _))
+                                .Select(term => (long?)long.Parse(term))
+                                .ToList();
+                                query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
+                            $endif$
+
+                            $if(!property.IsArray && property.IsShort)$
+                            var $property.Name$Terms = searchTerms
+                            .Where(term => short.TryParse(term, out _))
+                                .Select(term => (short?)short.Parse(term))
+                                .ToList();
+                                query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
+                            $endif$
+
+                            $if(!property.IsArray && property.IsByte)$
+                            var $property.Name$Terms = searchTerms
+                            .Where(term => byte.TryParse(term, out _))
+                                .Select(term => (byte?)byte.Parse(term))
+                                .ToList();
+                                query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
+                            $endif$
+
+                            $if(!property.IsArray && property.IsBool)$
+                            var $property.Name$Terms = searchTerms
+                            .Where(term => bool.TryParse(term, out _))
+                                .Select(term => (bool?)bool.Parse(term))
+                                .ToList();
+                                query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
+                            $endif$
+
+                            $if(!property.IsArray && property.IsGuid)$
+                            var $property.Name$Terms = searchTerms
+                            .Where(term => Guid.TryParse(term, out _))
+                                .Select(term => (Guid?)Guid.Parse(term))
+                                .ToList();
+                                query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
+                            $endif$
+
+                            $if(!property.IsArray && property.IsTimeSpan)$
+                            var $property.Name$Terms = searchTerms
+                            .Where(term => TimeSpan.TryParse(term, out _))
+                                .Select(term => (TimeSpan?)TimeSpan.Parse(term))
+                                .ToList();
+                                query = query.Where(e => $property.Name$Terms.Contains(e.$property.Name$));
+                            $endif$
+                                
+                            break;
                         }$
-                        _ => query
-                    \};
+                        default:
+                            _logger.LogWarning("Unknown column name: " + columnName);
+                            break;
+                    \}
                 \}
             \}
 
