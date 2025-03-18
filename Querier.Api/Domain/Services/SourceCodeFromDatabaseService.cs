@@ -88,7 +88,9 @@ public class SourceCodeFromDatabaseService
         ProcedureMetadataExtractorBase dbMetadataProvider = _dbConnectionType switch
         {
             DbConnectionType.SqlServer => new ProcedureMetadataExtractorSqlServer(_connectionString, _dbModel),
+            DbConnectionType.MySql => new ProcedureMetadataExtractorMySql(_connectionString, _dbModel),
             DbConnectionType.SQLite => new ProcedureMetadataExtractorSqlite(_connectionString, _dbModel),
+            DbConnectionType.PgSql => new ProcedureMetadataExtractorPgSql(_connectionString, _dbModel),
             _ => throw new NotSupportedException($"Database type {_dbConnectionType} not supported")
         };
 

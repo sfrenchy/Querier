@@ -24,7 +24,7 @@ namespace Querier.Api.Domain.Services
         {
         }
 
-        protected override string GetStoredProcedureSqlCreate(string procedureName)
+        protected override string GetStoredProcedureSqlCreate(string procedureName, string schema)
         {
             return "";
         }

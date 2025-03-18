@@ -1,0 +1,206 @@
+﻿using System.Data;
+using System;
+using System.Data.Common;
+using Querier.Api.Infrastructure.Database.Templates;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
+using MySqlConnector;
+
+namespace Querier.Api.Domain.Services
+{
+    public class ProcedureMetadataExtractorMySql : ProcedureMetadataExtractorBase
+    {
+        private readonly MySqlConnection _connection;
+        public ProcedureMetadataExtractorMySql(string connectionString, DatabaseModel dbModel)
+            : base(dbModel)
+        {
+            ConnectionString = connectionString;
+            _connection = new MySqlConnection(connectionString);
+            _connection.Open();
+            ExtractMetadata();
+        }
+        protected override string GetProcedureWithParametersQuery => @"
+        SELECT 
+            r.ROUTINE_SCHEMA AS SchemaName, 
+            r.ROUTINE_NAME AS ProcedureName,
+            p.PARAMETER_NAME AS ParameterName,
+            p.DATA_TYPE AS DataType,
+            p.CHARACTER_MAXIMUM_LENGTH AS Length,
+            p.NUMERIC_PRECISION AS `Precision`, 
+            p.NUMERIC_SCALE AS Scale,
+            p.ORDINAL_POSITION AS ParameterOrder,
+            p.COLLATION_NAME AS Collation,
+            1 AS IsNullable,
+            CASE 
+                WHEN p.PARAMETER_MODE = 'OUT' THEN 1 
+                ELSE 0 
+            END AS IsOutput
+        FROM INFORMATION_SCHEMA.ROUTINES r
+        LEFT JOIN INFORMATION_SCHEMA.PARAMETERS p 
+            ON p.SPECIFIC_SCHEMA = r.ROUTINE_SCHEMA
+            AND p.SPECIFIC_NAME = r.ROUTINE_NAME
+        WHERE r.ROUTINE_TYPE = 'PROCEDURE'
+          AND r.ROUTINE_SCHEMA = DATABASE() 
+          AND r.ROUTINE_NAME NOT LIKE 'sp_%' 
+          AND r.ROUTINE_NAME NOT LIKE 'xp_%' 
+          AND r.ROUTINE_NAME NOT LIKE 'ms_%'
+        ORDER BY r.ROUTINE_SCHEMA, r.ROUTINE_NAME, p.ORDINAL_POSITION;
+        ";
+
+        protected override DbConnection Connection => _connection;
+
+        protected override void ExtractProcedureOutputMetadata()
+        {
+            List<TemplateProperty> result = [];
+            int procedureIndex = 0;
+            List<int> procedureToRemoveIndexes = [];
+
+            foreach (var procedure in _procedureMetadata)
+            {
+                try
+                {
+                    // Récupération des paramètres de la procédure depuis INFORMATION_SCHEMA
+                    var parameters = new List<MySqlParameter>();
+
+                    using (var getParamsCommand = new MySqlCommand(@"
+                        SELECT PARAMETER_NAME, DATA_TYPE 
+                        FROM INFORMATION_SCHEMA.PARAMETERS 
+                        WHERE SPECIFIC_SCHEMA = @schema 
+                        AND SPECIFIC_NAME = @procedure", _connection))
+                    {
+                        getParamsCommand.Parameters.AddWithValue("@schema", procedure.Schema);
+                        getParamsCommand.Parameters.AddWithValue("@procedure", procedure.Name);
+
+                        using var paramReader = getParamsCommand.ExecuteReader();
+                        while (paramReader.Read())
+                        {
+                            var paramName = paramReader["PARAMETER_NAME"].ToString();
+                            var paramType = paramReader["DATA_TYPE"].ToString();
+
+                            var mySqlParam = new MySqlParameter($"@{paramName}", GetMySqlDbType(paramType)); 
+                            parameters.Add(mySqlParam);
+                        }
+                    }
+
+                    // Construction de la requête CALL avec des placeholders
+                    string paramPlaceholders = string.Join(", ", parameters.Select(p => p.ParameterName));
+                    string callProcedureSql = $"CALL {procedure.Schema}.{procedure.Name}({paramPlaceholders})";
+
+                    using var getProcedureOutput = new MySqlCommand(callProcedureSql, _connection);
+                    
+                    // Ajout des paramètres à la commande
+                    foreach (var param in parameters)
+                    {
+                        getProcedureOutput.Parameters.Add(param);
+                    }
+
+                    using var reader = getProcedureOutput.ExecuteReader(CommandBehavior.SchemaOnly);
+                    var schemaTable = reader.GetSchemaTable();
+
+                    if (schemaTable != null)
+                    {
+                        foreach (DataRow row in schemaTable.Rows)
+                        {
+                            var outputSet = new TemplateProperty()
+                            {
+                                Name = (string)row["ColumnName"],
+                                CSName = NormalizeCsString((string)row["ColumnName"]),
+                                IsKey = false,
+                                IsForeignKey = false,
+                                IsRequired = (bool)row["AllowDBNull"] == false,
+                                IsAutoGenerated = false,
+                                CSType = row["DataType"].ToString()
+                            };
+                            procedure.OutputSet.Add(outputSet);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (!TryAIOutputMetadataExtraction(procedure, result))
+                    {
+                        procedureToRemoveIndexes.Add(procedureIndex);
+                    }
+                }
+                procedureIndex++;
+            }
+
+            foreach (var index in procedureToRemoveIndexes)
+            {
+                _procedureMetadata[index] = null;
+            }
+
+            _procedureMetadata.RemoveAll(p => p == null);
+        }
+
+
+        protected override string GetStoredProcedureSqlCreate(string procedureName, string schema)
+        {
+            using var command = new MySqlCommand($"SHOW CREATE PROCEDURE `{schema}`.`{procedureName}`", _connection);
+            using var reader = command.ExecuteReader();
+
+            if (reader.Read())
+            {
+                return reader.GetString("Create Procedure");
+            }
+    
+            return string.Empty;
+        }
+
+        private MySqlDbType GetMySqlDbType(string mysqlType)
+        {
+            return mysqlType.ToLower() switch
+            {
+                "int" => MySqlDbType.Int32,
+                "varchar" => MySqlDbType.VarChar,
+                "text" => MySqlDbType.Text,
+                "date" => MySqlDbType.Date,
+                "datetime" => MySqlDbType.DateTime,
+                "tinyint" => MySqlDbType.Int16,
+                "smallint" => MySqlDbType.Int16,
+                "bigint" => MySqlDbType.Int64,
+                "decimal" => MySqlDbType.Decimal,
+                "double" => MySqlDbType.Double,
+                "float" => MySqlDbType.Float,
+                "char" => MySqlDbType.String,
+                "blob" => MySqlDbType.Blob,
+                _ => MySqlDbType.VarChar
+            };
+        }
+        
+        protected override string GetCSharpType(string sqlType)
+        {
+            if (sqlType.IndexOf("(", StringComparison.Ordinal) != -1)
+            {
+                sqlType = sqlType.Substring(0, sqlType.IndexOf("(", StringComparison.Ordinal));
+            }
+            return sqlType.ToLower() switch
+            {
+                "bigint" => "long",
+                "binary" or "varbinary" or "blob" or "mediumblob" or "longblob" or "tinyblob" => "byte[]",
+                "bit" => "bool",
+                "char" or "nchar" or "varchar" or "nvarchar" or "text" or "tinytext" or "mediumtext" or "longtext" => "string",
+                "date" or "datetime" or "timestamp" => "DateTime",
+                "decimal" or "numeric" or "fixed" => "decimal",
+                "double" => "double",
+                "float" => "float",
+                "int" or "integer" => "int",
+                "smallint" => "short",
+                "tinyint" => "byte",
+                "mediumint" => "int",
+                "smallint unsigned" => "ushort",
+                "tinyint unsigned" => "byte",
+                "mediumint unsigned" => "uint",
+                "int unsigned" => "uint",
+                "bigint unsigned" => "ulong",
+                "time" => "TimeSpan",
+                "year" => "int",
+                "json" => "string", // Peut être sérialisé en C#
+                "enum" or "set" => "string",
+                _ => "unknown",
+            };
+        }
+
+    }
+}
