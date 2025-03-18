@@ -268,47 +268,46 @@ public class $model.Entity.Name$Controller : ControllerBase
                     \});
                 \}
             \}
-    
-            /// <summary>
-            /// Gets unique values for a specific column
-            /// </summary>
-            /// <param name="column">The name of the column</param>
-            /// <returns>List of unique values</returns>
-            /// <response code="200">Returns the list of unique values</response>
-            /// <response code="400">If the column name is invalid</response>
-            /// <response code="500">If there was an internal server error</response>
-            [HttpGet("columns/{columnName\}/values")]
-            [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
-            [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-            [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-            public async Task<ActionResult<List<string>>> GetUniqueValues([FromRoute] string columnName)
-            {
-                try
-                {
-                    var result = await _service.ColumnUniqueValuesAsync(columnName);
-                    return Ok(result);
-                \}
-                catch (EntityValidationException ex)
-                {
-                    _logger.LogWarning(ex, "Validation error in GetUniqueValues");
-                    return BadRequest(new ProblemDetails
-                    {
-                        Title = "Validation Error",
-                        Detail = ex.Message,
-                        Status = StatusCodes.Status400BadRequest
-                    \});
-                \}
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error getting unique values for column " + columnName);
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
-                    {
-                        Title = "Internal Server Error",
-                        Detail = "An error occurred while retrieving unique values",
-                        Status = StatusCodes.Status500InternalServerError
-                    \});
-                \}
-            \}
         $endif$
     $endif$
+    /// <summary>
+    /// Gets unique values for a specific column
+    /// </summary>
+    /// <param name="column">The name of the column</param>
+    /// <returns>List of unique values</returns>
+    /// <response code="200">Returns the list of unique values</response>
+    /// <response code="400">If the column name is invalid</response>
+    /// <response code="500">If there was an internal server error</response>
+    [HttpGet("columns/{columnName\}/values")]
+    [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<List<string>>> GetUniqueValues([FromRoute] string columnName)
+    {
+        try
+        {
+            var result = await _service.ColumnUniqueValuesAsync(columnName);
+            return Ok(result);
+        \}
+        catch (EntityValidationException ex)
+        {
+            _logger.LogWarning(ex, "Validation error in GetUniqueValues");
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Validation Error",
+                Detail = ex.Message,
+                Status = StatusCodes.Status400BadRequest
+            \});
+        \}
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting unique values for column " + columnName);
+            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+            {
+                Title = "Internal Server Error",
+                Detail = "An error occurred while retrieving unique values",
+                Status = StatusCodes.Status500InternalServerError
+            \});
+        \}
+    \}
 \}
